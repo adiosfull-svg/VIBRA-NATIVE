@@ -8,6 +8,7 @@ const PAGE = 1000; // limite di righe per richiesta di PostgREST/Supabase
 
 type SubscribeEvent = { type: 'create' | 'update' | 'delete'; id: string; data: Row };
 type PageOpts = { sort?: string; limit?: number; cursor?: string; fields?: string[] };
+type Page = { items: Row[]; has_more: boolean; next_cursor: string | null };
 
 function fail(entity: string, op: string, error: { message: string } | null): never {
   throw new Error(`${entity}.${op}: ${error?.message ?? 'errore sconosciuto'}`);
@@ -43,27 +44,31 @@ function makeEntity(entity: EntityName) {
     return out;
   }
 
+  /**
+   * filter(query, sort?, limit?) -> Row[]
+   * filter(query, { sort, limit, cursor, fields }) -> { items, has_more, next_cursor }
+   */
+  function filter(query: Query, opts: PageOpts): Promise<Page>;
+  function filter(query?: Query, sort?: string | null, limit?: number): Promise<Row[]>;
+  function filter(query: Query = {}, sortOrOpts?: string | PageOpts | null, limit?: number): Promise<Row[] | Page> {
+    if (sortOrOpts && typeof sortOrOpts === 'object') {
+      const { sort, limit: pageSize = PAGE, cursor, fields } = sortOrOpts;
+      const skip = cursor ? Number(cursor) : 0;
+      return fetchRows(query, sort, pageSize + 1, skip, fields).then((rows) => {
+        const has_more = rows.length > pageSize;
+        return { items: rows.slice(0, pageSize), has_more, next_cursor: has_more ? String(skip + pageSize) : null };
+      });
+    }
+    return fetchRows(query, sortOrOpts, limit);
+  }
+
   return {
     /** list(sort?, limit?, skip?) — senza limit restituisce tutte le righe. */
     list(sort?: string | null, limit?: number, skip?: number) {
       return fetchRows({}, sort, limit, skip);
     },
 
-    /**
-     * filter(query, sort?, limit?) -> Row[]
-     * filter(query, { sort, limit, cursor, fields }) -> { items, has_more, next_cursor }
-     */
-    filter(query: Query = {}, sortOrOpts?: string | PageOpts | null, limit?: number): any {
-      if (sortOrOpts && typeof sortOrOpts === 'object') {
-        const { sort, limit: pageSize = PAGE, cursor, fields } = sortOrOpts;
-        const skip = cursor ? Number(cursor) : 0;
-        return fetchRows(query, sort, pageSize + 1, skip, fields).then((rows) => {
-          const has_more = rows.length > pageSize;
-          return { items: rows.slice(0, pageSize), has_more, next_cursor: has_more ? String(skip + pageSize) : null };
-        });
-      }
-      return fetchRows(query, sortOrOpts, limit);
-    },
+    filter,
 
     async get(id: string) {
       const { data, error } = await supabase.from(table).select('*').eq('id', id).single();

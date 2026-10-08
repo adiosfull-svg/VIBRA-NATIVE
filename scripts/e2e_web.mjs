@@ -1,0 +1,40 @@
+// Test end-to-end dell'app web (Expo) contro lo stack locale.
+// Prerequisiti: scripts/local/dev_stack.sh avviato, `npx expo start --web --port 8081` in app/,
+// pacchetto `playwright` installato. Uso: node scripts/e2e_web.mjs <cartella-screenshot>
+import { chromium } from 'playwright';
+const out = process.argv[2];
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const errors = [];
+page.on('pageerror', (e) => errors.push(String(e)));
+page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+await page.goto('http://127.0.0.1:8081/', { waitUntil: 'networkidle', timeout: 120000 });
+await page.getByLabel('Email').fill('pr@vibra.local');
+await page.getByLabel('Password').fill('sbagliata');
+await page.getByRole('button', { name: 'Accedi' }).click();
+await page.getByText('Email o password errati').waitFor({ timeout: 15000 });
+await page.screenshot({ path: `${out}/01-login-errore.png` });
+await page.getByLabel('Password').fill('vibra');
+await page.getByRole('button', { name: 'Accedi' }).click();
+await page.waitForURL(/il-mio-vibra/, { timeout: 20000 });
+await page.screenshot({ path: `${out}/02-home-pr.png` });
+await page.getByRole('tab', { name: /Clienti/ }).click();
+await page.getByText(/\d+ clienti/).waitFor({ timeout: 20000 });
+await page.screenshot({ path: `${out}/03-clienti.png` });
+const count1 = await page.getByText(/\d+ clienti/).textContent();
+await page.getByLabel('Cerca cliente').fill('chiara');
+await page.waitForTimeout(500);
+const count2 = await page.getByText(/\d+ clienti/).textContent();
+await page.screenshot({ path: `${out}/04-ricerca.png` });
+await page.getByLabel('Cerca cliente').fill('');
+await page.getByRole('button', { name: 'Rating' }).click();
+await page.waitForTimeout(300);
+await page.getByRole('button', { name: /presenze/ }).first().click();
+await page.getByText('Storico presenze').waitFor({ timeout: 15000 });
+await page.screenshot({ path: `${out}/05-dettaglio.png`, fullPage: true });
+await page.goBack();
+await page.getByRole('tab', { name: /Menu/ }).click();
+await page.getByText('Esci').waitFor();
+await page.screenshot({ path: `${out}/06-menu-pr.png` });
+console.log(JSON.stringify({ count1, count2, errors }, null, 1));
+await browser.close();

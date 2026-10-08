@@ -2,7 +2,8 @@
 // testabile con `node --test`.
 import { SCHEMA, type ColumnType, type EntityName } from './schema.generated.ts';
 
-export type Row = Record<string, unknown> & { id: string };
+// I record arrivano da dati Base44 senza tipi: `any` per i campi rende il porting del codice JS diretto.
+export type Row = Record<string, any> & { id: string };
 export type Query = Record<string, unknown>;
 
 /** '-date' -> { column: 'date', ascending: false }, come le stringhe di sort Base44. */
