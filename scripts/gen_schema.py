@@ -222,6 +222,7 @@ def main(src, dst):
     entities.pop("User", None)  # gestita da public.profiles
 
     tables, rls_out, index_out = [], [], []
+    app_schema = {}
     for name, spec in entities.items():
         table = table_name(name)
         props = spec.get("properties", {})
@@ -240,6 +241,7 @@ def main(src, dst):
             coltypes[field] = ctype
             nn = " not null" if field in required else ""
             cols.append(f"  {qi(field)} {ctype}{col_default(fspec, ctype)}{nn}")
+        app_schema[name] = {"table": table, "columns": coltypes}
         tables.append(
             f"-- {name}: {spec.get('description', '')}".rstrip(": ") + "\n"
             f"create table public.{table} (\n" + ",\n".join(cols) + "\n);\n"
@@ -267,6 +269,18 @@ def main(src, dst):
     mapping["User"] = "profiles"
     open(os.path.join(os.path.dirname(src.rstrip("/")), "tables.json"), "w").write(
         json.dumps(mapping, indent=2, sort_keys=True) + "\n")
+    # Schema per l'adapter dati dell'app (colonne e tipi di ogni entità).
+    app_schema["User"] = {"table": "profiles", "columns": {
+        "id": "text", "email": "text", "full_name": "text", "role": "text", "promoter_id": "text",
+        "legacy_id": "text", "created_date": "timestamptz", "updated_date": "timestamptz"}}
+    app_file = os.path.join(os.path.dirname(src.rstrip("/")), "..", "app", "src", "lib", "schema.generated.ts")
+    os.makedirs(os.path.dirname(app_file), exist_ok=True)
+    open(app_file, "w").write(
+        "// GENERATO da scripts/gen_schema.py - non modificare a mano.\n"
+        "export type ColumnType = 'text' | 'date' | 'timestamptz' | 'double precision' | 'boolean' | 'jsonb';\n\n"
+        "export const SCHEMA = " + json.dumps(app_schema, indent=2, sort_keys=True) +
+        " as const satisfies Record<string, { table: string; columns: Record<string, ColumnType> }>;\n\n"
+        "export type EntityName = keyof typeof SCHEMA;\n")
     print(f"{len(entities)} entità -> {dst}")
 
 

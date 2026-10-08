@@ -50,6 +50,12 @@ select e.id, c.promoter_id, c.id, true, round((80 + random() * 520)::numeric, 0)
 from public.event e cross join public.client c
 where random() < 0.33;
 
+-- Presenze dei promoter (client_id nullo): qui sta il fatturato del promoter per serata
+insert into public.event_attendance (event_id, promoter_id, present, revenue, guadagno_pct)
+select e.id, p.id, true, round((400 + random() * 1800)::numeric, 0), 10
+from public.event e cross join public.promoter p
+where p.status = 'attivo' and random() < 0.8;
+
 insert into public.achievement (key, title, description, category, rarity, icon_emoji, condition_type, condition_value, sort_order) values
   ('first_client', 'Primo cliente', 'Registra il tuo primo cliente', 'clienti', 'bronzo', '🌱', 'total_clients', 1, 1),
   ('clients_25', 'Rete in crescita', 'Raggiungi 25 clienti', 'clienti', 'argento', '🌿', 'total_clients', 25, 2),
