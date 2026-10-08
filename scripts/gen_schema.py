@@ -226,7 +226,6 @@ def main(src, dst):
     for name, spec in entities.items():
         table = table_name(name)
         props = spec.get("properties", {})
-        required = set(spec.get("required", []))
         cols = [
             "  id text primary key default public.new_id()",
             "  created_date timestamptz not null default now()",
@@ -239,8 +238,9 @@ def main(src, dst):
         for field, fspec in props.items():
             ctype = col_type(fspec)
             coltypes[field] = ctype
-            nn = " not null" if field in required else ""
-            cols.append(f"  {qi(field)} {ctype}{col_default(fspec, ctype)}{nn}")
+            # "required" in Base44 è solo una validazione in scrittura: i dati storici possono non
+            # rispettarla, quindi niente NOT NULL (lo garantiscono i form dell'app, come prima).
+            cols.append(f"  {qi(field)} {ctype}{col_default(fspec, ctype)}")
         app_schema[name] = {"table": table, "columns": coltypes}
         tables.append(
             f"-- {name}: {spec.get('description', '')}".rstrip(": ") + "\n"
@@ -264,15 +264,13 @@ def main(src, dst):
     rt = [f"alter publication supabase_realtime add table public.{table_name(e)};" for e in REALTIME]
     open(os.path.join(dst, "20261008000004_realtime.sql"), "w").write(header + "\n".join(rt) + "\n")
 
-    # Mappa entità -> tabella, usata dall'adapter dati dell'app e dallo script di import.
-    mapping = {name: table_name(name) for name in entities}
-    mapping["User"] = "profiles"
-    open(os.path.join(os.path.dirname(src.rstrip("/")), "tables.json"), "w").write(
-        json.dumps(mapping, indent=2, sort_keys=True) + "\n")
     # Schema per l'adapter dati dell'app (colonne e tipi di ogni entità).
     app_schema["User"] = {"table": "profiles", "columns": {
         "id": "text", "email": "text", "full_name": "text", "role": "text", "promoter_id": "text",
         "legacy_id": "text", "created_date": "timestamptz", "updated_date": "timestamptz"}}
+    # Stesso schema in JSON per gli script (import dati).
+    open(os.path.join(os.path.dirname(src.rstrip("/")), "schema.json"), "w").write(
+        json.dumps(app_schema, indent=2, sort_keys=True) + "\n")
     app_file = os.path.join(os.path.dirname(src.rstrip("/")), "..", "app", "src", "lib", "schema.generated.ts")
     os.makedirs(os.path.dirname(app_file), exist_ok=True)
     open(app_file, "w").write(

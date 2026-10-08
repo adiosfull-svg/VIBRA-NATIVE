@@ -7,7 +7,7 @@ create table public.ai_suggestion (
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
   "computed_at" timestamptz,
-  "promoter_id" text not null,
+  "promoter_id" text,
   "recommendations" jsonb,
   "summary" text,
   "week_start" date
@@ -23,15 +23,15 @@ create table public.achievement (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "key" text not null,
-  "title" text not null,
+  "key" text,
+  "title" text,
   "description" text,
   "category" text,
   "rarity" text,
   "icon_emoji" text,
   "icon_url" text,
-  "condition_type" text not null,
-  "condition_value" double precision not null,
+  "condition_type" text,
+  "condition_value" double precision,
   "sort_order" double precision default 0,
   "is_active" boolean default true
 );
@@ -46,7 +46,7 @@ create table public.app_settings (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "key" text not null,
+  "key" text,
   "value" text
 );
 create trigger app_settings_touch before update on public.app_settings
@@ -63,14 +63,14 @@ create table public.audit_log (
   "user_id" text,
   "user_email" text,
   "user_name" text,
-  "entity_name" text not null,
-  "record_id" text not null,
+  "entity_name" text,
+  "record_id" text,
   "record_label" text,
-  "operation_type" text not null,
+  "operation_type" text,
   "changed_fields" jsonb,
   "old_value" jsonb,
   "new_value" jsonb,
-  "timestamp" timestamptz not null
+  "timestamp" timestamptz
 );
 create trigger audit_log_touch before update on public.audit_log
   for each row execute function public.touch_updated_date();
@@ -111,12 +111,12 @@ create table public.client (
   "is_leader" boolean default false,
   "last_contacted_at" timestamptz,
   "leader_since" timestamptz,
-  "name" text not null,
+  "name" text,
   "new_people_brought" double precision default 0,
   "notes" text,
   "phone" text,
   "photo_url" text,
-  "promoter_id" text not null,
+  "promoter_id" text,
   "referred_by_client_id" text,
   "residenza_key" text,
   "source_type" text,
@@ -134,8 +134,8 @@ create table public.client_group (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "name" text not null,
+  "promoter_id" text,
+  "name" text,
   "client_ids" jsonb
 );
 create trigger client_group_touch before update on public.client_group
@@ -149,10 +149,10 @@ create table public.contact_reminder (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "client_id" text not null,
+  "promoter_id" text,
+  "client_id" text,
   "client_name" text,
-  "reminder_datetime" timestamptz not null,
+  "reminder_datetime" timestamptz,
   "status" text default 'pending'
 );
 create trigger contact_reminder_touch before update on public.contact_reminder
@@ -166,10 +166,10 @@ create table public.credit_usage_log (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
+  "promoter_id" text,
   "promoter_name" text,
-  "feature" text not null,
-  "credits" double precision default 1 not null,
+  "feature" text,
+  "credits" double precision default 1,
   "detail" text
 );
 create trigger credit_usage_log_touch before update on public.credit_usage_log
@@ -183,10 +183,10 @@ create table public.download_item (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "name" text not null,
-  "file_url" text not null,
+  "name" text,
+  "file_url" text,
   "file_type" text,
-  "section_id" text not null,
+  "section_id" text,
   "section_label" text,
   "section_icon" text,
   "section_color" text,
@@ -203,8 +203,8 @@ create table public.event (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "name" text not null,
-  "date" date not null,
+  "name" text,
+  "date" date,
   "venue" text,
   "physical_location" text,
   "total_revenue" double precision,
@@ -224,7 +224,7 @@ create table public.event_attendance (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "event_id" text not null,
+  "event_id" text,
   "promoter_id" text,
   "client_id" text,
   "present" boolean default true,
@@ -246,8 +246,8 @@ create table public.ignored_instagram_chat (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "conversation_id" text not null,
+  "promoter_id" text,
+  "conversation_id" text,
   "handle" text,
   "username" text,
   "ignored_at" timestamptz
@@ -263,15 +263,15 @@ create table public.instagram_message (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "conversation_id" text not null,
+  "promoter_id" text,
+  "conversation_id" text,
   "sender_ig_id" text,
-  "sender_handle" text not null,
+  "sender_handle" text,
   "sender_username" text,
   "sender_profile_pic_url" text,
-  "message_text" text not null,
+  "message_text" text,
   "message_type" text default 'text',
-  "message_timestamp" timestamptz not null,
+  "message_timestamp" timestamptz,
   "matched_semina_id" text,
   "matched_client_id" text,
   "is_outgoing" boolean default false,
@@ -290,8 +290,8 @@ create table public.instagram_profile_snapshot (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "date" date not null,
+  "promoter_id" text,
+  "date" date,
   "followers" double precision default 0,
   "following" double precision default 0,
   "semine_added" double precision default 0
@@ -308,9 +308,9 @@ create table public.notification (
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
   "recipient_promoter_id" text,
-  "type" text not null,
-  "title" text not null,
-  "message" text not null,
+  "type" text,
+  "title" text,
+  "message" text,
   "icon" text,
   "is_read" boolean default false,
   "related_id" text,
@@ -327,7 +327,7 @@ create table public.programmazione_plan (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
+  "promoter_id" text,
   "plan" jsonb
 );
 create trigger programmazione_plan_touch before update on public.programmazione_plan
@@ -341,7 +341,7 @@ create table public.promoter (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "name" text not null,
+  "name" text,
   "phone" text,
   "instagram" text,
   "instagram_followers" double precision,
@@ -401,10 +401,10 @@ create table public.promoter_achievement (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "achievement_id" text not null,
+  "promoter_id" text,
+  "achievement_id" text,
   "achievement_key" text,
-  "unlocked_at" timestamptz not null
+  "unlocked_at" timestamptz
 );
 create trigger promoter_achievement_touch before update on public.promoter_achievement
   for each row execute function public.touch_updated_date();
@@ -417,9 +417,9 @@ create table public.promoter_ig_token (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "ig_access_token" text not null,
-  "ig_user_id" text not null,
+  "promoter_id" text,
+  "ig_access_token" text,
+  "ig_user_id" text,
   "ig_connected_at" timestamptz
 );
 create trigger promoter_ig_token_touch before update on public.promoter_ig_token
@@ -433,8 +433,8 @@ create table public.promoter_monthly_stats (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "month" text not null,
+  "promoter_id" text,
+  "month" text,
   "revenue" double precision default 0,
   "tables" double precision default 0
 );
@@ -449,7 +449,7 @@ create table public.promoter_note (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
+  "promoter_id" text,
   "title" text,
   "content" text,
   "color" text default '#1e1e2e',
@@ -467,8 +467,8 @@ create table public.promoter_rank (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
-  "rank_key" text not null
+  "promoter_id" text,
+  "rank_key" text
 );
 create trigger promoter_rank_touch before update on public.promoter_rank
   for each row execute function public.touch_updated_date();
@@ -483,9 +483,9 @@ create table public.push_subscription (
   created_by text default public.app_email(),
   "promoter_id" text,
   "user_id" text,
-  "endpoint" text not null,
-  "p256dh" text not null,
-  "auth" text not null,
+  "endpoint" text,
+  "p256dh" text,
+  "auth" text,
   "user_agent" text
 );
 create trigger push_subscription_touch before update on public.push_subscription
@@ -499,7 +499,7 @@ create table public.recompute_lock (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "key" text not null,
+  "key" text,
   "token" text
 );
 create trigger recompute_lock_touch before update on public.recompute_lock
@@ -513,9 +513,9 @@ create table public.season_divider (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "label" text not null,
+  "label" text,
   "color" text,
-  "eventId" text not null
+  "eventId" text
 );
 create trigger season_divider_touch before update on public.season_divider
   for each row execute function public.touch_updated_date();
@@ -528,8 +528,8 @@ create table public.semina (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "name" text not null,
-  "promoter_id" text not null,
+  "name" text,
+  "promoter_id" text,
   "platform" text default 'instagram',
   "instagram" text,
   "instagram_profile_url" text,
@@ -559,8 +559,8 @@ create table public.serata_fittizia (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "name" text not null,
-  "date" date not null
+  "name" text,
+  "date" date
 );
 create trigger serata_fittizia_touch before update on public.serata_fittizia
   for each row execute function public.touch_updated_date();
@@ -573,7 +573,7 @@ create table public.venue (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "name" text not null,
+  "name" text,
   "day_of_week" double precision,
   "season_label" text,
   "color_hex" text default '#a78bfa',
@@ -595,7 +595,7 @@ create table public.vibra_challenge (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "title" text not null,
+  "title" text,
   "description" text,
   "prize" text,
   "participant_ids" jsonb,
@@ -616,7 +616,7 @@ create table public.weekly_suggestion (
   updated_date timestamptz not null default now(),
   created_by_id text default auth.uid()::text,
   created_by text default public.app_email(),
-  "promoter_id" text not null,
+  "promoter_id" text,
   "week_start" date,
   "suggestions" jsonb,
   "computed_at" timestamptz
