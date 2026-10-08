@@ -17,24 +17,12 @@ run_pg "'$PGBIN/pg_ctl' -D '$DIR/data' -o '-p $PORT -k $DIR -c listen_addresses=
 
 PSQL=(psql -h "$DIR" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q)
 
-"${PSQL[@]}" <<'SQL'
-create role anon nologin;
-create role authenticated nologin;
-create role service_role nologin bypassrls;
-create schema auth;
-create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}');
-create function auth.uid() returns uuid language sql stable as
-  $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-create publication supabase_realtime;
-grant usage on schema public, auth to authenticated, anon;
-grant execute on all functions in schema auth to authenticated;
-SQL
+"${PSQL[@]}" -f scripts/local/stub.sql
 
 for f in supabase/migrations/*.sql; do
   echo "applico $f"
   "${PSQL[@]}" -f "$f"
 done
-"${PSQL[@]}" -c "grant select, insert, update, delete on all tables in schema public to authenticated;"
 
 echo "test RLS"
 "${PSQL[@]}" -f scripts/test_rls.sql
