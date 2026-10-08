@@ -1,0 +1,83 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID dell'utente che ha effettuato l'operazione"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email dell'utente che ha effettuato l'operazione"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome completo dell'utente"
+    },
+    "entity_name": {
+      "type": "string",
+      "description": "Nome dell'entit\u00e0 modificata (es. Client, EventAttendance)"
+    },
+    "record_id": {
+      "type": "string",
+      "description": "ID del record modificato"
+    },
+    "record_label": {
+      "type": "string",
+      "description": "Label leggibile del record (es. nome del cliente)"
+    },
+    "operation_type": {
+      "type": "string",
+      "enum": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "description": "Tipo di operazione"
+    },
+    "changed_fields": {
+      "type": "array",
+      "description": "Lista dei campi modificati (solo per update)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "old_value": {
+      "type": "object",
+      "description": "Valori del record prima della modifica"
+    },
+    "new_value": {
+      "type": "object",
+      "description": "Valori del record dopo la modifica"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Orario esatto dell'operazione (ISO 8601)"
+    }
+  },
+  "required": [
+    "entity_name",
+    "record_id",
+    "operation_type",
+    "timestamp"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "SeasonDivider",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Etichetta del separatore (es. 'Fine stagione estiva')"
+    },
+    "color": {
+      "type": "string",
+      "description": "Colore hex del separatore (es. '#ef4444')"
+    },
+    "eventId": {
+      "type": "string",
+      "description": "ID dell'evento a cui \u00e8 associato il separatore"
+    }
+  },
+  "required": [
+    "label",
+    "eventId"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "name": "AISuggestion",
+  "properties": {
+    "computed_at": {
+      "description": "Data/ora dell'ultimo calcolo AI",
+      "format": "date-time",
+      "type": "string"
+    },
+    "promoter_id": {
+      "description": "ID del promoter proprietario dell'analisi AI (un record per promoter)",
+      "type": "string"
+    },
+    "recommendations": {
+      "description": "Lista delle raccomandazioni AI per ogni cliente, ordinata per priorit\u00e0 crescente poi rating decrescente",
+      "items": {
+        "properties": {
+          "approccio": {
+            "description": "Come contattarlo (suggerimento)",
+            "type": "string"
+          },
+          "categoria": {
+            "enum": [
+              "nuovo",
+              "leader",
+              "inattivo",
+              "da_recuperare",
+              "top",
+              "da_ricontattare",
+              "stabile"
+            ],
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "descrizione": {
+            "description": "Profilo/storia del cliente (1-2 frasi)",
+            "type": "string"
+          },
+          "g_d": {
+            "description": "Presenze cumulative di domenica",
+            "type": "number"
+          },
+          "g_e": {
+            "description": "Presenze cumulative in eventi extra/festivi",
+            "type": "number"
+          },
+          "g_s": {
+            "description": "Presenze cumulative di sabato",
+            "type": "number"
+          },
+          "g_v": {
+            "description": "Presenze cumulative di venerd\u00ec",
+            "type": "number"
+          },
+          "instagram": {
+            "type": "string"
+          },
+          "is_leader": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "perche_ora": {
+            "description": "Perch\u00e9 invitarlo ora (1 frase)",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "presenze_totali": {
+            "type": "number"
+          },
+          "presenze_ultimo_mese": {
+            "type": "number"
+          },
+          "priorita": {
+            "description": "1 (massima) - 5 (minima)",
+            "type": "number"
+          },
+          "rating": {
+            "description": "Rating cumulativo 0-10",
+            "type": "number"
+          },
+          "stato": {
+            "description": "Status del pagante al momento del calcolo (es. 'fidanzato'); vuoto = attivo",
+            "type": "string"
+          },
+          "trend": {
+            "enum": [
+              "up",
+              "down",
+              "stable"
+            ],
+            "type": "string"
+          },
+          "zona": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "summary": {
+      "description": "Sintesi AI dello stato generale del parco clienti del promoter",
+      "type": "string"
+    },
+    "week_start": {
+      "description": "Luned\u00ec di inizio settimana a cui si riferisce l'analisi",
+      "format": "date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "promoter_id"
+  ],
+  "type": "object",
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

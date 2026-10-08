@@ -1,0 +1,79 @@
+{
+  "name": "SerataFittizia",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome della serata fittizia (es. Capodanno, Halloween)"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data della serata fittizia"
+    }
+  },
+  "required": [
+    "name",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "name": "InstagramProfileSnapshot",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario dello snapshot"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data dello snapshot (YYYY-MM-DD, timezone Europe/Rome). Un record per promoter per giorno."
+    },
+    "followers": {
+      "type": "number",
+      "description": "Numero di follower Instagram al momento dello snapshot",
+      "default": 0
+    },
+    "following": {
+      "type": "number",
+      "description": "Numero di seguiti Instagram al momento dello snapshot",
+      "default": 0
+    },
+    "semine_added": {
+      "type": "number",
+      "description": "Numero di semine create dal promoter in quella giornata",
+      "default": 0
+    }
+  },
+  "required": [
+    "promoter_id",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

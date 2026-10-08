@@ -1,0 +1,71 @@
+{
+  "name": "Event",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome della serata"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data della serata"
+    },
+    "venue": {
+      "type": "string",
+      "description": "Nome della discoteca/locale (brand/format)"
+    },
+    "physical_location": {
+      "type": "string",
+      "description": "Location fisica dove si \u00e8 svolta la serata (se diversa dal locale principale)"
+    },
+    "total_revenue": {
+      "type": "number",
+      "description": "Fatturato totale della serata"
+    },
+    "total_guests": {
+      "type": "number",
+      "description": "Totale ospiti della serata"
+    },
+    "table_threshold": {
+      "type": "number",
+      "description": "Soglia euro per chiusura tavolo (solo per eventi festivi/extra). Default: 300 per Ven/Dom, 360 per Sab"
+    },
+    "is_extra": {
+      "type": "boolean",
+      "description": "Indica se la serata rientra nella categoria Extra",
+      "default": false
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note sulla serata"
+    }
+  },
+  "required": [
+    "name",
+    "date"
+  ],
+  "rls": {
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

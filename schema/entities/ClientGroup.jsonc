@@ -1,0 +1,123 @@
+{
+  "name": "ClientGroup",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario del gruppo"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome del gruppo (es. 'Amici Posillipo')"
+    },
+    "client_ids": {
+      "type": "array",
+      "description": "Lista degli ID dei clienti nel gruppo",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "promoter_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    }
+  }
+}

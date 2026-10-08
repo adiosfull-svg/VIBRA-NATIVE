@@ -1,0 +1,78 @@
+{
+  "name": "VibraChallenge",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Titolo della sfida (es. 'Chi porta pi\u00f9 tavoli questo sabato?')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione/regole della sfida"
+    },
+    "prize": {
+      "type": "string",
+      "description": "Cosa c'\u00e8 in palio per il vincitore"
+    },
+    "participant_ids": {
+      "type": "array",
+      "description": "ID dei promoter sfidanti. Vuoto = aperta a tutti i promoter",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metric_type": {
+      "type": "string",
+      "enum": [
+        "fatturato",
+        "tavoli",
+        "manuale"
+      ],
+      "description": "Come viene calcolato automaticamente il vincitore: 'fatturato' e 'tavoli' si aggiornano da soli dalle serate nel periodo della sfida, 'manuale' usa i punteggi inseriti a mano dall'admin",
+      "default": "fatturato"
+    },
+    "manual_scores": {
+      "type": "object",
+      "description": "Punteggi inseriti manualmente per promoter (usato solo se metric_type = 'manuale'). Chiave: promoter_id, valore: punteggio",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data inizio sfida"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data fine sfida"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Se la sfida \u00e8 attualmente in bacheca",
+      "default": true
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

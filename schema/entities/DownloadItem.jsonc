@@ -1,0 +1,66 @@
+{
+  "name": "DownloadItem",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome del file/materiale"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL pubblico del file caricato"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "img",
+        "file"
+      ],
+      "description": "Tipo: img o file (pdf/altro)"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "ID della sezione (es. vibra-loghi, loghi-locali, sfondi, materiali, o custom)"
+    },
+    "section_label": {
+      "type": "string",
+      "description": "Label della sezione (usato per sezioni custom)"
+    },
+    "section_icon": {
+      "type": "string",
+      "description": "Emoji icona della sezione custom"
+    },
+    "section_color": {
+      "type": "string",
+      "description": "Colore hex della sezione custom"
+    },
+    "bg_class": {
+      "type": "string",
+      "description": "Classe bg tailwind per la preview",
+      "default": "bg-gray-900"
+    }
+  },
+  "required": [
+    "name",
+    "file_url",
+    "section_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

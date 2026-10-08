@@ -1,0 +1,151 @@
+{
+  "name": "EventAttendance",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "ID della serata"
+    },
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID del cliente (opzionale, solo per presenze clienti)"
+    },
+    "present": {
+      "type": "boolean",
+      "description": "Presenza del promoter (S\u00ec/No)",
+      "default": true
+    },
+    "revenue": {
+      "type": "number",
+      "description": "Fatturato generato in questa serata"
+    },
+    "table_number": {
+      "type": "string",
+      "description": "Numero tavolo"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note"
+    },
+    "new_people_brought": {
+      "type": "number",
+      "description": "Numero di persone nuove portate dal cliente in questa serata",
+      "default": 0
+    },
+    "guadagno_pct": {
+      "type": "number",
+      "description": "Percentuale guadagno per questa serata",
+      "default": 0
+    },
+    "guadagno_fuori_mano": {
+      "type": "number",
+      "description": "Guadagno fuori mano in euro per questa serata",
+      "default": 0
+    }
+  },
+  "required": [
+    "event_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    }
+  }
+}

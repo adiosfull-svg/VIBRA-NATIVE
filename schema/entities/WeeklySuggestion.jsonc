@@ -1,0 +1,99 @@
+{
+  "name": "WeeklySuggestion",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario del suggerimento (un record per promoter)"
+    },
+    "week_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Luned\u00ec di inizio settimana a cui si riferiscono i suggerimenti"
+    },
+    "suggestions": {
+      "type": "array",
+      "description": "Lista dei clienti suggeriti per il weekend, ordinata per score decrescente",
+      "items": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "initials": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "rating": {
+            "type": "number",
+            "description": "Rating cumulativo del cliente (0-10)"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "recency",
+              "top",
+              "recontact",
+              "recovery",
+              "new"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "instagram": {
+            "type": "string"
+          },
+          "is_leader": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "computed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora dell'ultimo calcolo dei suggerimenti"
+    }
+  },
+  "required": [
+    "promoter_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

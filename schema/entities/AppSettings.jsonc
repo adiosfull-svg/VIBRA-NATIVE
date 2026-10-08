@@ -1,0 +1,35 @@
+{
+  "name": "AppSettings",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Chiave univoca dell'impostazione (es. 'org_logo', 'venue_logo_Frontemare')"
+    },
+    "value": {
+      "type": "string",
+      "description": "Valore dell'impostazione (URL immagine o stringa)"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

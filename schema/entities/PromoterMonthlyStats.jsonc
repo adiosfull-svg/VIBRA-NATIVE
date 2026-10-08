@@ -1,0 +1,46 @@
+{
+  "name": "PromoterMonthlyStats",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter"
+    },
+    "month": {
+      "type": "string",
+      "description": "Mese in formato YYYY-MM"
+    },
+    "revenue": {
+      "type": "number",
+      "description": "Fatturato del promoter in quel mese",
+      "default": 0
+    },
+    "tables": {
+      "type": "number",
+      "description": "Tavoli del promoter in quel mese",
+      "default": 0
+    }
+  },
+  "required": [
+    "promoter_id",
+    "month"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

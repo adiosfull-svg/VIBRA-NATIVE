@@ -1,0 +1,50 @@
+{
+  "name": "PromoterIGToken",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario del token"
+    },
+    "ig_access_token": {
+      "type": "string",
+      "description": "Token di accesso Instagram del promoter (long-lived, per sincronizzazione DM e invio messaggi)"
+    },
+    "ig_user_id": {
+      "type": "string",
+      "description": "ID account Instagram Business del promoter (usato per le chiamate Graph API)"
+    },
+    "ig_connected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora di collegamento dell'account Instagram"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "ig_access_token",
+    "ig_user_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

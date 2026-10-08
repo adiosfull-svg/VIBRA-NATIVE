@@ -1,0 +1,321 @@
+{
+  "name": "Promoter",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome completo del promoter"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Numero di telefono"
+    },
+    "instagram": {
+      "type": "string",
+      "description": "Handle Instagram (senza @)"
+    },
+    "instagram_followers": {
+      "type": "number",
+      "description": "Numero di follower Instagram (aggiornato manualmente)"
+    },
+    "instagram_following": {
+      "type": "number",
+      "description": "Numero di seguiti Instagram (aggiornato manualmente)"
+    },
+    "ig_user_id": {
+      "type": "string",
+      "description": "ID account Instagram Business del promoter (sincronizzato automaticamente, non sensibile)"
+    },
+    "ig_connected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora di collegamento dell'account Instagram"
+    },
+    "ig_profile_pic_url": {
+      "type": "string",
+      "description": "URL foto profilo Instagram (sincronizzato automaticamente dalla Graph API)"
+    },
+    "ig_followers_synced": {
+      "type": "number",
+      "description": "Follower Instagram (sincronizzato automaticamente dalla Graph API)",
+      "default": 0
+    },
+    "ig_following_synced": {
+      "type": "number",
+      "description": "Seguiti Instagram (sincronizzato automaticamente dalla Graph API)",
+      "default": 0
+    },
+    "ig_username_synced": {
+      "type": "string",
+      "description": "Username Instagram (sincronizzato automaticamente)"
+    },
+    "ig_name_synced": {
+      "type": "string",
+      "description": "Nome display Instagram (sincronizzato automaticamente)"
+    },
+    "ig_profile_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora dell'ultima sincronizzazione del profilo Instagram"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Foto profilo"
+    },
+    "photo_zoom": {
+      "type": "number",
+      "description": "Zoom della foto profilo (1 = originale)",
+      "default": 1
+    },
+    "photo_offset_x": {
+      "type": "number",
+      "description": "Offset orizzontale del ritaglio foto (px)",
+      "default": 0
+    },
+    "photo_offset_y": {
+      "type": "number",
+      "description": "Offset verticale del ritaglio foto (px)",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "attivo",
+        "inattivo"
+      ],
+      "default": "attivo",
+      "description": "Stato del promoter"
+    },
+    "show_in_stats": {
+      "type": "boolean",
+      "description": "Se true, le statistiche del promoter restano visibili nei grafici storici aziendali anche quando \u00e8 inattivo. Se false, viene nascosto da tutti i grafici storici.",
+      "default": true
+    },
+    "ruolo": {
+      "type": "string",
+      "enum": [
+        "fondatore",
+        "super4",
+        "capogruppo",
+        "pr",
+        "ragazza_immagine"
+      ],
+      "description": "Ruolo del promoter nel team"
+    },
+    "referente_id": {
+      "type": "string",
+      "description": "ID del promoter di riferimento (a chi fa capo questo promoter)"
+    },
+    "neighborhood": {
+      "type": "string",
+      "description": "Quartiere o zona di provenienza (es. Posillipo, Bagnoli, Scampia...)"
+    },
+    "city": {
+      "type": "string",
+      "description": "Comune/citt\u00e0 di provenienza (es. Napoli, Pozzuoli, Caserta...)"
+    },
+    "province_area": {
+      "type": "string",
+      "description": "Area della provincia (es. Napoli Nord, Napoli Sud, Casertano, Salernitano...)"
+    },
+    "address": {
+      "type": "string",
+      "description": "Indirizzo preciso (es. Via Roma 10, Napoli) \u2014 usato per posizionare il marker sulla mappa"
+    },
+    "lat": {
+      "type": "number",
+      "description": "Latitudine geocodificata dall'indirizzo"
+    },
+    "lng": {
+      "type": "number",
+      "description": "Longitudine geocodificata dall'indirizzo"
+    },
+    "promoter_from": {
+      "type": "string",
+      "format": "date",
+      "description": "Data di inizio come promoter"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note aggiuntive"
+    },
+    "goals": {
+      "type": "array",
+      "description": "Obiettivi personalizzati del promoter: fatturato, tavoli, nuovi clienti social, achievement o rango da raggiungere",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fatturato",
+              "tavoli",
+              "clienti_instagram",
+              "clienti_tiktok",
+              "achievement",
+              "rank"
+            ]
+          },
+          "target": {
+            "type": "number"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "label": {
+            "type": "string"
+          },
+          "giorni": {
+            "type": "string"
+          },
+          "achievement_id": {
+            "type": "string"
+          },
+          "rank_key": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "accordi_per_locale": {
+      "type": "object",
+      "description": "Percentuali di accordo per ogni locale (chiave: venue, valore: percentuale)",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "cum_total_revenue": {
+      "type": "number",
+      "description": "Fatturato totale cumulativo del promoter (aggiornato automaticamente in background, non ricalcolare a mano)",
+      "default": 0
+    },
+    "cum_total_tables": {
+      "type": "number",
+      "description": "Tavoli totali cumulativi del promoter (aggiornato automaticamente in background)",
+      "default": 0
+    },
+    "cum_week_revenue": {
+      "type": "number",
+      "description": "Fatturato dell'ultima settimana completa (aggiornato automaticamente in background)",
+      "default": 0
+    },
+    "cum_week_tables": {
+      "type": "number",
+      "description": "Tavoli dell'ultima settimana completa (aggiornato automaticamente in background)",
+      "default": 0
+    },
+    "cum_month_revenue": {
+      "type": "number",
+      "description": "Miglior fatturato mensile (snapshot pre-calcolato in background per Dashboard/Vibra VS)",
+      "default": 0
+    },
+    "cum_total_earnings": {
+      "type": "number",
+      "description": "Guadagni totali cumulativi (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_total_clients": {
+      "type": "number",
+      "description": "Numero totale clienti del promoter (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_total_presences": {
+      "type": "number",
+      "description": "Numero totale presenze del promoter (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_vibra_vs_weekly_wins": {
+      "type": "number",
+      "description": "Vittorie settimanali Vibra VS (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_vibra_vs_weekly_streak": {
+      "type": "number",
+      "description": "Record storico: striscia massima di vittorie settimanali Vibra VS consecutive (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_vibra_vs_current_streak": {
+      "type": "number",
+      "description": "Striscia attuale (in corso) di vittorie settimanali Vibra VS consecutive (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_vibra_vs_monthly_win": {
+      "type": "number",
+      "description": "Vittorie mensili Vibra VS (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_ach_total": {
+      "type": "number",
+      "description": "Totale achievement attivi (snapshot pre-calcolato in background per la Bacheca Riconoscimenti)",
+      "default": 0
+    },
+    "cum_ach_unlocked": {
+      "type": "number",
+      "description": "Numero di achievement sbloccati dal promoter (snapshot pre-calcolato in background)",
+      "default": 0
+    },
+    "cum_ach_by_rarity": {
+      "type": "object",
+      "description": "Riepilogo bacheca per rarit\u00e0: { [rarity]: { total, unlocked } }. Pre-calcolato in background per caricamento istantaneo.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "unlocked": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "cum_geo_zone_counts": {
+      "type": "object",
+      "description": "Conteggio clienti per zona di residenza: { [residenza_key]: count }. Pre-calcolato in background per la mappa geografica.",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "cum_stats_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora dell'ultimo ricalcolo delle statistiche cumulative"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "id": "{{user.data.promoter_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

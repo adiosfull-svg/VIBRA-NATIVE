@@ -1,0 +1,42 @@
+{
+  "name": "PromoterAchievement",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter"
+    },
+    "achievement_id": {
+      "type": "string",
+      "description": "ID dell'achievement sbloccato"
+    },
+    "achievement_key": {
+      "type": "string",
+      "description": "Chiave achievement (ridondante per lookup veloce)"
+    },
+    "unlocked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e ora dello sblocco"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "achievement_id",
+    "unlocked_at"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

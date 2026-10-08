@@ -1,0 +1,202 @@
+{
+  "name": "Semina",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome o nickname del contatto seminato (non ancora cliente)"
+    },
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario della semina"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "instagram",
+        "tiktok"
+      ],
+      "default": "instagram",
+      "description": "Piattaforma da cui proviene il contatto seminato"
+    },
+    "instagram": {
+      "type": "string",
+      "description": "Handle Instagram (senza @)"
+    },
+    "instagram_profile_url": {
+      "type": "string",
+      "description": "URL del profilo/chat Instagram"
+    },
+    "tiktok": {
+      "type": "string",
+      "description": "Handle TikTok (senza @)"
+    },
+    "tiktok_profile_url": {
+      "type": "string",
+      "description": "URL del profilo TikTok"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Numero di telefono / WhatsApp del contatto seminato"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "URL della foto di profilo (incollata dagli appunti o caricata manualmente)"
+    },
+    "eta": {
+      "type": "number",
+      "description": "Et\u00e0 del contatto seminato"
+    },
+    "provenienza": {
+      "type": "string",
+      "description": "Provenienza (citt\u00e0/quartiere) del contatto seminato"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note aggiuntive sulla semina"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "nuovo",
+        "contattato",
+        "interessato",
+        "convertito"
+      ],
+      "default": "nuovo",
+      "description": "Stato di avanzamento della semina: nuovo = appena aggiunto, contattato = primo contatto fatto, interessato = ha mostrato interesse, convertito = diventato cliente"
+    },
+    "recettivita": {
+      "type": "number",
+      "description": "Livello di recettivit\u00e0 della semina (1=da coltivare, 2=ottima empatia, 3=super recettiva/prossima per venire)",
+      "default": 1
+    },
+    "is_off": {
+      "type": "boolean",
+      "description": "Se true, la semina \u00e8 spenta/persa: viene grigia e nascosta dal tab Inviti fino al riattivamento",
+      "default": false
+    },
+    "last_contacted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e ora dell'ultimo contatto con la semina"
+    },
+    "display_order": {
+      "type": "number",
+      "description": "Ordine di visualizzazione manuale (drag & drop). Valore pi\u00f9 basso = viene prima.",
+      "default": 0
+    },
+    "ai_data": {
+      "type": "object",
+      "description": "Dati estratti automaticamente dai DM Instagram dall'AI (et\u00e0, zona, locali, promoter, inviti, sintesi)",
+      "additionalProperties": true
+    },
+    "ai_extracted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora dell'ultima estrazione AI dai messaggi Instagram"
+    }
+  },
+  "required": [
+    "name",
+    "promoter_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "name": "PushSubscription",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario della subscription"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID utente Base44"
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "URL endpoint del browser push service"
+    },
+    "p256dh": {
+      "type": "string",
+      "description": "Chiave pubblica P-256 del client"
+    },
+    "auth": {
+      "type": "string",
+      "description": "Auth secret del client"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User agent del browser/dispositivo"
+    }
+  },
+  "required": [
+    "endpoint",
+    "p256dh",
+    "auth"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        }
+      ]
+    }
+  }
+}

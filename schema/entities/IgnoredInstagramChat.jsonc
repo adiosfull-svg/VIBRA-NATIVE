@@ -1,0 +1,72 @@
+{
+  "name": "IgnoredInstagramChat",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario"
+    },
+    "conversation_id": {
+      "type": "string",
+      "description": "ID conversazione Instagram Graph API"
+    },
+    "handle": {
+      "type": "string",
+      "description": "Handle Instagram del contatto ignorato (senza @)"
+    },
+    "username": {
+      "type": "string",
+      "description": "Nome display del contatto ignorato"
+    },
+    "ignored_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora in cui la chat e stata ignorata"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "conversation_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "read": {
+      "data.promoter_id": "{{user.data.promoter_id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    }
+  }
+}

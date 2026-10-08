@@ -1,0 +1,28 @@
+{
+  "name": "PromoterRank",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter (uno per promoter)"
+    },
+    "rank_key": {
+      "type": "string",
+      "description": "Chiave del rank attuale (es. 'bronzo_1', 'argento_2')"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "rank_key"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

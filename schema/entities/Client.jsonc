@@ -1,0 +1,320 @@
+{
+  "name": "Client",
+  "properties": {
+    "cum_attendance_rate": {
+      "default": 0,
+      "description": "Tasso di presenza % rispetto alle serate disponibili dalla prima presenza (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_avg_spent": {
+      "default": 0,
+      "description": "Spesa media per serata (aggiornato automaticamente in background)",
+      "type": "number"
+    },
+    "cum_badges": {
+      "description": "Badge classifica pre-calcolati (es. \ud83c\udfc5, \ud83d\udcb0) basati sul ranking tra i clienti del promoter. Aggiornato in background.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "cum_ciclo_medio": {
+      "default": 0,
+      "description": "Durata media (in presenze) dei cicli di frequenza continua (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_extra": {
+      "default": 0,
+      "description": "Presenze in eventi extra/festivi (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_first_attendance_date": {
+      "description": "Data della prima presenza registrata (aggiornato automaticamente in background)",
+      "format": "date",
+      "type": "string"
+    },
+    "cum_fri": {
+      "default": 0,
+      "description": "Presenze di venerd\u00ec (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_last_attendance_date": {
+      "description": "Data dell'ultima presenza registrata (aggiornato automaticamente in background)",
+      "format": "date",
+      "type": "string"
+    },
+    "cum_last_event_venue": {
+      "description": "Locale dell'ultima presenza del cliente (pre-calcolato in background per il popup Da Ricontattare)",
+      "type": "string"
+    },
+    "cum_last_revenue": {
+      "default": 0,
+      "description": "Fatturato dell'ultima presenza del cliente (pre-calcolato in background per il popup Da Ricontattare)",
+      "type": "number"
+    },
+    "cum_month_trend": {
+      "default": 0,
+      "description": "Variazione % presenze ultimi 30 giorni vs 30 giorni precedenti (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_rating": {
+      "default": 0,
+      "description": "Punteggio ranking 1-10 pre-calcolato (aggiornato automaticamente in background, non ricalcolare a mano)",
+      "type": "number"
+    },
+    "cum_sat": {
+      "default": 0,
+      "description": "Presenze di sabato (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_stats_updated_at": {
+      "description": "Data/ora dell'ultimo ricalcolo delle statistiche cumulative",
+      "format": "date-time",
+      "type": "string"
+    },
+    "cum_sun": {
+      "default": 0,
+      "description": "Presenze di domenica (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_total_spent": {
+      "default": 0,
+      "description": "Spesa totale cumulativa del cliente (aggiornato automaticamente in background)",
+      "type": "number"
+    },
+    "cum_trend_pct": {
+      "default": 0,
+      "description": "Variazione % del trend presenze (pre-calcolato in background)",
+      "type": "number"
+    },
+    "cum_trend_status": {
+      "description": "Stato del trend presenze: up/down/stable (pre-calcolato in background)",
+      "enum": [
+        "up",
+        "down",
+        "stable"
+      ],
+      "type": "string"
+    },
+    "cum_venue_counts": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Conteggio presenze per locale: { [venue]: count }. Pre-calcolato in background per Analitica Clienti.",
+      "type": "object"
+    },
+    "cum_visits": {
+      "default": 0,
+      "description": "Numero di presenze cumulative del cliente (aggiornato automaticamente in background)",
+      "type": "number"
+    },
+    "data_nascita": {
+      "description": "Data di nascita del cliente (formato YYYY-MM-DD per data precisa, o YYYY per solo anno). Usata per calcolare l'et\u00e0.",
+      "type": "string"
+    },
+    "instagram": {
+      "description": "Handle Instagram",
+      "type": "string"
+    },
+    "instagram_profile_url": {
+      "description": "URL del profilo/chat Instagram (usato per i lead acquisiti via DM)",
+      "type": "string"
+    },
+    "is_driver": {
+      "default": false,
+      "description": "Se vero, il cliente \u00e8 guidatore (ha la macchina)",
+      "type": "boolean"
+    },
+    "is_lead": {
+      "default": false,
+      "description": "Se vero, \u00e8 un prospect Instagram non ancora acquisito (mai venuto in locale). Flip automatico a false alla prima presenza.",
+      "type": "boolean"
+    },
+    "is_leader": {
+      "default": false,
+      "description": "Se vero, il cliente \u00e8 un leader (mostrata stellina dorata)",
+      "type": "boolean"
+    },
+    "last_contacted_at": {
+      "description": "Data e ora dell'ultimo contatto col cliente (promemoria operativo)",
+      "format": "date-time",
+      "type": "string"
+    },
+    "leader_since": {
+      "description": "Data/ora in cui il cliente \u00e8 diventato leader (per ordinare i leader dal pi\u00f9 recente al pi\u00f9 vecchio nel tab Leader del Weekend)",
+      "format": "date-time",
+      "type": "string"
+    },
+    "name": {
+      "description": "Nome completo del cliente",
+      "type": "string"
+    },
+    "new_people_brought": {
+      "default": 0,
+      "description": "Numero cumulativo di persone nuove portate dal cliente",
+      "type": "number"
+    },
+    "notes": {
+      "description": "Note aggiuntive",
+      "type": "string"
+    },
+    "phone": {
+      "description": "Numero di telefono",
+      "type": "string"
+    },
+    "photo_url": {
+      "description": "URL della foto profilo del cliente (incollata dagli appunti o caricata manualmente)",
+      "type": "string"
+    },
+    "promoter_id": {
+      "description": "ID del promoter a cui appartiene il cliente",
+      "type": "string"
+    },
+    "referred_by_client_id": {
+      "description": "ID del cliente che ha presentato questo cliente (solo se source_type = referred)",
+      "type": "string"
+    },
+    "residenza_key": {
+      "description": "Chiave della zona di residenza (es. NA_VOMERO, CE_CASERTA) per la mappa geografica",
+      "type": "string"
+    },
+    "source_type": {
+      "description": "Canale da cui \u00e8 stato conosciuto il cliente",
+      "enum": [
+        "instagram",
+        "tiktok",
+        "direct",
+        "referred",
+        "paganti_acquisiti"
+      ],
+      "type": "string"
+    },
+    "stato_pagante": {
+      "description": "Status del pagante usato dall'Analisi Intelligente. Vuoto o 'attivo' = pagante attivo (default). contatti_persi = non ci si sente pi\u00f9; fidanzato = attualmente fidanzato, verr\u00e0 sicuramente di meno (il suo gruppo potrebbe aver perso un leader); diventato_pr = pagante forte diventato PR, i suoi storici sono commemorativi; altro_pr = non entra pi\u00f9 con me, preferisce altri PR/gruppi.",
+      "enum": [
+        "attivo",
+        "contatti_persi",
+        "fidanzato",
+        "diventato_pr",
+        "altro_pr"
+      ],
+      "type": "string"
+    },
+    "tipologia_cliente": {
+      "description": "Tipologie caratteriali del cliente (selezione multipla): isolato = in cerca di amicizie, casinista = anima della serata, aggregatore = viene sempre in compagnia, normale = segue gli amici in serata",
+      "items": {
+        "enum": [
+          "isolato",
+          "casinista",
+          "aggregatore",
+          "normale"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "promoter_id"
+  ],
+  "type": "object",
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    }
+  }
+}

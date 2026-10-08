@@ -1,0 +1,57 @@
+{
+  "name": "CreditUsageLog",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter che ha generato il consumo"
+    },
+    "promoter_name": {
+      "type": "string",
+      "description": "Nome del promoter (cache per display rapido senza join)"
+    },
+    "feature": {
+      "type": "string",
+      "enum": [
+        "sync_ig_ai",
+        "ai_suggestions",
+        "ai_summary",
+        "vibra_gpt",
+        "vibra_gpt_title"
+      ],
+      "description": "Funzione che ha consumato il credito: sync_ig_ai = AI estrazione DM Instagram, ai_suggestions = Analisi Intelligente clienti, ai_summary = sintesi AI, vibra_gpt = VibraGPT/Consulente Strategico, vibra_gpt_title = generazione titolo conversazione"
+    },
+    "credits": {
+      "type": "number",
+      "default": 1,
+      "description": "Crediti stimati consumati (1 per chiamata InvokeLLM)"
+    },
+    "detail": {
+      "type": "string",
+      "description": "Dettaglio aggiuntivo (es. '5 conversazioni analizzate', '60 clienti')"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "feature",
+    "credits"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

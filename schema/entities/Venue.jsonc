@@ -1,0 +1,73 @@
+{
+  "name": "Venue",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome del locale, usato come valore del campo venue delle serate (es. 'Ammare Frontemare')"
+    },
+    "day_of_week": {
+      "type": "number",
+      "description": "Giorno fisso della settimana (0=Domenica...6=Sabato). Lascia vuoto per locali speciali/extra"
+    },
+    "season_label": {
+      "type": "string",
+      "description": "Etichetta stagione/periodo (es. 'Estate', 'Inverno', 'Festivi', '2023')"
+    },
+    "color_hex": {
+      "type": "string",
+      "description": "Colore hex usato nei grafici e nelle card",
+      "default": "#a78bfa"
+    },
+    "default_threshold": {
+      "type": "number",
+      "description": "Soglia di fatturato default (\u20ac) per contare un tavolo",
+      "default": 300
+    },
+    "is_extra": {
+      "type": "boolean",
+      "description": "Se vero, questo locale rappresenta la categoria Extra/Festivi",
+      "default": false
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Se il locale \u00e8 attualmente attivo (Attivi) o concluso (Conclusi)",
+      "default": true
+    },
+    "show_in_prospetto": {
+      "type": "boolean",
+      "description": "Se vero, il locale compare nel prospetto inviti (menu contestuale su clienti/semine). Usalo per passare dai locali estivi a quelli invernali senza disattivarli.",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "description": "Ordine di visualizzazione",
+      "default": 0
+    },
+    "logo_key": {
+      "type": "string",
+      "description": "Chiave alternativa usata per il logo/piantina/formule in Branding (default: uguale al nome)"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

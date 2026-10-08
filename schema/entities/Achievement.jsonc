@@ -1,0 +1,118 @@
+{
+  "name": "Achievement",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Chiave univoca dell'achievement (es. 'first_client')"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titolo dell'achievement"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione dell'obiettivo"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "clienti",
+        "fatturato",
+        "guadagni",
+        "presenze",
+        "leadership",
+        "speciale"
+      ],
+      "description": "Categoria"
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "bronzo",
+        "argento",
+        "oro",
+        "platino",
+        "master",
+        "leggenda"
+      ],
+      "description": "Rarit\u00e0 / livello"
+    },
+    "icon_emoji": {
+      "type": "string",
+      "description": "Emoji usata come icona principale"
+    },
+    "icon_url": {
+      "type": "string",
+      "description": "URL immagine/badge personalizzato (opzionale)"
+    },
+    "condition_type": {
+      "type": "string",
+      "enum": [
+        "total_clients",
+        "total_revenue",
+        "total_presences",
+        "total_tables",
+        "leaders_count",
+        "referrals_count",
+        "clients_with_instagram",
+        "clients_from_instagram",
+        "clients_from_tiktok",
+        "monthly_revenue",
+        "consecutive_presences",
+        "single_event_revenue",
+        "multi_zone_clients",
+        "monthly_tables",
+        "single_event_tables",
+        "team_size",
+        "vibra_vs_weekly_wins",
+        "vibra_vs_weekly_streak",
+        "vibra_vs_monthly_win",
+        "consecutive_event_tables",
+        "max_referral_chain_depth",
+        "total_earnings",
+        "monthly_earnings",
+        "consecutive_weekend_revenue"
+      ],
+      "description": "Tipo di condizione da verificare"
+    },
+    "condition_value": {
+      "type": "number",
+      "description": "Valore soglia da raggiungere"
+    },
+    "sort_order": {
+      "type": "number",
+      "description": "Ordine di visualizzazione",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Se abilitato o no",
+      "default": true
+    }
+  },
+  "required": [
+    "key",
+    "title",
+    "condition_type",
+    "condition_value"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

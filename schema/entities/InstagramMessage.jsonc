@@ -1,0 +1,114 @@
+{
+  "name": "InstagramMessage",
+  "type": "object",
+  "properties": {
+    "promoter_id": {
+      "type": "string",
+      "description": "ID del promoter proprietario della conversazione (i DM sono privati per promoter)"
+    },
+    "conversation_id": {
+      "type": "string",
+      "description": "ID conversazione Instagram Graph API"
+    },
+    "sender_ig_id": {
+      "type": "string",
+      "description": "ID Instagram del mittente"
+    },
+    "sender_handle": {
+      "type": "string",
+      "description": "Handle Instagram del mittente (senza @)"
+    },
+    "sender_username": {
+      "type": "string",
+      "description": "Nome display del mittente"
+    },
+    "sender_profile_pic_url": {
+      "type": "string",
+      "description": "URL foto profilo Instagram del mittente"
+    },
+    "message_text": {
+      "type": "string",
+      "description": "Testo del messaggio DM"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "voice",
+        "image",
+        "video",
+        "media",
+        "unknown"
+      ],
+      "default": "text",
+      "description": "Tipo di messaggio: text, voice (messaggio vocale), image, video, media o unknown"
+    },
+    "message_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp del messaggio (da Instagram Graph API)"
+    },
+    "matched_semina_id": {
+      "type": "string",
+      "description": "ID della semina abbinata (se instagram == sender_handle tra le semine del promoter)"
+    },
+    "matched_client_id": {
+      "type": "string",
+      "description": "ID del cliente abbinato (se instagram == sender_handle tra i clienti del promoter)"
+    },
+    "is_outgoing": {
+      "type": "boolean",
+      "description": "Se true, il messaggio e stato inviato dal promoter (risposta), non ricevuto",
+      "default": false
+    },
+    "is_read": {
+      "type": "boolean",
+      "description": "Se la conversazione e stata letta dal promoter",
+      "default": false
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "description": "Se la conversazione e fissata in cima (seguita)",
+      "default": false
+    },
+    "synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/ora di sincronizzazione del messaggio nel database"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "conversation_id",
+    "sender_handle",
+    "message_text",
+    "message_timestamp"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "data.promoter_id": "{{user.data.promoter_id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

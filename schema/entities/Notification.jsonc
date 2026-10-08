@@ -1,0 +1,101 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_promoter_id": {
+      "type": "string",
+      "description": "ID del promoter destinatario. Se null, la notifica \u00e8 broadcast per tutti."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "new_event",
+        "achievement",
+        "vibra_vs",
+        "inactive_client",
+        "new_goal",
+        "system",
+        "birthday"
+      ],
+      "description": "Tipo di notifica"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titolo breve della notifica"
+    },
+    "message": {
+      "type": "string",
+      "description": "Testo della notifica"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji icona"
+    },
+    "is_read": {
+      "type": "boolean",
+      "description": "Se la notifica \u00e8 stata letta",
+      "default": false
+    },
+    "related_id": {
+      "type": "string",
+      "description": "ID della risorsa correlata (event_id, achievement_id, client_id)"
+    },
+    "action_url": {
+      "type": "string",
+      "description": "Percorso di navigazione al click (es. /il-mio-vibra?tab=achievements)"
+    }
+  },
+  "required": [
+    "type",
+    "title",
+    "message"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.recipient_promoter_id": "{{user.data.promoter_id}}"
+        },
+        {
+          "data.recipient_promoter_id": null
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.recipient_promoter_id": "{{user.data.promoter_id}}"
+        },
+        {
+          "data.recipient_promoter_id": null
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.recipient_promoter_id": "{{user.data.promoter_id}}"
+        },
+        {
+          "data.recipient_promoter_id": null
+        }
+      ]
+    }
+  }
+}
