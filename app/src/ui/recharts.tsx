@@ -313,6 +313,20 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
               ? <TickText key={`ct${i}`} x={plot.left - 8} y={pos} dy={4} value={String(value ?? '')} tick={catAxis.tick} anchor="end" />
               : <TickText key={`ct${i}`} x={pos} y={plot.top + plot.height + 16} value={String(value ?? '')} tick={catAxis.tick} />;
           })}
+          {/* lineette dei tick (recharts: tickLine visibile, tickSize 6) */}
+          {valAxis && !valAxis.hide && valAxis.tickLine !== false && ticks.map((t, i) => {
+            const p = valPos(t);
+            return vertical
+              ? <SvgLine key={`vl${i}`} x1={p} x2={p} y1={plot.top + plot.height} y2={plot.top + plot.height + 6} stroke="#666" />
+              : <SvgLine key={`vl${i}`} x1={plot.left - 6} x2={plot.left} y1={p} y2={p} stroke="#666" />;
+          })}
+          {catAxis && !catAxis.hide && catAxis.tickLine !== false && data.map((_, i) => {
+            if (i % tickEvery !== 0 && i !== data.length - 1) return null;
+            const p = catPos(i);
+            return vertical
+              ? <SvgLine key={`cl${i}`} x1={plot.left - 6} x2={plot.left} y1={p} y2={p} stroke="#666" />
+              : <SvgLine key={`cl${i}`} x1={p} x2={p} y1={plot.top + plot.height} y2={plot.top + plot.height + 6} stroke="#666" />;
+          })}
           {(x && !x.hide && x.axisLine !== false) && <SvgLine x1={plot.left} x2={plot.left + plot.width} y1={plot.top + plot.height} y2={plot.top + plot.height} stroke="#666" />}
           {(y && !y.hide && y.axisLine !== false) && <SvgLine x1={plot.left} x2={plot.left} y1={plot.top} y2={plot.top + plot.height} stroke="#666" />}
 
