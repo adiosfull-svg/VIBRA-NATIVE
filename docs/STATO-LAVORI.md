@@ -13,7 +13,9 @@
 1. Codice originale (riferimento, NON nel repo): rileggerlo da Base44 con `read_file` a blocchi di 50 file
    in `/home/user/vibra-reference` (475 file; elenco con `list_directory` ricorsivo, max_depth 10).
 2. Backend locale: `scripts/local/dev_stack.sh --reset` (serve il binario PostgREST v12.2.3 in
-   `scripts/local/bin/`, scaricabile da GitHub releases). Utenti: admin/pr/super4 `@vibra.local`, password `vibra`.
+   `scripts/local/bin/`: `mkdir -p scripts/local/bin && curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin`).
+   Con admin la lista Clienti locale è vuota (i dati di prova sono di altri promoter): per provare form e dettaglio
+   creare un cliente con "Singolo cliente". Prove Playwright con touch: contesto `{ hasTouch: true, isMobile: true }`. Utenti: admin/pr/super4 `@vibra.local`, password `vibra`.
 3. App: `cd app && npm install && printf 'EXPO_PUBLIC_BACKEND=local\nEXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\nEXPO_PUBLIC_SUPABASE_ANON_KEY=dev\n' > .env && EXPO_OFFLINE=1 npx expo start --web --port 8081`
    (senza `.env` l'app usa Base44 vero, irraggiungibile dal container: lo prova l'utente con il suo account Google)
    (`EXPO_OFFLINE=1` perché api.expo.dev è bloccato dal proxy; idem per `npx expo install`).
