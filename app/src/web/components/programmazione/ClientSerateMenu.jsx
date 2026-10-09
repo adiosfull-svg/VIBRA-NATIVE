@@ -21,7 +21,7 @@ import { lockScroll } from '@/web/lib/scrollLock';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput, Label } from '@/ui/elements';
 
-import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
+import { doc as webDocument, nav as webNavigator, win as webWindow, url as webURL } from '@/web/shims/dom';
 
 function formatShareText(client) {
   const rating = client?.cum_rating || 0;
@@ -525,12 +525,12 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
           copied = true;
         } catch (e) {
           // Fallback: download
-          const url = URL.createObjectURL(blob);
+          const url = webURL.createObjectURL(blob);
           const a = webDocument.createElement('a');
           a.href = url;
           a.download = fileName;
           a.click();
-          URL.revokeObjectURL(url);
+          webURL.revokeObjectURL(url);
         }
         toast({
           title: copied ? 'Scheda copiata negli appunti' : 'Scheda scaricata',
@@ -598,12 +598,12 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
           await webNavigator.clipboard.write([clipboardItem]);
           copied = true;
         } catch (e) {
-          const url = URL.createObjectURL(blob);
+          const url = webURL.createObjectURL(blob);
           const a = webDocument.createElement('a');
           a.href = url;
           a.download = fileName;
           a.click();
-          URL.revokeObjectURL(url);
+          webURL.revokeObjectURL(url);
         }
         toast({
           title: copied ? 'Scheda copiata negli appunti' : 'Scheda scaricata',

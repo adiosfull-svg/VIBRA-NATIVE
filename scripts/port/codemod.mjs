@@ -48,6 +48,8 @@ function rewriteImport(src) {
   if (src === '@/lib/AuthContext') return '@/lib/auth';
   if (src === '@/lib/viewAsPromoterContext') return '@/lib/viewAs';
   if (src === '@/lib/utils') return '@/ui/cn';
+  // doc.save() salva/condivide anche sul telefono
+  if (src === 'jspdf') return '@/web/shims/jspdf';
   if (src === 'framer-motion') return '@/ui/motion';
   if (src === 'sonner') return '@/ui/sonner';
   if (src === 'recharts') return '@/ui/recharts';
@@ -62,8 +64,8 @@ function rewriteImport(src) {
 }
 
 // ── API del browser → shim (app/src/web/shims/dom: veri oggetti sul web, equivalenti nativi sul telefono)
-const DOM_SHIMS = { window: 'webWindow', document: 'webDocument', navigator: 'webNavigator', localStorage: 'webStorage' };
-const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage', WebCustomEvent: 'CustomEvt' };
+const DOM_SHIMS = { window: 'webWindow', document: 'webDocument', navigator: 'webNavigator', localStorage: 'webStorage', URL: 'webURL' };
+const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage', WebCustomEvent: 'CustomEvt', webURL: 'url' };
 // new X(...) di classi del browser che sul telefono non esistono
 const NEW_SHIMS = { CustomEvent: 'WebCustomEvent' };
 
@@ -151,7 +153,7 @@ export function transform(code, originalPath = '') {
       if (src === 'uplot') todos.push('uplot: grafico da rifare con @/ui/recharts');
       if (src === 'react-leaflet' || src === 'leaflet') todos.push('mappa: react-native-maps');
       if (src === '@hello-pangea/dnd') todos.push('drag & drop: react-native-draggable-flatlist');
-      if (src === 'jspdf' || src === 'html2canvas') todos.push('PDF/immagine: expo-print / react-native-view-shot');
+      if (src === 'html2canvas') todos.push('immagine: react-native-view-shot');
       if (src === 'react-markdown') todos.push('markdown: react-native-markdown-display');
       if (/\.css$/.test(src)) { p.prune(); return false; }
       return false;

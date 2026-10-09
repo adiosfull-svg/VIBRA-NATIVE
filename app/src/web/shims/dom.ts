@@ -9,6 +9,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { BackHandler, Dimensions, Linking, PixelRatio, Share } from 'react-native';
+import { blobToBase64, saveBase64File } from './files';
 import { pageScroll } from './pageScroll';
 
 type AnyFn = (...a: any[]) => any;
@@ -123,12 +124,30 @@ const fakeElement = () => ({
   getBoundingClientRect: () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 }),
 });
 
-/** <a href download>.click(): link http(s) aperti col sistema; i file generati (blob/data) non si scaricano così. */
+// ── URL.createObjectURL: blob tenuti qui, così <a href=blob: download>.click() può salvarli ──
+const blobs = new Map<string, Blob>();
+let blobSeq = 0;
+export const url = {
+  createObjectURL(blob: Blob) { const u = `blob:vibra/${++blobSeq}`; blobs.set(u, blob); return u; },
+  revokeObjectURL(u: string) { blobs.delete(u); },
+};
+
+/**
+ * <a href download>.click(): link http(s) aperti col sistema; con `download` un blob (URL.createObjectURL) o un
+ * data: URL diventa un file salvato e condiviso (files.ts), come il download del browser.
+ */
 function anchor() {
   const a = { ...fakeElement(), href: '', download: '', target: '', rel: '' };
   a.click = () => {
-    if (/^(https?:|mailto:|tel:|sms:|whatsapp:)/.test(a.href)) Linking.openURL(a.href).catch(() => {});
-    else console.warn('[dom] download non supportato sul telefono:', a.href.slice(0, 60));
+    const blob = blobs.get(a.href);
+    const data = a.href.match(/^data:([^;,]*)(;base64)?,(.*)$/);
+    if (blob) {
+      void blobToBase64(blob).then((b64) => saveBase64File(a.download || 'file', b64, blob.type || 'application/octet-stream'));
+    } else if (data) {
+      const b64 = data[2] ? data[3] : globalThis.btoa(unescape(encodeURIComponent(decodeURIComponent(data[3]))));
+      void saveBase64File(a.download || 'file', b64, data[1] || 'application/octet-stream');
+    } else if (/^(https?:|mailto:|tel:|sms:|whatsapp:)/.test(a.href)) Linking.openURL(a.href).catch(() => {});
+    else console.warn('[dom] link non supportato sul telefono:', a.href.slice(0, 60));
   };
   return a;
 }

@@ -50,12 +50,7 @@ import { buildAllDownloadItems, shareText } from '@/legacy/utils/downloadMateria
 import CachedImage from '@/web/components/shared/CachedImage';
 import { lockScroll } from '@/web/lib/scrollLock';
 
-import {
-  CustomEvt as WebCustomEvent,
-  doc as webDocument,
-  nav as webNavigator,
-  win as webWindow,
-} from '@/web/shims/dom';
+import { CustomEvt as WebCustomEvent, doc as webDocument, nav as webNavigator, win as webWindow, url as webURL } from '@/web/shims/dom';
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
@@ -670,14 +665,14 @@ export default function VibraSearch() {
   const handleDownloadFormula = () => {
     if (!formulaView) return;
     const blob = new Blob([formulaView.text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const url = webURL.createObjectURL(blob);
     const a = webDocument.createElement('a');
     a.href = url;
     a.download = (formulaView.label || 'formule').replace(/[^a-z0-9]/gi, '_') + '.txt';
     webDocument.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    webURL.revokeObjectURL(url);
   };
 
   const glassPanelStyle = {

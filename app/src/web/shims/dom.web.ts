@@ -58,3 +58,4 @@ export const nav: any = navigator;
 export const storage: Storage = localStorage;
 export const storageReady = Promise.resolve();
 export const CustomEvt = CustomEvent;
+export const url = URL;

@@ -4,7 +4,7 @@ import { X, ZoomIn, ZoomOut, Copy, Download, Share2 } from '@/ui/icons.generated
 import { shareMedia } from '@/legacy/utils/downloadMaterials';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 
-import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
+import { doc as webDocument, nav as webNavigator, win as webWindow, url as webURL } from '@/web/shims/dom';
 import { Btn, Div, Span } from '@/ui/html';
 import { Img } from '@/ui/elements';
 
@@ -260,14 +260,14 @@ export default function PiantinaFullscreen({ src, label, onClose, disableBackClo
     try {
       const res = await fetch(src);
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const url = webURL.createObjectURL(blob);
       const a = webDocument.createElement('a');
       a.href = url;
       a.download = (label || 'immagine').replace(/[^a-z0-9]/gi, '_');
       webDocument.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      webURL.revokeObjectURL(url);
     } catch {
       webWindow.open(src, '_blank');
     }

@@ -190,12 +190,17 @@
    QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
    Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
    (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
-2. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
+2. **Dashboard: convertita ma NON collegata né verificata** (`app/src/web/pages/Dashboard.jsx` e
+   `components/dashboard/*`, `components/export/ExportReportButton.jsx`; le route `/` e `/dashboard` mostrano ancora
+   ComingSoon). Fermata su richiesta dell'utente: prima chiudere gli errori di Clienti sul telefono e valutare un
+   emulatore Android per trovarli qui. Nuovi shim pronti: `shims/files.ts` (salva e condivide file sul telefono),
+   `shims/jspdf.ts` (doc.save()), `url` in `shims/dom.ts` (URL.createObjectURL + <a download>); il codemod li usa.
+3. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
    Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
-3. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
+4. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
    expo-notifications. Funzioni server, automazioni, file: restano su Base44.
-4. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
-5. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+5. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
+6. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
 
 ## In attesa dell'utente
 - Errori sul telefono quando si cambia tab in Clienti (l'utente manderà le schermate rosse). Prima verificare che
