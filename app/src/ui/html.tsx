@@ -12,6 +12,21 @@ import { FlexParentContext, splitTextClasses, type ParentLayout, Text, TextClass
 import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
+// Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
+// serve sul telefono; se manca, Clienti va in errore ("cannot add a new property", "exactly one
+// property per transform object"). Lo diciamo subito invece di lasciar indovinare.
+if (__DEV__ && Platform.OS !== 'web') {
+  try {
+    /* eslint-disable-next-line @typescript-eslint/no-require-imports */
+    const { assignToTarget } = require('react-native-css-interop/dist/shared');
+    const probe: Record<string, unknown> = { transform: Object.freeze([{ translateY: 4 }]) };
+    assignToTarget(probe, [{ translateY: 0 }], ['transform']);
+    if ((probe.transform as unknown[]).length !== 1) throw new Error('transform annidato');
+  } catch (e) {
+    console.error(`[VIBRA] Patch di react-native-css-interop NON applicata (${(e as Error).message}): esegui "npm install" nella cartella app e poi "npx expo start -c".`);
+  }
+}
+
 // vh/vw negli style del web: dimensioni della finestra
 Object.assign(cssViewport, Dimensions.get('window'));
 Dimensions.addEventListener('change', ({ window }) => Object.assign(cssViewport, { width: window.width, height: window.height }));
