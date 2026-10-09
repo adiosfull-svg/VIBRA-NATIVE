@@ -2,8 +2,8 @@
 // portano riga per riga mantenendo className e struttura:
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
-import { Children, cloneElement, Fragment, isValidElement, useContext, type ReactElement, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Children, cloneElement, Fragment, isValidElement, useCallback, useContext, useState, type ReactElement, type ReactNode } from 'react';
+import { Platform, Pressable, StyleSheet, View, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { splitTextClasses, Text, TextClassContext, type AppTextProps } from './text';
@@ -128,17 +128,53 @@ function boxStyle(grid?: Grid, className?: string, style?: Record<string, any>) 
   return base;
 }
 
+/** Testo dei figli (per rimisurare quando cambia il contenuto). */
+function textSignature(children: ReactNode): string {
+  let out = '';
+  Children.forEach(children, (c) => {
+    if (typeof c === 'string' || typeof c === 'number') out += c;
+    else if (isValidElement(c)) out += textSignature((c.props as { children?: ReactNode }).children);
+  });
+  return out;
+}
+
+// In CSS un flex item ha min-width: auto: non si restringe sotto la larghezza del contenuto
+// (con testo su una riga la riga sborda invece di troncare). In RN si restringe e il testo si
+// tronca. Per gli elementi whitespace-nowrap (es. tutti i Button): primo layout alla larghezza
+// naturale, poi quella larghezza diventa minWidth. Non vale con overflow nascosto/truncate
+// (lì anche in CSS min-width: auto = 0) o con larghezza esplicita.
+const NOWRAP = /(^|\s)whitespace-nowrap(\s|$)/;
+const NO_MIN_CONTENT = /(^|\s)(truncate|overflow-hidden|overflow-x-auto|overflow-auto|min-w-\S+|w-\S+|size-\S+|basis-\S+|flex-none|shrink-0|flex-shrink-0)(\s|$)/;
+
+function useMinContentWidth(className: string | undefined, style: Record<string, any> | undefined, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
+  const enabled = NOWRAP.test(className ?? '') && !NO_MIN_CONTENT.test(className ?? '')
+    && style?.width == null && style?.minWidth == null && style?.flexShrink !== 0;
+  const signature = enabled ? textSignature(children) : '';
+  const [measured, setMeasured] = useState<{ sig: string; width: number } | null>(null);
+  const measuring = enabled && measured?.sig !== signature;
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    onLayout?.(e);
+    if (measuring) setMeasured({ sig: signature, width: Math.ceil(e.nativeEvent.layout.width) });
+  }, [onLayout, measuring, signature]);
+  if (!enabled) return { minStyle: null, onLayout };
+  const minStyle = measuring
+    ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const, alignSelf: 'flex-start' as const }
+    : { minWidth: measured!.width };
+  return { minStyle, onLayout: handleLayout };
+}
+
 type DivProps = ViewProps & { className?: string; children?: ReactNode };
 
-export function Div({ className, children, style, ...props }: DivProps) {
+export function Div({ className, children, style, onLayout, ...props }: DivProps) {
   const inherited = useContext(TextClassContext);
   const [text, rest] = splitTextClasses(className);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const content = boxContent(children, grid, rest);
+  const min = useMinContentWidth(className, rnStyle, children, onLayout);
   return (
-    <View {...props} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle]}>
+    <View {...props} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle, min.minStyle]}>
       {gradient ? <GradientFill gradient={gradient} /> : null}
       {text ? <TextClassContext.Provider value={cn(inherited, text)}>{content}</TextClassContext.Provider> : content}
     </View>
@@ -174,20 +210,26 @@ type BtnProps = Omit<PressableProps, 'children' | 'style'> & {
 };
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
-export function Btn({ className, children, onClick, onPress, disabled, style, ...props }: BtnProps) {
+export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, ...props }: BtnProps) {
   const inherited = useContext(TextClassContext);
   const [text, rest] = splitTextClasses(className);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
+  const min = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
+  // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
+  const [pressed, setPressed] = useState(false);
   return (
     <Pressable
+      onLayout={min.onLayout}
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
       disabled={disabled}
       onPress={onPress ?? onClick}
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
-      style={({ pressed }) => [boxStyle(grid, box, rnStyle), rnStyle, pressed ? { opacity: 0.85 } : null]}
+      onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
+      onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
+      style={[boxStyle(grid, box, rnStyle), rnStyle, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
       <TextClassContext.Provider value={cn(inherited, text)}>{boxContent(children, grid, rest)}</TextClassContext.Provider>
