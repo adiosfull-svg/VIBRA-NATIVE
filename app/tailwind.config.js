@@ -4,8 +4,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class', // come l'originale
-  content: ['./src/**/*.{ts,tsx,js,jsx}'],
+  content: ['./src/**/*.{ts,tsx,js,jsx}', './src/ui/safelist.generated.txt'],
   presets: [require('nativewind/preset')],
+  // space-x/y-N diventano gap-x/y-N a runtime (src/ui/webClasses.ts): sempre disponibili
+  safelist: [{ pattern: /^gap-[xy]-(0|px|0\.5|1|1\.5|2|2\.5|3|3\.5|4|5|6|7|8|9|10|11|12|14|16|20|24)$/, variants: ['sm', 'md', 'lg'] }],
   theme: {
     extend: {
       fontFamily: {

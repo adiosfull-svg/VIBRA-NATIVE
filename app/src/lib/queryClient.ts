@@ -1,13 +1,17 @@
+// Stesse opzioni di src/lib/query-client.js dell'app web.
 import { QueryClient } from '@tanstack/react-query';
 
-// Stessi default "morbidi" dell'app web: i dati cambiano poco durante la sessione.
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60_000,
-      gcTime: 30 * 60_000,
-      retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      retry: (failureCount, error: any) => {
+        if (error?.response?.status === 429 || error?.message?.includes('Rate limit')) return false;
+        return failureCount < 1;
+      },
+      refetchOnReconnect: false,
     },
   },
 });

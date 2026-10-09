@@ -3,11 +3,12 @@
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { Children, Fragment, isValidElement, useContext, type ReactElement, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type PressableProps, type ViewProps } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { splitTextClasses, Text, TextClassContext, type AppTextProps } from './text';
 import { normalizeClasses, type Gradient, type Grid } from './webClasses';
+import { webStyle, type WebStyleResult } from './webStyle';
 
 /** Avvolge in <Text> le stringhe/numeri figli diretti (in RN il testo nudo in una View è un errore). */
 function wrapText(children: ReactNode): ReactNode {
@@ -31,11 +32,28 @@ const GRADIENT_POINTS: Record<string, [{ x: number; y: number }, { x: number; y:
   tl: [{ x: 1, y: 1 }, { x: 0, y: 0 }],
 };
 
-/** Sfondo bg-gradient-to-*: dietro ai figli, ritagliato dagli angoli arrotondati del box. */
-export function GradientFill({ gradient }: { gradient: Gradient }) {
-  const [start, end] = GRADIENT_POINTS[gradient.dir] ?? GRADIENT_POINTS.b;
+type AnyGradient = Gradient & { angle?: number; locations?: number[] };
+
+/** Angolo CSS (0deg = verso l'alto, 90deg = verso destra) → punti start/end di LinearGradient. */
+function anglePoints(angle: number): [{ x: number; y: number }, { x: number; y: number }] {
+  const rad = (angle * Math.PI) / 180;
+  const dx = Math.sin(rad) / 2;
+  const dy = -Math.cos(rad) / 2;
+  return [{ x: 0.5 - dx, y: 0.5 - dy }, { x: 0.5 + dx, y: 0.5 + dy }];
+}
+
+/** Sfondo a gradiente (classi bg-gradient-to-* o style linear-gradient) dietro ai figli. */
+export function GradientFill({ gradient }: { gradient: AnyGradient }) {
+  const [start, end] = gradient.angle != null ? anglePoints(gradient.angle) : GRADIENT_POINTS[gradient.dir] ?? GRADIENT_POINTS.b;
   const colors = gradient.colors as [string, string, ...string[]];
-  return <LinearGradient pointerEvents="none" colors={colors} start={start} end={end} style={StyleSheet.absoluteFill} />;
+  const locations = gradient.locations as [number, number, ...number[]] | undefined;
+  return <LinearGradient pointerEvents="none" colors={colors} locations={locations} start={start} end={end} style={StyleSheet.absoluteFill} />;
+}
+
+/** Converte lo style (anche in sintassi CSS del web) e ne estrae l'eventuale gradiente. */
+function useWebStyle(style: unknown): WebStyleResult {
+  if (Array.isArray(style)) return webStyle(StyleSheet.flatten(style as StyleProp<ViewStyle>));
+  return webStyle(style);
 }
 
 /** Figli di una griglia CSS: larghezza 1/cols (o col-span) e gap orizzontale come padding. */
@@ -57,8 +75,14 @@ function boxContent(children: ReactNode, grid?: Grid) {
   return grid ? gridChildren(children, grid) : wrapText(children);
 }
 
-function boxStyle(grid?: Grid) {
-  return grid ? { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 } : null;
+// In CSS gli elementi flex hanno flex-shrink: 1 di default, in RN 0: lo ripristiniamo
+// (salvo classi che lo decidono esplicitamente).
+const SHRINK_CLASS = /(^|\s)(shrink-0|flex-shrink-0|flex-none|shrink|flex-shrink|flex-1|flex-auto|flex-initial|grow|flex-grow)(\s|$)/;
+
+function boxStyle(grid?: Grid, className?: string, style?: Record<string, any>) {
+  const base: Record<string, any> = grid ? { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 } : {};
+  if (!SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
+  return base;
 }
 
 type DivProps = ViewProps & { className?: string; children?: ReactNode };
@@ -66,21 +90,38 @@ type DivProps = ViewProps & { className?: string; children?: ReactNode };
 export function Div({ className, children, style, ...props }: DivProps) {
   const inherited = useContext(TextClassContext);
   const [text, rest] = splitTextClasses(className);
-  const { box, grid, gradient } = normalizeClasses(rest);
+  const { box, grid, gradient: classGradient } = normalizeClasses(rest);
+  const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
+  const gradient = styleGradient ?? classGradient;
   const content = boxContent(children, grid);
   return (
-    <View {...props} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid), style]}>
+    <View {...props} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle]}>
       {gradient ? <GradientFill gradient={gradient} /> : null}
       {text ? <TextClassContext.Provider value={cn(inherited, text)}>{content}</TextClassContext.Provider> : content}
     </View>
   );
 }
 
-export const Span = Text;
-export const P = Text;
-export function H({ className, ...props }: AppTextProps) {
-  return <Text accessibilityRole="header" className={className} {...props} />;
+// Un <span>/<p> usato come contenitore (flex, dimensioni fisse, gap...) in RN deve essere una View:
+// il testo figlio eredita comunque le classi di testo tramite il contesto.
+const BOXY = /(^|\s)(?:[a-z]+:)*(flex|inline-flex|grid|items-|justify-|gap-|space-[xy]-|size-|w-\d|h-\d|w-\[|h-\[|aspect-)/;
+
+type TextLikeProps = AppTextProps & { onPress?: () => void; style?: any };
+
+function textLike(defaultProps: Partial<TextLikeProps> = {}) {
+  return function TextLike({ className, children, style, onPress, ...props }: TextLikeProps) {
+    if (BOXY.test(className ?? '')) {
+      return onPress
+        ? <Btn className={className} style={style} onClick={onPress} {...(props as object)}>{children}</Btn>
+        : <Div className={className} style={style} {...(props as object)}>{children}</Div>;
+    }
+    return <Text {...defaultProps} {...props} className={className} style={style} onPress={onPress}>{children}</Text>;
+  };
 }
+
+export const Span = textLike();
+export const P = textLike();
+export const H = textLike({ accessibilityRole: 'header' });
 
 type BtnProps = Omit<PressableProps, 'children' | 'style'> & {
   className?: string;
@@ -93,15 +134,17 @@ type BtnProps = Omit<PressableProps, 'children' | 'style'> & {
 export function Btn({ className, children, onClick, onPress, disabled, style, ...props }: BtnProps) {
   const inherited = useContext(TextClassContext);
   const [text, rest] = splitTextClasses(className);
-  const { box, grid, gradient } = normalizeClasses(rest);
+  const { box, grid, gradient: classGradient } = normalizeClasses(rest);
+  const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
+  const gradient = styleGradient ?? classGradient;
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
       disabled={disabled}
       onPress={onPress ?? onClick}
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
-      style={({ pressed }) => [boxStyle(grid), style, pressed ? { opacity: 0.85 } : null]}
+      style={({ pressed }) => [boxStyle(grid, box, rnStyle), rnStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
       <TextClassContext.Provider value={cn(inherited, text)}>{boxContent(children, grid)}</TextClassContext.Provider>

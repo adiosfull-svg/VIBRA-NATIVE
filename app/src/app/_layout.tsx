@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { queryClient } from '../lib/queryClient';
 import { ViewAsPromoterProvider } from '../lib/viewAs';
+import { Toaster } from '../ui/use-toast';
 import { Loading } from '../components/ui';
 import { colors } from '../theme';
 
@@ -49,6 +50,7 @@ export default function RootLayout() {
             <StatusBar style="light" />
             <RootNavigator />
             <PortalHost />
+            <Toaster />
           </ViewAsPromoterProvider>
         </AuthProvider>
       </QueryClientProvider>

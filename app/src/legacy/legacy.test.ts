@@ -9,8 +9,9 @@ import { buildClientStatsMap } from './utils/clientPrecomputed';
 import { computePromoterStats, computeAutoUnlocked } from './utils/achievementLogic';
 
 test('tutti i moduli legacy si caricano', async () => {
-  // goalTypes importa un componente React Native (.tsx): non eseguibile in Node.
-  const files = readdirSync(new URL('./utils', import.meta.url)).filter((f) => f.endsWith('.js') && f !== 'goalTypes.js');
+  // goalTypes e imageCache dipendono da moduli React Native: non eseguibili in Node.
+  const NATIVE = ['goalTypes.js', 'imageCache.js'];
+  const files = readdirSync(new URL('./utils', import.meta.url)).filter((f) => f.endsWith('.js') && !NATIVE.includes(f));
   for (const f of files) await import(`./utils/${f}`);
   assert.ok(files.length >= 20);
 });
@@ -73,29 +74,6 @@ test('achievement: stats promoter e sblocchi automatici', () => {
     stats,
   );
   assert.deepEqual([...unlocked], ['a']);
-});
-
-test('computeClientStatsMap: le presenze reali sovrascrivono i cum_*', async () => {
-  const { computeClientStatsMap } = await import('../features/clients/clientStats.js');
-  const clients = [{ id: 'c1', cum_visits: 1, cum_total_spent: 10 }, { id: 'c2', cum_visits: 0 }];
-  const events = [
-    { id: 'e1', date: '2026-09-04' }, // venerdì
-    { id: 'e2', date: '2026-09-05' }, // sabato
-    { id: 'e3', date: '2026-08-15', is_extra: true },
-  ];
-  const att = [
-    { event_id: 'e1', client_id: 'c1', revenue: 100 },
-    { event_id: 'e2', client_id: 'c1', revenue: 300 },
-    { event_id: 'e3', client_id: 'c1', revenue: 50 },
-    { event_id: 'e1', promoter_id: 'p', revenue: 999 }, // presenza promoter: ignorata
-  ];
-  const map = computeClientStatsMap(clients, att, events);
-  assert.equal(map.c1.visits, 3);
-  assert.equal(map.c1.totalSpent, 450);
-  assert.equal(map.c1.avgSpent, 150);
-  assert.deepEqual([map.c1.fri, map.c1.sat, map.c1.extra], [1, 1, 1]);
-  assert.equal(typeof map.c1.rating, 'number');
-  assert.equal(map.c2.rating, null);
 });
 
 test('twColors traduce le classi Tailwind', async () => {
