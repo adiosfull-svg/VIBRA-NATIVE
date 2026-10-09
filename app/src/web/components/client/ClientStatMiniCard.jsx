@@ -1,14 +1,14 @@
 // Port di src/components/client/ClientStatMiniCard.jsx (convertito da scripts/port/codemod.mjs).
 import React from 'react';
 
-import { Div, P } from '@/ui/html';
+import { Btn, Div, P } from '@/ui/html';
 
 /**
  * Card statistica compatta per la Clienti page, in stile Dashboard:
  * glow radiale, linea accento in alto, hover lift, entrata dash-fade-up.
  */
 export default function ClientStatMiniCard({ icon: Icon, label, value, color = '#a78bfa', delay = 0, onClick }) {
-  const Comp = onClick ? 'button' : 'div';
+  const Comp = onClick ? Btn : Div;
   return (
     <Comp
       onClick={onClick}

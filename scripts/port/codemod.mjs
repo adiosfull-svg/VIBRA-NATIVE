@@ -13,6 +13,16 @@ const b = recast.types.builders;
 const parser = { parse: (s) => babel.parse(s, { sourceType: 'module', plugins: ['jsx'], tokens: true }) };
 
 // ── mappe ────────────────────────────────────────────────────────────────────
+/** Tag HTML in una stringa usata come componente → primitiva equivalente (come per <tag>). */
+function dynamicTag(tag) {
+  if (BOX.has(tag)) return 'Div';
+  if (tag === 'button') return 'Btn';
+  if (['span', 'label', 'strong', 'em', 'small', 'b', 'i'].includes(tag)) return 'Span';
+  if (tag === 'p') return 'P';
+  if (/^h[1-6]$/.test(tag)) return 'H';
+  return null;
+}
+
 const BOX = new Set(['div', 'section', 'header', 'footer', 'nav', 'main', 'aside', 'ul', 'ol', 'li', 'figure', 'article', 'fieldset']);
 const TEXT = { span: 'Span', p: 'P', small: 'Span', code: 'Span', pre: 'Span', b: 'Span', strong: 'Span', em: 'Span', i: 'Span', h1: 'H', h2: 'H', h3: 'H', h4: 'H', h5: 'H', h6: 'H' };
 const TEXT_EXTRA = { b: 'font-bold', strong: 'font-bold', em: 'italic', i: 'italic', code: 'font-mono', pre: 'font-mono' };
@@ -63,6 +73,22 @@ export function applyDomShims(ast) {
       if (p.node.source.value === 'react-dom') p.node.source = b.stringLiteral('@/web/shims/react-dom');
       return false;
     },
+    // tag scelto a runtime: const Comp = onClick ? 'button' : 'div' → Btn / Div (una stringa
+    // come componente funziona solo sul web: sul telefono "View config ... `div`")
+    visitVariableDeclarator(p) {
+      const { id, init } = p.node;
+      if (id.type === 'Identifier' && /^[A-Z]/.test(id.name) && init) {
+        recast.visit(init, {
+          visitStringLiteral(sp) {
+            const name = dynamicTag(sp.node.value);
+            if (name) { (['Div', 'Btn', 'Span', 'P', 'H'].includes(name) ? usedHtml : usedElements).add(name); sp.replace(b.identifier(local(name))); }
+            return false;
+          },
+        });
+      }
+      this.traverse(p);
+    },
+
     visitMemberExpression(p) {
       const o = p.node.object;
       if (o.type === 'Identifier' && DOM_SHIMS[o.name] && !p.scope?.lookup(o.name)) {
@@ -228,6 +254,22 @@ export function transform(code, originalPath = '') {
       el.name = b.jsxIdentifier(local(name));
       if (p.node.closingElement) p.node.closingElement.name = b.jsxIdentifier(local(name));
       if (removedGestures.length) todos.push(`<${tag}> gesture/eventi web rimossi: ${[...new Set(removedGestures)].join(', ')}`);
+      this.traverse(p);
+    },
+
+    // tag scelto a runtime: const Comp = onClick ? 'button' : 'div' → Btn / Div (una stringa
+    // come componente funziona solo sul web: sul telefono "View config ... `div`")
+    visitVariableDeclarator(p) {
+      const { id, init } = p.node;
+      if (id.type === 'Identifier' && /^[A-Z]/.test(id.name) && init) {
+        recast.visit(init, {
+          visitStringLiteral(sp) {
+            const name = dynamicTag(sp.node.value);
+            if (name) { (['Div', 'Btn', 'Span', 'P', 'H'].includes(name) ? usedHtml : usedElements).add(name); sp.replace(b.identifier(local(name))); }
+            return false;
+          },
+        });
+      }
       this.traverse(p);
     },
 

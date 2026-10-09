@@ -156,5 +156,14 @@
     `preview--club-track-live.base44.app`; dopo la pubblicazione passare a `https://vibrayourparty.com/accesso-app`,
     o `EXPO_PUBLIC_BASE44_LOGIN_BRIDGE`). Copia locale del codice originale aggiornata con gli stessi 2 file.
 
+- **Telefono, primo avvio dell'utente (Expo Go)**: login con la pagina ponte OK. Errore "View config getter
+  callback for component `div`" in ClientStatMiniCard (`const Comp = onClick ? 'button' : 'div'`): corretto, e il
+  codemod ora converte i tag scritti come stringa in variabili con la maiuscola (`dynamicTag`).
+- **Prestazioni** (l'utente trova l'app lenta in Expo Go): cambio tab Clienti sul web, sviluppo: nativo 90–190ms vs
+  originale 35–65ms; build di produzione (`expo export -p web`): 40–90ms (originale in sviluppo 25–60ms). Profilo:
+  il grosso è React in modalità sviluppo e il runtime di NativeWind (jsx di react-native-css-interop). Messe in
+  cache normalizeClasses/splitTextClasses/textClassesFor. Expo Go in sviluppo è molto più lento di una build:
+  provare con `npx expo start --no-dev --minify`; da rivedere dopo una build vera (punto 6).
+
 ## In attesa dell'utente
 - Prova del login sul telefono con la pagina ponte (Expo Go sulla stessa Wi-Fi del PC, senza --tunnel).

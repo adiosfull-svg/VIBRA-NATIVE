@@ -24,7 +24,20 @@ export const TextClassContext = createContext<string>('');
 const TEXT_CLASS = /^(?:[a-z0-9]+:)*(?:-?text-|font-|leading-|tracking-|uppercase$|lowercase$|capitalize$|normal-case$|italic$|not-italic$|underline$|line-through$|no-underline$|tabular-nums$|whitespace-|break-|truncate$|antialiased$|line-clamp-)/;
 
 /** Separa le classi che in CSS si ereditano (testo) da quelle del box. */
+const splitCache = new Map<string, [string, string]>();
+
 export function splitTextClasses(className?: string): [text: string, box: string] {
+  if (!className) return ['', ''];
+  let out = splitCache.get(className);
+  if (!out) {
+    if (splitCache.size > 5000) splitCache.clear();
+    out = computeSplit(className);
+    splitCache.set(className, out);
+  }
+  return out;
+}
+
+function computeSplit(className?: string): [text: string, box: string] {
   if (!className) return ['', ''];
   const text: string[] = [];
   const box: string[] = [];

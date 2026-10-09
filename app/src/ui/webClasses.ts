@@ -26,7 +26,21 @@ export function spacingPx(v: string): number {
 
 const BREAKPOINT = /^(sm|md|lg|xl|2xl|max-sm|max-md|max-lg):/;
 
+// Le stesse classi tornano a ogni render di ogni elemento: il risultato (sola lettura) si tiene in cache.
+const normalizedCache = new Map<string, Normalized>();
+
 export function normalizeClasses(className?: string): Normalized {
+  const key = className ?? '';
+  let out = normalizedCache.get(key);
+  if (!out) {
+    if (normalizedCache.size > 5000) normalizedCache.clear();
+    out = computeNormalized(className);
+    normalizedCache.set(key, out);
+  }
+  return out;
+}
+
+function computeNormalized(className?: string): Normalized {
   const out: Normalized = { box: '' };
   if (!className) return out;
   const list = className.split(/\s+/).filter(Boolean);

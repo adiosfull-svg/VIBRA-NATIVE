@@ -31,7 +31,20 @@ export const ARB_SIZE = /(?:^|\s)text-\[(\d+(?:\.\d+)?)px\]/;
  * Classi di testo da passare ai figli: con una dimensione arbitraria senza leading-* l'interlinea
  * ereditata va fissata in px, perché cn (tailwind-merge) toglierebbe quella del contenitore.
  */
+const classesForCache = new Map<string, string>();
+
 export function textClassesFor(inherited: string, own: string): string {
+  const key = `${inherited}|${own}`;
+  let out = classesForCache.get(key);
+  if (out === undefined) {
+    if (classesForCache.size > 5000) classesForCache.clear();
+    out = computeClassesFor(inherited, own);
+    classesForCache.set(key, out);
+  }
+  return out;
+}
+
+function computeClassesFor(inherited: string, own: string): string {
   const arb = own.match(ARB_SIZE);
   if (!arb || LEADING.test(own)) return cn(inherited, own);
   return cn(inherited, own, `leading-[${inheritedLineHeight(inherited, Number(arb[1]))}px]`);
