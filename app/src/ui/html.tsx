@@ -278,6 +278,18 @@ function ScrollBox({ axis, box, style, children, onScroll, ...props }: Omit<View
   );
 }
 
+// Breakpoint di Tailwind (min-width)
+const BREAKPOINT_PX: Record<string, number> = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 };
+const SHOWN_AT = /(?:^|\s)(sm|md|lg|xl|2xl):(block|flex|grid|inline-flex|inline-block|inline|table|contents)(?=\s|$)/g;
+
+/** "hidden sm:block" su uno schermo più stretto di sm: nascosto (es. le versioni desktop delle tabelle). */
+export function hiddenAtWidth(className: string, width: number): boolean {
+  if (!/(^|\s)hidden(\s|$)/.test(className)) return false;
+  let min = Infinity;
+  for (const m of className.matchAll(SHOWN_AT)) min = Math.min(min, BREAKPOINT_PX[m[1]]);
+  return width < min;
+}
+
 export function Div({ className, children, style, onLayout, ...all }: DivProps) {
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
@@ -289,6 +301,9 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   const gradient = styleGradient ?? classGradient;
   const content = <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>{boxContent(children, grid, rest)}</FlexParentContext.Provider>;
   const min = useMinContentWidth(className, rnStyle, children, onLayout);
+  // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
+  // sul web lo nasconde il CSS, qui costerebbe come se fosse visibile.
+  if (Platform.OS !== 'web' && hiddenAtWidth(rest, cssViewport.width)) return <View style={{ display: 'none' }} />;
   const axis = scrollAxis(rest);
   if (axis) {
     const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle]) as Record<string, any>;

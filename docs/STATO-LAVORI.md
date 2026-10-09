@@ -161,7 +161,11 @@
   codemod ora converte i tag scritti come stringa in variabili con la maiuscola (`dynamicTag`).
 - Telefono: "cannot add a new property" (react-native-css-interop fa push su array di stile congelati quando
   due classi scrivono la stessa proprietà, es. `shadow-xl shadow-black/50`): patch in
-  `app/patches/react-native-css-interop+0.2.7.patch`, applicata da `postinstall: patch-package`.
+  `app/patches/react-native-css-interop+0.2.7.patch`, applicata da `postinstall: patch-package` (copia gli
+  array non estendibili; due transform si fondono per chiave, invece di annidarsi: "exactly one property per
+  transform object").
+- Sul telefono i Div `hidden sm:block` (e md/lg...) non costruiscono i figli se lo schermo è più stretto
+  (`hiddenAtWidth` in `html.tsx`): es. la tabella desktop di Clienti non si costruisce più (prestazioni).
 - **Prestazioni** (l'utente trova l'app lenta in Expo Go): cambio tab Clienti sul web, sviluppo: nativo 90–190ms vs
   originale 35–65ms; build di produzione (`expo export -p web`): 40–90ms (originale in sviluppo 25–60ms). Profilo:
   il grosso è React in modalità sviluppo e il runtime di NativeWind (jsx di react-native-css-interop). Messe in
