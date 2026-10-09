@@ -1,4 +1,14 @@
+import '../../global.css';
+import {
+  Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
+  Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black,
+} from '@expo-google-fonts/inter';
+import {
+  PlayfairDisplay_400Regular, PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold,
+} from '@expo-google-fonts/playfair-display';
+import { PortalHost } from '@rn-primitives/portal';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -24,6 +34,13 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  // Stessi font dell'app web (index.html: Inter + Playfair Display)
+  const [fontsLoaded] = useFonts({
+    Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
+    Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black,
+    PlayfairDisplay_400Regular, PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold,
+  });
+  if (!fontsLoaded) return null;
   return (
     <SafeAreaProvider style={{ backgroundColor: colors.background }}>
       <QueryClientProvider client={queryClient}>
@@ -31,6 +48,7 @@ export default function RootLayout() {
           <ViewAsPromoterProvider>
             <StatusBar style="light" />
             <RootNavigator />
+            <PortalHost />
           </ViewAsPromoterProvider>
         </AuthProvider>
       </QueryClientProvider>
