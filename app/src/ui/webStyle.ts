@@ -63,14 +63,42 @@ export function cssColor(input: unknown): string | undefined {
   return v; // #hex, rgb(a), nomi: già validi in RN
 }
 
-/** '12px' → 12, '1.5rem' → 24, '50%' → '50%', calc/vh/env → undefined */
+/** Dimensioni della finestra per vh/vw (aggiornate da html.tsx con Dimensions). */
+export const cssViewport = { width: 0, height: 0 };
+
+/** Lunghezza assoluta in px: px, rem, (d|s|l)vh, vw; env() vale 0 (aree sicure: non note qui). */
+function absoluteLength(t: string): number | undefined {
+  let m: RegExpMatchArray | null;
+  if ((m = t.match(/^(-?[\d.]+)px$/))) return Number(m[1]);
+  if ((m = t.match(/^(-?[\d.]+)rem$/))) return Number(m[1]) * 16;
+  if ((m = t.match(/^(-?[\d.]+)[dsl]?vh$/)) && cssViewport.height) return (Number(m[1]) * cssViewport.height) / 100;
+  if ((m = t.match(/^(-?[\d.]+)[dsl]?vw$/)) && cssViewport.width) return (Number(m[1]) * cssViewport.width) / 100;
+  if (/^env\([^)]*\)$/.test(t) || t === '0') return 0;
+  return undefined;
+}
+
+/** calc() di sole lunghezze assolute sommate/sottratte: calc(100dvh - 4rem - env(x)) */
+function calcLength(t: string): number | undefined {
+  const m = t.match(/^calc\((.*)\)$/);
+  if (!m) return undefined;
+  const parts = m[1].replace(/\s+([+-])\s+/g, ' $1 ').trim().split(' ');
+  let total = absoluteLength(parts[0]);
+  for (let i = 1; total !== undefined && i < parts.length; i += 2) {
+    const v = absoluteLength(parts[i + 1] ?? '');
+    if (v === undefined || (parts[i] !== '+' && parts[i] !== '-')) return undefined;
+    total += parts[i] === '+' ? v : -v;
+  }
+  return total;
+}
+
+/** '12px' → 12, '1.5rem' → 24, '50%' → '50%', '100dvh' → altezza finestra, calc semplici; altro → undefined */
 export function cssLength(v: unknown): number | string | undefined {
   if (typeof v === 'number') return v;
   if (typeof v !== 'string') return undefined;
   const t = v.trim();
   let m: RegExpMatchArray | null;
-  if ((m = t.match(/^(-?[\d.]+)px$/))) return Number(m[1]);
-  if ((m = t.match(/^(-?[\d.]+)rem$/))) return Number(m[1]) * 16;
+  const abs = absoluteLength(t) ?? calcLength(t);
+  if (abs !== undefined) return abs;
   if ((m = t.match(/^(-?[\d.]+)%$/))) return t;
   if ((m = t.match(/^-?[\d.]+$/))) return Number(t);
   if (t === 'auto') return 'auto';
@@ -236,7 +264,7 @@ export function webStyle(input: unknown): WebStyleResult {
       && k !== 'flexWrap' && k !== 'textDecorationLine' && k !== 'borderStyle' && k !== 'objectFit' && k !== 'aspectRatio'
       && k !== 'flex' && k !== 'rotate') {
       const len = cssLength(v);
-      if (len === undefined) continue; // calc(), vh, env(): non convertibili
+      if (len === undefined) continue; // calc() con %, ecc.: non convertibili
       style[k] = len;
       continue;
     }

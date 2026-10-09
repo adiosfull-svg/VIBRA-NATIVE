@@ -7,6 +7,7 @@ import {
   type ReactElement, type ReactNode,
 } from 'react';
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
+import { getNiceTickValues, getTickValuesFixedDomain } from 'recharts-scale';
 import Svg, { Circle, G, Line as SvgLine, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 import { cssColor } from './webStyle';
 import { Text } from './text';
@@ -63,23 +64,17 @@ function flatChildren(children: ReactNode): ReactElement<any>[] {
   return out;
 }
 
-function niceStep(range: number, count: number) {
-  const raw = range / Math.max(1, count);
-  const pow = Math.pow(10, Math.floor(Math.log10(raw || 1)));
-  const n = raw / pow;
-  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * pow;
-}
-
-/** Dominio e tick "nice" come recharts (tickCount 5). */
-function niceTicks(min: number, max: number, allowDecimals = true, count = 5): number[] {
-  if (min === max) max = min + 1;
-  let step = niceStep(max - min, count - 1);
-  if (!allowDecimals) step = Math.max(1, Math.ceil(step));
-  const lo = Math.floor(min / step) * step;
-  const hi = Math.ceil(max / step) * step;
-  const ticks: number[] = [];
-  for (let v = lo; v <= hi + step / 2; v += step) ticks.push(Number(v.toFixed(10)));
-  return ticks;
+/**
+ * Tick dell'asse dei valori come recharts (getTicksOfScale): con dominio automatico (default
+ * [0, 'auto']) tick "nice" e dominio esteso al primo/ultimo tick; con dominio fisso, tick dentro il dominio.
+ */
+function axisTicks(min: number, max: number, domain: unknown, allowDecimals = true, count = 5): { ticks: number[]; lo: number; hi: number } {
+  const auto = !Array.isArray(domain) || domain[0] === 'auto' || domain[1] === 'auto';
+  if (auto) {
+    const ticks = getNiceTickValues([min, max], count, allowDecimals);
+    return { ticks, lo: Math.min(...ticks), hi: Math.max(...ticks) };
+  }
+  return { ticks: getTickValuesFixedDomain([min, max], count, allowDecimals), lo: min, hi: max };
 }
 
 function valueDomain(data: Datum[], keys: string[], stacked: boolean, domain?: any[]): [number, number] {
@@ -229,9 +224,8 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
   const keys = series.map((s) => s.props.dataKey as string);
   const stacked = series.some((s) => s.props.stackId != null);
   const [dMin, dMax] = valueDomain(data, keys, stacked, valAxis?.domain);
-  const ticks = useMemo(() => niceTicks(dMin, dMax, valAxis?.allowDecimals !== false, valAxis?.tickCount ?? 5), [dMin, dMax, valAxis?.allowDecimals, valAxis?.tickCount]);
-  const vMin = Array.isArray(valAxis?.domain) && typeof valAxis.domain[0] === 'number' ? valAxis.domain[0] : ticks[0];
-  const vMax = Array.isArray(valAxis?.domain) && typeof valAxis.domain[1] === 'number' ? valAxis.domain[1] : ticks[ticks.length - 1];
+  const { ticks, lo: vMin, hi: vMax } = useMemo(() => axisTicks(dMin, dMax, valAxis?.domain, valAxis?.allowDecimals !== false, valAxis?.tickCount ?? 5),
+    [dMin, dMax, valAxis?.domain, valAxis?.allowDecimals, valAxis?.tickCount]);
   const span = vMax - vMin || 1;
   const valLen = vertical ? plot.width : plot.height;
   const valPos = (v: number) => (vertical ? plot.left + ((v - vMin) / span) * valLen : plot.top + plot.height - ((v - vMin) / span) * valLen);
@@ -398,18 +392,24 @@ export function RadarChart({ data = [], width: w, height: h, cx, cy, outerRadius
   const pct = (v: any, total: number, def: number) => (typeof v === 'string' && v.endsWith('%') ? (parseFloat(v) / 100) * total : typeof v === 'number' ? v : def);
   const centerX = pct(cx, width, width / 2);
   const centerY = pct(cy, height, height / 2);
-  const R = pct(outerRadius, Math.min(width, height) / 2, Math.min(width, height) / 2 * 0.8);
+  // come recharts: margine di 5px per lato, raggio massimo = metà del lato minore, default 80%
+  const maxRadius = Math.min(width - 10, height - 10) / 2;
+  const R = pct(outerRadius ?? '80%', maxRadius, maxRadius * 0.8);
   const n = data.length || 1;
-  const maxV = Array.isArray(radiusAxis?.domain) && typeof radiusAxis.domain[1] === 'number'
-    ? radiusAxis.domain[1]
-    : Math.max(1, ...radars.flatMap((r) => data.map((d) => Number(d[r.props.dataKey]) || 0)));
+  // asse del raggio come recharts: dominio [0, 'auto'] (o quello dato) e anelli della griglia ai suoi tick
+  const dataMax = Math.max(0, ...radars.flatMap((r) => data.map((d) => Number(d[r.props.dataKey]) || 0)));
+  const rDomain = radiusAxis?.domain;
+  const rMin = Array.isArray(rDomain) && typeof rDomain[0] === 'number' ? rDomain[0] : 0;
+  const rMax = Array.isArray(rDomain) && typeof rDomain[1] === 'number' ? rDomain[1] : dataMax;
+  const radial = axisTicks(rMin, rMax, rDomain ?? [0, 'auto'], radiusAxis?.allowDecimals !== false, radiusAxis?.tickCount ?? 5);
+  const maxV = radial.hi - radial.lo || 1;
   const point = (i: number, r: number) => {
     const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
     return { x: centerX + r * Math.cos(a), y: centerY + r * Math.sin(a) };
   };
   return (
     <Svg width={width} height={height}>
-      {gridCfg !== undefined && [0.2, 0.4, 0.6, 0.8, 1].map((f) => (
+      {gridCfg !== undefined && radial.ticks.map((t) => (t - radial.lo) / maxV).filter((f) => f > 0).map((f) => (
         <Polygon key={f} points={data.map((_, i) => { const p = point(i, R * f); return `${p.x},${p.y}`; }).join(' ')} fill="none" stroke={cssColor(gridCfg?.stroke) ?? '#ccc'} />
       ))}
       {gridCfg !== undefined && data.map((_, i) => { const p = point(i, R); return <SvgLine key={i} x1={centerX} y1={centerY} x2={p.x} y2={p.y} stroke={cssColor(gridCfg?.stroke) ?? '#ccc'} />; })}
@@ -418,12 +418,26 @@ export function RadarChart({ data = [], width: w, height: h, cx, cy, outerRadius
           points={data.map((d, i) => { const p = point(i, (R * (Number(d[r.props.dataKey]) || 0)) / maxV); return `${p.x},${p.y}`; }).join(' ')}
           fill={cssColor(r.props.fill) ?? '#8884d8'} fillOpacity={r.props.fillOpacity ?? 0.6} stroke={cssColor(r.props.stroke) ?? 'none'} strokeWidth={r.props.strokeWidth ?? 1} />
       ))}
+      {radars.map((r, ri) => {
+        // dot={{ fill, r }} o dot: pallini sui vertici (come recharts: props del Radar + quelle del dot)
+        const dot = r.props.dot;
+        if (!dot) return null;
+        const cfg = typeof dot === 'object' && !isValidElement(dot) ? dot : {};
+        return data.map((d, i) => {
+          const p = point(i, (R * (Number(d[r.props.dataKey]) || 0)) / maxV);
+          return <Circle key={`${ri}-${i}`} cx={p.x} cy={p.y} r={cfg.r ?? 3} fill={cssColor(cfg.fill ?? r.props.fill) ?? '#8884d8'} fillOpacity={cfg.fillOpacity ?? r.props.fillOpacity ?? 1}
+            stroke={cssColor(cfg.stroke ?? r.props.stroke) ?? 'none'} strokeWidth={cfg.strokeWidth ?? r.props.strokeWidth ?? 1} />;
+        });
+      })}
       {angleAxis && data.map((d, i) => {
-        const p = point(i, R + 12);
+        // etichette come PolarAngleAxis: a tickSize (8) oltre il raggio, ancorate secondo il lato
+        const p = point(i, R + (angleAxis.tickSize ?? 8));
+        const cos = Math.cos(-Math.PI / 2 + (2 * Math.PI * i) / n);
+        const anchor = cos > 1e-5 ? 'start' : cos < -1e-5 ? 'end' : 'middle';
         const value = angleAxis.dataKey ? d[angleAxis.dataKey] : i;
-        const custom = renderCustomTick(angleAxis.tick, { x: p.x, y: p.y, payload: { value }, index: i, textAnchor: 'middle' });
+        const custom = renderCustomTick(angleAxis.tick, { x: p.x, y: p.y, payload: { value }, index: i, textAnchor: anchor });
         if (custom) return <G key={i}>{custom}</G>;
-        return <TickText key={i} x={p.x} y={p.y} dy={4} value={String(value)} tick={angleAxis.tick} />;
+        return <TickText key={i} x={p.x} y={p.y} anchor={anchor} value={String(value)} tick={angleAxis.tick} />;
       })}
     </Svg>
   );

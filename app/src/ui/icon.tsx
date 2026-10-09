@@ -53,7 +53,7 @@ cssInterop(SvgIcon, {
 });
 
 // Dal contesto di testo ereditato tengo solo il colore (text-<colore>), non dimensione/peso.
-const TEXT_COLOR = /^(?:[a-z0-9]+:)*text-(?!(?:xs|sm|base|lg|xl|[2-9]xl|left|center|right|justify|start|end|wrap|nowrap|balance|pretty|ellipsis|clip)$)[a-z]/;
+export const TEXT_COLOR = /^(?:[a-z0-9]+:)*text-(?!(?:xs|sm|base|lg|xl|[2-9]xl|left|center|right|justify|start|end|wrap|nowrap|balance|pretty|ellipsis|clip)$)[a-z]/;
 
 export function makeIcon(name: string, node: IconNode) {
   function Icon({ className, size, color, fill, strokeWidth, style }: IconProps) {

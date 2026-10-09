@@ -1,12 +1,22 @@
 // Confronto originale (tools/web-ref, :5173) vs nativo (Expo web, :8081) sulla stessa pagina:
 // screenshot affiancabili + posizione verticale dei testi comuni (scostamenti = spaziature diverse).
-// Uso: node tools/compare/measure.mjs <cartella-output> [percorso=/clienti] [ruoli=pr,admin,super4]
+// Uso: node tools/compare/measure.mjs <cartella-output> [percorso=/clienti] [ruoli=pr,admin,super4] [passi]
+// passi (separati da ";", eseguiti uguali sulle due app dopo il caricamento della pagina):
+//   click:<testo>     tocca il primo elemento visibile con quel testo esatto (es. click:Gruppi)
+//   click~<testo>     idem, testo contenuto (non esatto)
+//   nth:<n>:<testo>   tocca l'n-esimo (da 0) elemento visibile con quel testo esatto
+//   wait:<ms>         attende
+//   scroll:<px>       scorre la pagina (window e scroller interni) di px
+//   key:<tasto>       preme un tasto (es. key:Escape)
+// es.: node tools/compare/measure.mjs out/gruppi /clienti pr "click:Gruppi;wait:1500"
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 // playwright installato globalmente nel container (npm root -g)
 const { chromium } = createRequire(execSync('npm root -g').toString().trim() + '/')('playwright');
 import { mkdirSync, writeFileSync } from 'node:fs';
-const [out = 'compare-out', route = '/clienti', roles = 'pr,admin,super4'] = process.argv.slice(2);
+import { parseSteps, runSteps } from './steps.mjs';
+const [out = 'compare-out', route = '/clienti', roles = 'pr,admin,super4', stepsArg = ''] = process.argv.slice(2);
+const steps = parseSteps(stepsArg);
 mkdirSync(out, { recursive: true });
 const REF = 'http://127.0.0.1:5173', NAT = 'http://127.0.0.1:8081';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
@@ -39,6 +49,7 @@ for (const role of roles.split(',')) {
   await nat.waitForTimeout(3000);
   await nat.goto(`${NAT}${route}`, { waitUntil: 'networkidle', timeout: 120000 });
   await nat.waitForTimeout(3500);
+  await runSteps(ref, steps, 'ref'); await runSteps(nat, steps, 'nat');
   await ref.screenshot({ path: `${out}/${role}-ref.png` });
   await nat.screenshot({ path: `${out}/${role}-nat.png` });
   const a = await ref.evaluate(collect), b = await nat.evaluate(collect);

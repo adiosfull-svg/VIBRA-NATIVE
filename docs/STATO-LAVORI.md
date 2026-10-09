@@ -27,6 +27,10 @@
    `node tools/compare/probe.mjs <ruolo> /clienti "<testo>"` (stili calcolati della catena di antenati, per la causa).
    Nota: dy/dx piccoli su pillole, pulsanti, iniziali avatar sono normali (nel web il testo è misurato sul contenitore);
    "Weekend"/"Cerca"/"Chiudi" con dy enormi sono elementi nascosti con la stessa etichetta.
+   Tab e dialog: quarto argomento con i passi, uguali sulle due app (`tools/compare/steps.mjs`), es.
+   `node tools/compare/measure.mjs out/growth /clienti pr "click:Growth;wait:2500"`,
+   `"click:Sofia Colombo;wait:2500"` (dettaglio cliente; per super4 "Alessandro Conti"), `"click:Singolo cliente"`,
+   `"click:Importa più clienti"`, `"click:Aggiungi presenze"`. Anche `probe.mjs` accetta i passi (5° argomento).
 
 ## Fatto
 - **Collegamento a Base44** (`app/src/lib/`): `base44.ts` sceglie il backend (`backend.ts`);
@@ -96,6 +100,34 @@
   - Codemod aggiornato: `<form>` → `Form` con onSubmit, `type="submit"` conservato sui pulsanti, gesture
     conservate su Div/Btn, date/file non più segnati come TODO (restano checkbox/radio/color/range).
 
+- **Confronto tab e dialog di Clienti (ex punto 2) — FATTO** per pr/admin/super4: Gruppi, Parco Paganti,
+  Albero, Tabelle, Growth, Analitica, dettaglio cliente, Aggiungi presenze, Importa, Singolo cliente coincidono
+  con l'originale (scostamenti residui ≤ 8px solo dove il web misura il testo sul contenitore). Correzioni,
+  tutte nello strato `app/src/ui/` (valgono per ogni pagina):
+  - `flex-shrink: 1` solo ai figli di contenitori flex in CSS (`FlexParentContext` in `text.tsx`): i figli di un
+    blocco non si restringono (il dettaglio cliente era tutto sovrapposto).
+  - Interlinea ereditata come in CSS (`textLeading.ts` + test): `text-[10px]` dentro `text-xs` ha 16px.
+  - `<span>`/`<label>` in linea in un blocco: riga alta quanto l'interlinea del blocco (`useInlineBox`);
+    `<textarea>` in un blocco: ~6px sotto (linea di base). Il form "Nuovo Cliente" era 40px più corto.
+  - Campi di testo sempre 16px come nell'`index.css` originale (`inputFontSize`, tranne `.semina-note-textarea`).
+  - Tabelle con layout automatico del browser (`Table`/`Tr`/`Td` in `elements.tsx`): colonne larghe quanto il
+    contenuto (prima tutte uguali: nomi del Growth League tagliati a una lettera).
+  - Griglie: Div/Btn figli si allungano all'altezza della riga; `inline-flex`/`inline-block` larghi quanto il
+    contenuto e allineati dal `text-align` del contenitore.
+  - Testo contiguo (`Tutti ({n})`) in un solo Text: niente gap in mezzo.
+  - `style` con `vh/dvh/vw` e `calc()` semplici (`webStyle.ts` + test): il popup Aggiungi presenze era in alto.
+  - recharts: tick con `recharts-scale` (stessa libreria dell'originale), radar con raggio, anelli, etichette e
+    pallini come recharts.
+  - `<svg>` (`Svg` di `elements.tsx`): className e colore ereditato (fill="currentColor") anche sul telefono.
+  - Sul telefono i Div con `overflow-*-auto` diventano ScrollView (prima non scorrevano: corpo del dettaglio
+    cliente, liste nei dialog, tabelle larghe); onScroll riceve `e.target.scrollTop/...` come sul web.
+    Bundle Android verificato (`npx expo export --platform android`), comportamento da provare sul telefono.
+  - Differenze note non emulate: i dialog Radix mettono il fuoco sul primo campo (bordo viola della textarea di
+    Importa e del riquadro foto); nel form "Nuovo Cliente" l'originale è 7px più largo (dimensione min-content della
+    griglia del dialog) e il pulsante del Guidatore tocca l'etichetta; un `<button>` in linea dentro un blocco
+    (es. "Carica dal dispositivo") ha la riga 8px più bassa (Btn non distingue `<button>` dai div cliccabili);
+    colonne `sticky left-0` delle tabelle non bloccate.
+
 ## In corso / prossimi passi
 1. **Da provare sul telefono** (Expo Go / build): selettori data/ora (Android: data poi ora per datetime-local,
    "Cancella" svuota; iOS: pannello in basso), scelta foto/file e caricamento su Base44 (quando si toglie la
@@ -103,16 +135,15 @@
    e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza col tap.
    Restano 2 PORT-TODO accettati: `onPaste` (incolla foto con Ctrl+V in ClientFormDialog, incolla in
    QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
-2. Poi: confronto screenshot di dettaglio cliente, dialog (Aggiungi presenze, Importa, Singolo cliente) e tab
-   Gruppi/Parco/Albero/Tabelle/Growth/Analitica per pr/admin/super4 (`tools/compare/measure.mjs` con percorso e
-   click: estendere lo script per aprire tab/dialog).
-3. ClientMap (Leaflet) → react-native-maps (ora segnaposto). VibraSearch (pulsante Cerca) da portare.
-4. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
+   Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
+   (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
+2. ClientMap (Leaflet) → react-native-maps (ora segnaposto). VibraSearch (pulsante Cerca) da portare.
+3. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
    Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
-5. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
+4. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
    expo-notifications. Funzioni server, automazioni, file: restano su Base44.
-6. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
-7. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+5. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
+6. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
 
 ## In attesa dell'utente
 - Prova del login Google con Base44 vero: sul PC (`npx expo start --web`, http://localhost:8081) e sul telefono

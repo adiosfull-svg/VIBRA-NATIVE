@@ -1,10 +1,12 @@
 // Stili calcolati della catena di antenati di un testo, originale vs nativo (per trovare la causa
 // di uno scostamento visto con measure.mjs).
-// Uso: node tools/compare/probe.mjs <ruolo> <percorso> "<testo>" [livelli=8]
+// Uso: node tools/compare/probe.mjs <ruolo> <percorso> "<testo>" [livelli=8] [passi, come measure.mjs]
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 const { chromium } = createRequire(execSync('npm root -g').toString().trim() + '/')('playwright');
-const [role = 'pr', route = '/clienti', text = 'Gruppi', levels = '8'] = process.argv.slice(2);
+import { parseSteps, runSteps } from './steps.mjs';
+const [role = 'pr', route = '/clienti', text = 'Gruppi', levels = '8', stepsArg = ''] = process.argv.slice(2);
+const steps = parseSteps(stepsArg);
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const ctxOpts = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 };
 const chain = ([text, levels]) => {
@@ -15,7 +17,7 @@ const chain = ([text, levels]) => {
   for (let i = 0; el && i < levels; i++, el = el.parentElement) {
     const s = getComputedStyle(el), r = el.getBoundingClientRect();
     const prev = el.previousElementSibling && el.previousElementSibling.getBoundingClientRect();
-    out.push(`${String(Math.round(r.top)).padStart(5)} h=${String(Math.round(r.height)).padStart(4)} prevBottom=${prev ? Math.round(prev.bottom) : '-'} mt=${s.marginTop} mb=${s.marginBottom} pt=${s.paddingTop} pb=${s.paddingBottom} gap=${s.rowGap} disp=${s.display}/${s.flexDirection} cls=${(el.getAttribute('class') || '').slice(0, 90)}`);
+    out.push(`${String(Math.round(r.top)).padStart(5)} x=${String(Math.round(r.left)).padStart(4)} w=${String(Math.round(r.width)).padStart(4)} h=${String(Math.round(r.height)).padStart(4)} prevBottom=${prev ? Math.round(prev.bottom) : '-'} mt=${s.marginTop} mb=${s.marginBottom} pt=${s.paddingTop} pb=${s.paddingBottom} gap=${s.rowGap} disp=${s.display}/${s.flexDirection} cls=${(el.getAttribute('class') || '').slice(0, 90)}`);
   }
   return out.join('\n');
 };
@@ -30,6 +32,7 @@ await nat.getByRole('button', { name: 'Accedi' }).click();
 await nat.waitForTimeout(3000);
 await nat.goto(`http://127.0.0.1:8081${route}`, { waitUntil: 'networkidle' });
 await nat.waitForTimeout(3500);
+await runSteps(ref, steps, 'ref'); await runSteps(nat, steps, 'nat');
 console.log('== ORIGINALE\n' + await ref.evaluate(chain, [text, +levels]));
 console.log('== NATIVO\n' + await nat.evaluate(chain, [text, +levels]));
 await browser.close();

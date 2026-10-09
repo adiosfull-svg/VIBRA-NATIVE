@@ -3,24 +3,39 @@
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { Children, cloneElement, Fragment, isValidElement, useCallback, useContext, useState, type ReactElement, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, View, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
-import { splitTextClasses, Text, TextClassContext, type AppTextProps } from './text';
+import { FlexParentContext, splitTextClasses, type ParentLayout, Text, TextClassContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
-import { webStyle, type WebStyleResult } from './webStyle';
+import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
-/** Avvolge in <Text> le stringhe/numeri figli diretti (in RN il testo nudo in una View è un errore). */
+// vh/vw negli style del web: dimensioni della finestra
+Object.assign(cssViewport, Dimensions.get('window'));
+Dimensions.addEventListener('change', ({ window }) => Object.assign(cssViewport, { width: window.width, height: window.height }));
+
+/**
+ * Avvolge in <Text> le stringhe/numeri figli diretti (in RN il testo nudo in una View è un errore).
+ * Come in CSS, testo contiguo (es. `Tutti ({n})`) forma un solo elemento: niente gap in mezzo.
+ */
 function wrapText(children: ReactNode): ReactNode {
-  return Children.map(children, (child) => {
-    if (typeof child === 'string' || typeof child === 'number') return <Text>{child}</Text>;
-    if (isValidElement(child) && child.type === Fragment) {
-      return <Fragment key={child.key}>{wrapText((child.props as { children?: ReactNode }).children)}</Fragment>;
-    }
-    return child;
-  });
+  const out: ReactNode[] = [];
+  let run: string | null = null;
+  const flush = () => {
+    if (run != null) out.push(<Text key={`text-${out.length}`}>{run}</Text>);
+    run = null;
+  };
+  for (const child of Children.toArray(children)) {
+    if (typeof child === 'string' || typeof child === 'number') { run = (run ?? '') + child; continue; }
+    flush();
+    out.push(isValidElement(child) && child.type === Fragment
+      ? <Fragment key={child.key}>{wrapText((child.props as { children?: ReactNode }).children)}</Fragment>
+      : child);
+  }
+  flush();
+  return out;
 }
 
 const GRADIENT_POINTS: Record<string, [{ x: number; y: number }, { x: number; y: number }]> = {
@@ -58,23 +73,35 @@ function useWebStyle(style: unknown): WebStyleResult {
   return webStyle(style);
 }
 
-/** Figli di una griglia CSS: larghezza 1/cols (o col-span) e gap orizzontale come padding. */
-function gridChildren(children: ReactNode, grid: Grid): ReactNode {
+// Figli che in CSS non si allungano all'altezza della riga della griglia
+const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
+
+/**
+ * Figli di una griglia CSS: larghezza 1/cols (o col-span) e gap orizzontale come padding.
+ * Come in CSS (align-items: stretch) un Div/Btn figlio diretto si allunga all'altezza della riga.
+ */
+function gridChildren(children: ReactNode, grid: Grid, className?: string): ReactNode {
+  const stretch = !/(^|\s)items-(start|center|end|baseline)(\s|$)/.test(className ?? '');
   return Children.map(wrapText(children), (child) => {
     if (child == null || typeof child === 'boolean') return child;
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
     const span = Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1);
     if (/(?:^|\s)hidden(?:\s|$)/.test(cls)) return child;
+    let item = child;
+    if (stretch && isValidElement(child) && (child.type === Div || child.type === Btn) && !NO_STRETCH.test(cls)) {
+      const own = (child.props as { style?: StyleProp<ViewStyle> }).style;
+      item = cloneElement(child as ReactElement<{ style?: StyleProp<ViewStyle> }>, { style: [{ flexGrow: 1 }, own] });
+    }
     return (
       <View style={{ width: `${(100 * Math.min(span, grid.cols)) / grid.cols}%`, paddingHorizontal: grid.gapX / 2 }}>
-        {child}
+        {item}
       </View>
     );
   });
 }
 
 function boxContent(children: ReactNode, grid?: Grid, className?: string) {
-  return grid ? gridChildren(children, grid) : wrapText(spaceOverrides(children, className));
+  return grid ? gridChildren(children, grid, className) : wrapText(spaceOverrides(children, className));
 }
 
 const SPACE = /(?:^|\s)space-([xy])-(\S+)/g;
@@ -121,12 +148,33 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
 }
 
 // In CSS gli elementi flex hanno flex-shrink: 1 di default, in RN 0: lo ripristiniamo
-// (salvo classi che lo decidono esplicitamente).
+// (salvo classi che lo decidono esplicitamente), ma solo se il genitore è flex in CSS:
+// i figli di un blocco non si restringono (FlexParentContext).
+// (anche la griglia: i suoi figli sono "bloccati" come gli elementi flex, niente righe in linea)
+const CSS_FLEX = /(^|\s)(?:max-sm:)?(flex|inline-flex|grid)(\s|$)/;
 const SHRINK_CLASS = /(^|\s)(shrink-0|flex-shrink-0|flex-none|shrink|flex-shrink|flex-1|flex-auto|flex-initial|grow|flex-grow)(\s|$)/;
 
-function boxStyle(grid?: Grid, className?: string, style?: Record<string, any>) {
+// Elementi "in linea a blocco" (inline-flex, inline-block): in un blocco sono larghi quanto il
+// contenuto e li posiziona il text-align del contenitore (in RN si allungherebbero a tutta riga).
+const INLINE_LEVEL = /(^|\s)(inline-flex|inline-block|inline-grid)(\s|$)/;
+const SELF = /(^|\s)self-/;
+
+function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
+  let align: 'flex-start' | 'center' | 'flex-end' = 'flex-start';
+  for (const c of inherited.split(/\s+/)) {
+    if (c === 'text-center') align = 'center';
+    else if (c === 'text-right' || c === 'text-end') align = 'flex-end';
+    else if (c === 'text-left' || c === 'text-start') align = 'flex-start';
+  }
+  return align;
+}
+
+function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>) {
   const base: Record<string, any> = grid ? { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 } : {};
-  if (!SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
+  if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
+  if (layout === 'block' && INLINE_LEVEL.test(rawClass ?? '') && !SELF.test(rawClass ?? '') && style?.alignSelf == null) {
+    base.alignSelf = inlineAlign(inherited);
+  }
   return base;
 }
 
@@ -167,20 +215,93 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
 
 type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & { className?: string; children?: ReactNode };
 
+// ── overflow-*-auto sul telefono ─────────────────────────────────────────────
+// Sul web una View con overflow auto scorre (CSS); su Android/iOS no: lì diventa una ScrollView.
+// Le classi/stili che dispongono i figli (padding, gap, direzione, allineamento) vanno sul
+// contenitore del contenuto, il resto (dimensioni, bordi, sfondo, posizione) sulla ScrollView.
+const SCROLL_Y = /(^|\s)overflow(-y)?-(auto|scroll)(\s|$)/;
+const SCROLL_X = /(^|\s)overflow-x-(auto|scroll)(\s|$)/;
+const CONTENT_CLASS = /^(p[xytrblse]?-|gap-|flex-(row|col|wrap|nowrap)|items-|justify-|content-|divide-)/;
+const CONTENT_STYLE = /^(padding|gap|rowGap|columnGap|flexDirection|flexWrap|alignItems|justifyContent|alignContent)/;
+
+function scrollAxis(className: string): 'x' | 'y' | null {
+  if (Platform.OS === 'web') return null;
+  if (SCROLL_Y.test(className)) return 'y';
+  if (SCROLL_X.test(className)) return 'x';
+  return null;
+}
+
+/** onScroll del web (e.target.scrollTop...) a partire dall'evento della ScrollView. */
+function webScrollHandler(onScroll: ((e: any) => void) | undefined) {
+  if (!onScroll) return undefined;
+  return (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const target = {
+      scrollTop: contentOffset.y, scrollLeft: contentOffset.x, scrollHeight: contentSize.height, scrollWidth: contentSize.width,
+      clientHeight: layoutMeasurement.height, clientWidth: layoutMeasurement.width,
+    };
+    onScroll({ ...e, target, currentTarget: target });
+  };
+}
+
+function ScrollBox({ axis, box, style, children, onScroll, ...props }: Omit<ViewProps, 'style'> & {
+  axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void;
+}) {
+  const outer: string[] = [];
+  const inner: string[] = [];
+  for (const c of box.split(/\s+/)) {
+    if (!c || /^overflow/.test(c)) continue;
+    (CONTENT_CLASS.test(c) ? inner : outer).push(c);
+  }
+  const outerStyle: Record<string, any> = {};
+  const innerStyle: Record<string, any> = {};
+  for (const [k, v] of Object.entries(style)) {
+    if (k === 'marginHorizontal' && style.rowGap != null) innerStyle[k] = v; // griglia: margini negativi del contenuto
+    else (CONTENT_STYLE.test(k) ? innerStyle : outerStyle)[k] = v;
+  }
+  return (
+    <ScrollView
+      {...props}
+      horizontal={axis === 'x'}
+      className={outer.join(' ')}
+      contentContainerClassName={inner.join(' ')}
+      style={outerStyle}
+      contentContainerStyle={innerStyle}
+      onScroll={webScrollHandler(onScroll)}
+      scrollEventThrottle={16}
+      nestedScrollEnabled
+      keyboardShouldPersistTaps="handled"
+      showsHorizontalScrollIndicator={false}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
 export function Div({ className, children, style, onLayout, ...all }: DivProps) {
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
+  const layout = useContext(FlexParentContext);
   const [text, rest] = splitTextClasses(className);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
-  const content = boxContent(children, grid, rest);
+  const content = <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>{boxContent(children, grid, rest)}</FlexParentContext.Provider>;
   const min = useMinContentWidth(className, rnStyle, children, onLayout);
+  const axis = scrollAxis(rest);
+  if (axis) {
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle]) as Record<string, any>;
+    return (
+      <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
+        {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
+      </ScrollBox>
+    );
+  }
   return (
-    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle, min.minStyle]}>
+    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle]}>
       {gradient ? <GradientFill gradient={gradient} /> : null}
-      {text ? <TextClassContext.Provider value={cn(inherited, text)}>{content}</TextClassContext.Provider> : content}
+      {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
     </View>
   );
 }
@@ -191,18 +312,20 @@ const BOXY = /(^|\s)(?:[a-z]+:)*(flex|inline-flex|grid|items-|justify-|gap-|spac
 
 type TextLikeProps = AppTextProps & { onPress?: () => void; style?: any };
 
-function textLike(defaultProps: Partial<TextLikeProps> = {}) {
+function textLike(defaultProps: Partial<TextLikeProps> = {}, inline = false) {
   return function TextLike({ className, children, style, onPress, ...props }: TextLikeProps) {
+    const inlineBox = useInlineBox(inline && !BOXY.test(className ?? '') ? className : 'block');
     if (BOXY.test(className ?? '')) {
       return onPress
         ? <Btn className={className} style={style} onClick={onPress} {...(props as object)}>{children}</Btn>
         : <Div className={className} style={style} {...(props as object)}>{children}</Div>;
     }
-    return <Text {...defaultProps} {...props} className={className} style={style} onPress={onPress}>{children}</Text>;
+    const text = <Text {...defaultProps} {...props} className={className} style={style} onPress={onPress}>{children}</Text>;
+    return inlineBox ? <View style={inlineBox}>{text}</View> : text;
   };
 }
 
-export const Span = textLike();
+export const Span = textLike({}, true);
 export const P = textLike();
 export const H = textLike({ accessibilityRole: 'header' });
 
@@ -225,6 +348,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
     ? (e) => { press?.(e); form.submit(); }
     : press;
   const inherited = useContext(TextClassContext);
+  const layout = useContext(FlexParentContext);
   const [text, rest] = splitTextClasses(className);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
@@ -243,10 +367,12 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(grid, box, rnStyle), rnStyle, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
-      <TextClassContext.Provider value={cn(inherited, text)}>{boxContent(children, grid, rest)}</TextClassContext.Provider>
+      <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
+        <TextClassContext.Provider value={textClassesFor(inherited, text)}>{boxContent(children, grid, rest)}</TextClassContext.Provider>
+      </FlexParentContext.Provider>
     </Pressable>
   );
 }

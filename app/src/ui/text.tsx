@@ -4,7 +4,19 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { Platform, StyleSheet, Text as RNText, type TextProps } from 'react-native';
 import { cn } from './cn';
+import { ARB_SIZE, fontSizeOf, inheritedLineHeight, inlineLineBox, lineHeightOf, strutDescent, textClassesFor } from './textLeading';
 import { webStyle } from './webStyle';
+
+export { textClassesFor };
+
+/**
+ * Che cosa è in CSS il contenitore più vicino: 'flex' (solo allora i figli hanno flex-shrink: 1,
+ * default degli elementi flex), 'block' (i figli non si restringono mai, ma in RN ogni View è flex:
+ * senza questo il corpo scorrevole di un dialog con space-y-3 verrebbe schiacciato; un elemento in
+ * linea vi sta in una riga alta almeno quanto l'interlinea del blocco, vedi useInlineBox) o 'text'.
+ */
+export type ParentLayout = 'flex' | 'block' | 'text';
+export const FlexParentContext = createContext<ParentLayout>('flex');
 
 /** Classi di testo ereditate dal contenitore più vicino (come la cascata CSS). */
 export const TextClassContext = createContext<string>('');
@@ -62,22 +74,25 @@ const SHRINK = /(^|\s)(shrink-0|flex-shrink-0|flex-none|shrink|flex-1|flex-auto)
 
 /**
  * Regole CSS che il web applica di default e RN no:
- *  - line-height 1.5 (preflight di Tailwind) quando la dimensione è arbitraria (text-[10px] o style)
+ *  - interlinea ereditata quando la dimensione è arbitraria (text-[10px] o style): vedi inheritedLineHeight
  *  - flex-shrink: 1 sugli elementi in un contenitore flex
  */
-function cssDefaults(merged: string, style: any) {
+function cssDefaults(merged: string, inherited: string, own: string, style: any, inFlex: boolean) {
   const out: Record<string, number> = {};
-  if (!LEADING.test(merged) && style?.lineHeight == null) {
-    const arb = merged.match(/(?:^|\s)text-\[(\d+(?:\.\d+)?)px\]/);
-    const size = typeof style?.fontSize === 'number' ? style.fontSize : arb && !NAMED_SIZE.test(merged) ? Number(arb[1]) : null;
-    if (size != null) out.lineHeight = Math.round(size * 1.5 * 100) / 100;
+  if (!LEADING.test(own) && style?.lineHeight == null && !NAMED_SIZE.test(own)) {
+    // dimensione effettiva arbitraria (propria, da style o ereditata): le classi con nome hanno già l'interlinea
+    const arb = (NAMED_SIZE.test(merged) && !ARB_SIZE.test(own) ? null : merged.match(ARB_SIZE));
+    const size = typeof style?.fontSize === 'number' ? style.fontSize : arb ? Number(arb[1]) : null;
+    // leading-[Npx] del contesto è sintetico (textClassesFor): NativeWind non lo conosce, lo applichiamo qui
+    if (size != null) out.lineHeight = inheritedLineHeight(inherited, size);
   }
-  if (!SHRINK.test(merged) && style?.flexShrink == null) out.flexShrink = 1;
+  if (inFlex && !SHRINK.test(merged) && style?.flexShrink == null) out.flexShrink = 1;
   return out;
 }
 
 export function Text({ className, style, numberOfLines, children, ...props }: AppTextProps) {
   const inherited = useContext(TextClassContext);
+  const inFlex = useContext(FlexParentContext) === 'flex';
   const merged = cn('text-base text-foreground', inherited, className);
   const fontFamily = fontFamilyFor(merged);
   const converted = webStyle(StyleSheet.flatten(style)).style;
@@ -89,10 +104,48 @@ export function Text({ className, style, numberOfLines, children, ...props }: Ap
       numberOfLines={numberOfLines ?? (truncate ? 1 : clamp || undefined)}
       className={merged}
       // il peso è già nel file del font: fontWeight lo raddoppierebbe su Android
-      style={[cssDefaults(merged, converted), converted, fontFamily ? { fontFamily, fontWeight: 'normal' } : null]}
+      style={[cssDefaults(merged, inherited, className ?? '', converted, inFlex), converted, fontFamily ? { fontFamily, fontWeight: 'normal' } : null]}
     >
       {/* i figli (testo annidato, icone) ereditano colore e stile come in CSS */}
-      <TextClassContext.Provider value={merged}>{children}</TextClassContext.Provider>
+      <FlexParentContext.Provider value="text">
+        <TextClassContext.Provider value={merged}>{children}</TextClassContext.Provider>
+      </FlexParentContext.Provider>
     </RNText>
   );
+}
+
+/** index.css dell'originale: `input, select, textarea { font-size: 16px !important }` (niente zoom su iOS),
+ *  tranne `.semina-note-textarea` (11px). Vince su classi e style inline, quindi va messo per ultimo. */
+export function inputFontSize(classes?: string): { fontSize: number } {
+  return { fontSize: classes && /(^|\s)semina-note-textarea(\s|$)/.test(classes) ? 11 : 16 };
+}
+
+const NOT_INLINE = /(^|\s)(absolute|fixed|block|inline-block|flex|inline-flex|grid|hidden|sr-only)(\s|$)/;
+
+/**
+ * <span>/<label> da soli in un blocco: in CSS la riga è alta almeno quanto l'interlinea del blocco
+ * (lo "strut"), con il testo allineato sulla linea di base. Restituisce il padding da mettere
+ * attorno al Text, o null quando non serve (contenitore flex o testo, stesso font del blocco).
+ */
+export function useInlineBox(className?: string): { paddingTop: number; paddingBottom: number } | null {
+  const layout = useContext(FlexParentContext);
+  const inherited = useContext(TextClassContext);
+  if (layout !== 'block' || NOT_INLINE.test(className ?? '')) return null;
+  const own = textClassesFor(inherited, className ?? '');
+  const size = fontSizeOf(own), lh = lineHeightOf(own);
+  const parentSize = fontSizeOf(inherited), parentLh = lineHeightOf(inherited);
+  if (size === parentSize && lh === parentLh) return null;
+  const box = inlineLineBox(parentSize, parentLh, size, lh);
+  return { paddingTop: box.top, paddingBottom: Math.max(0, box.height - box.top - lh) };
+}
+
+/**
+ * <textarea> è in linea: in un blocco sta sulla linea di base, con sotto lo spazio del
+ * discendente del contenitore (~6px con text-base). Restituisce il margine da aggiungere sotto.
+ */
+export function useTextareaBaselineGap(className?: string): number {
+  const layout = useContext(FlexParentContext);
+  const inherited = useContext(TextClassContext);
+  if (layout !== 'block' || NOT_INLINE.test(className ?? '')) return 0;
+  return strutDescent(fontSizeOf(inherited), lineHeightOf(inherited));
 }

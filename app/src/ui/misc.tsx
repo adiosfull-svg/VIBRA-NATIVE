@@ -1,12 +1,16 @@
 // Port di label.jsx, skeleton.jsx, progress.jsx, separator.
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Animated } from 'react-native';
+import { Animated, View } from 'react-native';
 import { cn } from './cn';
 import { Div } from './html';
-import { Text } from './text';
+import { Text, useInlineBox } from './text';
 
 export function Label({ className, children, nativeID }: { className?: string; children?: ReactNode; nativeID?: string; htmlFor?: string }) {
-  return <Text nativeID={nativeID} className={cn('text-sm font-medium leading-none', className)}>{children}</Text>;
+  const cls = cn('text-sm font-medium leading-none', className);
+  // <label> è in linea: in un blocco la sua riga è alta quanto l'interlinea del blocco
+  const inlineBox = useInlineBox(cls);
+  const text = <Text nativeID={nativeID} className={cls}>{children}</Text>;
+  return inlineBox ? <View style={inlineBox}>{text}</View> : text;
 }
 
 /** animate-pulse rounded-md bg-primary/10 */

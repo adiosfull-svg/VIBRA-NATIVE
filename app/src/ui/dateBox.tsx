@@ -6,7 +6,7 @@ import { cn } from './cn';
 import { displayValue, type DateInputType } from './dateValue';
 import { Btn } from './html';
 import { Calendar, Clock } from './icons.generated';
-import { Text } from './text';
+import { inputFontSize, Text } from './text';
 
 export type DateFieldProps = {
   type: DateInputType;
@@ -34,7 +34,7 @@ export function DateBox({ type, value, className, style, disabled, onPress, chil
       onClick={onPress}
       accessibilityLabel={accessibilityLabel ?? text}
     >
-      <Text className={cn('flex-shrink', empty && 'opacity-70')} numberOfLines={1}>{text}</Text>
+      <Text className={cn('flex-shrink', empty && 'opacity-70')} style={inputFontSize(className)} numberOfLines={1}>{text}</Text>
       <Icon className="w-4 h-4 ml-2 opacity-70" />
       {children}
     </Btn>

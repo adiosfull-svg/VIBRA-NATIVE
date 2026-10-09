@@ -8,7 +8,7 @@ import { FileField } from './fileField';
 import { useTextFormField } from './formContext';
 import { keyDownProps, type WebKeyEvent } from './keyEvents';
 import { THEME } from './palette.generated';
-import { fontFamilyFor } from './text';
+import { fontFamilyFor, inputFontSize } from './text';
 
 type InputProps = TextInputProps & {
   className?: string;
@@ -43,7 +43,7 @@ function webInputProps({ className, type, onChange, onChangeText, onKeyDown, val
     onChangeText: (t: string) => { onChangeText?.(t); onChange?.({ target: { value: t } }); },
     placeholderTextColor: THEME['muted-foreground'],
     className: merged,
-    style: [{ fontFamily: fontFamilyFor(merged) }, style],
+    style: [{ fontFamily: fontFamilyFor(merged) }, style, inputFontSize(merged)],
   };
 }
 

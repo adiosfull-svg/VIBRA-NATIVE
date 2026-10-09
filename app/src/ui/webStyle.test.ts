@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cssColor, parseLinearGradient, webStyle } from './webStyle.ts';
+import { cssColor, cssViewport, parseLinearGradient, webStyle } from './webStyle.ts';
 
 test('colori CSS dell\'app web', () => {
   assert.equal(cssColor('hsl(var(--primary))'), '#561a8e');
@@ -56,4 +56,17 @@ test('webStyle: bordi e raggi abbreviati', () => {
 test('webStyle: display flex in riga e raggio in percentuale', () => {
   assert.equal(webStyle({ display: 'flex', gap: '4px' }).style.flexDirection, 'row');
   assert.equal(webStyle({ width: 12, height: 12, borderRadius: '50%' }).style.borderRadius, 6);
+});
+
+test('webStyle: vh/dvh e calc semplici con le dimensioni della finestra', () => {
+  Object.assign(cssViewport, { width: 390, height: 844 });
+  try {
+    const { style } = webStyle({ height: '100dvh', minHeight: 'calc(100dvh - 4rem - env(safe-area-inset-top))', width: '50vw', maxHeight: 'calc(100% - 2rem)' });
+    assert.equal(style.height, 844);
+    assert.equal(style.minHeight, 780);
+    assert.equal(style.width, 195);
+    assert.equal(style.maxHeight, undefined);
+  } finally {
+    Object.assign(cssViewport, { width: 0, height: 0 });
+  }
 });
