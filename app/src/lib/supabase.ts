@@ -2,11 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { AppState, Platform } from 'react-native';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-if (!url || !anonKey) {
-  throw new Error('Configura EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_ANON_KEY in app/.env');
-}
+// Progetto Supabase di default (la chiave anon è pubblica per natura: i dati li proteggono le
+// regole RLS). app/.env può sostituirli, es. con lo stack locale di scripts/local/dev_stack.sh.
+const DEFAULT_URL = 'https://iapybtpkvgryqxtapsll.supabase.co';
+const DEFAULT_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhcHlidHBrdmdyeXF4dGFwc2xsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MDI1MjAsImV4cCI6MjEwNzA3ODUyMH0._TKQnNTk7ejUNVzhBlPtVG8jua2GT6g0Yd7BxOloTds';
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL || DEFAULT_URL;
+const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_ANON_KEY;
 
 // SecureStore accetta valori fino a ~2 KB: la sessione Supabase può superarli,
 // quindi la salviamo spezzata in più chiavi.

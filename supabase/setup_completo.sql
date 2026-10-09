@@ -1,6 +1,16 @@
 -- GENERATO da scripts/gen_setup_sql.py - non modificare a mano.
--- Da eseguire UNA volta nel SQL Editor di un progetto Supabase vuoto.
+-- Per un progetto Supabase di PROVA: si può rieseguire, ma CANCELLA e ricrea tutti i dati.
 begin;
+
+-- ===== azzeramento =====
+delete from auth.identities where user_id in (select id from auth.users where email like '%@vibra.local');
+delete from auth.users where email like '%@vibra.local';
+drop schema if exists public cascade;
+create schema public;
+grant usage, create on schema public to postgres, anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 
 -- ===== 20261008000001_base.sql =====
 -- GENERATO da scripts/gen_schema.py - non modificare a mano.

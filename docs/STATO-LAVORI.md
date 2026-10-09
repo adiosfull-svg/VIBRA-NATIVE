@@ -10,7 +10,8 @@
    in `/home/user/vibra-reference` (475 file; elenco con `list_directory` ricorsivo, max_depth 10).
 2. Backend locale: `scripts/local/dev_stack.sh --reset` (serve il binario PostgREST v12.2.3 in
    `scripts/local/bin/`, scaricabile da GitHub releases). Utenti: admin/pr/super4 `@vibra.local`, password `vibra`.
-3. App: `cd app && npm install && cp .env.example .env && EXPO_OFFLINE=1 npx expo start --web --port 8081`
+3. App: `cd app && npm install && printf 'EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\nEXPO_PUBLIC_SUPABASE_ANON_KEY=dev\n' > .env && EXPO_OFFLINE=1 npx expo start --web --port 8081`
+   (senza `.env` l'app usa il progetto Supabase vero `iapybtpkvgryqxtapsll`, irraggiungibile dal container)
    (`EXPO_OFFLINE=1` perché api.expo.dev è bloccato dal proxy; idem per `npx expo install`).
 4. App originale di riferimento: `tools/web-ref/setup.sh /home/user/vibra-reference` poi `tools/web-ref/run.sh`
    (porta 5173, `?as=pr|admin|super4`). Confronti con Playwright (Chromium in /opt/pw-browsers).
@@ -22,6 +23,10 @@
    "Weekend"/"Cerca"/"Chiudi" con dy enormi sono elementi nascosti con la stessa etichetta.
 
 ## Fatto
+- **Progetto Supabase di prova** `https://iapybtpkvgryqxtapsll.supabase.co`: URL e chiave anon sono predefiniti in
+  `app/src/lib/supabase.ts` (niente `.env` da creare). Database creato incollando `supabase/setup_completo.sql`
+  (generato da `scripts/gen_setup_sql.py`: azzera, migrazioni, permessi, utenti admin/pr/super4 `@vibra.local`
+  password `vibra`, dati sintetici) nel SQL Editor. Rieseguibile, ma cancella tutto: mai su dati veri.
 - Schema Supabase generato dalle entità (`scripts/gen_schema.py`), RLS testate (`scripts/test_db.sh`).
 - Import dati Base44→Supabase (`scripts/import_base44.py`), guida `docs/MIGRAZIONE.md`.
 - Strato di compatibilità web→nativo in `app/src/ui/`:

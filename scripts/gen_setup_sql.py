@@ -1,11 +1,21 @@
 # Crea supabase/setup_completo.sql: un unico file da incollare nel SQL Editor di un progetto
-# Supabase NUOVO (vuoto) = migrazioni + permessi API + dati di prova (supabase/seed_demo.sql).
+# Supabase di PROVA = azzeramento + migrazioni + permessi API + dati di prova (supabase/seed_demo.sql).
+# Rieseguibile: all'inizio CANCELLA lo schema public e gli utenti @vibra.local (mai su dati veri).
 # Uso: python3 scripts/gen_setup_sql.py
 import glob, os
 root = os.path.join(os.path.dirname(__file__), '..')
 parts = ['-- GENERATO da scripts/gen_setup_sql.py - non modificare a mano.\n'
-         '-- Da eseguire UNA volta nel SQL Editor di un progetto Supabase vuoto.\n'
-         'begin;\n']
+         '-- Per un progetto Supabase di PROVA: si può rieseguire, ma CANCELLA e ricrea tutti i dati.\n'
+         'begin;\n'
+         '\n-- ===== azzeramento =====\n'
+         "delete from auth.identities where user_id in (select id from auth.users where email like '%@vibra.local');\n"
+         "delete from auth.users where email like '%@vibra.local';\n"
+         'drop schema if exists public cascade;\n'
+         'create schema public;\n'
+         'grant usage, create on schema public to postgres, anon, authenticated, service_role;\n'
+         'alter default privileges in schema public grant all on tables to anon, authenticated, service_role;\n'
+         'alter default privileges in schema public grant all on functions to anon, authenticated, service_role;\n'
+         'alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;\n']
 for f in sorted(glob.glob(os.path.join(root, 'supabase/migrations/*.sql'))):
     parts.append(f'\n-- ===== {os.path.basename(f)} =====\n' + open(f).read())
 parts.append('''

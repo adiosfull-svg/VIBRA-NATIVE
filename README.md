@@ -24,7 +24,8 @@ Supabase indipendente. L'app web su Base44 resta com'è e serve solo da riferime
 scripts/local/dev_stack.sh            # --reset per ricreare il DB con i dati sintetici
 
 # 2. app
-cd app && cp .env.example .env && npm install
+cd app && npm install                 # senza .env usa il progetto Supabase predefinito;
+#                                       per lo stack locale crea .env come in .env.example
 npx expo start                        # Expo Go / dev build;  --web per il browser
 ```
 Utenti di prova: `admin@vibra.local`, `super4@vibra.local`, `pr@vibra.local`, password `vibra`.
