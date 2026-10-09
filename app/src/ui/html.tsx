@@ -6,6 +6,7 @@ import { Children, cloneElement, Fragment, isValidElement, useCallback, useConte
 import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
+import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, type ParentLayout, Text, TextClassContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
@@ -293,6 +294,9 @@ function ScrollBox({ axis, box, style, children, onScroll, ...props }: Omit<View
   );
 }
 
+const FIXED = /(^|\s)fixed(\s|$)/;
+const WEB_FIXED = { position: 'fixed' } as unknown as ViewStyle;
+
 // Breakpoint di Tailwind (min-width)
 const BREAKPOINT_PX: Record<string, number> = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 };
 const SHOWN_AT = /(?:^|\s)(sm|md|lg|xl|2xl):(block|flex|grid|inline-flex|inline-block|inline|table|contents)(?=\s|$)/g;
@@ -316,12 +320,20 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   const gradient = styleGradient ?? classGradient;
   const content = <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>{boxContent(children, grid, rest)}</FlexParentContext.Provider>;
   const min = useMinContentWidth(className, rnStyle, children, onLayout);
+  const inPortal = useContext(InPortalContext);
   // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
   // sul web lo nasconde il CSS, qui costerebbe come se fosse visibile.
   if (Platform.OS !== 'web' && hiddenAtWidth(rest, cssViewport.width)) return <View style={{ display: 'none' }} />;
+  // position: fixed (relativo allo schermo): portale alla radice (le View di RN-web creano contesti
+  // di sovrapposizione, z-50 non uscirebbe dalla pagina) e sul web anche position: fixed vero
+  const fixed = FIXED.test(rest);
+  if (fixed && !inPortal) {
+    return <PortalToRoot><Div className={className} style={style} onLayout={onLayout} {...all}>{children}</Div></PortalToRoot>;
+  }
+  const fixedStyle = fixed && Platform.OS === 'web' ? WEB_FIXED : null;
   const axis = scrollAxis(rest);
   if (axis) {
-    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle]) as Record<string, any>;
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, min.minStyle]) as Record<string, any>;
     return (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
         {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
@@ -329,7 +341,7 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
     );
   }
   return (
-    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle]}>
+    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, min.minStyle]}>
       {gradient ? <GradientFill gradient={gradient} /> : null}
       {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
     </View>

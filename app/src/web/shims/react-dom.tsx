@@ -1,11 +1,10 @@
 // createPortal(…, document.body) dell'app web → Portal nativo (@rn-primitives/portal), reso nel
 // PortalHost alla radice dell'app (_layout.tsx): stesso effetto "sopra a tutto" su web e telefono.
-import { Portal } from '@rn-primitives/portal';
-import { useId, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { PortalToRoot } from '../../ui/fixedPortal';
 
 function PortalShim({ children }: { children: ReactNode }) {
-  const name = useId();
-  return <Portal name={name}>{children}</Portal>;
+  return <PortalToRoot>{children}</PortalToRoot>;
 }
 
 export function createPortal(children: ReactNode, _container?: unknown, key?: string | null) {

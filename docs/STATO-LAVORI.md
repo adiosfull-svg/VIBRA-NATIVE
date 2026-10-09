@@ -128,6 +128,18 @@
     (es. "Carica dal dispositivo") ha la riga 8px più bassa (Btn non distingue `<button>` dai div cliccabili);
     colonne `sticky left-0` delle tabelle non bloccate.
 
+- **Mappa clienti (ClientMap) — FATTO**: stessa pagina Leaflet dell'originale (leaflet 1.9.4 +
+  markercluster 1.5.3 incorporati da `scripts/gen_leaflet.mjs` in `ui/map/leafletAssets.generated.ts`; codice di
+  buildMarkerIcon/cluster/ViewportTracker/MapGestureSync e stili in `ui/map/leafletHtml.ts`), mostrata in un
+  iframe sul web (`leafletMap.web.tsx`) e in una WebView sul telefono (`leafletMap.tsx`, react-native-webview);
+  messaggi: clienti inquadrati → MapBottomBar/legenda, nome nel popup → dettaglio. Il resto di ClientMap.jsx
+  è il codice originale convertito. Verificato sul web: identica (gruppi, segnaposti, popup, dettaglio, schermo
+  intero). Le tile OSM servono internet. Differenza nota: a schermo intero copre anche la barra in basso.
+- `fixed` come nel browser (`ui/fixedPortal.tsx`): i Div `fixed` vanno alla radice (PortalHost), relativi allo
+  schermo e sopra alla pagina; sul web anche position: fixed. Limite: i context della pagina non arrivano
+  nel portale (come già per createPortal).
+- Codemod: `export ... from` riscritti come gli import.
+
 ## In corso / prossimi passi
 1. **Da provare sul telefono** (Expo Go / build): selettori data/ora (Android: data poi ora per datetime-local,
    "Cancella" svuota; iOS: pannello in basso), scelta foto/file e caricamento su Base44 (quando si toglie la
@@ -137,7 +149,7 @@
    QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
    Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
    (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
-2. ClientMap (Leaflet) → react-native-maps (ora segnaposto). VibraSearch (pulsante Cerca) da portare.
+2. VibraSearch (pulsante Cerca) da portare.
 3. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
    Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
 4. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare

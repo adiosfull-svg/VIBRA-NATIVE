@@ -158,6 +158,18 @@ export function transform(code, originalPath = '') {
       return false;
     },
 
+    // export { x } from '...' / export * from '...': stessi percorsi degli import
+    visitExportNamedDeclaration(p) {
+      const src = p.node.source?.value;
+      if (src) { const next = rewriteImport(src); if (next !== src) p.node.source = b.stringLiteral(next); }
+      this.traverse(p);
+    },
+    visitExportAllDeclaration(p) {
+      const src = p.node.source?.value;
+      if (src) { const next = rewriteImport(src); if (next !== src) p.node.source = b.stringLiteral(next); }
+      return false;
+    },
+
     // import() dinamici (React.lazy)
     visitCallExpression(p) {
       const n = p.node;
