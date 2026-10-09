@@ -1,3 +1,5 @@
+// crypto.getRandomValues per lo SDK Base44 (uuid): deve essere il primo import
+import 'react-native-get-random-values';
 import '../../global.css';
 import {
   Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
@@ -30,6 +32,7 @@ function RootNavigator() {
       <Stack.Protected guard={!user}>
         <Stack.Screen name="login" />
       </Stack.Protected>
+      <Stack.Screen name="auth" />
     </Stack>
   );
 }

@@ -1,69 +1,13 @@
-// Oggetto `base44` con la stessa interfaccia dello SDK usato dall'app web, sopra Supabase:
-// il codice portato può chiamare base44.entities.X.filter(...), base44.functions.invoke(...),
-// base44.integrations.Core.UploadFile(...) esattamente come nell'originale.
-import { File as ExpoFile } from 'expo-file-system';
-import { entities } from './entities';
-import { supabase } from './supabase';
+// Oggetto `base44` usato da tutto il codice portato (base44.entities.X.filter(...),
+// base44.functions.invoke(...), base44.integrations.Core...), identico all'app web originale.
+//  - default: il vero backend Base44 (base44Remote.ts), in sola lettura finché non si toglie la modalità prova;
+//  - EXPO_PUBLIC_BACKEND=local: stack di prova con dati sintetici (localBackend.ts), per i confronti grafici.
+import { BACKEND } from './backend';
 
-async function me() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw Object.assign(new Error('Authentication required'), { status: 401 });
-  const { data, error } = await supabase.from('profiles')
-    .select('id, email, full_name, role, promoter_id').eq('id', session.user.id).single();
-  if (error) throw error;
-  return data;
-}
+// Tipo: quello dell'adattatore di prova, che ricalca l'interfaccia dello SDK usata dall'app.
+type Base44 = typeof import('./localBackend').localBase44;
 
-/** Funzioni backend: Supabase Edge Functions con lo stesso nome delle funzioni Base44. */
-async function invoke(name: string, payload?: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke(name, { body: payload ?? {} });
-  if (error) throw error;
-  return { data };
-}
-
-type UploadArg = { file: { uri: string; name?: string; type?: string } | Blob };
-const BUCKET_PUBLIC = 'public-files';
-const BUCKET_PRIVATE = 'private-files';
-
-async function upload(bucket: string, { file }: UploadArg) {
-  const isBlob = typeof Blob !== 'undefined' && file instanceof Blob;
-  const meta = isBlob ? { name: 'file', type: (file as Blob).type } : (file as { uri: string; name?: string; type?: string });
-  const ext = (meta.name?.split('.').pop() || meta.type?.split('/').pop() || 'bin').toLowerCase();
-  const path = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${ext}`;
-  const body = isBlob ? (file as Blob) : await new ExpoFile((file as { uri: string }).uri).arrayBuffer();
-  const { error } = await supabase.storage.from(bucket).upload(path, body, { contentType: meta.type || undefined });
-  if (error) throw error;
-  return path;
-}
-
-export const base44 = {
-  entities,
-  auth: {
-    me,
-    isAuthenticated: async () => !!(await supabase.auth.getSession()).data.session,
-    logout: async (_redirect?: string) => { await supabase.auth.signOut(); },
-    redirectToLogin: (_from?: string) => { void supabase.auth.signOut(); },
-    updateMe: async (values: Record<string, unknown>) => entities.User.update((await me()).id, values),
-  },
-  functions: { invoke },
-  integrations: {
-    Core: {
-      UploadFile: async (arg: UploadArg) => {
-        const path = await upload(BUCKET_PUBLIC, arg);
-        return { file_url: supabase.storage.from(BUCKET_PUBLIC).getPublicUrl(path).data.publicUrl };
-      },
-      UploadPublicFile: async (arg: UploadArg) => {
-        const path = await upload(BUCKET_PUBLIC, arg);
-        return { file_url: supabase.storage.from(BUCKET_PUBLIC).getPublicUrl(path).data.publicUrl };
-      },
-      UploadPrivateFile: async (arg: UploadArg) => ({ file_uri: await upload(BUCKET_PRIVATE, arg) }),
-      CreateFileSignedUrl: async ({ file_uri, expires_in = 3600 }: { file_uri: string; expires_in?: number }) => {
-        const { data, error } = await supabase.storage.from(BUCKET_PRIVATE).createSignedUrl(file_uri, expires_in);
-        if (error) throw error;
-        return { signed_url: data.signedUrl };
-      },
-      /** InvokeLLM → Edge Function "invokeLLM" (Claude), stessi parametri dell'SDK. */
-      InvokeLLM: async (params: Record<string, unknown>) => (await invoke('invokeLLM', params)).data,
-    },
-  },
-};
+/* eslint-disable @typescript-eslint/no-require-imports */
+export const base44: Base44 = BACKEND === 'local'
+  ? require('./localBackend').localBase44
+  : require('./base44Remote').remoteBase44;

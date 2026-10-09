@@ -1,22 +1,26 @@
+// Utente connesso, come AuthContext dell'app web: user = base44.auth.me() (con role e promoter_id).
+// Backend vero: login con Google su Base44 (authRemote). Stack di prova: email/password (authLocal).
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Session } from '@supabase/supabase-js';
-import { supabase } from './supabase';
+import { BACKEND } from './backend';
 
 export type Role = 'admin' | 'super4' | 'capogruppo' | 'pr';
 
-/** Stessa forma dell'utente restituito da base44.auth.me() nell'app originale. */
+/** Utente restituito da base44.auth.me() (qui i campi usati dall'app; l'oggetto ha anche gli altri). */
 export type AppUser = {
   id: string;
   email: string;
   full_name: string;
   role: Role;
   promoter_id: string | null;
+  [key: string]: unknown;
 };
 
-type AuthState = {
-  session: Session | null;
+export type AuthState = {
   user: AppUser | null;
   isLoadingAuth: boolean;
+  /** Accesso con Google (backend Base44). */
+  signInWithGoogle: () => Promise<boolean>;
+  /** Accesso email/password (solo stack di prova locale). */
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   /** Alias dell'app web (AuthContext.logout) */
@@ -26,66 +30,54 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
-async function loadProfile(session: Session | null): Promise<AppUser | null> {
-  if (!session) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, email, full_name, role, promoter_id')
-    .eq('id', session.user.id)
-    .single();
-  if (error) throw new Error(`Profilo non trovato: ${error.message}`);
-  return data as AppUser;
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+function useRemoteAuth(): AuthState {
+  /* eslint-disable @typescript-eslint/no-require-imports */
+  const remote = require('./base44Remote') as typeof import('./base44Remote');
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoadingAuth, setLoading] = useState(true);
 
-  const apply = useCallback(async (s: Session | null) => {
-    setSession(s);
+  const loadUser = useCallback(async () => {
     try {
-      setUser(await loadProfile(s));
-    } catch {
+      setUser((await remote.remoteBase44.auth.me()) as unknown as AppUser);
+    } catch (e) {
+      const status = (e as { status?: number; response?: { status?: number } })?.status ?? (e as any)?.response?.status;
+      // token scaduto o non valido: si torna al login
+      if (status === 401 || status === 403) await remote.signOut();
       setUser(null);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [remote]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      // TOKEN_REFRESHED non cambia il profilo: evitiamo una query inutile.
-      if (event === 'TOKEN_REFRESHED') setSession(s);
-      // La callback non deve attendere altre chiamate Supabase (rischio deadlock del lock auth).
-      else setTimeout(() => apply(s), 0);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [apply]);
+    (async () => {
+      if (await remote.restoreSession()) await loadUser();
+      setLoading(false);
+    })();
+    return remote.onSignedOut(() => setUser(null));
+  }, [remote, loadUser]);
 
-  const value = useMemo<AuthState>(
-    () => ({
-      session,
-      user,
-      isLoadingAuth,
-      async signIn(email, password) {
-        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Email o password errati' : error.message);
-      },
-      async signOut() {
-        await supabase.auth.signOut();
-      },
-      async logout() {
-        await supabase.auth.signOut();
-      },
-      async refreshUser() {
-        setUser(await loadProfile(session));
-      },
-    }),
-    [session, user, isLoadingAuth],
-  );
+  return useMemo<AuthState>(() => ({
+    user,
+    isLoadingAuth,
+    async signInWithGoogle() {
+      const ok = await remote.signInWithGoogle();
+      if (ok) await loadUser();
+      return ok;
+    },
+    async signIn() {
+      throw new Error('Con Base44 si accede con Google');
+    },
+    signOut: remote.signOut,
+    logout: remote.signOut,
+    refreshUser: loadUser,
+  }), [user, isLoadingAuth, remote, loadUser]);
+}
 
+const useAuthState: () => AuthState = BACKEND === 'local'
+  ? (require('./authLocal') as typeof import('./authLocal')).useLocalAuth
+  : useRemoteAuth;
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const value = useAuthState();
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

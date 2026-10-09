@@ -3,10 +3,11 @@ import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, Button } from '../components/ui';
 import { useAuth } from '../lib/auth';
+import { BACKEND } from '../lib/backend';
 import { colors, radius } from '../theme';
 
 export default function Login() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +23,34 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function google() {
+    setError(null);
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Backend Base44: si entra con Google sulla pagina di accesso di Base44, come nell'app web.
+  if (BACKEND === 'base44') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={s.wrap}>
+          <AppText size={34} weight="800" style={s.logo}>VIBRA</AppText>
+          <AppText muted style={{ textAlign: 'center', marginBottom: 32 }}>Accedi con il tuo account</AppText>
+          <View style={{ gap: 12 }}>
+            {error ? <AppText style={{ color: colors.destructive }} accessibilityRole="alert">{error}</AppText> : null}
+            <Button title="Continua con Google" onPress={google} loading={loading} />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
