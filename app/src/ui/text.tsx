@@ -73,9 +73,12 @@ const DISPLAY_FAMILY: Record<string, string> = {
   'font-bold': 'PlayfairDisplay_700Bold',
 };
 
+// pila `font-mono` di Tailwind, come l'originale (sul web `monospace` da solo sceglie un altro font)
+const MONO_WEB = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+
 export function fontFamilyFor(classes: string): string | undefined {
   const list = classes.split(/\s+/);
-  if (list.includes('font-mono')) return Platform.select({ ios: 'Menlo', default: 'monospace' });
+  if (list.includes('font-mono')) return Platform.select({ ios: 'Menlo', web: MONO_WEB, default: 'monospace' });
   let weight = 'font-normal';
   for (const c of list) if (WEIGHT_FAMILY[c]) weight = c; // vince l'ultima, come in CSS
   if (list.includes('font-display')) return DISPLAY_FAMILY[weight] ?? DISPLAY_FAMILY['font-normal'];
