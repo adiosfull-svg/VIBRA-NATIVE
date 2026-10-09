@@ -13,6 +13,12 @@ import { toast } from '../ui/use-toast';
 export const APP_ID = '69de4f1f7f53d9f187d01392';
 export const SERVER_URL = 'https://base44.app';
 const TOKEN_KEY = 'base44_access_token';
+/**
+ * Pagina ponte del login sul telefono (src/pages/AccessoApp.jsx dell'app Base44): Base44 rimanda
+ * solo agli indirizzi web dell'app, non a vibra:// o exp://; la pagina passa il token all'app.
+ * Per ora sull'anteprima (non pubblicata); dopo la pubblicazione: https://vibrayourparty.com.
+ */
+const LOGIN_BRIDGE_URL = process.env.EXPO_PUBLIC_BASE44_LOGIN_BRIDGE ?? 'https://preview--club-track-live.base44.app/accesso-app';
 /** Modalità prova (default): l'app legge i dati veri ma non scrive. EXPO_PUBLIC_BASE44_READONLY=0 la toglie. */
 export const READ_ONLY = process.env.EXPO_PUBLIC_BASE44_READONLY !== '0';
 
@@ -54,7 +60,7 @@ export async function restoreSession(): Promise<boolean> {
 
 /**
  * Accesso con Google sulla pagina di Base44. Sul web: redirect a pagina intera come l'originale
- * (al ritorno lo SDK legge ?access_token). Sul telefono: browser interno che torna all'app.
+ * (al ritorno lo SDK legge ?access_token). Sul telefono: browser interno → pagina ponte → app.
  * Restituisce true se il token è stato ottenuto.
  */
 export async function signInWithGoogle(): Promise<boolean> {
@@ -62,8 +68,10 @@ export async function signInWithGoogle(): Promise<boolean> {
     sdk.auth.loginWithProvider('google', '/');
     return false;
   }
+  // ritorno all'app: vibra://auth (app installata) o exp://<ip del PC>:8081/--/auth (Expo Go, stessa rete)
   const returnUrl = Linking.createURL('auth');
-  const url = `${SERVER_URL}/api/apps/auth/login?app_id=${APP_ID}&from_url=${encodeURIComponent(returnUrl)}`;
+  const bridge = `${LOGIN_BRIDGE_URL}?return=${encodeURIComponent(returnUrl)}`;
+  const url = `${SERVER_URL}/api/apps/auth/login?app_id=${APP_ID}&from_url=${encodeURIComponent(bridge)}`;
   const result = await WebBrowser.openAuthSessionAsync(url, returnUrl);
   if (result.type !== 'success') return false;
   const token = Linking.parse(result.url).queryParams?.access_token;

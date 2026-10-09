@@ -145,7 +145,16 @@
 5. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
 6. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
 
+- **Login Google con Base44 vero**:
+  - PC: FUNZIONA (verificato dall'utente). Base44 rimanda a `<sito>/api/apps/auth/final-callback?access_token=`,
+    gestito da `app/src/app/api/apps/auth/final-callback.tsx`.
+  - Telefono: Base44 rifiuta exp:// e vibra:// ("Invalid redirect domain"; accetta solo localhost, i domini
+    *.base44.app dell'app e vibrayourparty.com). Con l'ok dell'utente aggiunta all'app Base44 la pagina ponte
+    `src/pages/AccessoApp.jsx` (route `/accesso-app` in `App.jsx`, fuori da login/layout; checkpoint
+    "Pagina ponte /accesso-app...", NON pubblicata): legge il token e lo rimanda a `?return=` (solo vibra:// o
+    exp:// su IP di rete locale). L'app la usa da `LOGIN_BRIDGE_URL` in `base44Remote.ts` (anteprima
+    `preview--club-track-live.base44.app`; dopo la pubblicazione passare a `https://vibrayourparty.com/accesso-app`,
+    o `EXPO_PUBLIC_BASE44_LOGIN_BRIDGE`). Copia locale del codice originale aggiornata con gli stessi 2 file.
+
 ## In attesa dell'utente
-- Prova del login Google con Base44 vero: sul PC (`npx expo start --web`, http://localhost:8081) e sul telefono
-  (Expo Go). Se Base44 rifiuta il ritorno (`from_url` localhost / exp:// / vibra://): pagina ponte https che
-  rimbalza `access_token` all'app.
+- Prova del login sul telefono con la pagina ponte (Expo Go sulla stessa Wi-Fi del PC, senza --tunnel).
