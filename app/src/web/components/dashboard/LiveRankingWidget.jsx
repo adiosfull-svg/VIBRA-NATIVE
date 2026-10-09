@@ -94,14 +94,14 @@ export default function LiveRankingWidget({ promoters, attendances = [], events 
       <Div className="flex gap-1 mb-4 p-1 rounded-xl bg-secondary/30">
         {TABS.map(t => (
           <Btn
+            button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex-1 text-[11px] font-medium py-1.5 rounded-lg transition-all duration-200 ${
               tab === t.id
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
+            }`}>
             {t.label}
           </Btn>
         ))}

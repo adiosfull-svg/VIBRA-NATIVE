@@ -193,7 +193,10 @@ export default function ClientCompareDialog({ clients, statsMap, badgesMap, allC
               <P className="text-[10px] text-muted-foreground">{clients.length} selezionati · 🏆 = migliore</P>
             </Div>
           </Div>
-          <Btn onClick={onClose} className="text-muted-foreground hover:text-foreground shrink-0 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors">
+          <Btn
+            button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground shrink-0 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors">
             <X className="w-4 h-4" />
           </Btn>
         </Div>

@@ -6,7 +6,7 @@ import { createContext, useContext } from 'react';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 import { cssInterop } from 'nativewind';
 import { cn } from './cn';
-import { TextClassContext } from './text';
+import { TextClassContext, TextStyleContext } from './text';
 
 export type IconNode = [string, Record<string, string>][];
 export type IconProps = {
@@ -58,7 +58,11 @@ export const TEXT_COLOR = /^(?:[a-z0-9]+:)*text-(?!(?:xs|sm|base|lg|xl|[2-9]xl|l
 export function makeIcon(name: string, node: IconNode) {
   function Icon({ className, size, color, fill, strokeWidth, style }: IconProps) {
     const inheritedText = useContext(TextClassContext);
+    const inheritedStyleColor = useContext(TextStyleContext).color as string | undefined;
     const iconDefaults = useContext(IconClassContext);
+    // currentColor = colore del testo: anche quello dato con style dal contenitore (salvo classe propria)
+    const ownColor = (className ?? '').split(/\s+/).some((c) => TEXT_COLOR.test(c));
+    const effectiveColor = color ?? (!ownColor ? inheritedStyleColor : undefined);
     const inheritedColor = inheritedText.split(/\s+/).filter((c) => TEXT_COLOR.test(c)).join(' ');
     // size esplicito (prop, come in lucide) vince sulle classi di dimensione di default
     const sizeClasses = size != null ? '' : cn('w-6 h-6', iconDefaults);
@@ -67,7 +71,7 @@ export function makeIcon(name: string, node: IconNode) {
         node={node}
         className={cn(sizeClasses, 'text-foreground', inheritedColor, className)}
         {...(size != null ? { width: size, height: size } : null)}
-        {...(color ? { color } : null)}
+        {...(effectiveColor ? { color: effectiveColor } : null)}
         {...(fill ? { fill } : null)}
         strokeWidth={strokeWidth ?? 2}
         style={style}

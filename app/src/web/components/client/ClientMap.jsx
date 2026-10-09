@@ -18,13 +18,13 @@ function ZoneLegend({ visibleZones }) {
   return (
     <Div className="relative">
       <Btn
+        button
         onClick={() => setOpen(o => !o)}
         className={`flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
           open
             ? 'border-primary/40 bg-primary/10 text-primary'
             : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
-        }`}
-      >
+        }`}>
         <Layers className="w-3.5 h-3.5" />
         Zone in vista ({visibleZones.length})
       </Btn>
@@ -32,7 +32,10 @@ function ZoneLegend({ visibleZones }) {
         <Div className="absolute bottom-full left-0 mb-2 w-52 rounded-xl border border-border bg-popover shadow-xl p-3 z-40">
           <Div className="flex items-center justify-between mb-2">
             <Span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Zone inquadrate</Span>
-            <Btn onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+            <Btn
+              button
+              onClick={() => setOpen(false)}
+              className="text-muted-foreground hover:text-foreground">
               <X className="w-3 h-3" />
             </Btn>
           </Div>
@@ -91,10 +94,10 @@ function ZoneRanking({ clientsWithLocation, onZoneClick }) {
                 const drivers = zone.clients.filter(c => c.is_driver).length;
                 return (
                   <Btn
+                    button
                     key={key}
                     onClick={() => onZoneClick(key)}
-                    className="w-full flex items-center gap-2 px-2 py-1 rounded text-left hover:bg-secondary/30 transition-colors"
-                  >
+                    className="w-full flex items-center gap-2 px-2 py-1 rounded text-left hover:bg-secondary/30 transition-colors">
                     <Span className="text-[10px] text-muted-foreground truncate flex-1">{zone.label}</Span>
                     {drivers > 0 && (
                       <Span className="text-[9px] text-blue-400 font-semibold flex items-center gap-0.5 shrink-0">
@@ -282,17 +285,17 @@ export default function ClientMap({ clients, onClientClick, clientStatsMap = {},
             </Div>
           </Div>
           <Btn
+            button
             onClick={() => setShowLeadersOnly(!showLeadersOnly)}
             className={`p-2 rounded-lg border transition-all ${showLeadersOnly ? 'border-yellow-400/50 bg-yellow-400/10 text-yellow-400' : 'border-border hover:bg-secondary/40 text-muted-foreground'}`}
-            accessibilityLabel="Filtra solo Leader"
-          >
+            accessibilityLabel="Filtra solo Leader">
             <Star className="w-4 h-4" />
           </Btn>
           <Btn
+            button
             onClick={() => setFullscreen(f => !f)}
             className="p-2 rounded-lg border border-border hover:bg-secondary/40 transition-all"
-            accessibilityLabel={fullscreen ? 'Esci da schermo intero' : 'Schermo intero'}
-          >
+            accessibilityLabel={fullscreen ? 'Esci da schermo intero' : 'Schermo intero'}>
             {fullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </Btn>
         </Div>
@@ -314,7 +317,10 @@ export default function ClientMap({ clients, onClientClick, clientStatsMap = {},
           </Div>
           <Div className="lg:w-64 space-y-3 overflow-y-auto max-h-full">
             {focusZone && (
-              <Btn onClick={() => setFocusZone(null)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary hover:bg-primary/20 transition-colors">
+              <Btn
+                button
+                onClick={() => setFocusZone(null)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary hover:bg-primary/20 transition-colors">
                 <Filter className="w-3 h-3" /> Mostra tutta la Campania
               </Btn>
             )}
@@ -347,7 +353,10 @@ export default function ClientMap({ clients, onClientClick, clientStatsMap = {},
           </Div>
           <Div className="lg:w-64 space-y-3 overflow-y-auto" style={{ maxHeight: 420 }}>
             {focusZone && (
-              <Btn onClick={() => setFocusZone(null)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary hover:bg-primary/20 transition-colors">
+              <Btn
+                button
+                onClick={() => setFocusZone(null)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs text-primary hover:bg-primary/20 transition-colors">
                 <Filter className="w-3 h-3" /> Mostra tutta la Campania
               </Btn>
             )}

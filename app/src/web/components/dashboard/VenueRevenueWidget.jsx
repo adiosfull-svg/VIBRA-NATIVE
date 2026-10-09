@@ -86,14 +86,14 @@ export default function VenueRevenueWidget({ events, delay = 0 }) {
       <Div className="flex gap-1 mb-4 p-1 rounded-xl bg-secondary/30">
         {['alltime', 'month'].map(t => (
           <Btn
+            button
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 text-[11px] font-medium py-1.5 rounded-lg transition-all duration-200 ${
               tab === t
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
+            }`}>
             {t === 'alltime' ? 'Sempre' : 'Mese'}
           </Btn>
         ))}

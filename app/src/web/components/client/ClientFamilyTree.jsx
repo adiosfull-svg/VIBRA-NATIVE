@@ -238,14 +238,14 @@ function TreeNode({
             style={{ transform: `scale(${nodeScale})`, ...(touchAction ? { touchAction } : {}) }}
           >
             <Btn
+              button
               onClick={(e) => { e.stopPropagation(); onFocus(isFocused ? null : client.id); }}
               className={`absolute top-1.5 right-1.5 p-1 rounded-full transition-all duration-200 z-10
                 ${isFocused
                   ? 'bg-primary text-primary-foreground shadow-md opacity-100'
                   : 'bg-secondary/70 text-muted-foreground opacity-0 group-hover:opacity-100 hover:!opacity-100 hover:text-primary hover:bg-secondary'
                 }`}
-              accessibilityLabel={isFocused ? 'Togli focus' : 'Metti a fuoco'}
-            >
+              accessibilityLabel={isFocused ? 'Togli focus' : 'Metti a fuoco'}>
               {isFocused ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
             </Btn>
 
@@ -286,9 +286,9 @@ function TreeNode({
 
         {hasChildren && (
           <Btn
+            button
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            className={`rounded-full bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all ${compact ? 'mt-0.5 p-0.5' : 'mt-1.5 p-1'}`}
-          >
+            className={`rounded-full bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all ${compact ? 'mt-0.5 p-0.5' : 'mt-1.5 p-1'}`}>
             {expanded ? <ChevronDown className={compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} /> : <ChevronRight className={compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} />}
           </Btn>
         )}
@@ -631,7 +631,10 @@ export default function ClientFamilyTree({ clients, attendances, events, onClien
             <Eye className="w-3 h-3 text-primary" />
             <Span className="text-muted-foreground">Focus:</Span>
             <Span className="font-semibold text-primary">{tree.byId[focusedClientId]?.name || '—'}</Span>
-            <Btn onClick={() => setFocusedClientId(null)} className="ml-1 p-0.5 rounded-full hover:bg-primary/20 transition-all">
+            <Btn
+              button
+              onClick={() => setFocusedClientId(null)}
+              className="ml-1 p-0.5 rounded-full hover:bg-primary/20 transition-all">
               <X className="w-3 h-3 text-primary" />
             </Btn>
           </motion.div>
@@ -641,14 +644,23 @@ export default function ClientFamilyTree({ clients, attendances, events, onClien
       {/* Zoom controls sticky — sotto il menu tab di Clienti (tab bar alto ~5.5rem con pt-10) */}
       <Div ref={zoomBarRef} className="sticky top-[5.5rem] z-20 py-1.5 -mx-4 px-4 border-b border-border flex items-center gap-1.5 justify-center" style={stickyGlassStyle(zoomStuck)}>
         <Span className="text-[9px] text-muted-foreground">Zoom</Span>
-        <Btn onClick={zoomOut} className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
+        <Btn
+          button
+          onClick={zoomOut}
+          className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
           <ZoomOut className="w-3.5 h-3.5" />
         </Btn>
         <Span className="text-[10px] font-semibold text-foreground w-9 text-center">{Math.round(displayZoom * 100)}%</Span>
-        <Btn onClick={zoomIn} className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
+        <Btn
+          button
+          onClick={zoomIn}
+          className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
           <ZoomIn className="w-3.5 h-3.5" />
         </Btn>
-        <Btn onClick={zoomReset} className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary ml-1">
+        <Btn
+          button
+          onClick={zoomReset}
+          className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary ml-1">
           <RotateCcw className="w-3 h-3" />
         </Btn>
       </Div>

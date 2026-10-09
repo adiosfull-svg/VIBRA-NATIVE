@@ -148,12 +148,12 @@ export default function ClientGroupsView() {
                 const extraCount = memberCount - memberNames.length;
                 return (
                   <Btn
+                    button
                     key={g.id}
                     onClick={() => setSelectedGroupId(g.id)}
                     className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all ${
                       isActive ? 'border-primary/40 bg-primary/10 shadow-sm shadow-primary/10' : 'border-white/10 bg-gradient-to-br from-card to-secondary/10 hover:from-secondary/20'
-                    }`}
-                  >
+                    }`}>
                     <Div className="flex items-center justify-between gap-2">
                       <P className="text-sm font-semibold truncate">{g.name}</P>
                       <Span className="text-[10px] font-bold text-violet-300 bg-violet-500/15 px-1.5 py-0.5 rounded-full shrink-0">{memberCount}</Span>
@@ -225,11 +225,11 @@ export default function ClientGroupsView() {
               return (
                 <Div key={g.id}>
                   <Btn
+                    button
                     onClick={() => setSelectedGroupId(isExpanded ? null : g.id)}
                     className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all ${
                       isExpanded ? 'border-primary/40 bg-primary/10 rounded-b-none shadow-sm shadow-primary/10' : 'border-white/10 bg-gradient-to-br from-card to-secondary/10 hover:from-secondary/20'
-                    }`}
-                  >
+                    }`}>
                     <Div className="flex items-center justify-between gap-2">
                       <P className="text-sm font-semibold truncate">{g.name}</P>
                       <Span className="text-[10px] font-bold text-violet-300 bg-violet-500/15 px-1.5 py-0.5 rounded-full shrink-0">{memberCount}</Span>

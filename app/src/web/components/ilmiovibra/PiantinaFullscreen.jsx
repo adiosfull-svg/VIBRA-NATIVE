@@ -288,14 +288,24 @@ export default function PiantinaFullscreen({ src, label, onClose, disableBackClo
       <Div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-white/10 shrink-0">
         <Span className="text-white text-sm font-semibold truncate">{label}</Span>
         <Div className="flex items-center gap-2">
-          <Btn onClick={() => zoomBy(0.5)} className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20">
+          <Btn
+            button
+            onClick={() => zoomBy(0.5)}
+            className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20">
             <ZoomIn className="w-4 h-4" />
           </Btn>
-          <Btn onClick={() => zoomBy(-0.5)} className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20">
+          <Btn
+            button
+            onClick={() => zoomBy(-0.5)}
+            className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20">
             <ZoomOut className="w-4 h-4" />
           </Btn>
           <Div className="relative">
-            <Btn onClick={handleCopy} className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20" accessibilityLabel="Copia">
+            <Btn
+              button
+              onClick={handleCopy}
+              className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20"
+              accessibilityLabel="Copia">
               <Copy className="w-4 h-4" />
             </Btn>
             {copied && (
@@ -305,16 +315,24 @@ export default function PiantinaFullscreen({ src, label, onClose, disableBackClo
             )}
           </Div>
           <Btn
+            button
             onClick={handleShare}
             className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20"
             accessibilityLabel="Condividi">
             <Share2 className="w-4 h-4" />
           </Btn>
-          <Btn onClick={handleDownload} className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20" accessibilityLabel="Scarica">
+          <Btn
+            button
+            onClick={handleDownload}
+            className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20"
+            accessibilityLabel="Scarica">
             <Download className="w-4 h-4" />
           </Btn>
           {/* X: chiude SOLO questo popup (onClose), non il genitore */}
-          <Btn onClick={onClose} className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20">
+          <Btn
+            button
+            onClick={onClose}
+            className="p-2 rounded-lg bg-white/10 text-white active:bg-white/20">
             <X className="w-4 h-4" />
           </Btn>
         </Div>

@@ -97,8 +97,16 @@ export default function QuickContactEdit({ client, onSaved }) {
             className="w-[105px] h-6 text-[10px] px-2 rounded-full border border-primary bg-transparent text-foreground outline-none"
             placeholder="+39..."
             onKeyDown={handleKeyDown} />
-          <Btn onClick={saveEdit} className="p-0.5 rounded text-emerald-400 hover:bg-emerald-400/10" accessibilityLabel="Salva"><Check className="w-3 h-3" /></Btn>
-          <Btn onClick={() => setEditingField(null)} className="p-0.5 rounded text-muted-foreground hover:text-foreground" accessibilityLabel="Annulla"><X className="w-3 h-3" /></Btn>
+          <Btn
+            button
+            onClick={saveEdit}
+            className="p-0.5 rounded text-emerald-400 hover:bg-emerald-400/10"
+            accessibilityLabel="Salva"><Check className="w-3 h-3" /></Btn>
+          <Btn
+            button
+            onClick={() => setEditingField(null)}
+            className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+            accessibilityLabel="Annulla"><X className="w-3 h-3" /></Btn>
         </Div>
       ) : (
         <Div className="flex items-center rounded-full overflow-hidden shrink-0 bg-emerald-500/10">
@@ -115,10 +123,10 @@ export default function QuickContactEdit({ client, onSaved }) {
             </A>
           )}
           <Btn
+            button
             onClick={() => startEdit('phone', displayPhone)}
             className="flex items-center gap-1 px-2 py-1 hover:bg-emerald-500/60 transition-colors"
-            accessibilityLabel="Clicca per modificare il telefono"
-          >
+            accessibilityLabel="Clicca per modificare il telefono">
             {displayPhone ? (
               <Span className="text-[10px] text-emerald-400/90">{displayPhone}</Span>
             ) : (
@@ -145,8 +153,16 @@ export default function QuickContactEdit({ client, onSaved }) {
             className="w-[100px] h-6 text-[10px] px-2 rounded-full bg-transparent text-pink-400 outline-none"
             placeholder="@handle"
             onKeyDown={handleKeyDown} />
-          <Btn onClick={saveEdit} className="p-0.5 rounded text-emerald-400 hover:bg-emerald-400/10" accessibilityLabel="Salva"><Check className="w-3 h-3" /></Btn>
-          <Btn onClick={() => setEditingField(null)} className="p-0.5 rounded text-muted-foreground hover:text-foreground" accessibilityLabel="Annulla"><X className="w-3 h-3" /></Btn>
+          <Btn
+            button
+            onClick={saveEdit}
+            className="p-0.5 rounded text-emerald-400 hover:bg-emerald-400/10"
+            accessibilityLabel="Salva"><Check className="w-3 h-3" /></Btn>
+          <Btn
+            button
+            onClick={() => setEditingField(null)}
+            className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+            accessibilityLabel="Annulla"><X className="w-3 h-3" /></Btn>
         </Div>
       ) : (
         <Div className="flex items-center rounded-full overflow-hidden shrink-0 bg-pink-500/10">
@@ -163,10 +179,10 @@ export default function QuickContactEdit({ client, onSaved }) {
             </A>
           )}
           <Btn
+            button
             onClick={() => startEdit('ig', displayIg)}
             className="flex items-center gap-1 px-2 py-1 hover:bg-pink-500/60 transition-colors"
-            accessibilityLabel="Clicca per modificare Instagram"
-          >
+            accessibilityLabel="Clicca per modificare Instagram">
             {displayIg ? (
               <Span className="text-[10px] text-pink-400/90">{displayIg}</Span>
             ) : (

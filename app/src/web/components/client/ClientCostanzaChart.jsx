@@ -193,17 +193,17 @@ export default function ClientCostanzaChart({ clients, attendances, events, prom
           <Div className="flex items-center gap-1 flex-wrap">
             {[10, 15, 25].map(n => (
               <Btn
+                button
                 key={n}
                 onClick={() => { setTopN(n); setShowAll(false); }}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all ${!showAll && topN === n ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
-              >
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all ${!showAll && topN === n ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}>
                 Top {n}
               </Btn>
             ))}
             <Btn
+              button
               onClick={() => setShowAll(true)}
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all ${showAll ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
-            >
+              className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all ${showAll ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}>
               Tutti
             </Btn>
           </Div>

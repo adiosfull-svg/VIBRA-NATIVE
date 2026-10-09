@@ -25,6 +25,7 @@ export default function BulkCreatedClientsList({ clients, allClients = [], atten
       <Div className="space-y-1.5">
         {clients.map(c => (
           <Btn
+            button
             key={c.id}
             onClick={() => setDetailClient(c)}
             className="w-full flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 hover:bg-emerald-500/12 hover:border-emerald-500/50 px-3 py-2 text-left transition-colors">

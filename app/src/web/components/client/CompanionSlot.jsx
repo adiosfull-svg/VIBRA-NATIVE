@@ -88,6 +88,7 @@ export default function CompanionSlot({ slot, clients, existingClientIds, onChan
           />
         </Div>
         <Btn
+          button
           onClick={handleClear}
           className="text-muted-foreground hover:text-destructive shrink-0">
           <X className="w-3 h-3" />
@@ -112,6 +113,7 @@ export default function CompanionSlot({ slot, clients, existingClientIds, onChan
         <Div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-xl max-h-32 overflow-y-auto p-1 space-y-0.5">
           {filteredClients.map(c => (
             <Btn
+              button
               key={c.id}
               onClick={() => handleSelectClient(c)}
               className="w-full flex items-center gap-2 text-left text-xs px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
@@ -122,6 +124,7 @@ export default function CompanionSlot({ slot, clients, existingClientIds, onChan
             </Btn>
           ))}
           <Btn
+            button
             onClick={handleCreateNew}
             className="w-full flex items-center gap-2 text-left text-xs px-2 py-1.5 rounded-lg hover:bg-violet-500/10 text-violet-300 transition-colors">
             <UserPlus className="w-3 h-3 shrink-0" />

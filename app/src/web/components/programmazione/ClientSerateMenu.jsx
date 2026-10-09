@@ -217,6 +217,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
                 <P className="text-xs text-muted-foreground text-center py-6">Nessun cliente trovato</P>
               ) : candidates.map(c => (
                 <Btn
+                  button
                   key={c.id}
                   onClick={() => { setSource(c); setSelected(new Set()); }}
                   className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] hover:bg-secondary/40 text-left transition-colors">
@@ -230,6 +231,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
           <Div className="space-y-3">
             <Div className="flex items-center justify-between gap-2">
               <Btn
+                button
                 onClick={() => { setSource(null); setSelected(new Set()); }}
                 disabled={saving}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
@@ -237,6 +239,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
               </Btn>
               {selectableIds.length > 0 && (
                 <Btn
+                  button
                   onClick={toggleAll}
                   disabled={saving}
                   className="text-xs font-medium text-violet-300 hover:text-violet-200">
@@ -262,6 +265,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
                 const on = selected.has(att.id);
                 return (
                   <Btn
+                    button
                     key={att.id}
                     disabled={dup || saving}
                     onClick={() => toggle(att.id)}
@@ -282,6 +286,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
             </Div>
 
             <Btn
+              button
               onClick={handleCopy}
               disabled={selected.size === 0 || saving}
               className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-violet-500/90 text-white hover:bg-violet-500 disabled:opacity-40 transition-colors">
@@ -1001,7 +1006,10 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
         <P className="text-[11px] font-semibold text-foreground truncate">
           {menu.client.name ? `Aggiungi ${menu.client.name}` : 'Aggiungi a serata'}
         </P>
-        <Btn onClick={closeMenu} className="text-muted-foreground hover:text-foreground shrink-0">
+        <Btn
+          button
+          onClick={closeMenu}
+          className="text-muted-foreground hover:text-foreground shrink-0">
           <X className="w-3.5 h-3.5" />
         </Btn>
       </Div>
@@ -1017,6 +1025,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
               className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary/60 transition-colors"
             >
               <Btn
+                button
                 onClick={guarded(() => {
                   const root = webDocument.querySelector('[data-prospetto-root]');
                   const prospettoBottom = root ? root.getBoundingClientRect().bottom + webWindow.scrollY : 0;
@@ -1032,8 +1041,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
                     if (delta !== 0) webWindow.scrollTo(0, prevY + delta);
                   }));
                 })}
-                className="flex items-center gap-2 min-w-0 flex-1 text-left"
-              >
+                className="flex items-center gap-2 min-w-0 flex-1 text-left">
                 {d.logoUrl
                   ? <CachedImage src={d.logoUrl} alt="" decoding="sync" className="w-4 h-4 rounded object-contain shrink-0 bg-secondary/40" />
                   : <CalendarPlus className="w-4 h-4 text-blue-400 shrink-0" />}
@@ -1045,10 +1053,10 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
               {isAdded && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
               {canMove && (
                 <Btn
+                  button
                   onClick={guarded(() => handleMoveToSerata(d))}
                   className="flex items-center gap-1 text-[10px] font-semibold text-violet-300 hover:text-violet-200 shrink-0 px-1.5 py-0.5 rounded bg-violet-500/15 hover:bg-violet-500/25 transition-colors"
-                  accessibilityLabel="Sposta qui"
-                >
+                  accessibilityLabel="Sposta qui">
                   <ArrowRightLeft className="w-3 h-3" />
                   Sposta
                 </Btn>
@@ -1068,9 +1076,9 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       <Div className="border-t border-border/40">
         {!customOpen ? (
           <Btn
+            button
             onClick={guarded(() => setCustomOpen(true))}
-            className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-secondary/60 transition-colors text-amber-400"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-secondary/60 transition-colors text-amber-400">
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
             <Span className="text-xs font-medium">Crea nuova serata extra</Span>
           </Btn>
@@ -1090,12 +1098,15 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
               className="w-full px-2.5 py-1.5 rounded-lg bg-secondary/40 border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-amber-400"
             />
             <Div className="flex gap-2">
-              <Btn onClick={() => setCustomOpen(false)} className="flex-1 px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Annulla</Btn>
               <Btn
+                button
+                onClick={() => setCustomOpen(false)}
+                className="flex-1 px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Annulla</Btn>
+              <Btn
+                button
                 onClick={submitCustom}
                 disabled={!customName.trim()}
-                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/90 text-black disabled:opacity-40 hover:bg-amber-500"
-              >
+                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/90 text-black disabled:opacity-40 hover:bg-amber-500">
                 <Plus className="w-3 h-3" />Aggiungi
               </Btn>
             </Div>
@@ -1116,6 +1127,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
               </Div>
               {pastePhotoMsg.type === 'success' && photoUndo && (
                 <Btn
+                  button
                   onClick={handleUndoPhoto}
                   className="mt-2 w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors">
                   <Undo2 className="w-3.5 h-3.5" />Annulla caricamento
@@ -1124,10 +1136,10 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
             </Div>
           ) : (
             <Btn
+              button
               onClick={guarded(handlePastePhoto)}
               disabled={pastingPhoto}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-secondary/60 transition-colors text-pink-400 disabled:opacity-50"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-secondary/60 transition-colors text-pink-400 disabled:opacity-50">
               {pastingPhoto
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                 : <ImageIcon className="w-3.5 h-3.5 shrink-0" />}
@@ -1142,61 +1154,61 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       {onToggleLeader && !menu.client.isSemina && (
         <Div className="border-t border-border/40">
           <Btn
+            button
             onClick={guarded(() => runAction(onToggleLeader))}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
             {isLeader
               ? <Star className="w-3.5 h-3.5 text-amber-400 shrink-0 fill-amber-400" />
               : <Star className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
             <Span className="text-xs font-medium">{isLeader ? 'Rimuovi leader' : 'Rendi leader'}</Span>
           </Btn>
           <Btn
+            button
             onClick={guarded(() => runAction(onToggleDriver))}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
             <Car className={`w-3.5 h-3.5 shrink-0 ${isDriver ? 'text-sky-400' : 'text-muted-foreground'}`} />
             <Span className="text-xs font-medium">{isDriver ? 'Rimuovi guidatore' : 'Rendi guidatore'}</Span>
           </Btn>
           <Btn
+            button
             onClick={guarded(openWhatsApp)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
             <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <Span className="text-xs font-medium">{live?.phone ? 'Contatta' : 'Contatta (senza telefono)'}</Span>
           </Btn>
           {onSetReminder && (
             <Btn
+              button
               onClick={guarded(() => runAction(onSetReminder))}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
               <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <Span className="text-xs font-medium">Ricordami di ricontattarlo</Span>
             </Btn>
           )}
           <Btn
+            button
             onClick={guarded(() => setGroupOpen(true))}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
             <Users className="w-3.5 h-3.5 text-violet-400 shrink-0" />
             <Span className="text-xs font-medium">Aggiungi a gruppo</Span>
           </Btn>
           <Btn
+            button
             onClick={guarded(() => {
               const t = live || menu.client;
               closeMenu();
               // Apre il dialog dopo la chiusura animata del menu (evita conflitti col tasto indietro)
               setTimeout(() => setCopyTarget({ id: t.id, name: t.name }), 220);
             })}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
             <Copy className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <Span className="text-xs font-medium">Copia presenze da…</Span>
           </Btn>
           <Btn
+            button
             onClick={guarded(handleShareClient)}
             disabled={sharing}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors disabled:opacity-50"
-          >
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors disabled:opacity-50">
             {sharing
               ? <Loader2 className="w-3.5 h-3.5 text-blue-400 shrink-0 animate-spin" />
               : <Share2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />}
@@ -1204,12 +1216,12 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
           </Btn>
           {onLongPressSelect && (
             <Btn
+              button
               onClick={guarded(() => {
                 onLongPressSelectRef.current?.(menu.client);
                 closeMenu();
               })}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
               <CheckSquare className="w-3.5 h-3.5 text-violet-400 shrink-0" />
               <Span className="text-xs font-medium">Selezione multipla</Span>
             </Btn>
@@ -1222,46 +1234,46 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
         <Div className="border-t border-border/40">
           {onConvertSemina && (
             <Btn
+              button
               onClick={guarded(() => { onConvertSemina(menu.client.id); closeMenu(); })}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-gradient-to-r from-violet-500/15 to-amber-500/10 hover:from-violet-500/25 hover:to-amber-500/20 transition-colors border-b border-border/40"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-gradient-to-r from-violet-500/15 to-amber-500/10 hover:from-violet-500/25 hover:to-amber-500/20 transition-colors border-b border-border/40">
               <UserPlus className="w-3.5 h-3.5 text-violet-300 shrink-0" />
               <Span className="text-xs font-semibold text-violet-100">Converti in cliente</Span>
             </Btn>
           )}
           {onMarkSeminaContacted && (
             <Btn
+              button
               onClick={guarded(openWhatsApp)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
               <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <Span className="text-xs font-medium">{menu.client.phone ? 'Contatta' : 'Contatta (senza telefono)'}</Span>
             </Btn>
           )}
           {onSetReminder && (
             <Btn
+              button
               onClick={guarded(() => runAction(onSetReminder))}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
               <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <Span className="text-xs font-medium">Ricordami di ricontattarlo</Span>
             </Btn>
           )}
           {onToggleSeminaOff && (
             <Btn
+              button
               onClick={guarded(() => runAction(onToggleSeminaOff))}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
               <Power className={`w-3.5 h-3.5 shrink-0 ${menu.client.is_off ? 'text-emerald-400' : 'text-zinc-400'}`} />
               <Span className="text-xs font-medium">{menu.client.is_off ? 'Riattiva semina' : 'Spegni semina'}</Span>
             </Btn>
           )}
           {getSemina && (
             <Btn
+              button
               onClick={guarded(handleShareSemina)}
               disabled={sharing}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors disabled:opacity-50"
-            >
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors disabled:opacity-50">
               {sharing
                 ? <Loader2 className="w-3.5 h-3.5 text-blue-400 shrink-0 animate-spin" />
                 : <Share2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />}
@@ -1273,7 +1285,10 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       </>) : (
         <Div className="flex flex-col">
           <Div className="flex items-center gap-2 px-3 py-2 border-b border-border/40 bg-secondary/40">
-            <Btn onClick={() => setGroupOpen(false)} className="text-muted-foreground hover:text-foreground shrink-0">
+            <Btn
+              button
+              onClick={() => setGroupOpen(false)}
+              className="text-muted-foreground hover:text-foreground shrink-0">
               <ChevronLeft className="w-4 h-4" />
             </Btn>
             <P className="text-[11px] font-semibold text-foreground">Aggiungi a gruppo</P>
@@ -1291,9 +1306,9 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
             </Div>
             {onCreateGroup && !createMode && (
               <Btn
+                button
                 onClick={guarded(() => { setCreateMode(true); setGroupSearch(''); })}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 transition-colors text-xs font-medium"
-              >
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 transition-colors text-xs font-medium">
                 <Plus className="w-3.5 h-3.5 shrink-0" />Crea nuovo gruppo
               </Btn>
             )}
@@ -1307,12 +1322,15 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
                   className="w-full px-2.5 py-1.5 rounded-md bg-secondary/40 border border-violet-500/40 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-400"
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitCreateGroup(); } }} />
                 <Div className="flex gap-2">
-                  <Btn onClick={() => { setCreateMode(false); setNewGroupName(''); }} className="flex-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground">Annulla</Btn>
                   <Btn
+                    button
+                    onClick={() => { setCreateMode(false); setNewGroupName(''); }}
+                    className="flex-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground">Annulla</Btn>
+                  <Btn
+                    button
                     onClick={guarded(submitCreateGroup)}
                     disabled={!newGroupName.trim()}
-                    className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold bg-violet-500/90 text-white disabled:opacity-40 hover:bg-violet-500"
-                  >
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold bg-violet-500/90 text-white disabled:opacity-40 hover:bg-violet-500">
                     <Plus className="w-3 h-3" />Crea e aggiungi
                   </Btn>
                 </Div>
@@ -1333,10 +1351,10 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
               const memberCount = (g.client_ids || []).length;
               return (
                 <Btn
+                  button
                   key={g.id}
                   onClick={guarded(() => handleToggleGroup(g))}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors"
-                >
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors">
                   <Div className="min-w-0 flex-1">
                     <P className="text-xs font-medium truncate">{g.name}</P>
                     <P className="text-[10px] text-muted-foreground">{memberCount} membri</P>

@@ -42,6 +42,7 @@ export default function ClientGroupsBox({ client, groups = [], allClients = [], 
           return (
             <Div key={g.id} className="rounded-lg border border-border/40 bg-background/30 overflow-hidden">
               <Btn
+                button
                 onClick={() => toggleExpand(g.id)}
                 className="w-full flex items-center gap-2 px-2.5 py-2 hover:bg-secondary/40 transition-colors">
                 {expanded
@@ -66,6 +67,7 @@ export default function ClientGroupsBox({ client, groups = [], allClients = [], 
                       {m.is_leader && <Star className="w-2.5 h-2.5 text-yellow-400 shrink-0" fill="currentColor" />}
                       <ClientAvatar client={m} size="xs" initials={m.name?.charAt(0)?.toUpperCase() || '?'} />
                       <Btn
+                        button
                         onClick={() => onClientDetail?.(m)}
                         className={`flex-1 text-left truncate hover:text-primary hover:underline transition-colors ${m.id === client.id ? 'text-violet-300 font-medium' : 'text-muted-foreground'}`}
                         accessibilityLabel="Apri dettaglio cliente">

@@ -149,7 +149,10 @@ export default function GroupDetailPanel({ group, clients, clientMap, onUpdate, 
               <Div>
                 <H className="text-lg font-bold flex items-center gap-2">
                   {group.name}
-                  <Btn onClick={() => { setEditing(true); setEditName(group.name); }} className="text-muted-foreground hover:text-foreground">
+                  <Btn
+                    button
+                    onClick={() => { setEditing(true); setEditName(group.name); }}
+                    className="text-muted-foreground hover:text-foreground">
                     <Pencil className="w-3.5 h-3.5" />
                   </Btn>
                 </H>
@@ -232,10 +235,10 @@ export default function GroupDetailPanel({ group, clients, clientMap, onUpdate, 
             <Div className="max-h-32 overflow-y-auto space-y-0.5">
               {notInGroup.slice(0, 20).map(c => (
                 <Btn
+                  button
                   key={c.id}
                   onClick={() => handleAddMember(c.id)}
-                  className="w-full text-left text-xs px-2 py-1.5 rounded flex items-center gap-2 hover:bg-primary/10 transition-colors"
-                >
+                  className="w-full text-left text-xs px-2 py-1.5 rounded flex items-center gap-2 hover:bg-primary/10 transition-colors">
                   <ClientAvatar client={c} initials={c.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()} size="xs" />
                   <Span className="truncate">{c.name}</Span>
                   <Plus className="w-3 h-3 ml-auto text-muted-foreground" />
@@ -276,7 +279,10 @@ export default function GroupDetailPanel({ group, clients, clientMap, onUpdate, 
                           <MessageCircle className="w-3 h-3 fill-emerald-400/20" />
                         </A>
                       )}
-                      <Btn onClick={() => handleRemoveMember(c.id)} className="p-1 text-muted-foreground hover:text-destructive rounded opacity-0 group-hover/member:opacity-100 transition-all">
+                      <Btn
+                        button
+                        onClick={() => handleRemoveMember(c.id)}
+                        className="p-1 text-muted-foreground hover:text-destructive rounded opacity-0 group-hover/member:opacity-100 transition-all">
                         <X className="w-3 h-3" />
                       </Btn>
                     </Div>
@@ -287,7 +293,10 @@ export default function GroupDetailPanel({ group, clients, clientMap, onUpdate, 
                 <Div key={id} className="flex items-center gap-2.5 rounded-lg bg-secondary/20 border border-border/50 px-3 py-2 opacity-50">
                   <Div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-[9px] text-muted-foreground shrink-0">?</Div>
                   <Div className="flex-1"><P className="text-[10px] text-muted-foreground italic">Cliente rimosso</P></Div>
-                  <Btn onClick={() => handleRemoveMember(id)} className="p-1 text-muted-foreground hover:text-destructive rounded">
+                  <Btn
+                    button
+                    onClick={() => handleRemoveMember(id)}
+                    className="p-1 text-muted-foreground hover:text-destructive rounded">
                     <X className="w-3 h-3" />
                   </Btn>
                 </Div>

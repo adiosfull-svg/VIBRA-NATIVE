@@ -119,6 +119,7 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new' }) {
           {row.client.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
           <Span className="text-xs font-semibold text-blue-300 flex-1 truncate">{row.client.name}</Span>
           <Btn
+            button
             onClick={() => setEditing(false)}
             className="text-muted-foreground hover:text-foreground">
             <X className="w-3.5 h-3.5" />
@@ -151,6 +152,7 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new' }) {
         <ClientAvatar client={row.client} size="xs" initials={row.client.name?.charAt(0)?.toUpperCase() || '?'} />
         {row.client.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
         <Btn
+          button
           onClick={() => onClientDetail?.(row.client)}
           className={`text-xs font-semibold ${nameClass} truncate hover:underline text-left`}>
           {row.client.name}
@@ -161,11 +163,13 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new' }) {
         {row.ppl > 0 && <Span className={pplClass}>{row.ppl} pers.</Span>}
         <Check className={`w-3.5 h-3.5 ${checkClass}`} />
         <Btn
+          button
           onClick={() => { setRev(String(row.rev)); setPpl(String(row.ppl)); setEditing(true); }}
           className="text-muted-foreground hover:text-blue-400 transition-colors">
           <Pencil className="w-3 h-3" />
         </Btn>
         <Btn
+          button
           onClick={handleDelete}
           className="text-muted-foreground hover:text-red-400 transition-colors">
           <X className="w-3 h-3" />
@@ -496,6 +500,7 @@ export default function SmartBatchImport({
       {/* Mobile collassato: barra compatta per riaprire (lg:hidden su desktop) */}
       {leftCollapsed && (
         <Btn
+          button
           onClick={() => setLeftCollapsed(false)}
           className="lg:hidden flex items-center gap-2.5 rounded-xl border border-border/50 bg-gradient-to-r from-secondary/30 to-secondary/10 hover:from-secondary/40 hover:to-secondary/20 px-3 py-2.5 transition-all text-left shadow-sm mx-4 mt-3">
           <Div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
@@ -511,6 +516,7 @@ export default function SmartBatchImport({
       <Div className={`p-4 space-y-3 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain lg:border-r lg:border-border ${leftCollapsed ? 'hidden lg:block' : ''}`}>
         {/* Mobile: pulsante per collassare di nuovo il pannello sinistro */}
         <Btn
+          button
           onClick={() => setLeftCollapsed(true)}
           className="lg:hidden flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/20 hover:bg-secondary/40 px-2.5 py-1.5 transition-colors text-left w-fit">
           <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
@@ -558,6 +564,7 @@ export default function SmartBatchImport({
 
         {/* Crea nuovi clienti in blocco */}
         <Btn
+          button
           onClick={onOpenImportaBulk}
           className="w-full flex items-center gap-2.5 rounded-xl border border-border/50 bg-gradient-to-r from-secondary/30 to-secondary/10 hover:from-secondary/40 hover:to-secondary/20 hover:border-foreground/20 px-3 py-3 transition-all text-left shadow-sm">
           <Div className="p-1.5 rounded-lg bg-primary/10 shrink-0">

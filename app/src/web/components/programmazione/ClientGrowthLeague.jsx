@@ -183,10 +183,10 @@ export default function ClientGrowthLeague({ rows, onContact, onDetail, search =
           </Div>
         </Div>
         <Btn
+          button
           onClick={onToggleSearch}
           className={`p-2 rounded-lg border transition-colors ${searchOpen ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground'}`}
-          accessibilityLabel="Cerca"
-        >
+          accessibilityLabel="Cerca">
           <Search className="w-4 h-4" />
         </Btn>
       </Div>

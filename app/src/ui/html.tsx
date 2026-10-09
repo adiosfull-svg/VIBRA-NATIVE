@@ -2,7 +2,7 @@
 // portano riga per riga mantenendo className e struttura:
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
-import { Children, cloneElement, Fragment, isValidElement, useCallback, useContext, useState, type ReactElement, type ReactNode } from 'react';
+import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useState, type ReactElement, type ReactNode } from 'react';
 import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,8 @@ import { cn } from './cn';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
-import { FlexParentContext, splitTextClasses, type ParentLayout, Text, TextClassContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
+import { FlexParentContext, splitTextClasses, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
+import { nextTextStyle } from './textStyleInherit';
 import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
@@ -35,13 +36,15 @@ Dimensions.addEventListener('change', ({ window }) => Object.assign(cssViewport,
 
 /**
  * Avvolge in <Text> le stringhe/numeri figli diretti (in RN il testo nudo in una View è un errore).
- * Come in CSS, testo contiguo (es. `Tutti ({n})`) forma un solo elemento: niente gap in mezzo.
+ * Come in CSS, testo contiguo (es. `Tutti ({n})`) forma un solo elemento: niente gap in mezzo, e il
+ * testo vuoto o fatto solo di spazi non occupa posto.
  */
 function wrapText(children: ReactNode): ReactNode {
   const out: ReactNode[] = [];
   let run: string | null = null;
   const flush = () => {
-    if (run != null) out.push(<Text key={`text-${out.length}`}>{run}</Text>);
+    // testo vuoto o solo spazi tra blocchi: in CSS non genera nessun box (es. {cond && ...} con cond = '')
+    if (run != null && run.trim() !== '') out.push(<Text key={`text-${out.length}`}>{run}</Text>);
     run = null;
   };
   for (const child of Children.toArray(children)) {
@@ -90,6 +93,12 @@ function useWebStyle(style: unknown): WebStyleResult {
   return webStyle(style);
 }
 
+/**
+ * Cella di una griglia che si allunga all'altezza della riga (align-items: stretch): il primo Div/Btn
+ * sotto la cella la riceve anche se è dentro un componente (es. <KpiFlashCard/> che rende un Btn).
+ */
+const GridCellContext = createContext(false);
+
 // Figli che in CSS non si allungano all'altezza della riga della griglia
 const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
 
@@ -106,14 +115,9 @@ function gridChildren(children: ReactNode, grid: Grid, className?: string): Reac
     const span = Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1);
     // in CSS gli elementi assoluti non sono elementi della griglia (niente cella, niente gap)
     if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) return child;
-    let item = child;
-    if (stretch && isValidElement(child) && (child.type === Div || child.type === Btn) && !NO_STRETCH.test(cls)) {
-      const own = (child.props as { style?: StyleProp<ViewStyle> }).style;
-      item = cloneElement(child as ReactElement<{ style?: StyleProp<ViewStyle> }>, { style: [{ flexGrow: 1 }, own] });
-    }
     return (
       <View style={{ width: `${(100 * Math.min(span, grid.cols)) / grid.cols}%`, paddingHorizontal: grid.gapX / 2 }}>
-        {item}
+        {stretch ? <GridCellContext.Provider value>{child}</GridCellContext.Provider> : child}
       </View>
     );
   });
@@ -216,13 +220,22 @@ function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
   return align;
 }
 
-function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>) {
+function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
   const base: Record<string, any> = grid ? (grid.template ? { rowGap: grid.gapY } : { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 }) : {};
   if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
+  if (gridCell && !NO_STRETCH.test(rawClass ?? '') && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
   if (layout === 'block' && INLINE_LEVEL.test(rawClass ?? '') && !SELF.test(rawClass ?? '') && style?.alignSelf == null) {
     base.alignSelf = inlineAlign(inherited);
   }
   return base;
+}
+
+/** Classi e style di testo del contenitore per i figli (cascata CSS). */
+function TextInherit({ inherited, text, style, children }: { inherited: string; text: string; style: Record<string, any>; children: ReactNode }) {
+  const inheritedStyle = useContext(TextStyleContext);
+  const nextStyle = nextTextStyle(inheritedStyle, text, style);
+  const withStyle = nextStyle === inheritedStyle ? children : <TextStyleContext.Provider value={nextStyle}>{children}</TextStyleContext.Provider>;
+  return text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{withStyle}</TextClassContext.Provider> : <>{withStyle}</>;
 }
 
 /** Testo dei figli (per rimisurare quando cambia il contenuto). */
@@ -370,7 +383,10 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
-  const content = <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>{boxContent(children, grid, rest)}</FlexParentContext.Provider>;
+  const gridCell = useContext(GridCellContext);
+  const inner = <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>{boxContent(children, grid, rest)}</FlexParentContext.Provider>;
+  // la cella della griglia la "consuma" questo elemento, non i suoi discendenti
+  const content = gridCell ? <GridCellContext.Provider value={false}>{inner}</GridCellContext.Provider> : inner;
   const min = useMinContentWidth(className, rnStyle, children, onLayout);
   const inPortal = useContext(InPortalContext);
   // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
@@ -389,19 +405,19 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   const nativeBlur = blur && Platform.OS !== 'web' ? <BlurFill px={blur.px} /> : null;
   const axis = scrollAxis(rest);
   if (axis) {
-    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, blurStyle, min.minStyle]) as Record<string, any>;
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, blurStyle, min.minStyle]) as Record<string, any>;
     return (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
         {nativeBlur}
-        {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
+        <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
       </ScrollBox>
     );
   }
   return (
-    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, (gradient || nativeBlur) && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, blurStyle, min.minStyle]}>
+    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, (gradient || nativeBlur) && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, blurStyle, min.minStyle]}>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} /> : null}
-      {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
+      <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
     </View>
   );
 }
@@ -450,24 +466,34 @@ type BtnProps = Omit<PressableProps, 'children' | 'style' | keyof WebGestureProp
   style?: ViewProps['style'];
   /** type="submit" invia il <form> che lo contiene (ui/form.tsx), come nel browser. */
   type?: string;
+  /** Era un <button> (non un div cliccabile): default del browser, testo centrato e in linea (inline-block). */
+  button?: boolean;
 };
 
+// <button> senza classi di visualizzazione/larghezza: inline-block come nel browser
+const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+|self-\S+|absolute|fixed)(\s|$)/;
+
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
-export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, ...all }: BtnProps) {
+export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const form = useForm();
+  const gridCell = useContext(GridCellContext);
   const press = onPress ?? onClick;
   const handlePress: PressableProps['onPress'] = type === 'submit' && form
     ? (e) => { press?.(e); form.submit(); }
     : press;
   const inherited = useContext(TextClassContext);
   const layout = useContext(FlexParentContext);
-  const [text, rest] = splitTextClasses(className);
+  const [ownText, rest] = splitTextClasses(className);
+  // il browser centra il contenuto di <button> (le classi text-left/right della pagina vincono)
+  const text = button ? cn('text-center', ownText) : ownText;
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const min = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
+  const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
+    ? { alignSelf: inlineAlign(inherited) } : null;
   // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
   const [pressed, setPressed] = useState(false);
   return (
@@ -481,12 +507,14 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle), rnStyle, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), inlineButton, rnStyle, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
-      <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
-        <TextClassContext.Provider value={textClassesFor(inherited, text)}>{boxContent(children, grid, rest)}</TextClassContext.Provider>
-      </FlexParentContext.Provider>
+      <GridCellContext.Provider value={false}>
+        <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
+          <TextInherit inherited={inherited} text={text} style={rnStyle}>{boxContent(children, grid, rest)}</TextInherit>
+        </FlexParentContext.Provider>
+      </GridCellContext.Provider>
     </Pressable>
   );
 }

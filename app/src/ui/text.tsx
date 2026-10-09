@@ -5,6 +5,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { Platform, StyleSheet, Text as RNText, type TextProps } from 'react-native';
 import { cn } from './cn';
 import { ARB_SIZE, fontSizeOf, inheritedLineHeight, inlineLineBox, lineHeightOf, strutDescent, textClassesFor } from './textLeading';
+import { nextTextStyle, weightClass, withoutClassOverrides, type TextStyle } from './textStyleInherit';
 import { webStyle } from './webStyle';
 
 export { textClassesFor };
@@ -17,6 +18,9 @@ export { textClassesFor };
  */
 export type ParentLayout = 'flex' | 'block' | 'text';
 export const FlexParentContext = createContext<ParentLayout>('flex');
+
+/** Proprietà di testo scritte in `style` dai contenitori (colore, dimensione...), ereditate come in CSS. */
+export const TextStyleContext = createContext<TextStyle>({});
 
 /** Classi di testo ereditate dal contenitore più vicino (come la cascata CSS). */
 export const TextClassContext = createContext<string>('');
@@ -103,12 +107,23 @@ function cssDefaults(merged: string, inherited: string, own: string, style: any,
   return out;
 }
 
+// In CSS una parola che non ci sta sborda (overflow-wrap: normal); RN-web di default la spezza
+// (word-wrap: break-word): es. "€257.818" in una colonna stretta. Sul telefono resta il comportamento di RN.
+const WEB_NO_WORD_BREAK = Platform.OS === 'web' ? ({ wordWrap: 'normal', overflowWrap: 'normal' } as object) : null;
+
 export function Text({ className, style, numberOfLines, children, ...props }: AppTextProps) {
   const inherited = useContext(TextClassContext);
+  const inheritedStyle = useContext(TextStyleContext);
   const inFlex = useContext(FlexParentContext) === 'flex';
   const merged = cn('text-base text-foreground', inherited, className);
-  const fontFamily = fontFamilyFor(merged);
   const converted = webStyle(StyleSheet.flatten(style)).style;
+  // style di testo dei contenitori, salvo ciò che le classi proprie ridefiniscono
+  const applied = withoutClassOverrides(inheritedStyle, className);
+  // peso: style proprio > classe propria > style ereditato > classi ereditate
+  const ownWeight = /(^|\s)font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)(\s|$)/.test(className ?? '');
+  const styleWeight = weightClass(converted.fontWeight) ?? (ownWeight ? null : weightClass(applied.fontWeight));
+  const fontFamily = fontFamilyFor(styleWeight ? `${merged} ${styleWeight}` : merged);
+  const childStyle = nextTextStyle(inheritedStyle, className, converted);
   const truncate = /(^|\s)truncate(\s|$)/.test(merged);
   const clamp = Number(merged.match(/(?:^|\s)line-clamp-(\d+)/)?.[1] ?? 0);
   return (
@@ -117,11 +132,13 @@ export function Text({ className, style, numberOfLines, children, ...props }: Ap
       numberOfLines={numberOfLines ?? (truncate ? 1 : clamp || undefined)}
       className={merged}
       // il peso è già nel file del font: fontWeight lo raddoppierebbe su Android
-      style={[cssDefaults(merged, inherited, className ?? '', converted, inFlex), converted, fontFamily ? { fontFamily, fontWeight: 'normal' } : null]}
+      style={[cssDefaults(merged, inherited, className ?? '', { ...applied, ...converted }, inFlex), WEB_NO_WORD_BREAK, applied, converted, fontFamily ? { fontFamily, fontWeight: 'normal' } : null]}
     >
       {/* i figli (testo annidato, icone) ereditano colore e stile come in CSS */}
       <FlexParentContext.Provider value="text">
-        <TextClassContext.Provider value={merged}>{children}</TextClassContext.Provider>
+        <TextStyleContext.Provider value={childStyle}>
+          <TextClassContext.Provider value={merged}>{children}</TextClassContext.Provider>
+        </TextStyleContext.Provider>
       </FlexParentContext.Provider>
     </RNText>
   );

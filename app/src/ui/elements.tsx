@@ -15,7 +15,7 @@ import { keyDownProps, type WebKeyEvent } from './keyEvents';
 import { Btn, Div } from './html';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './menu';
 import { THEME } from './palette.generated';
-import { fontFamilyFor, inputFontSize, TextClassContext, useTextareaBaselineGap } from './text';
+import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
 import RNSvg, { type SvgProps } from 'react-native-svg';
 
@@ -278,8 +278,11 @@ function SvgBox({ color, ...p }: SvgProps & { color?: string }) {
 }
 cssInterop(SvgBox, { className: { target: 'style', nativeStyleToProp: { width: true, height: true, color: true } } });
 
-export function Svg({ className, color, ...p }: SvgProps & { className?: string; color?: string }) {
+export function Svg({ className, color: ownColor, ...p }: SvgProps & { className?: string; color?: string }) {
   const inheritedText = useContext(TextClassContext);
+  const styleColor = useContext(TextStyleContext).color as string | undefined;
+  const classColor = (className ?? '').split(/\s+/).some((c) => TEXT_COLOR.test(c));
+  const color = ownColor ?? (classColor ? undefined : styleColor);
   const inheritedColor = inheritedText.split(/\s+/).filter((c) => TEXT_COLOR.test(c)).join(' ');
   return <SvgBox {...p} {...(color ? { color } : null)} className={cn(color ? '' : cn('text-foreground', inheritedColor), className)} />;
 }

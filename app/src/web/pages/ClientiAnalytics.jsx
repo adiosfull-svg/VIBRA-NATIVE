@@ -291,10 +291,10 @@ export default function ClientiAnalytics() {
         <Div className="flex flex-wrap gap-1.5">
           {periods.map(p => (
             <Btn
+              button
               key={p.key}
               onClick={() => setPeriod(p.key)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${period === p.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground'}`}
-            >
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${period === p.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground'}`}>
               {p.label}
             </Btn>
           ))}
@@ -317,10 +317,10 @@ export default function ClientiAnalytics() {
       <Div className="flex flex-wrap gap-2">
         {metrics.map(m => (
           <Btn
+            button
             key={m.key}
             onClick={() => setMetric(m.key)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${metric === m.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}
-          >
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${metric === m.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>
             {m.label}
           </Btn>
         ))}
@@ -331,7 +331,10 @@ export default function ClientiAnalytics() {
         <Div className="flex items-center justify-between mb-3">
           <SectionHeader icon={BarChart2} title={`${metrics.find(m => m.key === metric)?.label} per Cliente`} color="#a78bfa" />
           {clientStats.length > PREVIEW && (
-            <Btn onClick={() => setExpanded1(e => !e)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <Btn
+              button
+              onClick={() => setExpanded1(e => !e)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
               {expanded1 ? <><ChevronUp className="w-3.5 h-3.5" />Meno</> : <><ChevronDown className="w-3.5 h-3.5" />Tutti ({clientStats.length})</>}
             </Btn>
           )}
@@ -347,7 +350,10 @@ export default function ClientiAnalytics() {
           <Div className="flex items-center justify-between mb-3">
             <SectionHeader icon={MapPin} title="Presenze per Locale" color="#60a5fa" />
             {clientStats.length > PREVIEW && (
-              <Btn onClick={() => setExpanded2(e => !e)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+              <Btn
+                button
+                onClick={() => setExpanded2(e => !e)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
                 {expanded2 ? <><ChevronUp className="w-3.5 h-3.5" />Meno</> : <><ChevronDown className="w-3.5 h-3.5" />Tutti ({clientStats.length})</>}
               </Btn>
             )}

@@ -128,6 +128,7 @@ export default function ClientFormDialog({ open, onOpenChange, client, onSave, i
                     <P className="text-[10px] text-muted-foreground">Incolla una nuova immagine per sostituirla</P>
                   </Div>
                   <Btn
+                    button
                     onClick={() => setForm({ ...form, photo_url: '' })}
                     className="p-1 rounded-full bg-secondary/50 hover:bg-secondary text-muted-foreground">
                     <X className="w-3.5 h-3.5" />
@@ -146,6 +147,7 @@ export default function ClientFormDialog({ open, onOpenChange, client, onSave, i
                   <Div className="flex-1 min-w-0">
                     <P className="text-xs text-muted-foreground">Incolla una foto (Ctrl+V) o</P>
                     <Btn
+                      button
                       onClick={() => fileInputRef.current?.click()}
                       className="text-xs text-violet-400 hover:text-violet-300 font-medium">
                       Carica dal dispositivo

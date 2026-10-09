@@ -173,9 +173,9 @@ function EventTile({ ev, color }) {
   return (
     <Div className="rounded-lg bg-secondary/20 overflow-hidden">
       <Btn
+        button
         onClick={() => hasPromoters && setExpanded(e => !e)}
-        className={`w-full flex items-center gap-2.5 p-2.5 transition-colors ${hasPromoters ? 'hover:bg-secondary/30 cursor-pointer' : 'cursor-default'}`}
-      >
+        className={`w-full flex items-center gap-2.5 p-2.5 transition-colors ${hasPromoters ? 'hover:bg-secondary/30 cursor-pointer' : 'cursor-default'}`}>
         <VenueLogo venue={ev.venue} isExtra={ev.isExtra} />
         <Div className="flex-1 min-w-0 text-left">
           <P className="text-xs font-medium truncate">{ev.name}</P>

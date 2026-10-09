@@ -1279,9 +1279,9 @@ export default function Clienti() {
               </Button>
 
               <Btn
+                button
                 onClick={() => setDeletedClient(null)}
-                className="text-muted-foreground hover:text-foreground"
-              >
+                className="text-muted-foreground hover:text-foreground">
                 <X className="w-4 h-4" />
               </Btn>
             </Div>
@@ -1353,6 +1353,7 @@ export default function Clienti() {
                   icon: TabIcon
                 }) =>
                   <Btn
+                    button
                     key={key}
                     ref={
                       activeTab === key
@@ -1367,8 +1368,7 @@ export default function Clienti() {
                       activeTab === key
                         ? 'bg-card text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
+                    }`}>
                     <TabIcon className="w-3.5 h-3.5 flex-shrink-0" />
                     {label}
                   </Btn>
@@ -1501,11 +1501,11 @@ export default function Clienti() {
 
               {rootClientId !== 'all' &&
                 <Btn
+                  button
                   onClick={() =>
                     setRootClientId('all')
                   }
-                  className="text-[10px] text-primary hover:underline whitespace-nowrap"
-                >
+                  className="text-[10px] text-primary hover:underline whitespace-nowrap">
                   Mostra tutte
                 </Btn>
               }
@@ -1722,6 +1722,7 @@ export default function Clienti() {
                   >
                     <PopoverTrigger asChild>
                       <Btn
+                        button
                         onClick={(e) =>
                           e.stopPropagation()
                         }
@@ -1730,8 +1731,7 @@ export default function Clienti() {
                             ? 'border-red-400 bg-red-400/10 text-red-400'
                             : 'border-border text-muted-foreground hover:text-foreground'
                         }`}
-                        accessibilityLabel="Dati mancanti"
-                      >
+                        accessibilityLabel="Dati mancanti">
                         <AlertCircle className="w-3.5 h-3.5" />
 
                         {missingFilter &&
@@ -1754,6 +1754,7 @@ export default function Clienti() {
                       {MISSING_FILTERS.map(
                         ({ key, label }) =>
                           <Btn
+                            button
                             key={key}
                             onClick={() =>
                               setMissingFilter(
@@ -1767,8 +1768,7 @@ export default function Clienti() {
                               missingFilter === key
                                 ? 'bg-red-400/10 text-red-400'
                                 : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
-                            }`}
-                          >
+                            }`}>
                             {label}
                           </Btn>
                       )}

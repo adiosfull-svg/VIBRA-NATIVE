@@ -111,6 +111,7 @@ function EventPicker({ events, selectedEvent, onSelect, getVenueLogo }) {
   return (
     <Div className="relative">
       <Btn
+        button
         onClick={() => setShow(s => !s)}
         className={`w-full flex items-center gap-3 rounded-xl border bg-secondary/20 px-3 py-2.5 text-left transition-colors ${selectedEvent ? 'border-border' : 'border-border hover:border-foreground/30'}`}>
         {selectedEvent ? (
@@ -153,6 +154,7 @@ function EventPicker({ events, selectedEvent, onSelect, getVenueLogo }) {
           )}
           {filtered.map(e => (
             <Btn
+              button
               key={e.id}
               onClick={() => { onSelect(e); setShow(false); setSearch(''); }}
               className={`flex items-center gap-2 text-left text-xs px-2.5 py-2 rounded-lg border transition-all ${selectedEvent?.id === e.id ? 'border-primary/50 bg-primary/10' : 'border-white/[0.04] bg-secondary/20 hover:border-primary/30'}`}>
@@ -254,6 +256,7 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new', promo
           {row.client.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" />}
           <Span className="text-xs font-semibold text-blue-300 flex-1 truncate">{row.client.name}</Span>
           <Btn
+            button
             onClick={() => setEditing(false)}
             className="text-muted-foreground hover:text-foreground">
             <X className="w-3.5 h-3.5" />
@@ -286,6 +289,7 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new', promo
         <ClientAvatar client={row.client} size="xs" initials={row.client.name?.charAt(0)?.toUpperCase() || '?'} />
         {row.client.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
         <Btn
+          button
           onClick={() => onClientDetail?.(row.client)}
           className={`text-xs font-semibold ${nameClass} truncate hover:underline text-left`}>
           {row.client.name}
@@ -296,11 +300,13 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new', promo
         {row.ppl > 0 && <Span className={pplClass}>{row.ppl} pers.</Span>}
         <Check className={`w-3.5 h-3.5 ${checkClass}`} />
         <Btn
+          button
           onClick={() => { setRev(String(row.rev)); setPpl(String(row.ppl)); setEditing(true); }}
           className="text-muted-foreground hover:text-blue-400 transition-colors">
           <Pencil className="w-3 h-3" />
         </Btn>
         <Btn
+          button
           onClick={handleDelete}
           className="text-muted-foreground hover:text-red-400 transition-colors">
           <X className="w-3 h-3" />
@@ -533,6 +539,7 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
         />
 
         <Btn
+          button
           onClick={onOpenImportaBulk}
           className="w-full flex items-center gap-2.5 rounded-xl border border-border bg-secondary/20 hover:bg-secondary/40 hover:border-foreground/30 px-3 py-3 transition-colors text-left">
           <Div className="p-1.5 rounded-lg bg-secondary/40 shrink-0">
@@ -796,23 +803,27 @@ export default function AttendanceHubDialog({ open, onOpenChange, events, client
               <Div className="ml-auto flex items-center gap-2 shrink-0">
                 <Div className="flex bg-secondary/40 rounded-lg p-0.5 border border-border">
                   <Btn
+                    button
                     onClick={() => setTab('manuale')}
                     className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${tab === 'manuale' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                     <Search className="w-3 h-3" />Manuale
                   </Btn>
                   <Btn
+                    button
                     onClick={() => setTab('ai')}
                     className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${tab === 'ai' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                     <Sparkles className="w-3 h-3" />AI
                   </Btn>
                 </Div>
                 <Btn
+                  button
                   onClick={handleSvuota}
                   className="text-muted-foreground hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
                   accessibilityLabel="Svuota sessione">
                   <Trash2 className="w-4 h-4" />
                 </Btn>
                 <Btn
+                  button
                   onClick={requestClose}
                   className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-secondary/60"
                   accessibilityLabel="Chiudi">

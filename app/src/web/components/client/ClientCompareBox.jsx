@@ -124,10 +124,10 @@ export default function ClientCompareBox({ clients, attendances, events }) {
           <Div className="flex flex-wrap gap-1">
             {filteredClients.map(c => (
               <Btn
+                button
                 key={c.id}
                 onClick={() => { toggleClient(c.id); setSearch(''); }}
-                className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
-              >
+                className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors">
                 {c.name}
               </Btn>
             ))}

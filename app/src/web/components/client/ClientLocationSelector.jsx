@@ -76,9 +76,9 @@ export default function ClientLocationSelector({ value, onChange, className = ''
             {selected.area}
           </Span>
           <Btn
+            button
             onClick={handleClear}
-            className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 shrink-0"
-          >
+            className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 shrink-0">
             <X className="w-3.5 h-3.5" />
           </Btn>
         </Div>
@@ -97,6 +97,7 @@ export default function ClientLocationSelector({ value, onChange, className = ''
             <Div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-xl z-50 max-h-56 overflow-y-auto">
               {results.map(loc => (
                 <Btn
+                  button
                   key={loc.key}
                   onClick={() => handleSelect(loc.key)}
                   className="w-full flex items-center gap-3 px-3 py-2 hover:bg-secondary/40 transition-colors text-left">

@@ -74,7 +74,10 @@ function MobileModal({ open, onClose, title, children, scrollClass, skipOwnHisto
         {/* Header */}
         <Div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-white/10 shrink-0 bg-gradient-to-r from-violet-500/10 to-transparent">
           <H className="text-base font-semibold flex items-center gap-2 min-w-0">{title}</H>
-          <Btn onClick={onClose} className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+          <Btn
+            button
+            onClick={onClose}
+            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <X className="w-4 h-4" />
           </Btn>
         </Div>

@@ -112,12 +112,14 @@ export default function AddToGroupSubmenu({ client }) {
                 autoFocus
                 onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); handleCreate(); } }} />
               <Btn
+                button
                 onClick={() => { setCreateMode(false); setNewGroupName(''); }}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="w-3 h-3" />
               </Btn>
             </Div>
             <Btn
+              button
               onClick={handleCreate}
               disabled={!newGroupName.trim()}
               className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold bg-violet-500/90 text-white disabled:opacity-40 hover:bg-violet-500">
@@ -127,6 +129,7 @@ export default function AddToGroupSubmenu({ client }) {
         ) : (
           <>
             <Btn
+              button
               onClick={() => { setCreateMode(true); setSearch(''); }}
               className="w-full flex items-center gap-2 px-2 py-1.5 mb-1 rounded-md bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 transition-colors text-xs font-medium">
               <Plus className="w-3.5 h-3.5" />Crea nuovo gruppo
@@ -143,6 +146,7 @@ export default function AddToGroupSubmenu({ client }) {
                 const memberCount = (g.client_ids || []).length;
                 return (
                   <Btn
+                    button
                     key={g.id}
                     onClick={() => handleAdd(g)}
                     className="w-full flex items-center justify-between gap-2 text-left px-2 py-1.5 rounded-md hover:bg-secondary/60 text-xs transition-colors">

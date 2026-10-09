@@ -2,7 +2,7 @@
 // stessi percorsi dell'originale (/clienti, /il-mio-vibra?tab=..., /promoter/:id).
 import { router, useGlobalSearchParams, useLocalSearchParams, usePathname, type Href } from 'expo-router';
 import { useMemo, type ReactNode } from 'react';
-import { Pressable } from 'react-native';
+import { Btn } from '../ui/html';
 
 type NavigateOpts = { replace?: boolean; state?: unknown };
 
@@ -49,8 +49,9 @@ export function Link({ to, replace, children, className, onClick }: {
 }) {
   const navigate = useNavigate();
   return (
-    <Pressable className={className} accessibilityRole="link" onPress={() => { onClick?.(); navigate(to, { replace }); }}>
+    // Btn come per <a>: classi del web (flex in riga, testo ereditato) e testo nudo avvolto
+    <Btn className={className} accessibilityRole="link" onClick={() => { onClick?.(); navigate(to, { replace }); }}>
       {children}
-    </Pressable>
+    </Btn>
   );
 }

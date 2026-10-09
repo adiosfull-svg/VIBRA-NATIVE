@@ -16,6 +16,7 @@ export default function SortPills({ label, options, value, onChange, className =
       }
       {options.map(({ key, label: lbl, icon: Icon }) =>
       <Btn
+        button
         key={key}
         onClick={() => onChange(key)}
         className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${

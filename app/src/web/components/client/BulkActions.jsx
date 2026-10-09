@@ -31,7 +31,10 @@ function Overlay({ title, onClose, children }) {
       <Div className="relative w-full max-w-sm rounded-2xl border border-border bg-popover shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         <Div className="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0">
           <P className="text-sm font-semibold text-foreground truncate">{title}</P>
-          <Btn onClick={onClose} className="text-muted-foreground hover:text-foreground shrink-0">
+          <Btn
+            button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground shrink-0">
             <X className="w-4 h-4" />
           </Btn>
         </Div>
@@ -62,7 +65,9 @@ function GroupDialog({ count, groups, onClose, onAdd, onCreate }) {
             className="w-full pl-8 pr-3 py-2 rounded-lg bg-secondary/40 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
         </Div>
         {!createMode && (
-          <Btn onClick={() => { setCreateMode(true); setSearch(''); }}
+          <Btn
+            button
+            onClick={() => { setCreateMode(true); setSearch(''); }}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 text-violet-300 text-sm font-medium hover:bg-violet-500/20 transition-colors">
             <Plus className="w-4 h-4" /> Crea nuovo gruppo
           </Btn>
@@ -72,8 +77,15 @@ function GroupDialog({ count, groups, onClose, onAdd, onCreate }) {
             <HtmlInput autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome nuovo gruppo..."
               className="w-full px-3 py-2 rounded-lg bg-secondary/40 border border-violet-500/40 text-sm focus:outline-none focus:ring-1 focus:ring-violet-400" />
             <Div className="flex gap-2">
-              <Btn onClick={() => { setCreateMode(false); setNewName(''); }} className="flex-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Annulla</Btn>
-              <Btn onClick={create} disabled={!newName.trim() || busy} className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold bg-violet-500/90 text-white disabled:opacity-40 hover:bg-violet-500">Crea e aggiungi</Btn>
+              <Btn
+                button
+                onClick={() => { setCreateMode(false); setNewName(''); }}
+                className="flex-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Annulla</Btn>
+              <Btn
+                button
+                onClick={create}
+                disabled={!newName.trim() || busy}
+                className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold bg-violet-500/90 text-white disabled:opacity-40 hover:bg-violet-500">Crea e aggiungi</Btn>
             </Div>
           </Div>
         )}
@@ -82,7 +94,11 @@ function GroupDialog({ count, groups, onClose, onAdd, onCreate }) {
             {filtered.length === 0
               ? <P className="text-sm text-muted-foreground text-center py-6">Nessun gruppo</P>
               : filtered.map(g => (
-                <Btn key={g.id} disabled={busy} onClick={() => pick(g)}
+                <Btn
+                  button
+                  key={g.id}
+                  disabled={busy}
+                  onClick={() => pick(g)}
                   className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg hover:bg-secondary/60 text-left transition-colors disabled:opacity-50">
                   <Div className="min-w-0">
                     <P className="text-sm font-medium truncate">{g.name}</P>
@@ -116,8 +132,15 @@ function ReminderDialog({ count, onClose, onConfirm }) {
             className="w-full px-3 py-2 rounded-lg bg-secondary/40 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
         </Div>
         <Div className="flex gap-2 pt-1">
-          <Btn onClick={onClose} className="flex-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Annulla</Btn>
-          <Btn onClick={confirm} disabled={busy || !dt} className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold bg-amber-500/90 text-black disabled:opacity-40 hover:bg-amber-500">Crea promemaria</Btn>
+          <Btn
+            button
+            onClick={onClose}
+            className="flex-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Annulla</Btn>
+          <Btn
+            button
+            onClick={confirm}
+            disabled={busy || !dt}
+            className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold bg-amber-500/90 text-black disabled:opacity-40 hover:bg-amber-500">Crea promemaria</Btn>
         </Div>
       </Div>
     </Overlay>
@@ -133,7 +156,11 @@ function SerataDialog({ count, upcomingDates, onClose, onConfirm }) {
         {upcomingDates.length === 0
           ? <P className="text-sm text-muted-foreground text-center py-6">Nessuna serata disponibile</P>
           : upcomingDates.map(d => (
-            <Btn key={d.id || d.dateStr} disabled={busy} onClick={() => pick(d)}
+            <Btn
+              button
+              key={d.id || d.dateStr}
+              disabled={busy}
+              onClick={() => pick(d)}
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-secondary/60 text-left transition-colors disabled:opacity-50">
               {d.logoUrl
                 ? <Img src={d.logoUrl} alt="" className="w-4 h-4 rounded object-contain shrink-0 bg-secondary/40" />
@@ -154,7 +181,10 @@ function SerataDialog({ count, upcomingDates, onClose, onConfirm }) {
 // L'etichetta erita lo stesso colore dell'icona.
 function BulkBtn({ Icon, label, color, hover, onClick, title }) {
   return (
-    <Btn onClick={onClick} className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-1 sm:px-2.5 py-1 sm:py-2 rounded-lg ${hover} transition-colors`}
+    <Btn
+      button
+      onClick={onClick}
+      className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-1 sm:px-2.5 py-1 sm:py-2 rounded-lg ${hover} transition-colors`}
       accessibilityLabel={title}>
       <Icon className={`w-[18px] h-[18px] sm:w-5 sm:h-5 ${color}`} />
       <Span className={`text-[9px] sm:text-sm font-medium leading-none ${color}`}>{label}</Span>

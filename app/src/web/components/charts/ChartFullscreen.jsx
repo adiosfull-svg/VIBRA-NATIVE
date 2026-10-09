@@ -102,6 +102,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
         {children}
         {!externalTrigger && (
           <Btn
+            button
             onClick={handleOpen}
             className={`absolute ${buttonPosition === 'bottom' ? 'bottom-2' : 'top-2'} right-2 z-20 p-1.5 rounded-lg bg-black/40 border border-white/10 text-white/70 hover:text-white hover:bg-black/60 transition-all duration-200 opacity-70 group-hover/chart:opacity-100 focus:opacity-100`}
             accessibilityLabel="Schermo intero">
@@ -120,6 +121,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
               {bare ? (
                 <Div className="flex-1 min-h-0 relative overflow-auto">
                   <Btn
+                    button
                     onClick={handleClose}
                     className="absolute top-2 right-2 z-30 p-2 rounded-lg bg-black/50 border border-white/10 text-white/80 hover:text-white hover:bg-black/70 transition"
                     accessibilityLabel="Chiudi">
@@ -146,6 +148,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
                   <Div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
                     <SectionHeader icon={icon} title={title} color={accentColor} />
                     <Btn
+                      button
                       onClick={handleClose}
                       className="p-1.5 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition shrink-0"
                       accessibilityLabel="Chiudi">
@@ -185,6 +188,7 @@ export default ChartFullscreen;
 export function FullscreenButton({ onClick, className = '', title = 'Schermo intero' }) {
   return (
     <Btn
+      button
       onClick={onClick}
       className={`shrink-0 p-1.5 rounded-lg bg-black/40 border border-white/10 text-white/70 hover:text-white hover:bg-black/60 transition-all duration-200 ${className}`}
       accessibilityLabel={title}>

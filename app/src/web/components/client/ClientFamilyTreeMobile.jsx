@@ -68,9 +68,9 @@ function MobileListNode({ node, depth, onClientClick, allClients, cumMap, zoom }
         >
           {hasChildren && lod !== 'compact' ? (
             <Btn
+              button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="shrink-0 p-0.5 rounded text-muted-foreground active:text-foreground"
-            >
+              className="shrink-0 p-0.5 rounded text-muted-foreground active:text-foreground">
               {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
             </Btn>
           ) : (
@@ -151,14 +151,23 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut, onReset }) {
   return (
     <Div className="flex items-center gap-1.5 justify-center pb-2">
       <Span className="text-[9px] text-muted-foreground">Zoom</Span>
-      <Btn onClick={onZoomOut} className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
+      <Btn
+        button
+        onClick={onZoomOut}
+        className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
         <ZoomOut className="w-3.5 h-3.5" />
       </Btn>
       <Span className="text-[10px] font-semibold text-foreground w-9 text-center">{Math.round(zoom * 100)}%</Span>
-      <Btn onClick={onZoomIn} className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
+      <Btn
+        button
+        onClick={onZoomIn}
+        className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary">
         <ZoomIn className="w-3.5 h-3.5" />
       </Btn>
-      <Btn onClick={onReset} className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary ml-1">
+      <Btn
+        button
+        onClick={onReset}
+        className="p-1 rounded-md bg-secondary/60 text-muted-foreground hover:text-foreground active:bg-secondary ml-1">
         <RotateCcw className="w-3 h-3" />
       </Btn>
     </Div>
@@ -387,19 +396,19 @@ export default function ClientFamilyTreeMobile({ clients, attendances, events, o
     <Div className="flex justify-center pb-2">
       <Div className="inline-flex rounded-lg bg-secondary/60 p-0.5 gap-0.5">
         <Btn
+          button
           onClick={() => setViewMode('list')}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all ${
             viewMode === 'list' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
-          }`}
-        >
+          }`}>
           <AlignJustify className="w-3.5 h-3.5" /> Lista
         </Btn>
         <Btn
+          button
           onClick={() => setViewMode('tree')}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all ${
             viewMode === 'tree' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
-          }`}
-        >
+          }`}>
           <GitFork className="w-3.5 h-3.5" /> Albero
         </Btn>
       </Div>

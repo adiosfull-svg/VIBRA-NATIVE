@@ -141,7 +141,10 @@ function PeriodSelector({ period, index, color, onUpdate, onRemove }) {
       <Div className="flex items-center justify-between">
         <Span className="text-xs font-semibold" style={{ color }}>{index === 0 ? 'Periodo' : `Periodo ${index + 1}`}</Span>
         {index > 0 && (
-          <Btn onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors">
+          <Btn
+            button
+            onClick={onRemove}
+            className="text-muted-foreground hover:text-destructive transition-colors">
             <X className="w-3.5 h-3.5" />
           </Btn>
         )}
@@ -200,14 +203,14 @@ export default function AverageTablesStats({ events, attendances, promoters = []
           const active = activeTab === tab.id;
           return (
             <Btn
+              button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all border-b-2 -mb-px ${
                 active
                   ? 'text-purple-400 border-purple-400'
                   : 'text-muted-foreground border-transparent hover:text-foreground'
-              }`}
-            >
+              }`}>
               <Icon className="w-3.5 h-3.5" />
               {tab.label}
             </Btn>
@@ -233,7 +236,10 @@ export default function AverageTablesStats({ events, attendances, promoters = []
           <PeriodSelector key={i} period={p} index={i} color={PERIOD_COLORS[i]} onUpdate={(u) => updatePeriod(i, u)} onRemove={() => removePeriod(i)} />
         ))}
         {periods.length < 3 && (
-          <Btn onClick={addPeriod} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1">
+          <Btn
+            button
+            onClick={addPeriod}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1">
             <Plus className="w-3.5 h-3.5" /> Aggiungi periodo da confrontare
           </Btn>
         )}

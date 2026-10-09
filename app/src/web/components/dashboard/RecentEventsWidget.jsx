@@ -52,9 +52,9 @@ export default function RecentEventsWidget({ events, attendances, promoters, del
               className="rounded-xl border border-white/[0.05] bg-secondary/20 overflow-hidden hover:border-white/[0.10] transition-all duration-200"
             >
               <Btn
+                button
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-white/[0.02] transition-colors"
-                onClick={() => setExpanded(isOpen ? null : event.id)}
-              >
+                onClick={() => setExpanded(isOpen ? null : event.id)}>
                 {/* Pct bar side accent */}
                 <Div className="w-1 h-8 rounded-full bg-secondary/50 overflow-hidden shrink-0 flex flex-col justify-end">
                   <Div

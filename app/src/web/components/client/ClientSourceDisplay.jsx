@@ -136,6 +136,7 @@ export default function ClientSourceSelector({ value, referredClientId, clients,
           const isSelected = sourceType === key;
           return (
             <Btn
+              button
               key={key}
               onClick={() => handleSelect(key)}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
@@ -182,6 +183,7 @@ export default function ClientSourceSelector({ value, referredClientId, clients,
             ) : (
               filteredClients.map(c => (
                 <Btn
+                  button
                   key={c.id}
                   onClick={() => handleReferredSelect(c.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${

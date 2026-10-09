@@ -39,6 +39,7 @@ export default function ScrollToTopButton({ threshold = 500 }) {
   // resta veramente fixed rispetto al viewport.
   return createPortal(
     <Btn
+      button
       onClick={() => webWindow.scrollTo({ top: 0, behavior: 'smooth' })}
       className={`fixed right-4 w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center active:scale-95 hover:bg-primary/90 transition-all duration-200 ${bulkActive ? 'bottom-40 z-50' : 'bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-40'} sm:bottom-6 sm:right-6 sm:z-30`}
       accessibilityLabel="Torna su">

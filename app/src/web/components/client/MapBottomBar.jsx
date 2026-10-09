@@ -53,9 +53,9 @@ export default function MapBottomBar({ visibleClients = [], onClientClick }) {
         <Span className="text-[10px] text-muted-foreground">· per rating</Span>
         {overflow > 0 && (
           <Btn
+            button
             onClick={() => setExpanded(e => !e)}
-            className="ml-auto flex items-center gap-1 text-[10px] font-medium text-primary hover:text-primary/80 px-2 py-0.5 rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
-          >
+            className="ml-auto flex items-center gap-1 text-[10px] font-medium text-primary hover:text-primary/80 px-2 py-0.5 rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
             {expanded ? (
               <>
                 <ChevronUp className="w-3 h-3" />
@@ -76,10 +76,10 @@ export default function MapBottomBar({ visibleClients = [], onClientClick }) {
         <Div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto recontact-scrollbar pb-0.5">
           {displayClients.map(({ client, rating }) => (
             <Btn
+              button
               key={client.id}
               onClick={() => onClientClick?.(client.id)}
-              className="flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors"
-            >
+              className="flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors">
               <Div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
                 {initialsOf(client.name)}
               </Div>
@@ -96,10 +96,10 @@ export default function MapBottomBar({ visibleClients = [], onClientClick }) {
         <Div className="flex gap-2 overflow-x-auto pb-0.5" style={{ WebkitOverflowScrolling: 'touch' }}>
           {displayClients.map(({ client, rating }) => (
             <Btn
+              button
               key={client.id}
               onClick={() => onClientClick?.(client.id)}
-              className="flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors"
-            >
+              className="flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors">
               <Div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
                 {initialsOf(client.name)}
               </Div>

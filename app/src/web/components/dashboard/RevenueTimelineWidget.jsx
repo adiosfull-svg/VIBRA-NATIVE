@@ -76,7 +76,10 @@ export default function RevenueTimelineWidget({ delay = 0 }) {
         <Div className="flex items-center gap-2">
           <Div className="flex gap-1 p-1 rounded-xl bg-secondary/30">
             {[6, 12, 24, 'all'].map(m => (
-              <Btn key={m} onClick={() => setMonthRange(m)}
+              <Btn
+                button
+                key={m}
+                onClick={() => setMonthRange(m)}
                 className={`text-[11px] font-medium px-2 py-1 rounded-lg transition-all duration-200 ${monthRange === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
                 {m === 'all' ? 'Sempre' : `${m}m`}
               </Btn>
@@ -84,7 +87,10 @@ export default function RevenueTimelineWidget({ delay = 0 }) {
           </Div>
           <Div className="flex gap-1 p-1 rounded-xl bg-secondary/30">
             {[['area', '~'], ['bar', '▐']].map(([type, icon]) => (
-              <Btn key={type} onClick={() => setChartType(type)}
+              <Btn
+                button
+                key={type}
+                onClick={() => setChartType(type)}
                 className={`text-[11px] font-medium px-2 py-1 rounded-lg transition-all duration-200 ${chartType === type ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
                 {icon}
               </Btn>
@@ -104,7 +110,7 @@ export default function RevenueTimelineWidget({ delay = 0 }) {
             {chartType === 'area' ? (
               <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <Defs>
-                  <SvgLinearGradient x1="0" y1="0" x2="0" y2="1">
+                  <SvgLinearGradient id="grad-timeline" x1="0" y1="0" x2="0" y2="1">
                     <Stop offset="5%" stopColor="#a78bfa" stopOpacity={0.3} />
                     <Stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
                   </SvgLinearGradient>

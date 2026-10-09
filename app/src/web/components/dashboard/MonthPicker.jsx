@@ -46,10 +46,10 @@ export default function MonthPicker({ value, onChange }) {
   return (
     <>
       <Btn
+        button
         ref={buttonRef}
         onClick={handleOpen}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors capitalize"
-      >
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors capitalize">
         <Span>{label}</Span>
         <ChevronRight className={`w-3 h-3 transition-transform text-primary ${open ? 'rotate-90' : ''}`} />
       </Btn>
@@ -61,11 +61,17 @@ export default function MonthPicker({ value, onChange }) {
           className="bg-card border border-border rounded-xl shadow-xl p-3 w-52"
         >
           <Div className="flex items-center justify-between mb-2">
-            <Btn onClick={() => setViewYear(y => y - 1)} className="p-1 rounded hover:bg-secondary/50">
+            <Btn
+              button
+              onClick={() => setViewYear(y => y - 1)}
+              className="p-1 rounded hover:bg-secondary/50">
               <ChevronLeft className="w-3.5 h-3.5" />
             </Btn>
             <Span className="text-xs font-semibold">{viewYear}</Span>
-            <Btn onClick={() => setViewYear(y => y + 1)} className="p-1 rounded hover:bg-secondary/50">
+            <Btn
+              button
+              onClick={() => setViewYear(y => y + 1)}
+              className="p-1 rounded hover:bg-secondary/50">
               <ChevronRight className="w-3.5 h-3.5" />
             </Btn>
           </Div>
@@ -74,14 +80,14 @@ export default function MonthPicker({ value, onChange }) {
               const isSelected = value.getMonth() === i && value.getFullYear() === viewYear;
               return (
                 <Btn
+                  button
                   key={m}
                   onClick={() => handleSelect(i)}
                   className={`py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     isSelected
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-secondary/60 text-muted-foreground hover:text-foreground'
-                  }`}
-                >
+                  }`}>
                   {m}
                 </Btn>
               );

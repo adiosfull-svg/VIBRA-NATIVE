@@ -33,6 +33,7 @@ const ELEMENTS = {
   linearGradient: 'SvgLinearGradient', text: 'SvgText', polygon: 'Polygon', polyline: 'Polyline', foreignObject: 'ForeignObject',
 };
 const DROP_ATTR = /^(data-.*|aria-hidden|aria-expanded|aria-busy|aria-describedby|role|tabIndex|id|draggable|htmlFor|crossOrigin|decoding|xmlns|suppressContentEditableWarning|contentEditable|onContextMenu|onDragStart|onLostPointerCapture|onPointerDownCapture|toast-close)$/;
+const SVG_ID_TAGS = new Set(['linearGradient', 'radialGradient', 'clipPath', 'pattern', 'mask', 'filter', 'symbol', 'path', 'g']);
 const GESTURE_ATTR = /^on(Mouse|Pointer|Touch)\w*$|^onWheel$/;
 
 const UI_MAP = {
@@ -233,7 +234,8 @@ export function transform(code, originalPath = '') {
       for (const a of el.attributes) {
         if (a.type !== 'JSXAttribute') { attrs.push(a); continue; }
         const n = attrName(a);
-        if (DROP_ATTR.test(n)) continue;
+        // id negli SVG serve (fill="url(#grad)", clipPath...): si tiene; altrove non ha equivalente
+        if (DROP_ATTR.test(n) && !(n === 'id' && SVG_ID_TAGS.has(tag))) continue;
         // touch/pointer/mouse/wheel: supportati da Div e Btn (ui/gestures.ts), rimossi altrove
         if (GESTURE_ATTR.test(n) && !['Div', 'Btn'].includes(name)) { removedGestures.push(n); continue; }
         // onKeyDown dei campi di testo è supportato (ui/keyEvents.ts: Invio/Esc anche sul telefono)
@@ -263,6 +265,8 @@ export function transform(code, originalPath = '') {
         else if (cls.value.type === 'StringLiteral') cls.value = b.stringLiteral(`${TEXT_EXTRA[tag]} ${cls.value.value}`);
       }
 
+      // <button> vero (non un div cliccabile): Btn applica i default del browser (testo centrato, in linea)
+      if (tag === 'button') attrs.unshift(b.jsxAttribute(b.jsxIdentifier('button')));
       el.attributes = attrs;
       el.name = b.jsxIdentifier(local(name));
       if (p.node.closingElement) p.node.closingElement.name = b.jsxIdentifier(local(name));

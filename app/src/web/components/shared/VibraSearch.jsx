@@ -11,7 +11,13 @@ const motion = {
   ),
   button: ({ initial, animate, exit, transition, variants, className, style, children, ...rest }) => {
     const delay = transition?.delay || 0;
-    return (<Btn className={`${className || ''} search-tile-in`} style={{ ...style, animationDelay: `${delay}s` }} {...rest}>{children}</Btn>);
+    return (
+      <Btn
+        button
+        className={`${className || ''} search-tile-in`}
+        style={{ ...style, animationDelay: `${delay}s` }}
+        {...rest}>{children}</Btn>
+    );
   },
 };
 const AnimatePresence = ({ children }) => <>{children}</>;
@@ -717,10 +723,10 @@ export default function VibraSearch() {
               </Div>
               <H className="text-lg font-bold text-foreground flex-1 leading-none">Cerca</H>
               <Btn
+                button
                 onClick={() => setOpen(false)}
                 className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
-                accessibilityLabel="Chiudi"
-              >
+                accessibilityLabel="Chiudi">
                 <X className="w-4 h-4" />
               </Btn>
             </Div>
@@ -736,10 +742,10 @@ export default function VibraSearch() {
                 />
                 {q && (
                   <Btn
+                    button
                     onClick={() => setQ('')}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary shrink-0"
-                    accessibilityLabel="Pulisci"
-                  >
+                    accessibilityLabel="Pulisci">
                     <X className="w-3.5 h-3.5" />
                   </Btn>
                 )}
@@ -797,9 +803,9 @@ export default function VibraSearch() {
             {results.isLeaderSearch && (
               <Group title="Leader" icon={Star} color="#f59e0b" count={leaders.length}>
                 <Btn
+                  button
                   onClick={() => setLeadersOpen(true)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                >
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                   <Div className="w-8 h-8 rounded-lg bg-yellow-500/15 flex items-center justify-center shrink-0">
                     <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   </Div>
@@ -817,6 +823,7 @@ export default function VibraSearch() {
               <Group title="Materiale Locali" icon={MapIcon} color="#4ade80" count={results.materiale.length}>
                 {results.materiale.map((m, i) => (
                   <Btn
+                    button
                     key={i}
                     onClick={() => {
                       if (m.type === 'formule') {
@@ -827,8 +834,7 @@ export default function VibraSearch() {
                         setFullscreenImg({ src: m.value, label: `${m.venueLabel} — ${m.type === 'piantina' ? 'Piantina' : 'Listino'}` });
                       }
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <Div className="w-9 h-9 rounded-lg overflow-hidden bg-secondary/40 flex items-center justify-center shrink-0">
                       {m.type === 'formule'
                         ? <FileText className="w-4 h-4 text-orange-400" />
@@ -854,6 +860,7 @@ export default function VibraSearch() {
               <Group title="Loghi & Materiale" icon={Download} color="#8b5cf6" count={results.downloadLoghi.length}>
                 {results.downloadLoghi.map((m, i) => (
                   <Btn
+                    button
                     key={i}
                     onClick={() => {
                       if (m.isImage && m.preview) {
@@ -862,8 +869,7 @@ export default function VibraSearch() {
                         webWindow.open(m.url, '_blank', 'noopener,noreferrer');
                       }
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <Div className="w-9 h-9 rounded-lg overflow-hidden bg-secondary/40 flex items-center justify-center shrink-0">
                       {m.isImage && m.preview
                         ? <CachedImage src={m.preview} alt={m.name} className="w-full h-full object-contain" />
@@ -889,10 +895,10 @@ export default function VibraSearch() {
                 </Div>
                 {results.clients.map(c => (
                   <Btn
+                    button
                     key={c.id}
                     onClick={() => handleClientClick(c)}
-                    className="w-full grid grid-cols-[1fr_auto] gap-2 items-center px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full grid grid-cols-[1fr_auto] gap-2 items-center px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <Span className="flex items-center gap-2.5 min-w-0">
                       <ClientAvatar client={c} initials={c.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()} size="sm" />
                       <Span className="min-w-0">
@@ -913,10 +919,10 @@ export default function VibraSearch() {
               <Group title="Promoter" icon={Users2} color="#f472b6" count={results.promoters.length}>
                 {results.promoters.map(p => (
                   <Btn
+                    button
                     key={p.id}
                     onClick={() => goNavigate('/promoter/' + p.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <Span className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xs font-bold text-primary overflow-hidden shrink-0">
                       {p.photo_url
                         ? <CachedImage src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
@@ -970,9 +976,9 @@ export default function VibraSearch() {
                   return (
                     <Div key={e.id} className="border-b border-white/[0.04] last:border-0">
                       <Btn
+                        button
                         onClick={() => handleEventClick(e)}
-                        className="w-full grid grid-cols-[auto_1fr_auto_auto] gap-2 items-center px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left"
-                      >
+                        className="w-full grid grid-cols-[auto_1fr_auto_auto] gap-2 items-center px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left">
                         <VenueLogo venueKey={e.venue} size={28} />
                         <Span className="min-w-0">
                           <Span className="text-sm text-foreground truncate block">{e.name}</Span>
@@ -1001,10 +1007,10 @@ export default function VibraSearch() {
               <Group title="Locali" icon={Building2} color="#34d399" count={results.venues.length}>
                 {results.venues.map(v => (
                   <Btn
+                    button
                     key={v.id}
                     onClick={() => goNavigate('/locali?venue=' + encodeURIComponent(v.name))}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <VenueLogo venueKey={v.logo_key || v.name} size={28} />
                     <Span className="min-w-0 flex-1">
                       <Span className="text-sm text-foreground truncate block">{v.name}</Span>
@@ -1021,10 +1027,10 @@ export default function VibraSearch() {
               <Group title="Sezioni" icon={SlidersHorizontal} color="#60a5fa" count={results.appSections.length}>
                 {results.appSections.map(s => (
                   <Btn
+                    button
                     key={s.label}
                     onClick={() => goNavigate(s.path)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <Div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <s.icon className="w-3.5 h-3.5 text-primary" />
                     </Div>
@@ -1040,10 +1046,10 @@ export default function VibraSearch() {
               <Group title="Impostazioni" icon={Settings2} color="#f59e0b" count={results.settingsSections.length}>
                 {results.settingsSections.map(s => (
                   <Btn
+                    button
                     key={s.label}
                     onClick={() => goNavigate(s.path)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0"
-                  >
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors text-left border-b border-white/[0.04] last:border-0">
                     <Div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <s.icon className="w-3.5 h-3.5 text-primary" />
                     </Div>
@@ -1138,9 +1144,9 @@ export default function VibraSearch() {
             <Div className="flex items-center gap-2 pb-1">
               <Div className="relative">
                 <Btn
+                  button
                   onClick={handleCopyFormula}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/60 text-foreground transition-colors"
-                >
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/60 text-foreground transition-colors">
                   <Copy className="w-3.5 h-3.5" /> Copia
                 </Btn>
                 {copied && (
@@ -1150,15 +1156,15 @@ export default function VibraSearch() {
                 )}
               </Div>
               <Btn
+                button
                 onClick={handleDownloadFormula}
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/60 text-foreground transition-colors"
-              >
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/60 text-foreground transition-colors">
                 <Download className="w-3.5 h-3.5" /> Scarica
               </Btn>
               <Btn
+                button
                 onClick={() => shareText(formulaView.text, `${formulaView.label} — Formule di entrata`)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/60 text-foreground transition-colors"
-              >
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/60 text-foreground transition-colors">
                 <Share2 className="w-3.5 h-3.5" /> Condividi
               </Btn>
             </Div>

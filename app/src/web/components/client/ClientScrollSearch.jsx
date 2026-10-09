@@ -50,6 +50,7 @@ export default function ClientScrollSearch({ clients, onScrollToClient }) {
   return createPortal(
     <>
       <Btn
+        button
         onClick={() => setOpen((v) => !v)}
         className={`fixed right-16 w-10 h-10 rounded-full text-primary-foreground shadow-lg flex items-center justify-center active:scale-95 hover:bg-primary/90 transition-all duration-200 bg-[#551a8e] ${bulkActive ? 'bottom-40 z-50' : 'bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-40'} sm:bottom-6 sm:right-16 sm:z-30`}
         accessibilityLabel="Cerca cliente">
@@ -89,8 +90,9 @@ export default function ClientScrollSearch({ clients, onScrollToClient }) {
                   }} />
               
                 <Btn
-                onClick={() => setOpen(false)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  button
+                  onClick={() => setOpen(false)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 
                   <X className="w-4 h-4" />
                 </Btn>
@@ -107,6 +109,7 @@ export default function ClientScrollSearch({ clients, onScrollToClient }) {
 
               matches.map((c) =>
               <Btn
+                button
                 key={c.id}
                 onClick={() => handleSelect(c)}
                 className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/50 active:bg-secondary/70 transition-colors text-left border-b border-border/20 last:border-0">

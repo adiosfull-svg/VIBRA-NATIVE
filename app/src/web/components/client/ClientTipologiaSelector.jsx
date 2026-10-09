@@ -27,6 +27,7 @@ export function ClientStatoSelector({ value, onChange }) {
     <Div className="flex flex-col gap-1.5">
       {STATI_PAGANTE.map(s => (
         <Btn
+          button
           key={s.value}
           onClick={() => onChange(s.value)}
           className={`flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-all ${
@@ -72,6 +73,7 @@ export default function ClientTipologiaSelector({ value, onChange }) {
     <Div className="grid grid-cols-2 gap-2">
       {TIPOLOGIE.map(t => (
         <Btn
+          button
           key={t.value}
           onClick={() => toggle(t.value)}
           className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border text-center transition-all ${

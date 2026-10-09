@@ -22,6 +22,7 @@ export default function ClientReferralsBox({ client, allClients }) {
   return (
     <Div className="rounded-xl bg-card border border-border overflow-hidden">
       <Btn
+        button
         onClick={() => setExpanded(e => !e)}
         className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-secondary/30 transition-colors">
         <Div className="flex items-center gap-1.5">

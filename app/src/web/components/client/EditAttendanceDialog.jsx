@@ -425,6 +425,7 @@ export default function EditAttendanceDialog({
                     <Div>
                       <P className="text-[10px] text-muted-foreground mb-1">Serata</P>
                       <Btn
+                        button
                         onClick={() => setShowEditEventSearch(s => !s)}
                         className="w-full flex items-center justify-between text-xs rounded-md bg-secondary/40 border border-border px-2.5 py-1.5 hover:border-primary/50 transition-colors">
                         <Span className="truncate text-left">{getEventLabel(editEventId)}</Span>
@@ -446,6 +447,7 @@ export default function EditAttendanceDialog({
                                 .slice(0, 8)
                                 .map(e => (
                                   <Btn
+                                    button
                                     key={e.id}
                                     onClick={() => { setEditEventId(e.id); setEditEventSearch(''); setShowEditEventSearch(false); }}
                                     className={`w-full text-left text-xs px-2 py-1.5 rounded transition-colors ${editEventId === e.id ? 'bg-primary/10 text-primary' : 'hover:bg-secondary/60'}`}>
@@ -501,6 +503,7 @@ export default function EditAttendanceDialog({
                     <Div key={companion.id} className="flex items-center justify-between rounded-md bg-secondary/30 px-3 py-2">
                       <Span className={`text-xs font-medium ${excluded ? 'line-through text-muted-foreground' : ''}`}>{companion.name}</Span>
                       <Btn
+                        button
                         onClick={() => setExcludedEditCompanions(prev => { const n = new Set(prev); if (n.has(companion.id)) n.delete(companion.id); else n.add(companion.id); return n; })}
                         className={`text-xs flex items-center gap-1 transition-colors ${excluded ? 'text-primary' : 'text-muted-foreground hover:text-destructive'}`}>
                         {excluded ? 'Includi' : <X className="w-3.5 h-3.5" />}
@@ -541,6 +544,7 @@ export default function EditAttendanceDialog({
                       <Div className="flex items-center justify-between">
                         <Span className={`text-xs font-semibold ${excluded ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{companion.name}</Span>
                         <Btn
+                          button
                           onClick={() => toggleExcludeCompanion(companion.id)}
                           className={`text-xs flex items-center gap-1 transition-colors ${excluded ? 'text-primary hover:text-foreground' : 'text-muted-foreground hover:text-destructive'}`}>
                           {excluded ? <Span className="text-[10px]">Includi</Span> : <X className="w-3.5 h-3.5" />}
@@ -611,6 +615,7 @@ export default function EditAttendanceDialog({
                     const sel = !!selectedEvents[e.id];
                     return (
                       <Btn
+                        button
                         key={e.id}
                         onClick={() => toggleEventSelect(e.id)}
                         className={`text-[10px] px-2 py-1 rounded-full border transition-all ${sel ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'}`}>
@@ -633,6 +638,7 @@ export default function EditAttendanceDialog({
                 <Div className="rounded-lg border border-border bg-card shadow-sm space-y-0.5 p-1 max-h-32 overflow-y-auto">
                   {filteredSearch.map(e => (
                     <Btn
+                      button
                       key={e.id}
                       onClick={() => { toggleEventSelect(e.id); setEventSearch(''); }}
                       className={`w-full text-left text-xs px-2 py-1.5 rounded transition-colors ${selectedEvents[e.id] ? 'bg-primary/10 text-primary' : 'hover:bg-secondary/60'}`}>
@@ -651,6 +657,7 @@ export default function EditAttendanceDialog({
                       <Div className="flex items-center justify-between gap-2">
                         <P className="text-[10px] text-muted-foreground flex-1 truncate">{getEventLabel(eventId)}</P>
                         <Btn
+                          button
                           onClick={() => toggleEventSelect(eventId)}
                           className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
                           <X className="w-3 h-3" />

@@ -176,6 +176,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
       <Div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-transparent opacity-40 px-3 py-2.5">
         <Span className="text-xs text-muted-foreground flex-1 truncate">{entry.raw_name}</Span>
         <Btn
+          button
           onClick={handleExclude}
           className="text-[10px] text-primary hover:underline">Includi</Btn>
       </Div>
@@ -205,6 +206,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
           </Span>
         )}
         <Btn
+          button
           onClick={handleExclude}
           className="text-muted-foreground/50 hover:text-destructive shrink-0 transition-colors">
           <X className="w-3.5 h-3.5" />
@@ -224,11 +226,13 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
           {selectedClient && <ClientAvatar client={selectedClient} size="xs" initials={selectedClient.name?.charAt(0)?.toUpperCase() || '?'} />}
           {selectedClient?.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
           <Btn
+            button
             onClick={() => onClientDetail?.(selectedClient)}
             className="text-xs font-semibold text-emerald-200 break-words leading-tight flex-1 text-left hover:underline">
             {selectedClient?.name}
           </Btn>
           <Btn
+            button
             onClick={() => setSearchOpen(true)}
             className="text-[10px] text-muted-foreground/70 hover:text-foreground shrink-0 transition-colors">Cambia</Btn>
         </Div>
@@ -241,11 +245,13 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
           {entry.matchedClientObj?.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
           <Span className="text-xs text-foreground/90 break-words leading-tight flex-1 min-w-0">{entry.matched_client_name}</Span>
           <Btn
+            button
             onClick={handleConfirmMatch}
             className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500/15 rounded-md px-2 py-1 shrink-0 transition-colors shadow-sm shadow-emerald-500/10">
             <Check className="w-3 h-3" /> Conferma
           </Btn>
           <Btn
+            button
             onClick={() => setSearchOpen(true)}
             className="text-[10px] text-muted-foreground/70 hover:text-foreground shrink-0 ml-auto transition-colors">Cambia</Btn>
         </Div>
@@ -260,12 +266,14 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
               placeholder="Nome cliente..."
               onKeyDown={e => { if (e.key === 'Enter') handleConfirmCreate(); if (e.key === 'Escape') setCreateMode(false); }} />
             <Btn
+              button
               onClick={() => setCreateMode(false)}
               className="text-muted-foreground hover:text-destructive shrink-0 p-1">
               <X className="w-3.5 h-3.5" />
             </Btn>
           </Div>
           <Btn
+            button
             onClick={handleConfirmCreate}
             disabled={creating || !createName.trim()}
             className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 rounded-lg py-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-violet-600/25">
@@ -293,6 +301,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
                 <Div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-xl border border-border/60 bg-card shadow-2xl max-h-36 overflow-y-auto p-1 space-y-0.5">
                   {filteredClients.map(c => (
                     <Btn
+                      button
                       key={c.id}
                       onClick={() => handleSelectClient(c)}
                       className="w-full flex items-center gap-2 text-left text-xs px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
@@ -307,6 +316,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
             </Div>
           )}
           <Btn
+            button
             onClick={handleStartCreate}
             className="w-full flex items-center gap-2 text-xs text-violet-300/80 hover:text-violet-300 border border-dashed border-violet-500/25 rounded-lg px-2.5 py-2 hover:bg-violet-500/8 transition-colors">
             <UserPlus className="w-3.5 h-3.5 shrink-0" />
@@ -324,6 +334,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
               Aggiungere anche il gruppo? ({(entry.groupMembers || []).filter(m => !m.excluded).length} selezionati)
             </Span>
             <Btn
+              button
               onClick={() => {
                 const allExcluded = (entry.groupMembers || []).every(m => m.excluded);
                 onUpdate({ ...entry, groupMembers: (entry.groupMembers || []).map(m => ({ ...m, excluded: !allExcluded })) });
@@ -336,6 +347,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
             {(entry.groupMembers || []).map((m, idx) => (
               <Div key={m.client.id} className={`flex items-center gap-1.5 text-[11px] px-1.5 py-1 rounded-lg transition-colors ${m.excluded ? 'opacity-40' : 'bg-background/50 shadow-sm'}`}>
                 <Btn
+                  button
                   onClick={() => {
                     const newGm = [...(entry.groupMembers || [])];
                     newGm[idx] = { ...m, excluded: !m.excluded };
@@ -349,6 +361,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
                 <ClientAvatar client={m.client} size="xs" initials={m.client.name?.charAt(0)?.toUpperCase() || '?'} />
                 {m.client.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
                 <Btn
+                  button
                   onClick={() => onClientDetail?.(m.client)}
                   className={`flex-1 text-left truncate hover:underline transition-colors ${m.excluded ? 'line-through text-muted-foreground' : ''}`}>
                   {m.client.name}
@@ -408,6 +421,7 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
         {companionCount > 0 && (
           <>
             <Btn
+              button
               onClick={() => setCompanionsOpen(!companionsOpen)}
               className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors w-full">
               <Users className="w-3 h-3" />
@@ -437,12 +451,14 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
         )}
         <Div className="flex items-center gap-1.5">
           <Btn
+            button
             onClick={handleAddCompanion}
             className="flex items-center gap-1 text-[10px] font-semibold text-violet-300 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 rounded-lg px-2.5 py-1.5 transition-colors shrink-0">
             <Plus className="w-3 h-3" /> Accompagnatore
           </Btn>
           {entryGroupClients.length >= 2 && (
             <Btn
+              button
               onClick={() => setShowGroupCreate(s => !s)}
               className="flex items-center gap-1 text-[10px] font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 rounded-lg px-2.5 py-1.5 transition-colors shrink-0">
               <FolderPlus className="w-3 h-3" /> Gruppo
@@ -459,12 +475,14 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
               className="flex-1 h-7 text-[11px] px-2 rounded-lg bg-background border border-amber-500/30 focus:outline-none focus:ring-1 focus:ring-amber-500/40"
               onKeyDown={e => { if (e.key === 'Enter') handleCreateEntryGroup(); if (e.key === 'Escape') setShowGroupCreate(false); }} />
             <Btn
+              button
               disabled={!groupName.trim() || creatingGroup}
               onClick={handleCreateEntryGroup}
               className="flex items-center gap-1 text-[10px] font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50 shrink-0">
               {creatingGroup ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Check className="w-3 h-3" /> Crea</>}
             </Btn>
             <Btn
+              button
               onClick={() => setShowGroupCreate(false)}
               className="text-muted-foreground hover:text-destructive shrink-0 p-1">
               <X className="w-3 h-3" />

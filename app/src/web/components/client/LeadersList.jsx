@@ -280,6 +280,7 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
                 </A>
               )}
               <Btn
+                button
                 onClick={(e) => { e.stopPropagation(); markAsContacted(c.id); }}
                 className={`text-[9px] font-medium border rounded flex items-center gap-0.5 px-1.5 py-0.5 shrink-0 transition-all ${
                   contactStale
@@ -287,8 +288,7 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
                     : contactedLabel
                     ? 'text-emerald-400 bg-emerald-400/5 border-emerald-400/25'
                     : 'text-muted-foreground border-border'
-                }`}
-              >
+                }`}>
                 {contactedLabel ? (
                   <><CheckCircle2 className="w-2.5 h-2.5" />{contactedLabel}</>
                 ) : (
@@ -300,9 +300,9 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
                   <Popover>
                     <PopoverTrigger asChild>
                       <Btn
+                        button
                         onClick={(e) => e.stopPropagation()}
-                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-lg border transition-all ${badge.color}`}
-                      >
+                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-lg border transition-all ${badge.color}`}>
                         <Clock className="w-2.5 h-2.5" />
                         {badge.label}
                       </Btn>
@@ -339,10 +339,10 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
               )}
               {onViewNetwork && (
                 <Btn
+                  button
                   onClick={(e) => { e.stopPropagation(); onViewNetwork(c.id); }}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-                  accessibilityLabel="Vedi rete"
-                >
+                  accessibilityLabel="Vedi rete">
                   <GitBranch className="w-3.5 h-3.5" />
                 </Btn>
               )}

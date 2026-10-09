@@ -158,6 +158,7 @@ export default function ClientFUTCard({ client, stats, ranking, trendFull, badge
           </A>
         )}
         <Btn
+          button
           onClick={() => onContact?.(client.id)}
           className={`text-[10px] font-medium px-2 py-1 rounded-lg border flex items-center gap-0.5 transition-all ${
             contactStale
@@ -165,8 +166,7 @@ export default function ClientFUTCard({ client, stats, ranking, trendFull, badge
               : contactLabel
               ? 'text-emerald-400 bg-emerald-400/5 border-emerald-400/25'
               : 'text-muted-foreground bg-transparent border-border hover:border-emerald-400/40 hover:text-emerald-400'
-          }`}
-        >
+          }`}>
           {contactLabel ? <CheckCircle2 className="w-3 h-3" /> : <MessageCircle className="w-3 h-3" />}
           {contactLabel || 'Sentito'}
         </Btn>

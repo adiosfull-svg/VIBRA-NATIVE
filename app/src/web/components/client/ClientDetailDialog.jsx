@@ -421,10 +421,10 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           <Div className="flex items-center gap-2">
           {onBack && (
             <Btn
+              button
               onClick={(e) => { e.stopPropagation(); onBack(); }}
               className="p-1 -ml-1 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              accessibilityLabel="Torna alla lista ricontatti"
-            >
+              accessibilityLabel="Torna alla lista ricontatti">
               <ArrowLeft className="w-4 h-4" />
             </Btn>
           )}
@@ -437,6 +437,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
             </Span>
           )}
           <Btn
+            button
             onClick={() => handleOpenChange(false)}
             className="ml-auto text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-secondary/60 shrink-0"
             accessibilityLabel="Chiudi">
@@ -450,6 +451,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           <Popover open={statoEditOpen} onOpenChange={setStatoEditOpen}>
             <PopoverTrigger asChild>
               <Btn
+                button
                 disabled={savingStato}
                 className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full transition-all shrink-0 disabled:opacity-50 ${getStatoMeta(localClient?.stato_pagante).chip}`}
                 accessibilityLabel={getStatoMeta(localClient?.stato_pagante).label}>
@@ -479,6 +481,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
             </PopoverContent>
           </Popover>
           <Btn
+            button
             onClick={handlePastePhoto}
             disabled={pastingPhoto}
             className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full bg-secondary/40 hover:bg-secondary/60 transition-colors shrink-0 disabled:opacity-50"
@@ -496,6 +499,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           </Btn>
           {undoPhoto && (
             <Btn
+              button
               onClick={handleUndoPhoto}
               disabled={pastingPhoto}
               className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors shrink-0 disabled:opacity-50"
@@ -516,6 +520,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           <Popover open={locationEditOpen} onOpenChange={setLocationEditOpen}>
             <PopoverTrigger asChild>
               <Btn
+                button
                 className="inline-flex items-center gap-1 hover:opacity-80 transition-opacity disabled:opacity-50"
                 disabled={savingLocation}>
                 {localClient?.residenza_key && LOCATION_BY_KEY[localClient.residenza_key] ? (
@@ -554,6 +559,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           <Popover open={sourceEditOpen} onOpenChange={setSourceEditOpen}>
             <PopoverTrigger asChild>
               <Btn
+                button
                 className="inline-flex items-center gap-1 hover:opacity-80 transition-opacity disabled:opacity-50"
                 disabled={savingSource}>
                 {localSourceType ? (
@@ -589,6 +595,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         <Div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           {/* Toggle guidatore */}
           <Btn
+            button
             onClick={handleToggleDriver}
             disabled={savingDriver}
             className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full transition-all ${
@@ -612,6 +619,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
 
           {/* Toggle leader */}
           <Btn
+            button
             onClick={handleToggleLeader}
             disabled={savingLeader}
             className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full transition-all ${
@@ -627,6 +635,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           <Popover open={tipologiaEditOpen} onOpenChange={setTipologiaEditOpen}>
             <PopoverTrigger asChild>
               <Btn
+                button
                 disabled={savingTipologia}
                 className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full transition-all ${
                   normalizeTipologia(localClient?.tipologia_cliente).length > 0
@@ -668,6 +677,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
           <Popover open={birthDateEditOpen} onOpenChange={setBirthDateEditOpen}>
             <PopoverTrigger asChild>
               <Btn
+                button
                 disabled={savingBirthDate}
                 className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full transition-all disabled:opacity-50 ${
                   localClient?.data_nascita
@@ -776,7 +786,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData}>
                   <Defs>
-                    <SvgLinearGradient x1="0" y1="0" x2="0" y2="1">
+                    <SvgLinearGradient id="grad-client" x1="0" y1="0" x2="0" y2="1">
                       <Stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
                       <Stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                     </SvgLinearGradient>

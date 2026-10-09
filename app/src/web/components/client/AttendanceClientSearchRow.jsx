@@ -260,6 +260,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
   return (
     <Card className={open ? 'border-border' : 'hover:border-border/80'}>
       <Btn
+        button
         onClick={() => { setOpen(o => !o); if (open) reset(); }}
         className="w-full flex items-center justify-between p-3">
         <Div className="flex items-center gap-2.5">
@@ -278,11 +279,13 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
             <>
               <Div className="flex gap-1 bg-secondary/30 p-0.5 rounded-lg">
                 <Btn
+                  button
                   onClick={() => { setMode('client'); setSearch(''); }}
                   className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium transition-all ${mode === 'client' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
                   <Users className="w-3 h-3" />Cliente
                 </Btn>
                 <Btn
+                  button
                   onClick={() => { setMode('group'); setSearch(''); }}
                   className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium transition-all ${mode === 'group' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
                   <FolderOpen className="w-3 h-3" />Gruppo
@@ -298,6 +301,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                   <Div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-xl max-h-36 overflow-y-auto p-1 space-y-0.5 recontact-scrollbar">
                     {filteredClients.map(c => (
                       <Btn
+                        button
                         key={c.id}
                         onClick={() => handleSelectClient(c)}
                         className="w-full flex items-center gap-2 text-left text-xs px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
@@ -315,6 +319,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                       const available = (g.client_ids || []).filter(id => !existingClientIds.has(id)).length;
                       return (
                         <Btn
+                          button
                           key={g.id}
                           onClick={() => handleSelectGroup(g)}
                           className="w-full flex items-center gap-2 text-left text-xs px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
@@ -336,6 +341,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
 
               {mode === 'client' && search.trim() && filteredClients.length === 0 && !creatingNew && (
                 <Btn
+                  button
                   onClick={() => { setCreatingNew(true); setNewName(search.trim()); }}
                   className="w-full flex items-center gap-2 text-xs text-foreground border border-dashed border-border rounded-xl px-3 py-2.5 hover:bg-secondary/20 transition-colors">
                   <Plus className="w-3.5 h-3.5 shrink-0" />
@@ -347,6 +353,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                   <Div className="flex items-center justify-between">
                     <Span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5"><Plus className="w-3 h-3" />Nuovo cliente</Span>
                     <Btn
+                      button
                       onClick={() => { setCreatingNew(false); setNewName(''); setNewPhone(''); setNewInsta(''); }}
                       className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></Btn>
                   </Div>
@@ -366,7 +373,10 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
           {phase === 'group-members' && (
             <>
               <Div className="flex items-center gap-2">
-                <Btn onClick={reset} className="text-muted-foreground hover:text-foreground">
+                <Btn
+                  button
+                  onClick={reset}
+                  className="text-muted-foreground hover:text-foreground">
                   <X className="w-3.5 h-3.5" />
                 </Btn>
                 <Div className="flex items-center gap-1.5 flex-1">
@@ -380,6 +390,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
               <Div className="space-y-1.5 max-h-36 overflow-y-auto recontact-scrollbar">
                 {groupMembers.map(m => (
                   <Btn
+                    button
                     key={m.client.id}
                     onClick={() => toggleGroupMember(m.client.id)}
                     className={`w-full flex items-center gap-2 text-left text-xs px-2.5 py-2 rounded-lg border transition-colors ${m.checked ? 'border-emerald-500/30 bg-emerald-500/8 text-foreground' : 'border-border/40 bg-transparent text-muted-foreground line-through'}`}>
@@ -402,6 +413,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                   <Check className="w-3 h-3 text-emerald-400" />
                 </Div>
                 <Btn
+                  button
                   onClick={() => setShowAddGroup(s => !s)}
                   className="flex-1 flex items-center gap-1.5 min-w-0 text-left hover:bg-emerald-500/10 rounded-lg -mx-1 px-1 py-0.5 transition-colors"
                   accessibilityLabel="Aggiungi a un gruppo esistente">
@@ -411,6 +423,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                   <FolderOpen className={`w-3 h-3 shrink-0 ml-auto transition-colors ${showAddGroup ? 'text-emerald-400' : 'text-muted-foreground'}`} />
                 </Btn>
                 <Btn
+                  button
                   onClick={reset}
                   className="text-muted-foreground hover:text-red-400 transition-colors">
                   <X className="w-3 h-3" />
@@ -459,6 +472,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                     </Div>
                   ) : (
                     <Btn
+                      button
                       onClick={() => setCreateGroupMode(true)}
                       className="w-full flex items-center gap-2 text-xs font-medium text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-lg px-2.5 py-2 transition-colors">
                       <Plus className="w-3.5 h-3.5 shrink-0" />Crea nuovo gruppo
@@ -478,6 +492,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                         <Div key={g.id} className={`rounded-lg border transition-colors ${inGroup ? 'border-green-500/30 bg-green-500/8' : 'border-border/40'}`}>
                           <Div className="flex items-center gap-1.5 px-2 py-1.5">
                             <Btn
+                              button
                               onClick={() => toggleExpandGroupRow(g.id)}
                               className="shrink-0 text-muted-foreground hover:text-foreground p-0.5">
                               {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -486,6 +501,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                             <Span className={`flex-1 truncate text-xs font-medium ${inGroup ? 'text-green-400' : 'text-foreground'}`}>{g.name}</Span>
                             <Span className="text-[10px] text-muted-foreground shrink-0">{members.length}</Span>
                             <Btn
+                              button
                               onClick={() => handleToggleGroup(g)}
                               className={`shrink-0 flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[10px] font-medium transition-colors ${inGroup ? 'text-amber-400 hover:bg-amber-500/15' : 'text-emerald-400 hover:bg-emerald-500/15'}`}>
                               {inGroup
@@ -500,6 +516,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                                 <Div key={m.id} className={`flex items-center gap-1.5 text-[11px] pl-6 py-0.5 ${m.id === selectedClient.id ? 'text-green-400 font-medium' : 'text-muted-foreground'}`}>
                                   {m.is_leader && <Star className="w-2.5 h-2.5 text-yellow-400 shrink-0" fill="currentColor" />}
                                   <Btn
+                                    button
                                     onClick={() => onClientDetail?.(m)}
                                     className="truncate hover:text-primary hover:underline transition-colors text-left"
                                     accessibilityLabel="Apri dettaglio cliente · tasto destro per menu serate">
@@ -530,6 +547,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                   <Div key={cg.group.id} className="rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 space-y-1.5">
                     <Div className="flex items-center gap-2">
                       <Btn
+                        button
                         onClick={() => toggleExpandGroup(cg.group.id)}
                         className="flex items-center gap-2 text-left flex-1 min-w-0">
                         <FolderOpen className="w-3 h-3 text-amber-400 shrink-0" />
@@ -541,6 +559,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                           : <ChevronDown className="w-3 h-3 text-amber-400/60 shrink-0" />}
                       </Btn>
                       <Btn
+                        button
                         onClick={() => setAllExcluded(!allExcluded)}
                         className="text-[10px] font-medium text-amber-400/80 hover:text-amber-300 shrink-0 transition-colors whitespace-nowrap">
                         {allExcluded ? 'Includi tutti' : 'Rimuovi tutti'}
@@ -561,6 +580,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                           return (
                             <Div key={m.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg transition-colors ${excluded ? 'opacity-40' : 'bg-background/40'}`}>
                               <Btn
+                                button
                                 onClick={() => {
                                   setClientGroups(prev => prev.map(g => {
                                     if (g.group.id !== cg.group.id) return g;
@@ -577,6 +597,7 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                               {m.is_leader && <Star className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" />}
                               <ClientAvatar client={m} size="xs" initials={m.name?.charAt(0)?.toUpperCase() || '?'} />
                               <Btn
+                                button
                                 onClick={() => onClientDetail?.(m)}
                                 className={`flex-1 text-left truncate hover:text-primary hover:underline transition-colors ${excluded ? 'line-through text-muted-foreground' : ''}`}
                                 accessibilityLabel="Apri dettaglio cliente · tasto destro per menu serate">

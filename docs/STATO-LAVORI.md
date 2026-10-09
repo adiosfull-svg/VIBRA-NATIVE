@@ -190,17 +190,29 @@
    QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
    Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
    (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
-2. **Dashboard: convertita ma NON collegata né verificata** (`app/src/web/pages/Dashboard.jsx` e
-   `components/dashboard/*`, `components/export/ExportReportButton.jsx`; le route `/` e `/dashboard` mostrano ancora
-   ComingSoon). Fermata su richiesta dell'utente: prima chiudere gli errori di Clienti sul telefono e valutare un
-   emulatore Android per trovarli qui. Nuovi shim pronti: `shims/files.ts` (salva e condivide file sul telefono),
-   `shims/jspdf.ts` (doc.save()), `url` in `shims/dom.ts` (URL.createObjectURL + <a download>); il codemod li usa.
-3. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
-   Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
-4. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
+2. **Dashboard: collegata (route `/` e `/dashboard`), confronto web quasi identico** (admin; super4 uguale).
+   Differenza nota: la tabella "Media tavoli" non va a capo nella colonna Locale (servirebbe la larghezza
+   min-content delle colonne, non misurabile in RN). Export PDF/CSV: `shims/jspdf.ts`, `shims/files.ts`.
+   **DA FARE SUBITO nella prossima sessione** (modifiche dell'ultimo commit, typecheck e test OK ma confronto
+   NON rifatto): rilanciare i confronti di Clienti (tutte le tab/dialog, Cerca, Mappa) e Dashboard dopo:
+   - `button` su Btn: i `<button>` veri (codemod ora aggiunge `button`; `scripts/port/mark-buttons.mjs` li ha
+     segnati nei file già convertiti, 48 file, abbinando in ordine con l'originale) → testo centrato e
+     inline-block (larghezza del contenuto) in un blocco, come nel browser;
+   - celle di griglia allungate tramite `GridCellContext` (anche se la cella è un componente);
+   - testo vuoto/solo spazi non crea box; sul web le parole non si spezzano (CSS overflow-wrap: normal);
+   - style di testo ereditato (`ui/textStyleInherit.ts` + TextStyleContext: `<p style={{color}}><span>`),
+     anche per icone e svg (currentColor); fontWeight da style → file Inter giusto;
+   - `Link` (router) ora è un Btn; codemod tiene `id` negli elementi SVG (gradienti `url(#...)`).
+3. **Emulatore Android**: in questo container impossibile (niente /dev/kvm, dl.google.com bloccato). Proposta da
+   valutare con l'utente: workflow GitHub Actions (runner con KVM) che avvia stack locale + build Android e
+   l'emulatore (reactivecircus/android-emulator-runner), naviga le schermate (Maestro/adb), raccoglie
+   screenshot e errori JS (logcat ReactNativeJS) e li pubblica (artifact o branch) — costa minuti di Actions.
+4. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
+   Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
+5. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
    expo-notifications. Funzioni server, automazioni, file: restano su Base44.
-5. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
-6. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+6. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
+7. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
 
 ## In attesa dell'utente
 - Errori sul telefono quando si cambia tab in Clienti (l'utente manderà le schermate rosse). Prima verificare che

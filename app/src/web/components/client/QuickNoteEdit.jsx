@@ -58,16 +58,28 @@ export default function QuickNoteEdit({ client, onSaved }) {
             className="w-full text-xs bg-transparent border border-border rounded-lg px-2 py-1.5 text-foreground outline-none focus:border-primary resize-none"
             onKeyDown={handleKeyDown} />
           <Div className="flex justify-end gap-1">
-            <Btn onClick={cancel} className="p-1 rounded text-muted-foreground hover:text-foreground" accessibilityLabel="Annulla">
+            <Btn
+              button
+              onClick={cancel}
+              className="p-1 rounded text-muted-foreground hover:text-foreground"
+              accessibilityLabel="Annulla">
               <X className="w-3.5 h-3.5" />
             </Btn>
-            <Btn onClick={save} disabled={saving} className="p-1 rounded text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-40" accessibilityLabel="Salva nota">
+            <Btn
+              button
+              onClick={save}
+              disabled={saving}
+              className="p-1 rounded text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-40"
+              accessibilityLabel="Salva nota">
               <Check className="w-3.5 h-3.5" />
             </Btn>
           </Div>
         </Div>
       ) : (
-        <Btn onClick={startEdit} className="w-full flex items-start gap-2 text-left group">
+        <Btn
+          button
+          onClick={startEdit}
+          className="w-full flex items-start gap-2 text-left group">
           <StickyNote className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
           {display ? (
             <P className="text-xs text-muted-foreground italic leading-relaxed flex-1 group-hover:text-foreground transition-colors">{display}</P>
