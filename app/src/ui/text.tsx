@@ -8,7 +8,7 @@ import { cn } from './cn';
 /** Classi di testo ereditate dal contenitore più vicino (come la cascata CSS). */
 export const TextClassContext = createContext<string>('');
 
-const TEXT_CLASS = /^(?:[a-z0-9]+:)*(?:-?text-|font-|leading-|tracking-|uppercase$|lowercase$|capitalize$|normal-case$|italic$|not-italic$|underline$|line-through$|no-underline$|tabular-nums$|whitespace-|break-|truncate$|antialiased$)/;
+const TEXT_CLASS = /^(?:[a-z0-9]+:)*(?:-?text-|font-|leading-|tracking-|uppercase$|lowercase$|capitalize$|normal-case$|italic$|not-italic$|underline$|line-through$|no-underline$|tabular-nums$|whitespace-|break-|truncate$|antialiased$|line-clamp-)/;
 
 /** Separa le classi che in CSS si ereditano (testo) da quelle del box. */
 export function splitTextClasses(className?: string): [text: string, box: string] {
@@ -59,10 +59,11 @@ export function Text({ className, style, numberOfLines, children, ...props }: Ap
   const merged = cn('text-base text-foreground', inherited, className);
   const fontFamily = fontFamilyFor(merged);
   const truncate = /(^|\s)truncate(\s|$)/.test(merged);
+  const clamp = Number(merged.match(/(?:^|\s)line-clamp-(\d+)/)?.[1] ?? 0);
   return (
     <RNText
       {...props}
-      numberOfLines={numberOfLines ?? (truncate ? 1 : undefined)}
+      numberOfLines={numberOfLines ?? (truncate ? 1 : clamp || undefined)}
       className={merged}
       // il peso è già nel file del font: fontWeight lo raddoppierebbe su Android
       style={[style, fontFamily ? { fontFamily, fontWeight: 'normal' } : null]}
