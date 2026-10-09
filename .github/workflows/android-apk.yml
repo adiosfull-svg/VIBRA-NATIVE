@@ -1,7 +1,9 @@
 # APK Android di prova (release, firmata con la chiave di debug: si installa direttamente sul telefono).
 # Backend: Base44 vero in modalità prova (sola lettura), come l'app senza .env.
 # Parte a mano (Actions → "APK Android" → Run workflow) oppure con un push il cui messaggio contiene [apk].
-# L'APK si scarica dalla pagina della run, sezione Artifacts (vibra-apk).
+# L'APK si scarica direttamente da:
+#   https://github.com/adiosfull-svg/VIBRA-NATIVE/releases/download/anteprima/vibra.apk
+# (release "anteprima", sostituita a ogni build) e anche dalla pagina della run (Artifacts).
 name: APK Android
 
 on:
@@ -20,6 +22,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: app
@@ -68,3 +72,13 @@ jobs:
           name: vibra-apk
           path: app/${{ steps.name.outputs.file }}
           retention-days: 14
+
+      - name: Pubblica nella release "anteprima" (link diretto, nome fisso)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "${{ steps.name.outputs.file }}" vibra.apk
+          gh release delete anteprima --yes --cleanup-tag || true
+          gh release create anteprima vibra.apk --prerelease --target "$GITHUB_SHA" \
+            --title "VIBRA anteprima ($(git rev-parse --short HEAD))" \
+            --notes "APK di prova dal branch ${GITHUB_REF_NAME}, commit $(git rev-parse --short HEAD). Dati veri di Base44 in sola lettura."
