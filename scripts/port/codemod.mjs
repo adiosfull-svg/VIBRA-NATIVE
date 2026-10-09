@@ -43,11 +43,59 @@ function rewriteImport(src) {
   if (src === 'recharts') return '@/ui/recharts';
   if (src === '@/lib/layoutUIContext') return '@/web/lib/layoutUI';
   if (src === '@/hooks/useRoleAccess') return '@/lib/useRoleAccess';
+  if (src === 'react-dom') return '@/web/shims/react-dom';
   let m;
   if ((m = src.match(/^@\/components\/ui\/([\w-]+)$/))) return `@/ui/${UI_MAP[m[1]] ?? m[1]}`;
   if ((m = src.match(/^@\/utils\/([\w-]+)$/))) return `@/legacy/utils/${m[1]}`;
   if ((m = src.match(/^@\/(components|hooks|lib|pages)\/(.+)$/))) return `@/web/${m[1]}/${m[2]}`;
   return src;
+}
+
+// ── API del browser → shim (app/src/web/shims/dom: veri oggetti sul web, equivalenti nativi sul telefono)
+const DOM_SHIMS = { window: 'webWindow', document: 'webDocument', navigator: 'webNavigator', localStorage: 'webStorage' };
+const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage' };
+
+/** window.x / document.x / navigator.x / localStorage.x → webWindow.x ... + import da @/web/shims/dom. */
+export function applyDomShims(ast) {
+  const used = new Set();
+  recast.visit(ast, {
+    visitImportDeclaration(p) {
+      if (p.node.source.value === 'react-dom') p.node.source = b.stringLiteral('@/web/shims/react-dom');
+      return false;
+    },
+    visitMemberExpression(p) {
+      const o = p.node.object;
+      if (o.type === 'Identifier' && DOM_SHIMS[o.name] && !p.scope?.lookup(o.name)) {
+        used.add(DOM_SHIMS[o.name]);
+        p.node.object = b.identifier(DOM_SHIMS[o.name]);
+      }
+      this.traverse(p);
+    },
+  });
+  if (!used.size) return used;
+  const body = ast.program.body;
+  const existing = body.find((n) => n.type === 'ImportDeclaration' && n.source.value === '@/web/shims/dom');
+  const have = new Set(existing ? existing.specifiers.map((sp) => sp.local.name) : []);
+  const specs = [...used].filter((n) => !have.has(n)).sort().map((n) => b.importSpecifier(b.identifier(SHIM_EXPORT[n]), b.identifier(n)));
+  if (existing) existing.specifiers.push(...specs);
+  else {
+    const lastImport = body.reduce((i, n, idx) => (n.type === 'ImportDeclaration' ? idx : i), -1);
+    body.splice(lastImport + 1, 0, b.importDeclaration(specs, b.stringLiteral('@/web/shims/dom')));
+  }
+  return used;
+}
+
+/** Applica solo gli shim a un file già portato (anche ritoccato a mano) e pulisce i PORT-TODO risolti. */
+export function shimFile(code) {
+  const ast = recast.parse(code, { parser: { parse: (s) => babel.parse(s, { sourceType: 'module', plugins: ['jsx', 'typescript'], tokens: true }) } });
+  applyDomShims(ast);
+  let out = recast.print(ast, { quote: 'single', wrapColumn: 160 }).code;
+  const lines = out.split('\n');
+  const resolved = /^\/\/ {2}- (window|document|navigator|localStorage)\.|^\/\/ {2}- createPortal/;
+  const kept = lines.filter((l) => !resolved.test(l));
+  const i = kept.findIndex((l) => l.startsWith('// PORT-TODO'));
+  if (i >= 0 && !(kept[i + 1] ?? '').startsWith('//  - ')) kept.splice(i, 1);
+  return kept.join('\n');
 }
 
 // ── trasformazione ───────────────────────────────────────────────────────────
@@ -75,7 +123,6 @@ export function transform(code, originalPath = '') {
       const src = p.node.source.value;
       const next = rewriteImport(src);
       if (next !== src) p.node.source = b.stringLiteral(next);
-      if (src === 'react-dom') todos.push('createPortal: usare Modal/Portal nativi');
       if (src === 'uplot') todos.push('uplot: grafico da rifare con @/ui/recharts');
       if (src === 'react-leaflet' || src === 'leaflet') todos.push('mappa: react-native-maps');
       if (src === '@hello-pangea/dnd') todos.push('drag & drop: react-native-draggable-flatlist');
@@ -180,13 +227,12 @@ export function transform(code, originalPath = '') {
 
     visitMemberExpression(p) {
       const o = p.node.object;
-      if (o.type === 'Identifier' && ['window', 'document', 'localStorage', 'sessionStorage', 'navigator'].includes(o.name)) {
-        const prop = p.node.property.name ?? '';
-        todos.push(`${o.name}.${prop}`);
-      }
+      if (o.type === 'Identifier' && o.name === 'sessionStorage') todos.push(`sessionStorage.${p.node.property.name ?? ''}`);
       this.traverse(p);
     },
   });
+
+  applyDomShims(ast);
 
   // import delle primitive usate
   const body = ast.program.body;
@@ -210,7 +256,14 @@ export function transform(code, originalPath = '') {
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process.argv[1]}` && process.argv[2] === '--shims') {
+  // node scripts/port/codemod.mjs --shims <file...>: aggiorna in place i file già portati
+  for (const f of process.argv.slice(3)) {
+    const before = readFileSync(f, 'utf8');
+    const after = shimFile(before);
+    if (after !== before) { writeFileSync(f, after); console.log(`shim: ${f}`); }
+  }
+} else if (import.meta.url === `file://${process.argv[1]}`) {
   const [input, output] = process.argv.slice(2);
   const srcIdx = process.argv.indexOf('--src');
   const root = srcIdx > 0 ? process.argv[srcIdx + 1] : path.dirname(input);

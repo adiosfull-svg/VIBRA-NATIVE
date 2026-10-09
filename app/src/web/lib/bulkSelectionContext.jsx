@@ -1,8 +1,7 @@
 // Port di src/lib/bulkSelectionContext.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - window.addEventListener
-//  - window.removeEventListener
 import React, { createContext, useContext, useEffect } from 'react';
+
+import { win as webWindow } from '@/web/shims/dom';
 
 /**
  * Context per la selezione multipla clienti, condiviso tra tutte le liste
@@ -17,8 +16,8 @@ export function BulkSelectionProvider({ value, children }) {
   useEffect(() => {
     if (!selectMode) return;
     const onKey = (e) => { if (e.key === 'Escape') clearSelection?.(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    webWindow.addEventListener('keydown', onKey);
+    return () => webWindow.removeEventListener('keydown', onKey);
   }, [selectMode, clearSelection]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

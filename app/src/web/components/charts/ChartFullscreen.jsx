@@ -1,22 +1,14 @@
 // Port di src/components/charts/ChartFullscreen.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - document.documentElement
-//  - window.innerWidth
-//  - window.innerHeight
-//  - window.addEventListener
-//  - window.removeEventListener
-//  - document.fullscreenElement
-//  - document.exitFullscreen
-//  - document.body
 import React, { useState, useEffect, cloneElement } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { Maximize2, X, RotateCw, BarChart3 } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, Span } from '@/ui/html';
+
+import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 
 /**
  * Wrapper che aggiunge un pulsante "schermo intero" a qualsiasi grafico.
@@ -56,7 +48,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
     if (rotateOnMobile) {
       // Forza landscape nativamente: nessun transform CSS → zoom/pan fluidi.
       // Richiesto attivazione utente (siamo nel click del pulsante).
-      try { await document.documentElement.requestFullscreen(); } catch {}
+      try { await webDocument.documentElement.requestFullscreen(); } catch {}
       try { if (screen.orientation) await screen.orientation.lock('landscape'); } catch {}
     }
   };
@@ -69,13 +61,13 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
 
   // Dimensioni viewport (per il hint "ruota il telefono" quando ancora portrait)
   useEffect(() => {
-    const update = () => setDims({ w: window.innerWidth, h: window.innerHeight });
+    const update = () => setDims({ w: webWindow.innerWidth, h: webWindow.innerHeight });
     update();
-    window.addEventListener('resize', update);
-    window.addEventListener('orientationchange', update);
+    webWindow.addEventListener('resize', update);
+    webWindow.addEventListener('orientationchange', update);
     return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('orientationchange', update);
+      webWindow.removeEventListener('resize', update);
+      webWindow.removeEventListener('orientationchange', update);
     };
   }, []);
 
@@ -84,10 +76,10 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
     if (!open) return;
     const unlock = lockScroll();
     const onKey = (e) => { if (e.key === 'Escape') handleClose(); };
-    window.addEventListener('keydown', onKey);
+    webWindow.addEventListener('keydown', onKey);
     return () => {
       unlock();
-      window.removeEventListener('keydown', onKey);
+      webWindow.removeEventListener('keydown', onKey);
     };
   }, [open]);
 
@@ -96,7 +88,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
     if (!open || !rotateOnMobile) return;
     return () => {
       try { if (screen.orientation) screen.orientation.unlock(); } catch {}
-      try { if (document.fullscreenElement) document.exitFullscreen(); } catch {}
+      try { if (webDocument.fullscreenElement) webDocument.exitFullscreen(); } catch {}
     };
   }, [open, rotateOnMobile]);
 
@@ -177,7 +169,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
             </Div>
           )}
         </>,
-        document.body
+        webDocument.body
       )}
     </Div>
   );

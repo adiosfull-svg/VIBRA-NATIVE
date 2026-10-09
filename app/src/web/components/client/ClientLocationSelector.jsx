@@ -1,13 +1,12 @@
 // Port di src/components/client/ClientLocationSelector.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - document.addEventListener
-//  - document.removeEventListener
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, MapPin, X } from '@/ui/icons.generated';
 import { Input } from '@/ui/input';
 import { LOCATIONS_SORTED, LOCATION_BY_KEY, LABEL_TO_KEY, AREA_COLORS } from '@/web/lib/campaniaLocations';
 
 import { Btn, Div, Span } from '@/ui/html';
+
+import { doc as webDocument } from '@/web/shims/dom';
 
 /**
  * Selettore geografico con ricerca: digiti e il sistema riconosce quartiere/comune.
@@ -52,8 +51,8 @@ export default function ClientLocationSelector({ value, onChange, className = ''
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    webDocument.addEventListener('mousedown', handleClick);
+    return () => webDocument.removeEventListener('mousedown', handleClick);
   }, []);
 
   const handleSelect = (key) => {

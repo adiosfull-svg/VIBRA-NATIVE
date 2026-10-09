@@ -1,15 +1,14 @@
 // Port di src/components/client/ClientCompareDialog.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - document.body
 import React, { useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { X, TrendingUp, TrendingDown, Minus, Star, Car, Phone, Instagram, Calendar, Wallet, Award, Users, MapPin, Trophy, UserCircle } from '@/ui/icons.generated';
 import CachedImage from '@/web/components/shared/CachedImage';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+
+import { doc as webDocument } from '@/web/shims/dom';
 
 const TREND_ICON = { up: TrendingUp, down: TrendingDown, stable: Minus };
 const TREND_COLOR = { up: 'text-emerald-400', down: 'text-red-400', stable: 'text-muted-foreground' };
@@ -216,6 +215,6 @@ export default function ClientCompareDialog({ clients, statsMap, badgesMap, allC
         </Div>
       </Div>
     </Div>,
-    document.body
+    webDocument.body
   );
 }

@@ -1,13 +1,8 @@
 // Port di src/components/client/ClientCostanzaChart.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - window.innerWidth
-//  - document.body
-//  - window.addEventListener
-//  - window.removeEventListener
 //  - <div> gesture/eventi web rimossi: onMouseEnter, onMouseLeave
 import React, { useMemo, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { parseISO, format, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -16,6 +11,8 @@ import SectionHeader from '@/web/components/shared/SectionHeader';
 import ChartFullscreen from '@/web/components/charts/ChartFullscreen';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+
+import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 
 const CELL_SIZE = 28; // px per cella
 const MONTH_LABEL_W = 140;
@@ -55,7 +52,7 @@ function CustomTooltip({ data, x, y, maxCount }) {
   // Clamp orizzontale: evita che il popup venga tagliato dal bordo destro/sinistro
   // del viewport. Il popup ha min-width 160px e translate(-50%), quindi metà
   // larghezza ~80px + margine di sicurezza 12px.
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 999;
+  const vw = typeof window !== 'undefined' ? webWindow.innerWidth : 999;
   const halfW = 92;
   const clampedX = Math.max(halfW, Math.min(x, vw - halfW));
   return createPortal(
@@ -99,7 +96,7 @@ function CustomTooltip({ data, x, y, maxCount }) {
         </Div>
       )}
     </motion.div>,
-    document.body
+    webDocument.body
   );
 }
 
@@ -113,8 +110,8 @@ export default function ClientCostanzaChart({ clients, attendances, events, prom
   useEffect(() => {
     if (!tapped) return;
     const handleClose = () => setTapped(null);
-    window.addEventListener('scroll', handleClose, { passive: true, capture: true });
-    return () => window.removeEventListener('scroll', handleClose, { capture: true });
+    webWindow.addEventListener('scroll', handleClose, { passive: true, capture: true });
+    return () => webWindow.removeEventListener('scroll', handleClose, { capture: true });
   }, [tapped]);
 
   // Costruisce la matrice: per ogni client × mese → { count, revenue }

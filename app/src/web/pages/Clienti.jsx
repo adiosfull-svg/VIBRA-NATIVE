@@ -1,11 +1,4 @@
 // Port di src/pages/Clienti.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - window.history
-//  - window.addEventListener
-//  - window.removeEventListener
-//  - window.innerWidth
-//  - document.addEventListener
-//  - document.removeEventListener
 import { invalidateFullTables } from '@/web/lib/query-client';
 import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
@@ -69,6 +62,8 @@ import { it } from 'date-fns/locale';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
 
+import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
+
 const MISSING_FILTERS = [
   { key: 'no_phone', label: 'Senza Tel.', check: (c) => !c.phone },
   { key: 'no_instagram', label: 'Senza IG', check: (c) => !c.instagram },
@@ -111,7 +106,7 @@ export default function Clienti() {
   const [sortBy, setSortBy] = useState('visits');
   const [missingFilter, setMissingFilter] = useState(null);
   const [missingFilterPopoverOpen, setMissingFilterPopoverOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => window.history.state?._tab || 'clienti');
+  const [activeTab, setActiveTab] = useState(() => webWindow.history.state?._tab || 'clienti');
   const [rootClientId, setRootClientId] = useState('all');
   const [attendanceHubOpen, setAttendanceHubOpen] = useState(false);
   const [reminderClient, setReminderClient] = useState(null);
@@ -430,13 +425,13 @@ export default function Clienti() {
       io = new IntersectionObserver(onIntersect, { rootMargin: `-${offset}px 0px 0px 0px`, threshold: 0 });
       io.observe(s);
     };
-    window.addEventListener('resize', onResize);
+    webWindow.addEventListener('resize', onResize);
 
     const t = setTimeout(onResize, 300);
 
     return () => {
       io.disconnect();
-      window.removeEventListener('resize', onResize);
+      webWindow.removeEventListener('resize', onResize);
       clearTimeout(t);
     };
   }, [activeTab]);
@@ -514,7 +509,7 @@ export default function Clienti() {
     };
 
     const handler = (e) => {
-      if (window.innerWidth < 640) return;
+      if (webWindow.innerWidth < 640) return;
 
       // Se il mouse si è spostato tra mousedown e click, è un drag: non annullare
       if (downPos) {
@@ -534,12 +529,12 @@ export default function Clienti() {
       clearSelection();
     };
 
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('click', handler);
+    webDocument.addEventListener('mousedown', onMouseDown);
+    webDocument.addEventListener('click', handler);
 
     return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('click', handler);
+      webDocument.removeEventListener('mousedown', onMouseDown);
+      webDocument.removeEventListener('click', handler);
     };
   }, [selectMode, clearSelection]);
 
@@ -938,7 +933,7 @@ export default function Clienti() {
   };
 
   // Rileva se siamo su desktop (larghezza >= 640px)
-  const isDesktop = () => window.innerWidth >= 640;
+  const isDesktop = () => webWindow.innerWidth >= 640;
 
   // Focus iniziale quando la lista è pronta (solo desktop)
   useEffect(() => {

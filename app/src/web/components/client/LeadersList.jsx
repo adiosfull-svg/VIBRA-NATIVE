@@ -1,7 +1,6 @@
 // Port di src/components/client/LeadersList.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
 //  - <div> gesture/eventi web rimossi: onTouchStart, onTouchMove, onTouchEnd
-//  - document.createElement
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Star, Instagram, MessageCircle, CheckCircle2, Clock, GitBranch } from '@/ui/icons.generated';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/menu';
@@ -17,6 +16,8 @@ import WhatsAppIcon from '@/web/components/shared/WhatsAppIcon';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { A, Img } from '@/ui/elements';
+
+import { doc as webDocument } from '@/web/shims/dom';
 
 const TIER_META = {
   gold:   { label: 'Oro', starClass: 'text-yellow-400 fill-yellow-400' },
@@ -226,7 +227,7 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
         const daysSinceContacted = c.last_contacted_at ? differenceInDays(today, new Date(c.last_contacted_at)) : null;
         const contactStale = daysSinceContacted !== null && daysSinceContacted > 8;
         return (
-          <SwipeableLeaderRow key={c.id} onSwipeRight={() => markAsContacted(c.id)} onSwipeLeft={() => { const p = c.phone?.replace(/[^0-9]/g, ''); if (p) { const a = document.createElement('a'); a.href = `https://wa.me/${p}`; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.click(); } }} hasPhone={!!c.phone} disabled={selectMode}>
+          <SwipeableLeaderRow key={c.id} onSwipeRight={() => markAsContacted(c.id)} onSwipeLeft={() => { const p = c.phone?.replace(/[^0-9]/g, ''); if (p) { const a = webDocument.createElement('a'); a.href = `https://wa.me/${p}`; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.click(); } }} hasPhone={!!c.phone} disabled={selectMode}>
             <Btn
               onClick={(e) => {
                 if (selectMode) { toggleSelect?.(c); return; }

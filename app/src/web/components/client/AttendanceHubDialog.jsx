@@ -1,13 +1,8 @@
 // Port di src/components/client/AttendanceHubDialog.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - document.querySelector
-//  - document.body
-//  - window.addEventListener
-//  - window.removeEventListener
 //  - <div> gesture/eventi web rimossi: onPointerDown
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
 // Dialog principale gestito come overlay sempre montato (custom) per preservare la
 // sessione allo stesso modo dell'import serate: la chiusura non smonta il contenuto.
@@ -35,6 +30,8 @@ import { refetchEventTables, triggerStatsRecompute } from '@/web/lib/eventSync';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Img } from '@/ui/elements';
+
+import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -752,15 +749,15 @@ export default function AttendanceHubDialog({ open, onOpenChange, events, client
       if (e.key !== 'Escape') return;
       // Se c'è un dialog Radix aperto sopra (es. Dettaglio Cliente, Importa Bulk),
       // lascia che si chiuda quello: non chiudere anche il Box Presenze.
-      if (document.querySelector('[role="dialog"][data-state="open"]')) return;
+      if (webDocument.querySelector('[role="dialog"][data-state="open"]')) return;
       // Se il menu contestuale "Aggiungi a serata" è aperto sopra, chiudi solo quello.
-      if (document.body.dataset.clientSerateMenu) return;
+      if (webDocument.body.dataset.clientSerateMenu) return;
       requestCloseRef.current();
     };
-    window.addEventListener('keydown', onKey);
+    webWindow.addEventListener('keydown', onKey);
     const unlock = lockScroll();
     return () => {
-      window.removeEventListener('keydown', onKey);
+      webWindow.removeEventListener('keydown', onKey);
       unlock();
     };
   }, [open, onOpenChange]);
@@ -881,7 +878,7 @@ export default function AttendanceHubDialog({ open, onOpenChange, events, client
           </Div>
         </Div>
       </Div>,
-      document.body
+      webDocument.body
       )}
 
       <ImportaBulkDialog

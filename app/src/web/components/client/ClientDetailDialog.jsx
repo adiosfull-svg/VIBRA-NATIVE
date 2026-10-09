@@ -1,14 +1,8 @@
 // Port di src/components/client/ClientDetailDialog.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - navigator.clipboard
-//  - document.activeElement
-//  - window.addEventListener
-//  - window.removeEventListener
 //  - <div> gesture/eventi web rimossi: onPointerDown
-//  - document.body
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import CachedImage from '@/web/components/shared/CachedImage';
 // Dialog sostituito con overlay custom (stesso pattern di AttendanceHubDialog):
 // overlay custom centrato (popup, stesse proprietà di ClientFormDialog/ImportaClientiDialog:
@@ -46,6 +40,8 @@ import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Circle, Defs, Path, Rect, Stop, Svg, SvgLinearGradient } from '@/ui/elements';
+
+import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 
 const BADGE_LEGEND = [
   { icon: '🏅', label: 'Fedeltà', desc: 'Più presenze' },
@@ -288,7 +284,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
     if (pastingPhoto) return;
     setPastePhotoStatus(null);
     try {
-      const items = await navigator.clipboard.read();
+      const items = await webNavigator.clipboard.read();
       const imageItem = items.find(item => item.types.some(t => t.startsWith('image/')));
       if (!imageItem) {
         setPastePhotoStatus('error');
@@ -346,13 +342,13 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
   useEffect(() => {
     if (!open || !onBackRef.current) return;
     const handler = (e) => {
-      if (e.key === 'Backspace' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      if (e.key === 'Backspace' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(webDocument.activeElement?.tagName)) {
         e.preventDefault();
         onBackRef.current();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    webWindow.addEventListener('keydown', handler);
+    return () => webWindow.removeEventListener('keydown', handler);
   }, [open]);
 
   // Stack overlay centralizzato: il back button chiude solo questo dialog (non
@@ -385,8 +381,8 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         handleOpenChangeRef.current(false);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    webWindow.addEventListener('keydown', onKey);
+    return () => webWindow.removeEventListener('keydown', onKey);
   }, [open]);
 
   if (!client) return null;
@@ -891,6 +887,6 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         </Div>
       </Div>
     </Div>,
-    document.body
+    webDocument.body
   );
 }

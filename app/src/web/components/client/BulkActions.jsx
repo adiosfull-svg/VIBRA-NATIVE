@@ -1,10 +1,8 @@
 // Port di src/components/client/BulkActions.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - document.body
 //  - <input type="datetime-local"> da sostituire con il controllo nativo
 import React, { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { X, Bell, CalendarPlus, Link2, Plus, Search, Users, Scale } from '@/ui/icons.generated';
 import ClientCompareDialog from '@/web/components/client/ClientCompareDialog';
 import { format } from 'date-fns';
@@ -15,6 +13,8 @@ import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput, Img, Label } from '@/ui/elements';
+
+import { doc as webDocument } from '@/web/shims/dom';
 
 /**
  * Azioni massive sulla selezione multipla clienti.
@@ -40,7 +40,7 @@ function Overlay({ title, onClose, children }) {
         <Div className="flex-1 min-h-0 overflow-y-auto p-4">{children}</Div>
       </Div>
     </Div>,
-    document.body
+    webDocument.body
   );
 }
 
@@ -212,6 +212,6 @@ export default function BulkActions() {
         />
       )}
     </>,
-    document.body
+    webDocument.body
   );
 }

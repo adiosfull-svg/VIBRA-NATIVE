@@ -1,14 +1,10 @@
 // Port di src/components/client/DesktopClientTable.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - window.innerHeight
-//  - window.addEventListener
-//  - window.removeEventListener
-//  - window.scrollY
-//  - window.scrollTo
 import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import ClientTableRow from '@/web/components/client/ClientTableRow';
 
 import { Div, P } from '@/ui/html';
+
+import { win as webWindow } from '@/web/shims/dom';
 
 /**
  * Tabella desktop virtualizzata (window-based): renderizza solo le righe
@@ -48,7 +44,7 @@ export default function DesktopClientTable({
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const top = rect.top;
-    const vh = window.innerHeight;
+    const vh = webWindow.innerHeight;
     if (top > vh || top + rect.height < 0) return;
     const start = Math.max(0, Math.floor(-top / ROW_HEIGHT) - OVERSCAN);
     const end = Math.min(clients.length, Math.ceil((vh - top) / ROW_HEIGHT) + OVERSCAN);
@@ -59,12 +55,12 @@ export default function DesktopClientTable({
     compute();
     let raf = 0;
     const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(compute); };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    webWindow.addEventListener('scroll', onScroll, { passive: true });
+    webWindow.addEventListener('resize', onScroll);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      webWindow.removeEventListener('scroll', onScroll);
+      webWindow.removeEventListener('resize', onScroll);
     };
   }, [compute]);
 
@@ -83,9 +79,9 @@ export default function DesktopClientTable({
     // virtuale ha rect 0,0 → calcolerebbe una posizione sbagliata e il suo
     // scrollTo sovrascriverebbe quello della lista visibile (bug mobile).
     if (!container.offsetParent) return;
-    const containerTop = container.getBoundingClientRect().top + window.scrollY;
+    const containerTop = container.getBoundingClientRect().top + webWindow.scrollY;
     const targetTop = containerTop + idx * ROW_HEIGHT;
-    window.scrollTo({ top: targetTop - 120, behavior: 'smooth' });
+    webWindow.scrollTo({ top: targetTop - 120, behavior: 'smooth' });
     onScrolled?.();
   }, [scrollToClientId]);
 

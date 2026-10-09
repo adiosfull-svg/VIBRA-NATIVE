@@ -1,11 +1,9 @@
 // Port di src/components/client/ClientStatsBar.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
 //  - <div> gesture/eventi web rimossi: onTouchMove, onTouchStart
 //  - <div> gesture/eventi web rimossi: onTouchStart, onTouchMove
-//  - document.body
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { Users, Star, UsersRound, X } from '@/ui/icons.generated';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
@@ -19,6 +17,9 @@ import { lockScroll } from '@/web/lib/scrollLock';
 
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
+
+
+import { doc as webDocument } from '@/web/shims/dom';
 
 
 function getLastVisitDays(client, attendances) {
@@ -84,7 +85,7 @@ function MobileModal({ open, onClose, title, children, scrollClass, skipOwnHisto
         </Div>
       </Div>
     </Btn>,
-    document.body
+    webDocument.body
   );
 }
 

@@ -1,29 +1,10 @@
 // Port di src/components/programmazione/ClientSerateMenu.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
-//  - window.visualViewport
-//  - window.innerHeight
-//  - navigator.canShare
-//  - navigator.share
-//  - navigator.clipboard
-//  - document.createElement
-//  - window.open
-//  - window.addEventListener
-//  - document.addEventListener
-//  - window.removeEventListener
-//  - document.removeEventListener
-//  - window.history
-//  - document.body
-//  - window.innerWidth
 //  - <div> gesture/eventi web rimossi: onPointerDown
-//  - document.querySelector
-//  - window.scrollY
-//  - document.documentElement
-//  - window.scrollTo
 //  - <input type="date"> da sostituire con il controllo nativo
 //  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { format, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { CalendarPlus, X, Plus, Sparkles, Star, Car, Check, Bell, Trash2, Users, Search, ChevronLeft, UserPlus, UserMinus, Image as ImageIcon, AlertCircle, Loader2, CheckSquare, Power, Share2, ArrowRightLeft, Copy, Undo2 } from '@/ui/icons.generated';
@@ -43,6 +24,8 @@ import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput, Label } from '@/ui/elements';
+
+import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 
 function formatShareText(client) {
   const rating = client?.cum_rating || 0;
@@ -85,7 +68,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
   // --vv-h esposto alle liste interne per limitarne l'altezza (vedi max-h più sotto).
   useEffect(() => {
     const el = dlgEl;
-    const vv = window.visualViewport;
+    const vv = webWindow.visualViewport;
     if (!el || !vv) return;
     const clear = () => {
       el.style.removeProperty('top');
@@ -94,7 +77,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
       el.style.removeProperty('transition');
     };
     const apply = () => {
-      const keyboardOpen = window.innerHeight - vv.height > 120;
+      const keyboardOpen = webWindow.innerHeight - vv.height > 120;
       if (keyboardOpen) {
         const h = Math.max(200, vv.height - 16);
         el.style.transition = 'none';
@@ -530,9 +513,9 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       const fileName = `${(live.name || 'cliente').replace(/[^a-zA-Z0-9]/g, '_')}.png`;
       const file = new File([blob], fileName, { type: 'image/png' });
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      if (webNavigator.canShare && webNavigator.canShare({ files: [file] })) {
         // Mobile: share sheet nativo (WhatsApp, Telegram, ecc.)
-        await navigator.share({
+        await webNavigator.share({
           files: [file],
           title: live.name || 'Cliente',
           text: `Scheda di ${live.name}`,
@@ -542,12 +525,12 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
         let copied = false;
         try {
           const clipboardItem = new ClipboardItem({ 'image/png': blob });
-          await navigator.clipboard.write([clipboardItem]);
+          await webNavigator.clipboard.write([clipboardItem]);
           copied = true;
         } catch (e) {
           // Fallback: download
           const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
+          const a = webDocument.createElement('a');
           a.href = url;
           a.download = fileName;
           a.click();
@@ -561,8 +544,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
     } catch (e) {
       if (e?.name !== 'AbortError') {
         try {
-          if (navigator.share) {
-            await navigator.share({ title: live?.name || 'Cliente', text: formatShareText(live) });
+          if (webNavigator.share) {
+            await webNavigator.share({ title: live?.name || 'Cliente', text: formatShareText(live) });
           }
         } catch {}
       }
@@ -606,8 +589,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       const fileName = `${(semina.name || 'semina').replace(/[^a-zA-Z0-9]/g, '_')}.png`;
       const file = new File([blob], fileName, { type: 'image/png' });
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
+      if (webNavigator.canShare && webNavigator.canShare({ files: [file] })) {
+        await webNavigator.share({
           files: [file],
           title: semina.name || 'Semina',
           text: `Scheda di ${semina.name}`,
@@ -616,11 +599,11 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
         let copied = false;
         try {
           const clipboardItem = new ClipboardItem({ 'image/png': blob });
-          await navigator.clipboard.write([clipboardItem]);
+          await webNavigator.clipboard.write([clipboardItem]);
           copied = true;
         } catch (e) {
           const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
+          const a = webDocument.createElement('a');
           a.href = url;
           a.download = fileName;
           a.click();
@@ -634,8 +617,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
     } catch (e) {
       if (e?.name !== 'AbortError') {
         try {
-          if (navigator.share) {
-            await navigator.share({ title: semina?.name || 'Semina', text: `Scheda di ${semina?.name}` });
+          if (webNavigator.share) {
+            await webNavigator.share({ title: semina?.name || 'Semina', text: `Scheda di ${semina?.name}` });
           }
         } catch {}
       }
@@ -667,9 +650,9 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
     try {
       // 1. Tenta la lettura di un'immagine dagli appunti (Chrome/Edge)
       let imageBlob = null;
-      if (navigator.clipboard && navigator.clipboard.read) {
+      if (webNavigator.clipboard && webNavigator.clipboard.read) {
         try {
-          const items = await navigator.clipboard.read();
+          const items = await webNavigator.clipboard.read();
           for (const item of items) {
             const imageType = item.types.find(t => t.startsWith('image/'));
             if (imageType) { imageBlob = await item.getType(imageType); break; }
@@ -688,7 +671,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
         return;
       }
       // 2. Fallback: URL di testo negli appunti
-      const text = await navigator.clipboard.readText();
+      const text = await webNavigator.clipboard.readText();
       if (!text || !text.trim()) {
         setPastePhotoMsg({ type: 'error', text: 'Appunti vuoti — copia un\u2019immagine o un URL' });
         setPastingPhoto(false);
@@ -740,7 +723,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
   const openWhatsApp = () => {
     if (!menu) return;
     const phone = (live?.phone || menu.client.phone || '').replace(/[^\d]/g, '');
-    if (phone) window.open(`https://wa.me/${phone}`, '_blank');
+    if (phone) webWindow.open(`https://wa.me/${phone}`, '_blank');
     if (menu.client.isSemina) {
       onMarkSeminaContacted?.(menu.client);
     } else {
@@ -860,7 +843,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
     const onScroll = () => {
       if (timer || longTimer) clear();
     };
-    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    webWindow.addEventListener('scroll', onScroll, { passive: true, capture: true });
 
     // Blocca il click che iOS emette al rilascio dopo la pressione prolungata,
     // per non aprire anche il dettaglio cliente sopra il menu serate. Scope:
@@ -878,9 +861,9 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       }
     };
 
-    document.addEventListener('contextmenu', onCtx);
-    document.addEventListener('touchstart', onTouchStart, { passive: true });
-    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    webDocument.addEventListener('contextmenu', onCtx);
+    webDocument.addEventListener('touchstart', onTouchStart, { passive: true });
+    webDocument.addEventListener('touchmove', onTouchMove, { passive: true });
     // touchend = dito alzato volontariamente: cancella entrambi i timer.
     // touchcancel = evento di sistema (iOS emette touchcancel quando lo
     // scroll-lock setta overflow:hidden su html a 500ms): NON cancellare il
@@ -891,18 +874,18 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       if (menuOpenedViaTouchRef.current) return;
       clear();
     };
-    document.addEventListener('touchend', onTouchEnd, { passive: true });
-    document.addEventListener('touchcancel', onTouchCancel, { passive: true });
-    document.addEventListener('click', onClickGuard, true);
+    webDocument.addEventListener('touchend', onTouchEnd, { passive: true });
+    webDocument.addEventListener('touchcancel', onTouchCancel, { passive: true });
+    webDocument.addEventListener('click', onClickGuard, true);
     return () => {
       clear();
-      window.removeEventListener('scroll', onScroll, { capture: true });
-      document.removeEventListener('contextmenu', onCtx);
-      document.removeEventListener('touchstart', onTouchStart);
-      document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
-      document.removeEventListener('touchcancel', onTouchCancel);
-      document.removeEventListener('click', onClickGuard, true);
+      webWindow.removeEventListener('scroll', onScroll, { capture: true });
+      webDocument.removeEventListener('contextmenu', onCtx);
+      webDocument.removeEventListener('touchstart', onTouchStart);
+      webDocument.removeEventListener('touchmove', onTouchMove);
+      webDocument.removeEventListener('touchend', onTouchEnd);
+      webDocument.removeEventListener('touchcancel', onTouchCancel);
+      webDocument.removeEventListener('click', onClickGuard, true);
     };
   }, []);
 
@@ -910,8 +893,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
   useEffect(() => {
     if (!menu) return;
     const onKey = (e) => { if (e.key === 'Escape') closeMenu(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    webWindow.addEventListener('keydown', onKey);
+    return () => webWindow.removeEventListener('keydown', onKey);
   }, [menu, closing]);
 
   // Tasto back (Android/browser): chiude il menu long-press invece di uscire
@@ -922,26 +905,26 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
   // loro popstate ignora uno stato che non sia il loro sentinel.
   useEffect(() => {
     if (!menu) return;
-    if (!(window.history.state && window.history.state.clientSerateMenu)) {
-      window.history.pushState({ clientSerateMenu: true }, '');
+    if (!(webWindow.history.state && webWindow.history.state.clientSerateMenu)) {
+      webWindow.history.pushState({ clientSerateMenu: true }, '');
     }
     const onPop = () => {
       // Il sentinel del menu è ancora in cima: il popstate ha chiuso altro, ignoriamo.
-      if (window.history.state?.clientSerateMenu) return;
+      if (webWindow.history.state?.clientSerateMenu) return;
       closeMenu();
     };
-    window.addEventListener('popstate', onPop);
+    webWindow.addEventListener('popstate', onPop);
     return () => {
-      window.removeEventListener('popstate', onPop);
-      if (window.history.state?.clientSerateMenu) {
+      webWindow.removeEventListener('popstate', onPop);
+      if (webWindow.history.state?.clientSerateMenu) {
         if (skipHistoryBackRef.current) {
           // Chiusura per entrare in selezione multipla: rimuove il sentinel
           // silenziosamente (replaceState non genera popstate) invece di
           // history.back() che spazzerebbe via la selezione appena attivata.
           skipHistoryBackRef.current = false;
-          window.history.replaceState({}, '');
+          webWindow.history.replaceState({}, '');
         } else {
-          window.history.back();
+          webWindow.history.back();
         }
       }
     };
@@ -952,10 +935,10 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
   useEffect(() => {
     if (!menu) return;
     const unlock = lockScroll();
-    document.body.dataset.clientSerateMenu = '1';
+    webDocument.body.dataset.clientSerateMenu = '1';
     return () => {
       unlock();
-      delete document.body.dataset.clientSerateMenu;
+      delete webDocument.body.dataset.clientSerateMenu;
     };
   }, [menu]);
 
@@ -969,8 +952,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
         visibleDates * 42 + (onToggleLeader && !menu.client.isSemina ? 318 : 120) + (customOpen ? 60 : 0) + (onSetReminder && onToggleLeader && !menu.client.isSemina ? 42 : 0),
         560
       )) : 0;
-  const x = menu ? Math.max(8, Math.min(menu.x, window.innerWidth - w - 8)) : 0;
-  const y = menu ? Math.max(8, Math.min(menu.y, window.innerHeight - h - 8)) : 0;
+  const x = menu ? Math.max(8, Math.min(menu.x, webWindow.innerWidth - w - 8)) : 0;
+  const y = menu ? Math.max(8, Math.min(menu.y, webWindow.innerHeight - h - 8)) : 0;
   // Origine trasformazione = punto di tocco rispetto al popup (scale-in dal tap).
   const ox = menu ? Math.max(0, Math.min(menu.x - x, w)) : 0;
   const oy = menu ? Math.max(0, Math.min(menu.y - y, h)) : 0;
@@ -1015,7 +998,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       <Btn
         ref={ref}
         className={`fixed z-[10001] w-[248px] rounded-xl border border-white/10 bg-popover shadow-2xl overflow-y-auto overflow-x-hidden ${closing ? 'menu-pop-out' : 'menu-pop-in'}`}
-        style={{ left: x, top: y, maxHeight: window.innerHeight - y - 8, transformOrigin: `${ox}px ${oy}px` }}
+        style={{ left: x, top: y, maxHeight: webWindow.innerHeight - y - 8, transformOrigin: `${ox}px ${oy}px` }}
         onClick={(e) => e.stopPropagation()}>
       <Div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-secondary/40">
         <P className="text-[11px] font-semibold text-foreground truncate">
@@ -1038,18 +1021,18 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
             >
               <Btn
                 onClick={guarded(() => {
-                  const root = document.querySelector('[data-prospetto-root]');
-                  const prospettoBottom = root ? root.getBoundingClientRect().bottom + window.scrollY : 0;
-                  const prevY = window.scrollY;
-                  const prevH = document.documentElement.scrollHeight;
+                  const root = webDocument.querySelector('[data-prospetto-root]');
+                  const prospettoBottom = root ? root.getBoundingClientRect().bottom + webWindow.scrollY : 0;
+                  const prevY = webWindow.scrollY;
+                  const prevH = webDocument.documentElement.scrollHeight;
                   const below = prevY >= prospettoBottom - 24;
                   if (isAdded) onRemove?.(menu.client, d.dateStr);
                   else onAdd?.(menu.client, d);
                   closeMenu();
                   requestAnimationFrame(() => requestAnimationFrame(() => {
                     if (!below) return;
-                    const delta = document.documentElement.scrollHeight - prevH;
-                    if (delta !== 0) window.scrollTo(0, prevY + delta);
+                    const delta = webDocument.documentElement.scrollHeight - prevH;
+                    if (delta !== 0) webWindow.scrollTo(0, prevY + delta);
                   }));
                 })}
                 className="flex items-center gap-2 min-w-0 flex-1 text-left"
@@ -1377,6 +1360,6 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
     </>
     )}
     </>,
-    document.body
+    webDocument.body
   );
 }

@@ -1,10 +1,8 @@
 // Port di src/components/client/ClientScrollSearch.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - createPortal: usare Modal/Portal nativi
 //  - <input> gesture/eventi web rimossi: onKeyDown
-//  - document.body
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal } from '@/web/shims/react-dom';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { Search, X, ArrowDownToLine } from '@/ui/icons.generated';
 import ClientAvatar from './ClientAvatar';
@@ -12,6 +10,8 @@ import { useBulkSelection } from '@/web/lib/bulkSelectionContext';
 
 import { Btn, Div, P } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
+
+import { doc as webDocument } from '@/web/shims/dom';
 
 /**
  * Pulsante flottante "Cerca cliente" (viola, affianco al ScrollToTopButton).
@@ -130,6 +130,6 @@ export default function ClientScrollSearch({ clients, onScrollToClient }) {
         }
       </AnimatePresence>
       </>,
-      document.body
+      webDocument.body
       );
       }

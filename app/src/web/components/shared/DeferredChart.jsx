@@ -1,10 +1,9 @@
 // Port di src/components/shared/DeferredChart.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - window.requestIdleCallback
-//  - window.cancelIdleCallback
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Div } from '@/ui/html';
+
+import { win as webWindow } from '@/web/shims/dom';
 
 /**
  * Wrapper che ritarda il render dei figli (tipicamente ResponsiveContainer di
@@ -20,11 +19,11 @@ export default function DeferredChart({ children, className = '', style, ...prop
   const rafRef = useRef(null);
 
   useEffect(() => {
-    const ric = window.requestIdleCallback || ((cb) => setTimeout(cb, 50));
+    const ric = webWindow.requestIdleCallback || ((cb) => setTimeout(cb, 50));
     rafRef.current = ric(() => setReady(true), { timeout: 300 });
     return () => {
-      if (window.cancelIdleCallback && rafRef.current) {
-        window.cancelIdleCallback(rafRef.current);
+      if (webWindow.cancelIdleCallback && rafRef.current) {
+        webWindow.cancelIdleCallback(rafRef.current);
       }
     };
   }, []);

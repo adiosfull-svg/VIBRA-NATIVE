@@ -1,10 +1,9 @@
 // Port di src/hooks/useProgrammazionePlan.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - localStorage.getItem
-//  - localStorage.removeItem
 import { useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
+
+import { storage as webStorage } from '@/web/shims/dom';
 
 /**
  * Carica (o migra da localStorage) il Prospetto Inviti di un promoter.
@@ -20,10 +19,10 @@ export async function fetchProgrammazionePlan(promoterId) {
   // Migrazione one-time del prospetto localStorage esistente
   const lsKey = `vibra_prog_plan_${promoterId}`;
   let migrated = null;
-  try { migrated = JSON.parse(localStorage.getItem(lsKey) || 'null'); } catch { migrated = null; }
+  try { migrated = JSON.parse(webStorage.getItem(lsKey) || 'null'); } catch { migrated = null; }
   if (migrated && Object.keys(migrated).length > 0) {
     const created = await base44.entities.ProgrammazionePlan.create({ promoter_id: promoterId, plan: migrated });
-    try { localStorage.removeItem(lsKey); } catch {}
+    try { webStorage.removeItem(lsKey); } catch {}
     return created;
   }
   return null;

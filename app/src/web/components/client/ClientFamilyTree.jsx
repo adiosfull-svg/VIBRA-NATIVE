@@ -1,7 +1,5 @@
 // Port di src/components/client/ClientFamilyTree.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - window.addEventListener
-//  - window.removeEventListener
 //  - <div> gesture/eventi web rimossi: onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
@@ -14,6 +12,8 @@ import { useStuck } from '@/web/hooks/useStuck';
 import { stickyGlassStyle } from '@/legacy/utils/stickyGlass';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+
+import { win as webWindow } from '@/web/shims/dom';
 
 /** Punteggio importanza per ordinamento — usa campi pre-calcolati cum_* (O(1)) */
 function importanceScore(client, cumMap, childrenMap) {
@@ -356,11 +356,11 @@ function TreeScrollWrapper({ children, treeKey }) {
   }, []);
 
   useEffect(() => {
-    window.addEventListener('mouseup', onUp);
-    window.addEventListener('touchend', onUp);
+    webWindow.addEventListener('mouseup', onUp);
+    webWindow.addEventListener('touchend', onUp);
     return () => {
-      window.removeEventListener('mouseup', onUp);
-      window.removeEventListener('touchend', onUp);
+      webWindow.removeEventListener('mouseup', onUp);
+      webWindow.removeEventListener('touchend', onUp);
     };
   }, [onUp]);
 
