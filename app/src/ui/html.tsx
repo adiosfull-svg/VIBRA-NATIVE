@@ -109,14 +109,21 @@ const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
 function gridChildren(children: ReactNode, grid: Grid, className?: string): ReactNode {
   if (grid.template) return templateGridRows(children, grid, className);
   const stretch = !/(^|\s)items-(start|center|end|baseline)(\s|$)/.test(className ?? '');
+  const n = grid.cols, g = grid.gapX;
+  let col = 0;
   return Children.map(wrapText(children), (child) => {
     if (child == null || typeof child === 'boolean') return child;
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
-    const span = Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1);
+    const span = Math.min(Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1), n);
     // in CSS gli elementi assoluti non sono elementi della griglia (niente cella, niente gap)
     if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) return child;
+    if (col + span > n) col = 0;
+    // larghezza span/n e padding secondo la colonna: contenuto largo come la traccia CSS
+    // ((W − (n−1)·gap)/n) e nessun gap ai bordi, anche se il contenitore ha padding o bordo
+    const pad = { paddingLeft: (col * g) / n, paddingRight: ((n - col - span) * g) / n };
+    col = (col + span) % n;
     return (
-      <View style={{ width: `${(100 * Math.min(span, grid.cols)) / grid.cols}%`, paddingHorizontal: grid.gapX / 2 }}>
+      <View style={{ width: `${(100 * span) / n}%`, ...pad }}>
         {stretch ? <GridCellContext.Provider value>{child}</GridCellContext.Provider> : child}
       </View>
     );
@@ -221,7 +228,7 @@ function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
 }
 
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
-  const base: Record<string, any> = grid ? (grid.template ? { rowGap: grid.gapY } : { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 }) : {};
+  const base: Record<string, any> = grid ? { rowGap: grid.gapY } : {};
   if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
   if (gridCell && !NO_STRETCH.test(rawClass ?? '') && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
   if (layout === 'block' && INLINE_LEVEL.test(rawClass ?? '') && !SELF.test(rawClass ?? '') && style?.alignSelf == null) {

@@ -5,7 +5,7 @@
 import { Image, type ImageProps } from 'expo-image';
 import { cssInterop } from 'nativewind';
 import { Children, createContext, forwardRef, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Linking, Pressable, TextInput, type LayoutChangeEvent, type TextInputProps } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, TextInput, View, type LayoutChangeEvent, type TextInputProps } from 'react-native';
 import { cn } from './cn';
 import { DateField } from './dateField';
 import { isDateInputType } from './dateValue';
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
+import { webStyle } from './webStyle';
 import RNSvg, { type SvgProps } from 'react-native-svg';
 
 // ── <img> ────────────────────────────────────────────────────────────────────
@@ -36,20 +37,30 @@ function fitFrom(className = ''): ImageProps['contentFit'] {
   return 'cover';
 }
 
-export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigin: _c, draggable: _dr, onError, onLoad, ...props }: ImgProps) {
+export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigin: _c, draggable: _dr, onError, onLoad, style, ...props }: ImgProps) {
   if (!src) return null;
-  return (
+  // style in forma CSS (es. CachedImage: opacity undefined, transition) → RN
+  const rnStyle = webStyle(Array.isArray(style) ? StyleSheet.flatten(style) : style).style;
+  const image = (imageClass: string | undefined, imageStyle: object | undefined) => (
     <Image
       source={{ uri: src }}
       accessibilityLabel={alt}
-      className={className}
+      className={imageClass}
       contentFit={fitFrom(className)}
       cachePolicy="disk"
       onError={onError ? () => onError() : undefined}
       onLoad={onLoad ? () => onLoad() : undefined}
       {...props}
+      style={imageStyle}
     />
   );
+  // Sul web expo-image appiattisce lo style (StyleSheet.flatten) e fonderebbe la classe compilata
+  // con lo style inline (errore "styleq: opacity typeof 0..."): classi e style vanno su un contenitore
+  // che l'immagine riempie, la stessa struttura che expo-image crea da sé.
+  if (Platform.OS === 'web' && className && Object.keys(rnStyle).length) {
+    return <View className={className} style={[{ overflow: 'hidden' }, rnStyle]}>{image(undefined, StyleSheet.absoluteFill)}</View>;
+  }
+  return image(className, Object.keys(rnStyle).length ? rnStyle : undefined);
 }
 
 // ── <a> ──────────────────────────────────────────────────────────────────────
