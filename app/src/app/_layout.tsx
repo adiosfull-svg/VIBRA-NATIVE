@@ -1,5 +1,7 @@
 // crypto.getRandomValues per lo SDK Base44 (uuid): deve essere il primo import
 import 'react-native-get-random-values';
+// TextDecoder('latin1') (fast-png, jsPDF) sul telefono: prima di ogni altro modulo
+import '../lib/textDecoderLatin1';
 import '../../global.css';
 import {
   Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
