@@ -163,6 +163,8 @@ function boxContent(children: ReactNode, grid?: Grid, className?: string) {
 }
 
 const SPACE = /(?:^|\s)space-([xy])-(\S+)/g;
+// fuori dal flusso: niente gap col gap di RN, ma in CSS contano come fratello precedente per space-*
+const OUT_OF_FLOW = /(?:^|\s)(absolute|fixed)(?:\s|$)/;
 
 /** Margine inline in px (numero o "12px"), altrimenti null. */
 function inlinePx(v: unknown): number | null {
@@ -184,6 +186,7 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
   for (const m of className.matchAll(SPACE)) gaps[m[1] as 'x' | 'y'] = spacingPx(m[2]);
   if (gaps.x == null && gaps.y == null) return children;
   let seen = false;
+  let seenInFlow = false;
   const visit = (nodes: ReactNode): ReactNode => Children.map(nodes, (child) => {
     if (!isValidElement(child)) return child;
     // i figli di un Fragment in CSS sono fratelli diretti
@@ -192,14 +195,24 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
     }
     const props = child.props as { className?: string; style?: unknown };
     const hadPrev = seen;
-    if (typeof child.type === 'string' || props.className != null || props.style != null) seen = true;
-    if (!hadPrev || props.style == null) return child;
-    const flat = (Array.isArray(props.style) ? StyleSheet.flatten(props.style as StyleProp<ViewStyle>) : props.style) as Record<string, unknown>;
+    const hadInFlow = seenInFlow;
+    const drawn = typeof child.type === 'string' || props.className != null || props.style != null;
+    const outOfFlow = OUT_OF_FLOW.test(props.className ?? '');
+    if (drawn) { seen = true; if (!outOfFlow) seenInFlow = true; }
+    if (!hadPrev || !drawn || outOfFlow) return child;
+    const flat = (Array.isArray(props.style) ? StyleSheet.flatten(props.style as StyleProp<ViewStyle>) : (props.style ?? {})) as Record<string, unknown>;
     const fix: Record<string, number> = {};
     const mt = inlinePx(flat.marginTop);
     const ml = inlinePx(flat.marginLeft);
-    if (gaps.y != null && mt != null) fix.marginTop = mt - gaps.y;
-    if (gaps.x != null && ml != null) fix.marginLeft = ml - gaps.x;
+    if (!hadInFlow) {
+      // primo figlio nel flusso dopo soli elementi assoluti (es. la riga decorativa in cima a una
+      // scheda): il gap non c'è, ma in CSS il margine sì (lo style inline lo sostituisce)
+      if (gaps.y != null && mt == null) fix.marginTop = gaps.y;
+      if (gaps.x != null && ml == null) fix.marginLeft = gaps.x;
+    } else {
+      if (gaps.y != null && mt != null) fix.marginTop = mt - gaps.y;
+      if (gaps.x != null && ml != null) fix.marginLeft = ml - gaps.x;
+    }
     return Object.keys(fix).length ? cloneElement(child as ReactElement<{ style?: unknown }>, { style: { ...flat, ...fix } }) : child;
   });
   return visit(children);
