@@ -7,7 +7,7 @@
 
 ## Ambiente da ricreare in una nuova sessione
 1. Codice originale (riferimento, NON nel repo): rileggerlo da Base44 con `read_file` a blocchi di 50 file
-   in `/home/user/vibra-reference` (464 file; elenco con `list_directory` ricorsivo).
+   in `/home/user/vibra-reference` (475 file; elenco con `list_directory` ricorsivo, max_depth 10).
 2. Backend locale: `scripts/local/dev_stack.sh --reset` (serve il binario PostgREST v12.2.3 in
    `scripts/local/bin/`, scaricabile da GitHub releases). Utenti: admin/pr/super4 `@vibra.local`, password `vibra`.
 3. App: `cd app && npm install && cp .env.example .env && EXPO_OFFLINE=1 npx expo start --web --port 8081`
@@ -15,6 +15,11 @@
 4. App originale di riferimento: `tools/web-ref/setup.sh /home/user/vibra-reference` poi `tools/web-ref/run.sh`
    (porta 5173, `?as=pr|admin|super4`). Confronti con Playwright (Chromium in /opt/pw-browsers).
 5. Tool del codemod: `cd scripts/port && npm install`.
+6. Confronto originale vs nativo (entrambe le app avviate): `node tools/compare/measure.mjs <out> /clienti pr,admin,super4`
+   (screenshot `<ruolo>-ref.png`/`-nat.png` + posizione verticale dei testi comuni, `dy` = scostamento) e
+   `node tools/compare/probe.mjs <ruolo> /clienti "<testo>"` (stili calcolati della catena di antenati, per la causa).
+   Nota: dy/dx piccoli su pillole, pulsanti, iniziali avatar sono normali (nel web il testo è misurato sul contenitore);
+   "Weekend"/"Cerca"/"Chiudi" con dy enormi sono elementi nascosti con la stessa etichetta.
 
 ## Fatto
 - Schema Supabase generato dalle entità (`scripts/gen_schema.py`), RLS testate (`scripts/test_db.sh`).
@@ -31,14 +36,21 @@
 - Codemod `scripts/port/codemod.mjs` (+ `tree.mjs` per trovare i file di una pagina): converte i file originali
   in `app/src/web/...` mantenendo codice identico; segna i punti manuali con `PORT-TODO`.
 - Pagina Clienti: 74 file convertiti, compila e si vede quasi identica all'originale.
+- **Spaziature Clienti (ex punto 1) — FATTO**, verificato con `tools/compare/measure.mjs` per pr, admin e super4:
+  sezioni e righe della lista nella stessa posizione verticale dell'originale (dy=0).
+  - La safelist `gap-x/y-*` (0–24, mezzi passi, px; base/sm/md/lg) era già in `app/tailwind.config.js`
+    e funziona (gap-y-3 = 12px); `gen_safelist.mjs` produce solo le classi usate, la safelist resta come rete.
+  - Causa vera dello scostamento: in CSS `space-y-N` sono margini sui figli e un figlio con `style={{ marginTop: 0 }}`
+    li annulla (i sentinel della tab bar e della ricerca); col gap no. `Div`/`Btn` (`app/src/ui/html.tsx`,
+    `spaceOverrides`) ora danno a quei figli margine − gap, attraversando i Fragment.
+  - `VirtualizedClientList`: ogni riga è in un contenitore alto 110px con overflow nascosto come nell'originale
+    (la card ha `h-full`; prima ogni riga risultava alta 1500px).
 
 ## In corso / prossimi passi
-1. **Spaziature Clienti**: `gap-y-*` (da `space-y-*`) non generato da NativeWind. Fare:
-   - aggiungere in `app/tailwind.config.js` la safelist
-     `{ pattern: /^gap-[xy]-(0|px|0\.5|1|1\.5|2|2\.5|3|3\.5|4|5|6|7|8|9|10|11|12|14|16|20|24)$/, variants: ['sm','md','lg'] }`
-     (la modifica era stata interrotta, NON è applicata);
-   - riavviare Metro con `--clear`, riverificare con lo script di misura (stili calcolati ref vs nativo).
-   - rigenerare `node --experimental-strip-types scripts/gen_safelist.mjs` dopo ogni nuovo porting.
+1. **Larghezza pulsanti Clienti**: "Importa più clienti / Aggiungi presenze / Singolo cliente" nel nativo si
+   restringono e troncano il testo; nell'originale i flex item hanno `min-width: auto` (non scendono sotto il
+   contenuto, la riga sborda a destra). Emulare `min-width: auto` (es. minWidth dal contenuto per i flex item
+   con testo `whitespace-nowrap`). Dopo ogni nuovo porting: `node --experimental-strip-types scripts/gen_safelist.mjs`.
 2. Sistemare i `PORT-TODO` dei file Clienti (listener window/document, createPortal→Modal, input date/file,
    clipboard/share), poi dettaglio cliente, dialog, tab Gruppi/Parco/Albero/Tabelle/Growth/Analitica.
 3. ClientMap (Leaflet) → react-native-maps (ora segnaposto). VibraSearch (pulsante Cerca) da portare.

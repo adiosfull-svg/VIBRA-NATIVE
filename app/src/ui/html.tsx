@@ -2,12 +2,12 @@
 // portano riga per riga mantenendo className e struttura:
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
-import { Children, Fragment, isValidElement, useContext, type ReactElement, type ReactNode } from 'react';
+import { Children, cloneElement, Fragment, isValidElement, useContext, type ReactElement, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { splitTextClasses, Text, TextClassContext, type AppTextProps } from './text';
-import { normalizeClasses, type Gradient, type Grid } from './webClasses';
+import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
 import { webStyle, type WebStyleResult } from './webStyle';
 
 /** Avvolge in <Text> le stringhe/numeri figli diretti (in RN il testo nudo in una View è un errore). */
@@ -71,8 +71,51 @@ function gridChildren(children: ReactNode, grid: Grid): ReactNode {
   });
 }
 
-function boxContent(children: ReactNode, grid?: Grid) {
-  return grid ? gridChildren(children, grid) : wrapText(children);
+function boxContent(children: ReactNode, grid?: Grid, className?: string) {
+  return grid ? gridChildren(children, grid) : wrapText(spaceOverrides(children, className));
+}
+
+const SPACE = /(?:^|\s)space-([xy])-(\S+)/g;
+
+/** Margine inline in px (numero o "12px"), altrimenti null. */
+function inlinePx(v: unknown): number | null {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string' && /^-?\d+(\.\d+)?(px)?$/.test(v.trim())) return parseFloat(v);
+  return null;
+}
+
+/**
+ * space-y-N/space-x-N diventano gap (normalizeClasses), ma in CSS sono margini sui figli: un
+ * figlio con marginTop/marginLeft inline (es. style={{ marginTop: 0 }}) li sostituisce.
+ * Col gap non si può, quindi al figlio diamo margine − gap. Conta come "figlio precedente" solo
+ * un elemento che disegna qualcosa (tag o con className/style): i componenti come PageTitle,
+ * che rendono null, non hanno spazio prima del successivo né in CSS né col gap.
+ */
+function spaceOverrides(children: ReactNode, className?: string): ReactNode {
+  if (!className || !className.includes('space-')) return children;
+  const gaps: { x?: number; y?: number } = {};
+  for (const m of className.matchAll(SPACE)) gaps[m[1] as 'x' | 'y'] = spacingPx(m[2]);
+  if (gaps.x == null && gaps.y == null) return children;
+  let seen = false;
+  const visit = (nodes: ReactNode): ReactNode => Children.map(nodes, (child) => {
+    if (!isValidElement(child)) return child;
+    // i figli di un Fragment in CSS sono fratelli diretti
+    if (child.type === Fragment) {
+      return <Fragment key={child.key}>{visit((child.props as { children?: ReactNode }).children)}</Fragment>;
+    }
+    const props = child.props as { className?: string; style?: unknown };
+    const hadPrev = seen;
+    if (typeof child.type === 'string' || props.className != null || props.style != null) seen = true;
+    if (!hadPrev || props.style == null) return child;
+    const flat = (Array.isArray(props.style) ? StyleSheet.flatten(props.style as StyleProp<ViewStyle>) : props.style) as Record<string, unknown>;
+    const fix: Record<string, number> = {};
+    const mt = inlinePx(flat.marginTop);
+    const ml = inlinePx(flat.marginLeft);
+    if (gaps.y != null && mt != null) fix.marginTop = mt - gaps.y;
+    if (gaps.x != null && ml != null) fix.marginLeft = ml - gaps.x;
+    return Object.keys(fix).length ? cloneElement(child as ReactElement<{ style?: unknown }>, { style: { ...flat, ...fix } }) : child;
+  });
+  return visit(children);
 }
 
 // In CSS gli elementi flex hanno flex-shrink: 1 di default, in RN 0: lo ripristiniamo
@@ -93,7 +136,7 @@ export function Div({ className, children, style, ...props }: DivProps) {
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
-  const content = boxContent(children, grid);
+  const content = boxContent(children, grid, rest);
   return (
     <View {...props} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle]}>
       {gradient ? <GradientFill gradient={gradient} /> : null}
@@ -147,7 +190,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, ..
       style={({ pressed }) => [boxStyle(grid, box, rnStyle), rnStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
-      <TextClassContext.Provider value={cn(inherited, text)}>{boxContent(children, grid)}</TextClassContext.Provider>
+      <TextClassContext.Provider value={cn(inherited, text)}>{boxContent(children, grid, rest)}</TextClassContext.Provider>
     </Pressable>
   );
 }
