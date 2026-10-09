@@ -6,6 +6,7 @@ import { Children, cloneElement, Fragment, isValidElement, useCallback, useConte
 import { Platform, Pressable, StyleSheet, View, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
+import { useForm } from './formContext';
 import { splitTextClasses, Text, TextClassContext, type AppTextProps } from './text';
 import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
 import { webStyle, type WebStyleResult } from './webStyle';
@@ -207,10 +208,17 @@ type BtnProps = Omit<PressableProps, 'children' | 'style'> & {
   children?: ReactNode;
   onClick?: PressableProps['onPress'];
   style?: ViewProps['style'];
+  /** type="submit" invia il <form> che lo contiene (ui/form.tsx), come nel browser. */
+  type?: string;
 };
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
-export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, ...props }: BtnProps) {
+export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, ...props }: BtnProps) {
+  const form = useForm();
+  const press = onPress ?? onClick;
+  const handlePress: PressableProps['onPress'] = type === 'submit' && form
+    ? (e) => { press?.(e); form.submit(); }
+    : press;
   const inherited = useContext(TextClassContext);
   const [text, rest] = splitTextClasses(className);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
@@ -225,7 +233,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
       disabled={disabled}
-      onPress={onPress ?? onClick}
+      onPress={handlePress}
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}

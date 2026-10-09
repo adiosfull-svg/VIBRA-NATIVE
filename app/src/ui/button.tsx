@@ -39,7 +39,7 @@ export type ButtonProps = VariantProps<typeof buttonVariants> & {
   type?: string;
 };
 
-export function Button({ className, variant, size, title, type: _type, ...props }: ButtonProps) {
+export function Button({ className, variant, size, title, ...props }: ButtonProps) {
   return (
     // [&_svg]:size-4 [&_svg]:shrink-0 → dimensione di default delle icone figlie
     <IconClassContext.Provider value="size-4 shrink-0">

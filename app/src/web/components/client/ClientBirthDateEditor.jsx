@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientBirthDateEditor.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input type="date"> da sostituire con il controllo nativo
 import React from 'react';
 import { calculateAge } from '@/legacy/utils/clientAge';
 

@@ -13,12 +13,12 @@ const b = recast.types.builders;
 const parser = { parse: (s) => babel.parse(s, { sourceType: 'module', plugins: ['jsx'], tokens: true }) };
 
 // ── mappe ────────────────────────────────────────────────────────────────────
-const BOX = new Set(['div', 'section', 'header', 'footer', 'nav', 'main', 'aside', 'ul', 'ol', 'li', 'form', 'figure', 'article', 'fieldset']);
+const BOX = new Set(['div', 'section', 'header', 'footer', 'nav', 'main', 'aside', 'ul', 'ol', 'li', 'figure', 'article', 'fieldset']);
 const TEXT = { span: 'Span', p: 'P', small: 'Span', code: 'Span', pre: 'Span', b: 'Span', strong: 'Span', em: 'Span', i: 'Span', h1: 'H', h2: 'H', h3: 'H', h4: 'H', h5: 'H', h6: 'H' };
 const TEXT_EXTRA = { b: 'font-bold', strong: 'font-bold', em: 'italic', i: 'italic', code: 'font-mono', pre: 'font-mono' };
 const ELEMENTS = {
   img: 'Img', a: 'A', table: 'Table', thead: 'Thead', tbody: 'Tbody', tfoot: 'Tfoot', tr: 'Tr', td: 'Td', th: 'Th',
-  input: 'HtmlInput', textarea: 'HtmlTextarea', select: 'HtmlSelect', option: 'HtmlOption', hr: 'Hr', label: 'Label',
+  form: 'Form', input: 'HtmlInput', textarea: 'HtmlTextarea', select: 'HtmlSelect', option: 'HtmlOption', hr: 'Hr', label: 'Label',
   svg: 'Svg', path: 'Path', circle: 'Circle', rect: 'Rect', line: 'Line', g: 'G', defs: 'Defs', stop: 'Stop',
   linearGradient: 'SvgLinearGradient', text: 'SvgText', polygon: 'Polygon', polyline: 'Polyline', foreignObject: 'ForeignObject',
 };
@@ -198,13 +198,16 @@ export function transform(code, originalPath = '') {
         if (GESTURE_ATTR.test(n)) { removedGestures.push(n); continue; }
         // onKeyDown dei campi di testo è supportato (ui/keyEvents.ts: Invio/Esc anche sul telefono)
         if (n === 'onKeyDown' && (tag === 'input' || tag === 'textarea')) { attrs.push(a); continue; }
+        // <form onSubmit>: Form invia con i pulsanti type="submit" e l'Invio nei campi (ui/form.tsx)
+        if (n === 'onSubmit' && tag === 'form') { attrs.push(a); continue; }
         if (n === 'onKeyDown' || n === 'onPaste' || n === 'onInput' || n === 'onSubmit') { removedGestures.push(n); continue; }
         if (n === 'aria-label') { ariaLabel = a.value; continue; }
         if (n === 'title' && !['Svg', 'Path'].includes(name)) { ariaLabel = ariaLabel ?? a.value; continue; }
-        if (n === 'type' && name === 'Btn') continue;
+        // type="submit" serve a Form; "button"/"reset" non servono
+        if (n === 'type' && name === 'Btn' && a.value?.value !== 'submit') continue;
         if (n === 'loading' && name === 'Img') continue;
         if (n === 'onClick' && ['Span', 'P', 'H'].includes(name)) { a.name = b.jsxIdentifier('onPress'); attrs.push(a); continue; }
-        if (n === 'checked' || (n === 'type' && name === 'HtmlInput' && a.value?.value && ['checkbox', 'file', 'date', 'time', 'datetime-local', 'radio', 'color', 'range'].includes(a.value.value))) {
+        if (n === 'checked' || (n === 'type' && name === 'HtmlInput' && a.value?.value && ['checkbox', 'radio', 'color', 'range'].includes(a.value.value))) {
           todos.push(`<input ${n === 'checked' ? 'checked' : `type="${a.value.value}"`}> da sostituire con il controllo nativo`);
         }
         // class → className (non dovrebbe esserci, per sicurezza)
@@ -242,6 +245,10 @@ export function transform(code, originalPath = '') {
   const add = [];
   const spec = (n) => (taken.has(n) ? b.importSpecifier(b.identifier(n), b.identifier(local(n))) : b.importSpecifier(b.identifier(n)));
   if (usedHtml.size) add.push(b.importDeclaration([...usedHtml].sort().map(spec), b.stringLiteral('@/ui/html')));
+  if (usedElements.has('Form')) {
+    usedElements.delete('Form');
+    add.push(b.importDeclaration([spec('Form')], b.stringLiteral('@/ui/form')));
+  }
   if (usedElements.size) add.push(b.importDeclaration([...usedElements].sort().map(spec), b.stringLiteral('@/ui/elements')));
   if (usesHtmlText) add.push(b.importDeclaration([b.importSpecifier(b.identifier('HtmlText'))], b.stringLiteral('@/ui/htmlText')));
   body.splice(lastImport + 1, 0, ...add);

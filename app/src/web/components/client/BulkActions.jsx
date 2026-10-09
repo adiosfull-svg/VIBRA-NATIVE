@@ -1,6 +1,4 @@
 // Port di src/components/client/BulkActions.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input type="datetime-local"> da sostituire con il controllo nativo
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { X, Bell, CalendarPlus, Link2, Plus, Search, Users, Scale } from '@/ui/icons.generated';

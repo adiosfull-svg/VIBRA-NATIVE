@@ -7,6 +7,10 @@ import { cssInterop } from 'nativewind';
 import { Children, forwardRef, isValidElement, type ReactNode } from 'react';
 import { Linking, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { cn } from './cn';
+import { DateField } from './dateField';
+import { isDateInputType } from './dateValue';
+import { FileField } from './fileField';
+import { useTextFormField } from './formContext';
 import { keyDownProps, type WebKeyEvent } from './keyEvents';
 import { Btn, Div } from './html';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './menu';
@@ -86,7 +90,8 @@ type RawInputProps = TextInputProps & {
   className?: string;
   type?: string;
   value?: string | number | null;
-  onChange?: (e: { target: { value: string } }) => void;
+  onChange?: (e: any) => void;
+  required?: boolean; multiple?: boolean; capture?: string; disabled?: boolean;
   min?: number | string; max?: number | string; step?: number | string; rows?: number;
   autoFocus?: boolean; maxLength?: number; list?: string; accept?: string;
   onKeyDown?: (e: WebKeyEvent) => void;
@@ -103,12 +108,13 @@ function inputTypeProps(type?: string): TextInputProps {
   }
 }
 
-function rawInput({ className, type, value, onChange, onChangeText, onKeyDown, min: _min, max: _max, step: _s, rows, list: _l, accept: _a, style, ...props }: RawInputProps, multiline = false) {
+function rawInput({ className, type, value, onChange, onChangeText, onKeyDown, min: _min, max: _max, step: _s, rows, list: _l, accept: _a, required: _r, multiple: _m, capture: _c, disabled, style, ...props }: RawInputProps, submitForm: (() => void) | undefined, multiline = false) {
   const cls = cn('text-foreground text-base', className);
   return {
     ...inputTypeProps(type),
     ...props,
-    ...keyDownProps(onKeyDown, value == null ? '' : String(value), multiline),
+    ...(disabled ? { editable: false } : null),
+    ...keyDownProps(onKeyDown, value == null ? '' : String(value), multiline, submitForm),
     value: value == null ? '' : String(value),
     onChangeText: (t: string) => { onChangeText?.(t); onChange?.({ target: { value: t } }); },
     placeholderTextColor: THEME['muted-foreground'],
@@ -118,11 +124,26 @@ function rawInput({ className, type, value, onChange, onChangeText, onKeyDown, m
   };
 }
 
-export const HtmlInput = forwardRef<TextInput, RawInputProps>((p, ref) => <TextInput ref={ref} {...rawInput(p)} />);
+const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean }>(({ multiline = false, ...p }, ref) => {
+  const { ref: inputRef, submit } = useTextFormField(ref, p.required, p.value);
+  return multiline
+    ? <TextInput ref={inputRef} multiline textAlignVertical="top" {...rawInput(p, submit, true)} />
+    : <TextInput ref={inputRef} {...rawInput(p, submit)} />;
+});
+RawTextInput.displayName = 'RawTextInput';
+
+/** <input>: testo, ma anche date/ora (DateField) e file (FileField) come nel browser. */
+export const HtmlInput = forwardRef<any, RawInputProps>((p, ref) => {
+  const { type, className, value, onChange, min, max, disabled, required, accept, multiple, capture, style } = p;
+  if (isDateInputType(type)) {
+    return <DateField ref={ref} type={type} value={value} onChange={onChange} onBlur={p.onBlur as () => void} min={min} max={max}
+      disabled={disabled} required={required} style={style as object} className={cn('text-foreground text-base', className)} />;
+  }
+  if (type === 'file') return <FileField ref={ref} accept={accept} multiple={multiple} capture={capture} disabled={disabled} className={className} onChange={onChange} />;
+  return <RawTextInput ref={ref} {...p} />;
+});
 HtmlInput.displayName = 'HtmlInput';
-export const HtmlTextarea = forwardRef<TextInput, RawInputProps>((p, ref) => (
-  <TextInput ref={ref} multiline textAlignVertical="top" {...rawInput(p, true)} />
-));
+export const HtmlTextarea = forwardRef<TextInput, RawInputProps>((p, ref) => <RawTextInput ref={ref} multiline {...p} />);
 HtmlTextarea.displayName = 'HtmlTextarea';
 
 // ── <select><option> ─────────────────────────────────────────────────────────

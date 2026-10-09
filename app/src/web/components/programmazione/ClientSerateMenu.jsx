@@ -1,7 +1,6 @@
 // Port di src/components/programmazione/ClientSerateMenu.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
 //  - <div> gesture/eventi web rimossi: onPointerDown
-//  - <input type="date"> da sostituire con il controllo nativo
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { format, parseISO } from 'date-fns';

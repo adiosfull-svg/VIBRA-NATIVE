@@ -1,8 +1,6 @@
 // Port di src/components/client/ClientFormDialog.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - <form> gesture/eventi web rimossi: onSubmit
-//  - <div> gesture/eventi web rimossi: onPaste
-//  - <input type="file"> da sostituire con il controllo nativo
+//  - <div> gesture/eventi web rimossi: onPaste (incolla foto con Ctrl+V; resta "Carica dal dispositivo")
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
 import { Button } from '@/ui/button';
@@ -20,6 +18,7 @@ import { parseIgHandle } from '@/legacy/utils/seminaParse';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+import { Form } from '@/ui/form';
 import { HtmlInput, Img } from '@/ui/elements';
 
 export default function ClientFormDialog({ open, onOpenChange, client, onSave, isLoading, clients = [] }) {
@@ -115,7 +114,7 @@ export default function ClientFormDialog({ open, onOpenChange, client, onSave, i
             {client ? 'Modifica Cliente' : 'Nuovo Cliente'}
           </DialogTitle>
         </DialogHeader>
-        <Div className="space-y-4 relative">
+        <Form onSubmit={handleSubmit} className="space-y-4 relative">
           {/* Foto profilo */}
           <Div>
             <Label>Foto profilo</Label>
@@ -281,7 +280,7 @@ export default function ClientFormDialog({ open, onOpenChange, client, onSave, i
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>Annulla</Button>
             <Button type="submit" disabled={isLoading}>{isLoading ? 'Salvataggio...' : (client ? 'Salva' : 'Aggiungi')}</Button>
           </Div>
-        </Div>
+        </Form>
       </DialogContent>
     </Dialog>
   );
