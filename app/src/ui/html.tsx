@@ -4,6 +4,7 @@
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { Children, cloneElement, Fragment, isValidElement, useCallback, useContext, useState, type ReactElement, type ReactNode } from 'react';
 import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
@@ -97,12 +98,14 @@ const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
  * Come in CSS (align-items: stretch) un Div/Btn figlio diretto si allunga all'altezza della riga.
  */
 function gridChildren(children: ReactNode, grid: Grid, className?: string): ReactNode {
+  if (grid.template) return templateGridRows(children, grid, className);
   const stretch = !/(^|\s)items-(start|center|end|baseline)(\s|$)/.test(className ?? '');
   return Children.map(wrapText(children), (child) => {
     if (child == null || typeof child === 'boolean') return child;
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
     const span = Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1);
-    if (/(?:^|\s)hidden(?:\s|$)/.test(cls)) return child;
+    // in CSS gli elementi assoluti non sono elementi della griglia (niente cella, niente gap)
+    if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) return child;
     let item = child;
     if (stretch && isValidElement(child) && (child.type === Div || child.type === Btn) && !NO_STRETCH.test(cls)) {
       const own = (child.props as { style?: StyleProp<ViewStyle> }).style;
@@ -114,6 +117,34 @@ function gridChildren(children: ReactNode, grid: Grid, className?: string): Reac
       </View>
     );
   });
+}
+
+const ITEMS_ALIGN: Record<string, ViewStyle['alignItems']> = { start: 'flex-start', center: 'center', end: 'flex-end', baseline: 'baseline', stretch: 'stretch' };
+
+/**
+ * Griglia a colonne miste (grid-cols-[1fr_auto]): una riga (View in riga) per ogni gruppo di celle;
+ * fr → si allarga in proporzione, auto → larga quanto il contenuto, px → fissa.
+ * Le celle assolute/nascoste non occupano posto (come in CSS).
+ */
+function templateGridRows(children: ReactNode, grid: Grid, className?: string): ReactNode {
+  const tracks = grid.template!;
+  const align = ITEMS_ALIGN[(className ?? '').match(/(?:^|\s)items-(start|center|end|baseline|stretch)(?=\s|$)/)?.[1] ?? 'stretch'];
+  const outOfFlow: ReactNode[] = [];
+  const cells: ReactNode[] = [];
+  for (const child of Children.toArray(wrapText(children))) {
+    const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
+    (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls) ? outOfFlow : cells).push(child);
+  }
+  const rows: ReactNode[] = [];
+  for (let r = 0; r * tracks.length < cells.length; r++) {
+    const row = cells.slice(r * tracks.length, (r + 1) * tracks.length).map((cell, i) => {
+      const t = tracks[i];
+      const style: ViewStyle = 'fr' in t ? { flexGrow: t.fr, flexShrink: 1, flexBasis: 0, minWidth: 0 } : 'px' in t ? { width: t.px, flexShrink: 0 } : { flexShrink: 0 };
+      return <View key={i} style={[style, { justifyContent: 'center' }]}>{cell}</View>;
+    });
+    rows.push(<View key={`r${r}`} style={{ flexDirection: 'row', columnGap: grid.gapX, alignItems: align, width: '100%' }}>{row}</View>);
+  }
+  return [...outOfFlow, ...rows];
 }
 
 function boxContent(children: ReactNode, grid?: Grid, className?: string) {
@@ -186,7 +217,7 @@ function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
 }
 
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>) {
-  const base: Record<string, any> = grid ? { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 } : {};
+  const base: Record<string, any> = grid ? (grid.template ? { rowGap: grid.gapY } : { rowGap: grid.gapY, marginHorizontal: -grid.gapX / 2 }) : {};
   if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
   if (layout === 'block' && INLINE_LEVEL.test(rawClass ?? '') && !SELF.test(rawClass ?? '') && style?.alignSelf == null) {
     base.alignSelf = inlineAlign(inherited);
@@ -294,6 +325,27 @@ function ScrollBox({ axis, box, style, children, onScroll, ...props }: Omit<View
   );
 }
 
+// backdrop-filter: blur(...) (style o classi backdrop-blur-*): sfondo sfocato della pagina dietro.
+// Sul web è CSS vero; sul telefono una BlurView di expo-blur dietro ai figli.
+const BLUR_CLASS_PX: Record<string, number> = { none: 0, sm: 4, '': 8, md: 12, lg: 16, xl: 24, '2xl': 40, '3xl': 64 };
+
+function backdropBlur(className: string, style: unknown): { css?: string; px: number } | null {
+  const raw = (Array.isArray(style) ? StyleSheet.flatten(style as StyleProp<ViewStyle>) : style) as Record<string, unknown> | undefined;
+  const css = (raw?.backdropFilter ?? raw?.WebkitBackdropFilter) as string | undefined;
+  if (typeof css === 'string') {
+    const m = css.match(/blur\((\d+(?:\.\d+)?)px\)/);
+    return { css, px: m ? Number(m[1]) : 0 };
+  }
+  const c = className.match(/(?:^|\s)backdrop-blur(?:-(none|sm|md|lg|xl|2xl|3xl|\[(\d+)px\]))?(?=\s|$)/);
+  if (!c) return null;
+  return { px: c[2] ? Number(c[2]) : BLUR_CLASS_PX[c[1] ?? ''] };
+}
+
+function BlurFill({ px }: { px: number }) {
+  if (!px) return null;
+  return <BlurView pointerEvents="none" intensity={Math.min(100, px * 4)} tint="dark" style={StyleSheet.absoluteFill} />;
+}
+
 const FIXED = /(^|\s)fixed(\s|$)/;
 const WEB_FIXED = { position: 'fixed' } as unknown as ViewStyle;
 
@@ -331,17 +383,23 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
     return <PortalToRoot><Div className={className} style={style} onLayout={onLayout} {...all}>{children}</Div></PortalToRoot>;
   }
   const fixedStyle = fixed && Platform.OS === 'web' ? WEB_FIXED : null;
+  const blur = backdropBlur(rest, style);
+  // sul web lo stile backdropFilter passa così com'è (le classi le gestisce già il CSS)
+  const blurStyle = blur?.css && Platform.OS === 'web' ? ({ backdropFilter: blur.css, WebkitBackdropFilter: blur.css } as unknown as ViewStyle) : null;
+  const nativeBlur = blur && Platform.OS !== 'web' ? <BlurFill px={blur.px} /> : null;
   const axis = scrollAxis(rest);
   if (axis) {
-    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, min.minStyle]) as Record<string, any>;
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, blurStyle, min.minStyle]) as Record<string, any>;
     return (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
+        {nativeBlur}
         {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
       </ScrollBox>
     );
   }
   return (
-    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, min.minStyle]}>
+    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, (gradient || nativeBlur) && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle), fixedStyle, rnStyle, blurStyle, min.minStyle]}>
+      {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} /> : null}
       {text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{content}</TextClassContext.Provider> : content}
     </View>
@@ -350,14 +408,28 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
 
 // Un <span>/<p> usato come contenitore (flex, dimensioni fisse, gap...) in RN deve essere una View:
 // il testo figlio eredita comunque le classi di testo tramite il contesto.
-const BOXY = /(^|\s)(?:[a-z]+:)*(flex|inline-flex|grid|items-|justify-|gap-|space-[xy]-|size-|w-\d|h-\d|w-\[|h-\[|aspect-)/;
+const BOXY = /(^|\s)(?:[a-z]+:)*(flex|inline-flex|grid|items-|justify-|gap-|space-[xy]-|size-|w-\d|h-\d|w-\[|h-\[|aspect-|block(?=\s|$)|inline-block(?=\s|$))/;
+
+/** Un <span> che contiene blocchi (span block, div...) in CSS li impila: in RN serve una View, non testo annidato. */
+function hasBoxyChild(children: ReactNode): boolean {
+  let found = false;
+  Children.forEach(children, (c) => {
+    if (found || !isValidElement(c)) return;
+    if (c.type === Fragment) { found = hasBoxyChild((c.props as { children?: ReactNode }).children); return; }
+    if (c.type === Div || c.type === Btn) { found = true; return; }
+    const cls = (c.props as { className?: unknown }).className;
+    if (typeof cls === 'string' && BOXY.test(cls)) found = true;
+  });
+  return found;
+}
 
 type TextLikeProps = AppTextProps & { onPress?: () => void; style?: any };
 
 function textLike(defaultProps: Partial<TextLikeProps> = {}, inline = false) {
   return function TextLike({ className, children, style, onPress, ...props }: TextLikeProps) {
-    const inlineBox = useInlineBox(inline && !BOXY.test(className ?? '') ? className : 'block');
-    if (BOXY.test(className ?? '')) {
+    const boxy = BOXY.test(className ?? '') || hasBoxyChild(children);
+    const inlineBox = useInlineBox(inline && !boxy ? className : 'block');
+    if (boxy) {
       return onPress
         ? <Btn className={className} style={style} onClick={onPress} {...(props as object)}>{children}</Btn>
         : <Div className={className} style={style} {...(props as object)}>{children}</Div>;

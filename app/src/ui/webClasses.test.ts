@@ -45,3 +45,10 @@ test('spacing e colori', () => {
   assert.equal(themeColor('card'), '#131316');
   assert.equal(themeColor('white/10'), '#ffffff1a');
 });
+
+test('grid-cols-[1fr_auto]: colonne miste', () => {
+  const n = normalizeClasses('grid grid-cols-[1fr_auto] gap-2 px-3');
+  assert.deepEqual(n.grid, { cols: 2, gapX: 8, gapY: 8, template: [{ fr: 1 }, { auto: true }] });
+  assert.ok(!/flex-wrap/.test(n.box));
+  assert.equal(normalizeClasses('grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))]').grid?.template, undefined);
+});

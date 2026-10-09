@@ -30,7 +30,10 @@
    Tab e dialog: quarto argomento con i passi, uguali sulle due app (`tools/compare/steps.mjs`), es.
    `node tools/compare/measure.mjs out/growth /clienti pr "click:Growth;wait:2500"`,
    `"click:Sofia Colombo;wait:2500"` (dettaglio cliente; per super4 "Alessandro Conti"), `"click:Singolo cliente"`,
-   `"click:Importa più clienti"`, `"click:Aggiungi presenze"`. Anche `probe.mjs` accetta i passi (5° argomento).
+   `"click:Importa più clienti"`, `"click:Aggiungi presenze"`, `"click:Mappa;wait:4000"`,
+   `"click:Cerca;wait:2000;type:sofia"`. Anche `probe.mjs` accetta i passi (5° argomento).
+7. I processi in background possono spegnersi tra un turno e l'altro: `tools/compare/up.sh` riavvia stack, app
+   originale e app nativa (solo quelli spenti) e aspetta che rispondano.
 
 ## Fatto
 - **Collegamento a Base44** (`app/src/lib/`): `base44.ts` sceglie il backend (`backend.ts`);
@@ -140,22 +143,16 @@
   nel portale (come già per createPortal).
 - Codemod: `export ... from` riscritti come gli import.
 
-## In corso / prossimi passi
-1. **Da provare sul telefono** (Expo Go / build): selettori data/ora (Android: data poi ora per datetime-local,
-   "Cancella" svuota; iOS: pannello in basso), scelta foto/file e caricamento su Base44 (quando si toglie la
-   modalità prova: `UploadPublicFile` con il File "nativo" di `ui/fileField.tsx`), swipe dei leader, trascinamento
-   e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza col tap.
-   Restano 2 PORT-TODO accettati: `onPaste` (incolla foto con Ctrl+V in ClientFormDialog, incolla in
-   QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
-   Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
-   (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
-2. VibraSearch (pulsante Cerca) da portare.
-3. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
-   Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
-4. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
-   expo-notifications. Funzioni server, automazioni, file: restano su Base44.
-5. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
-6. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+- **Ricerca (VibraSearch, pulsante Cerca) — FATTO**: codice originale convertito (con EventPromoterChart,
+  PiantinaFullscreen, utils/downloadMaterials), montata in `app/(app)/_layout.tsx` come in AppLayout.jsx; si apre
+  con l'evento `vibra:search-open` e comunica lo stato con `vibra:search-state` (LayoutUIProvider → pill della nav),
+  `CustomEvt` negli shim (il codemod riscrive `new CustomEvent`). Verificata sul web: identica vuota e con risultati.
+- Strato UI (vale per tutte le pagine): DialogContent applica le classi della pagina alla finestra come l'originale
+  (base `grid w-full max-w-lg ... overflow-y-auto`, `modal={false}` senza velo); `backdrop-filter`/`backdrop-blur`
+  (CSS sul web, expo-blur sul telefono); griglie `grid-cols-[1fr_auto...]` (righe con colonne fr/auto/px);
+  `<span>` che contiene blocchi (span block, div) diventa una View; nelle griglie gli elementi assoluti non
+  prendono una cella.
+- Avvisi di sviluppo sul web da capire: "styleq: transition/opacity typeof ..." (NativeWind, classi transition-*).
 
 - **Login Google con Base44 vero**:
   - PC: FUNZIONA (verificato dall'utente). Base44 rimanda a `<sito>/api/apps/auth/final-callback?access_token=`,
@@ -184,5 +181,23 @@
   cache normalizeClasses/splitTextClasses/textClassesFor. Expo Go in sviluppo è molto più lento di una build:
   provare con `npx expo start --no-dev --minify`; da rivedere dopo una build vera (punto 6).
 
+## In corso / prossimi passi
+1. **Da provare sul telefono** (Expo Go / build): selettori data/ora (Android: data poi ora per datetime-local,
+   "Cancella" svuota; iOS: pannello in basso), scelta foto/file e caricamento su Base44 (quando si toglie la
+   modalità prova: `UploadPublicFile` con il File "nativo" di `ui/fileField.tsx`), swipe dei leader, trascinamento
+   e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza col tap.
+   Restano 2 PORT-TODO accettati: `onPaste` (incolla foto con Ctrl+V in ClientFormDialog, incolla in
+   QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
+   Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
+   (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
+2. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
+   Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
+3. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
+   expo-notifications. Funzioni server, automazioni, file: restano su Base44.
+4. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
+5. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+
 ## In attesa dell'utente
-- Prova del login sul telefono con la pagina ponte (Expo Go sulla stessa Wi-Fi del PC, senza --tunnel).
+- Errori sul telefono quando si cambia tab in Clienti (l'utente manderà le schermate rosse). Prima verificare che
+  usi l'ultimo codice (`git log --oneline -1`) e che `npm install` applichi la patch (`react-native-css-interop@0.2.7 ✔`;
+  in sviluppo l'app segnala "[VIBRA] Patch ... NON applicata" se manca).

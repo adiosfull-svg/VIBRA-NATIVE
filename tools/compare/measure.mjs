@@ -8,6 +8,7 @@
 //   wait:<ms>         attende
 //   scroll:<px>       scorre la pagina (window e scroller interni) di px
 //   key:<tasto>       preme un tasto (es. key:Escape)
+//   type:<testo>      scrive nel campo che ha il fuoco
 // es.: node tools/compare/measure.mjs out/gruppi /clienti pr "click:Gruppi;wait:1500"
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';

@@ -63,7 +63,14 @@ function rewriteImport(src) {
 
 // ── API del browser → shim (app/src/web/shims/dom: veri oggetti sul web, equivalenti nativi sul telefono)
 const DOM_SHIMS = { window: 'webWindow', document: 'webDocument', navigator: 'webNavigator', localStorage: 'webStorage' };
-const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage' };
+const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage', WebCustomEvent: 'CustomEvt' };
+// new X(...) di classi del browser che sul telefono non esistono
+const NEW_SHIMS = { CustomEvent: 'WebCustomEvent' };
+
+/** Nome dichiarato localmente? (ast-types non sa leggere i buchi negli array: const [, b] = ...) */
+function shadowed(p, name) {
+  try { return !!p.scope?.lookup(name); } catch { return false; }
+}
 
 /** window.x / document.x / navigator.x / localStorage.x → webWindow.x ... + import da @/web/shims/dom. */
 export function applyDomShims(ast) {
@@ -73,25 +80,17 @@ export function applyDomShims(ast) {
       if (p.node.source.value === 'react-dom') p.node.source = b.stringLiteral('@/web/shims/react-dom');
       return false;
     },
-    // tag scelto a runtime: const Comp = onClick ? 'button' : 'div' → Btn / Div (una stringa
-    // come componente funziona solo sul web: sul telefono "View config ... `div`")
-    visitVariableDeclarator(p) {
-      const { id, init } = p.node;
-      if (id.type === 'Identifier' && /^[A-Z]/.test(id.name) && init) {
-        recast.visit(init, {
-          visitStringLiteral(sp) {
-            const name = dynamicTag(sp.node.value);
-            if (name) { (['Div', 'Btn', 'Span', 'P', 'H'].includes(name) ? usedHtml : usedElements).add(name); sp.replace(b.identifier(local(name))); }
-            return false;
-          },
-        });
+    visitNewExpression(p) {
+      const c = p.node.callee;
+      if (c.type === 'Identifier' && NEW_SHIMS[c.name] && !shadowed(p, c.name)) {
+        used.add(NEW_SHIMS[c.name]);
+        p.node.callee = b.identifier(NEW_SHIMS[c.name]);
       }
       this.traverse(p);
     },
-
     visitMemberExpression(p) {
       const o = p.node.object;
-      if (o.type === 'Identifier' && DOM_SHIMS[o.name] && !p.scope?.lookup(o.name)) {
+      if (o.type === 'Identifier' && DOM_SHIMS[o.name] && !shadowed(p, o.name)) {
         used.add(DOM_SHIMS[o.name]);
         p.node.object = b.identifier(DOM_SHIMS[o.name]);
       }

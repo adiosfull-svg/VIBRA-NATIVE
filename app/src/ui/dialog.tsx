@@ -4,7 +4,7 @@
 // (radial-gradient a 50% -10%) è disegnato con react-native-svg.
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import * as AlertDialogPrimitive from '@rn-primitives/alert-dialog';
-import { useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
@@ -47,31 +47,42 @@ function useMaxHeight(popup?: boolean) {
   return popup ? height - 112 - insets.top - insets.bottom : height - 32;
 }
 
-export const Dialog = DialogPrimitive.Root;
+/** <Dialog modal={false}>: niente velo scuro dietro (come Radix), il resto uguale. */
+const ModalContext = createContext(true);
+
+export function Dialog({ modal = true, ...props }: DialogPrimitive.RootProps & { modal?: boolean }) {
+  return <ModalContext.Provider value={modal}><DialogPrimitive.Root {...props} /></ModalContext.Provider>;
+}
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
-export function DialogContent({ className, children, hideCloseButton, popup }: WithChildren & { hideCloseButton?: boolean; popup?: boolean }) {
+// Classi di DialogContent nell'originale (ui/dialog.jsx): le classi della pagina si applicano
+// alla finestra stessa, come sul web (es. VibraSearch: p-0 flex flex-col h-[88vh] overflow-hidden).
+// Centrata dall'overlay (equivale a fixed + translate -50%); overflow-y-auto → scorre (ScrollView sul telefono).
+const CONTENT_BASE = 'relative grid w-full max-w-lg overflow-y-auto overscroll-contain gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg';
+const POPUP_CLASSES = 'max-sm:w-[calc(100%-1.5rem)] max-sm:rounded-2xl sm:rounded-2xl border-border/50 shadow-lg';
+
+export function DialogContent({ className, children, hideCloseButton, popup, style }: WithChildren & {
+  hideCloseButton?: boolean; popup?: boolean; style?: object;
+  ref?: unknown; onOpenAutoFocus?: unknown; onPointerDownOutside?: unknown; onInteractOutside?: unknown; onEscapeKeyDown?: unknown;
+}) {
   const maxHeight = useMaxHeight(popup);
+  const modal = useContext(ModalContext);
+  // lo sfondo di default (bagliore viola) solo se la pagina non ne dà uno suo
+  const ownBackground = !!style && Object.keys(style).some((k) => /^background/.test(k));
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay style={StyleSheet.absoluteFill} className="flex items-center justify-center bg-black/80 px-3">
-        <DialogPrimitive.Content
-          style={{ maxHeight }}
-          className={cn(
-            'relative w-full max-w-lg overflow-hidden border border-border bg-background shadow-lg',
-            popup ? 'rounded-2xl border-border/50' : 'rounded-lg',
-          )}
-        >
-          <RadialGlow />
-          <ScrollView bounces={false} keyboardShouldPersistTaps="handled">
-            <Div className={cn('gap-4 p-6', className)}>{children}</Div>
-          </ScrollView>
-          {!hideCloseButton && (
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70" accessibilityLabel="Chiudi" hitSlop={8}>
-              <X className="h-4 w-4" />
-            </DialogPrimitive.Close>
-          )}
+      <DialogPrimitive.Overlay style={StyleSheet.absoluteFill} className={cn('flex items-center justify-center', modal ? 'bg-black/80' : 'bg-transparent')}>
+        <DialogPrimitive.Content style={{ width: '100%', alignItems: 'center' }}>
+          <Div className={cn(CONTENT_BASE, popup && POPUP_CLASSES, className)} style={[{ maxHeight }, style]}>
+            {ownBackground ? null : <Div className="absolute inset-0"><RadialGlow /></Div>}
+            {children}
+            {!hideCloseButton && (
+              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70" accessibilityLabel="Chiudi" hitSlop={8}>
+                <X className="h-4 w-4" />
+              </DialogPrimitive.Close>
+            )}
+          </Div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Overlay>
     </DialogPrimitive.Portal>

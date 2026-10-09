@@ -192,3 +192,13 @@ export const win = {
   navigator: nav,
   document: doc,
 };
+
+/** new CustomEvent(type, { detail }) per win.dispatchEvent (sul telefono non esiste CustomEvent). */
+export class CustomEvt<T = unknown> {
+  type: string;
+  detail: T;
+  constructor(type: string, init?: { detail?: T }) {
+    this.type = type;
+    this.detail = init?.detail as T;
+  }
+}

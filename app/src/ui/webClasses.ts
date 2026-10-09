@@ -10,7 +10,22 @@
 // dello schermo; le classi di griglia responsive invece si scartano (sul telefono vale la base).
 import { themeColor } from './colors.ts';
 
-export type Grid = { cols: number; gapX: number; gapY: number };
+/** Colonna di grid-cols-[...]: frazione (1fr), larghezza del contenuto (auto) o fissa (px). */
+export type GridTrack = { fr: number } | { auto: true } | { px: number };
+export type Grid = { cols: number; gapX: number; gapY: number; template?: GridTrack[] };
+
+/** grid-cols-[1fr_auto_120px] → colonne; null se contiene forme non gestite (repeat, minmax...). */
+export function parseGridTemplate(v: string): GridTrack[] | null {
+  const tracks: GridTrack[] = [];
+  for (const t of v.split('_')) {
+    let m: RegExpMatchArray | null;
+    if ((m = t.match(/^(\d+(?:\.\d+)?)fr$/))) tracks.push({ fr: Number(m[1]) });
+    else if (t === 'auto' || t === 'min-content' || t === 'max-content') tracks.push({ auto: true });
+    else if ((m = t.match(/^(\d+(?:\.\d+)?)(px|rem)$/))) tracks.push({ px: Number(m[1]) * (m[2] === 'rem' ? REM : 1) });
+    else return null;
+  }
+  return tracks.length ? tracks : null;
+}
 export type Gradient = { dir: string; colors: string[] };
 export type Normalized = { box: string; grid?: Grid; gradient?: Gradient; lineClamp?: number };
 
@@ -49,6 +64,7 @@ function computeNormalized(className?: string): Normalized {
   let hasDirection = false;
   let isGrid = false;
   let cols = 1;
+  let template: GridTrack[] | undefined;
   let gap: number | null = null;
   let gapX: number | null = null;
   let gapY: number | null = null;
@@ -69,6 +85,7 @@ function computeNormalized(className?: string): Normalized {
     if (/^flex-(row|col)(-reverse)?$/.test(base)) { if (!responsive) hasDirection = true; box.push(c); continue; }
     if (!responsive && c === 'grid') { isGrid = true; continue; }
     if (!responsive && (m = c.match(/^grid-cols-(\d+)$/))) { cols = Number(m[1]); continue; }
+    if (!responsive && (m = c.match(/^grid-cols-\[(.+)\]$/))) { template = parseGridTemplate(m[1]) ?? undefined; if (template) cols = template.length; continue; }
     if (!responsive && (m = c.match(/^gap-x-(\S+)$/))) { gapX = spacingPx(m[1]); box.push(c); continue; }
     if (!responsive && (m = c.match(/^gap-y-(\S+)$/))) { gapY = spacingPx(m[1]); box.push(c); continue; }
     if (!responsive && (m = c.match(/^gap-(\S+)$/))) { gap = spacingPx(m[1]); box.push(c); continue; }
@@ -95,10 +112,11 @@ function computeNormalized(className?: string): Normalized {
     if (ringColor) box.push(`border-${ringColor}`);
   }
   if (isGrid) {
-    out.grid = { cols, gapX: gapX ?? gap ?? 0, gapY: gapY ?? gap ?? 0 };
+    out.grid = { cols, gapX: gapX ?? gap ?? 0, gapY: gapY ?? gap ?? 0, ...(template ? { template } : null) };
     // la griglia è resa come righe a capo: i gap li applica Div sui wrapper dei figli
     for (let i = box.length - 1; i >= 0; i--) if (/^gap(-[xy])?-/.test(box[i])) box.splice(i, 1);
-    box.push('flex-row', 'flex-wrap');
+    // colonne uguali: righe a capo; colonne miste (template): una riga per gruppo di celle (Div)
+    if (!template) box.push('flex-row', 'flex-wrap');
   }
   if (gradDir) {
     const colors = [from, via, to].filter(Boolean).map((c) => themeColor(c as string)).filter(Boolean) as string[];
