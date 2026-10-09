@@ -1,6 +1,4 @@
 // Port di src/components/client/LeadersList.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onTouchStart, onTouchMove, onTouchEnd
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Star, Instagram, MessageCircle, CheckCircle2, Clock, GitBranch } from '@/ui/icons.generated';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/menu';
@@ -137,7 +135,10 @@ function SwipeableLeaderRow({ children, onSwipeRight, onSwipeLeft, hasPhone, dis
           transform: `translateX(${offset}px)`,
           background: offset > 0 ? rightBg : leftBg,
           touchAction: 'pan-y',
-        }}>
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}>
         {children}
       </Div>
     </Div>

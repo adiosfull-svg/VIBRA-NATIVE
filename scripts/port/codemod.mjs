@@ -195,7 +195,8 @@ export function transform(code, originalPath = '') {
         if (a.type !== 'JSXAttribute') { attrs.push(a); continue; }
         const n = attrName(a);
         if (DROP_ATTR.test(n)) continue;
-        if (GESTURE_ATTR.test(n)) { removedGestures.push(n); continue; }
+        // touch/pointer/mouse/wheel: supportati da Div e Btn (ui/gestures.ts), rimossi altrove
+        if (GESTURE_ATTR.test(n) && !['Div', 'Btn'].includes(name)) { removedGestures.push(n); continue; }
         // onKeyDown dei campi di testo è supportato (ui/keyEvents.ts: Invio/Esc anche sul telefono)
         if (n === 'onKeyDown' && (tag === 'input' || tag === 'textarea')) { attrs.push(a); continue; }
         // <form onSubmit>: Form invia con i pulsanti type="submit" e l'Invio nei campi (ui/form.tsx)

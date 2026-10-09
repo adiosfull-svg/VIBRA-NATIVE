@@ -7,6 +7,7 @@ import { Platform, Pressable, StyleSheet, View, type LayoutChangeEvent, type Pre
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { useForm } from './formContext';
+import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { splitTextClasses, Text, TextClassContext, type AppTextProps } from './text';
 import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
 import { webStyle, type WebStyleResult } from './webStyle';
@@ -164,9 +165,11 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
   return { minStyle, onLayout: handleLayout };
 }
 
-type DivProps = ViewProps & { className?: string; children?: ReactNode };
+type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & { className?: string; children?: ReactNode };
 
-export function Div({ className, children, style, onLayout, ...props }: DivProps) {
+export function Div({ className, children, style, onLayout, ...all }: DivProps) {
+  const [handlers, props] = splitGestureProps(all);
+  const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
   const [text, rest] = splitTextClasses(className);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
@@ -175,7 +178,7 @@ export function Div({ className, children, style, onLayout, ...props }: DivProps
   const content = boxContent(children, grid, rest);
   const min = useMinContentWidth(className, rnStyle, children, onLayout);
   return (
-    <View {...props} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle, min.minStyle]}>
+    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, gradient && 'overflow-hidden')} style={[boxStyle(grid, box, rnStyle), rnStyle, min.minStyle]}>
       {gradient ? <GradientFill gradient={gradient} /> : null}
       {text ? <TextClassContext.Provider value={cn(inherited, text)}>{content}</TextClassContext.Provider> : content}
     </View>
@@ -203,7 +206,7 @@ export const Span = textLike();
 export const P = textLike();
 export const H = textLike({ accessibilityRole: 'header' });
 
-type BtnProps = Omit<PressableProps, 'children' | 'style'> & {
+type BtnProps = Omit<PressableProps, 'children' | 'style' | keyof WebGestureProps> & WebGestureProps & {
   className?: string;
   children?: ReactNode;
   onClick?: PressableProps['onPress'];
@@ -213,7 +216,9 @@ type BtnProps = Omit<PressableProps, 'children' | 'style'> & {
 };
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
-export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, ...props }: BtnProps) {
+export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, ...all }: BtnProps) {
+  const [handlers, props] = splitGestureProps(all);
+  const gestures = useWebGestures(handlers);
   const form = useForm();
   const press = onPress ?? onClick;
   const handlePress: PressableProps['onPress'] = type === 'submit' && form
@@ -232,6 +237,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       onLayout={min.onLayout}
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
+      {...gestures}
       disabled={disabled}
       onPress={handlePress}
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}

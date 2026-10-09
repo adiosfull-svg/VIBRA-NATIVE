@@ -1,5 +1,4 @@
 // Port di src/components/client/ClientCompareBox.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
 import React, { useState, useMemo } from 'react';
 import { Input } from '@/ui/input';
 import { X, Users2, Search } from '@/ui/icons.generated';

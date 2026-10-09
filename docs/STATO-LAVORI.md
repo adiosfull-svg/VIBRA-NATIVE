@@ -74,23 +74,33 @@
   onSubmitEditing), usato da HtmlInput/HtmlTextarea/Input/Textarea; ripristinati i 12 handler originali
   (il codemod ora non li toglie più per input/textarea). Verificati typecheck e test; da provare a mano.
 
+- **PORT-TODO di Clienti — FATTO** (resta solo onPaste, vedi sotto):
+  - `<form>`: `ui/form.tsx` + `ui/formContext.ts`. `<form onSubmit>` → `Form`; `Btn`/`Button` con `type="submit"`
+    inviano il form più vicino (prima il loro onClick), l'Invio nei campi a riga singola lo invia (salvo
+    `e.preventDefault()` in onKeyDown), i campi `required` vuoti bloccano l'invio e prendono il fuoco.
+    Verificato sul web: "Singolo cliente" → Aggiungi a vuoto non invia, Invio sul nome crea il cliente.
+  - Data/ora: `HtmlInput`/`Input` con `type="date|time|datetime-local"` → `ui/dateField.tsx` (telefono,
+    @react-native-community/datetimepicker) / `dateField.web.tsx` (input vero trasparente + showPicker).
+    Valori come il browser, testo come Chrome in italiano (`ui/dateValue.ts` + test). min/max rispettati.
+  - File: `type="file"` → `ui/fileField.tsx` (expo-image-picker per `accept="image/*"`, altrimenti
+    expo-document-picker; `ref.current.click()` apre la scelta; i file sono `instanceof File` con uri/name/type
+    per il FormData di RN) / `fileField.web.tsx` (input vero).
+  - Gesture dei `<div>`: `ui/gestures.ts`, usato da `Div` e `Btn`. Sul web gli handler passano al DOM; sul telefono
+    onTouch* ricevono eventi in forma web (touches[i].clientX...), onPointerDown/Move/Up arrivano dai touch,
+    onMouse* sono emulati dopo un tap come nel browser del telefono (mouseleave quando si tocca altrove:
+    `hoverRootProps` sulla radice in `app/_layout.tsx`), onTouchCancel ricade su onTouchEnd. Ripristinati gli
+    handler originali in 9 file (ClientFamilyTree(Mobile), LeadersList, ClientStatsBar, ClientSourceDisplay,
+    ClientCostanzaChart, ClientTableRow, ClientDetailDialog, AttendanceHubDialog, ClientSerateMenu).
+  - Codemod aggiornato: `<form>` → `Form` con onSubmit, `type="submit"` conservato sui pulsanti, gesture
+    conservate su Div/Btn, date/file non più segnati come TODO (restano checkbox/radio/color/range).
+
 ## In corso / prossimi passi
-1. **Completare Clienti, PORT-TODO rimasti** (`grep -rn PORT-TODO app/src/web`):
-   - `ClientFormDialog.jsx`: il `<form onSubmit>` è stato rimosso → il pulsante `type="submit"` "Salva/Aggiungi"
-     NON fa nulla. Soluzione: Button `type="submit"` → `onClick={handleSubmit}` (handleSubmit chiama
-     e.preventDefault(): passare un evento finto) o supporto `type="submit"` via contesto form in `ui/button.tsx`.
-     Ci sono 6 `<form>` nell'originale: farlo in modo generale.
-   - Campi data: `type="date"` (ClientBirthDateEditor, ClientSerateMenu) e `datetime-local` (BulkActions):
-     gestirli dentro `HtmlInput` (telefono: @react-native-community/datetimepicker /
-     react-native-modal-datetime-picker; web: `<input type="date">` invisibile sopra il campo + showPicker()),
-     formato valore come il browser (YYYY-MM-DD, YYYY-MM-DDTHH:mm).
-   - `type="file"` (foto cliente in ClientFormDialog, usata con ref.click()): HtmlInput type=file → ref con
-     click() che apre expo-image-picker e chiama onChange({ target: { files: [{ uri, name, type }] } }).
-     onPaste di immagini/testo: non supportato su RN (onBlur fa già il parsing Instagram).
-   - Gesture rimosse su `<div>`: onPointerDown (ClientSerateMenu, ClientDetailDialog, AttendanceHubDialog: chiusura
-     cliccando fuori?), touch/mouse per swipe/drag (LeadersList, ClientStatsBar, ClientFamilyTree(Mobile),
-     ClientSourceDisplay, ClientCostanzaChart hover, ClientTableRow hover): valutare caso per caso
-     (Pressable / PanResponder / ScrollView orizzontale).
+1. **Da provare sul telefono** (Expo Go / build): selettori data/ora (Android: data poi ora per datetime-local,
+   "Cancella" svuota; iOS: pannello in basso), scelta foto/file e caricamento su Base44 (quando si toglie la
+   modalità prova: `UploadPublicFile` con il File "nativo" di `ui/fileField.tsx`), swipe dei leader, trascinamento
+   e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza col tap.
+   Restano 2 PORT-TODO accettati: `onPaste` (incolla foto con Ctrl+V in ClientFormDialog, incolla in
+   QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
 2. Poi: confronto screenshot di dettaglio cliente, dialog (Aggiungi presenze, Importa, Singolo cliente) e tab
    Gruppi/Parco/Albero/Tabelle/Growth/Analitica per pr/admin/super4 (`tools/compare/measure.mjs` con percorso e
    click: estendere lo script per aprire tab/dialog).

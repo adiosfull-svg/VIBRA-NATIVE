@@ -1,6 +1,4 @@
 // Port di src/components/programmazione/ClientSerateMenu.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onPointerDown
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { format, parseISO } from 'date-fns';
@@ -992,6 +990,7 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
       <Btn
         className={`fixed inset-0 z-[10000] bg-black/30 ${closing ? 'backdrop-fade-out' : 'backdrop-fade-in'}`}
         style={{ touchAction: 'none' }}
+        onPointerDown={(e) => { e.preventDefault(); closeMenu(); }}
         onClick={(e) => e.stopPropagation()} />
       <Btn
         ref={ref}

@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientFamilyTreeMobile.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onTouchStart, onTouchMove, onTouchEnd
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { ChevronDown, ChevronRight, Users, Euro, Star, GitBranch, AlignJustify, GitFork, ZoomIn, ZoomOut, RotateCcw } from '@/ui/icons.generated';
@@ -409,7 +407,7 @@ export default function ClientFamilyTreeMobile({ clients, attendances, events, o
   );
 
   return (
-    <Div>
+    <Div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       {legend}
       {viewToggle}
       <ZoomControls zoom={displayZoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={zoomReset} />

@@ -1,5 +1,4 @@
 // Port di src/components/client/ClientSkillRadar.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from '@/ui/recharts';
 import DeferredChart from '@/web/components/shared/DeferredChart';

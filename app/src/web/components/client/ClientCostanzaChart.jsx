@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientCostanzaChart.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onMouseEnter, onMouseLeave
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { motion, AnimatePresence } from '@/ui/motion';
@@ -281,6 +279,18 @@ export default function ClientCostanzaChart({ clients, attendances, events, prom
                         transform: isHov ? 'scale(1.2)' : 'scale(1)',
                         transition: 'transform 0.15s ease',
                       }}
+                      onMouseEnter={e => {
+                        if (!cell.count) return;
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const tooltipData = {
+                          clientIdx: cIdx, monthIdx: mIdx,
+                          x: rect.left + rect.width / 2,
+                          y: rect.top,
+                          data: { clientName: client.name, monthLabel: format(months[mIdx], 'MMMM yyyy', { locale: it }), count: cell.count, revenue: cell.revenue }
+                        };
+                        setHovered(tooltipData);
+                      }}
+                      onMouseLeave={() => setHovered(null)}
                       onClick={e => {
                         if (!cell.count) return;
                         const rect = e.currentTarget.getBoundingClientRect();

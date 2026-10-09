@@ -1,7 +1,4 @@
 // Port di src/components/client/ClientStatsBar.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onTouchMove, onTouchStart
-//  - <div> gesture/eventi web rimossi: onTouchStart, onTouchMove
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { Users, Star, UsersRound, X } from '@/ui/icons.generated';
@@ -61,11 +58,17 @@ function MobileModal({ open, onClose, title, children, scrollClass, skipOwnHisto
   return createPortal(
     <Btn
       className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onTouchMove={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+      onTouchStart={handleOverlayTouch}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ touchAction: 'none' }}>
       <Div
         className="relative w-full max-w-md mx-4 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-card to-background/95 flex flex-col"
-        style={{ maxHeight: '80vh', touchAction: 'auto', boxShadow: '0 0 40px -8px rgba(167,139,250,0.28), 0 12px 40px -12px rgba(0,0,0,0.6)' }}>
+        style={{ maxHeight: '80vh', touchAction: 'auto', boxShadow: '0 0 40px -8px rgba(167,139,250,0.28), 0 12px 40px -12px rgba(0,0,0,0.6)' }}
+        onTouchStart={handleContentTouch}
+        onTouchMove={handleContentTouch}>
         {/* Accent gradient superiore */}
         <Div className="h-[2px] w-full shrink-0" style={{ background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)' }} />
         {/* Header */}

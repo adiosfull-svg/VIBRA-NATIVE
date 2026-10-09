@@ -15,6 +15,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
+import { hoverRootProps } from '../ui/gestures';
 import { queryClient } from '../lib/queryClient';
 import { ViewAsPromoterProvider } from '../lib/viewAs';
 import { Toaster } from '../ui/use-toast';
@@ -46,7 +47,8 @@ export default function RootLayout() {
   });
   if (!fontsLoaded) return null;
   return (
-    <SafeAreaProvider style={{ backgroundColor: colors.background }}>
+    // hoverRootProps: chiude il tap per l'hover emulato (ui/gestures.ts)
+    <SafeAreaProvider style={{ backgroundColor: colors.background }} {...hoverRootProps}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ViewAsPromoterProvider>

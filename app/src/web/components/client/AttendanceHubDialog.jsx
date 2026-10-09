@@ -1,6 +1,4 @@
 // Port di src/components/client/AttendanceHubDialog.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onPointerDown
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
@@ -775,7 +773,7 @@ export default function AttendanceHubDialog({ open, onOpenChange, events, client
         // sintetico dopo la chiusura non attiva gli elementi della pagina sotto.
         className={`fixed z-[9999] flex items-center justify-center max-sm:pt-[env(safe-area-inset-top)] max-sm:pb-[env(safe-area-inset-bottom)] sm:p-8 transition-opacity duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0'} ${open ? '' : 'pointer-events-none'}`}
         style={{ top: 0, left: 0, right: 0, bottom: 'auto', height: '100dvh' }}>
-        <Div className="absolute inset-0 bg-black/80 touch-none" />
+        <Div className="absolute inset-0 bg-black/80 touch-none" onPointerDown={(e) => { if (e.target === e.currentTarget) requestClose(); }} />
         {/* Popup centrato (angoli stondati, margini laterali). Altezza DEFINITA (non auto):
             i tab interni usano h-full / grid. Zoom-in via scale solo da chiuso: da aperto
             nessun transform, così gli elementi fixed interni (picker serata) restano relativi al viewport. */}

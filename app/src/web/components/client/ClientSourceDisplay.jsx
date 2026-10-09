@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientSourceDisplay.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onWheel, onTouchMove
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Instagram, UserPlus, ArrowRightLeft, Search, UserCheck } from '@/ui/icons.generated';
 
@@ -176,7 +174,9 @@ export default function ClientSourceSelector({ value, referredClientId, clients,
               scrollbarColor: 'hsl(240 5% 20%) transparent',
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
-            }}>
+            }}
+            onWheel={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}>
             {filteredClients.length === 0 ? (
               <P className="text-xs text-muted-foreground px-1 py-2">Nessun cliente trovato</P>
             ) : (

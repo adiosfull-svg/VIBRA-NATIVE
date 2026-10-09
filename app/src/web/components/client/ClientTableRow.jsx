@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientTableRow.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onMouseMove, onMouseLeave
 import React, { useState } from 'react';
 import { Star, Gem, MoreVertical, CalendarPlus, BarChart2, Pencil, Trash2, Check } from '@/ui/icons.generated';
 import { Button } from '@/ui/button';
@@ -49,7 +47,9 @@ const ClientTableRow = React.memo(function ClientTableRow({
         if (selectMode) { onToggleSelect?.(client); }
         else if (e.ctrlKey || e.metaKey) { e.preventDefault(); onToggleSelect?.(client); }
         else onDetail(client);
-      }}>
+      }}
+      onMouseMove={() => setInteractive(true)}
+      onMouseLeave={() => setInteractive(false)}>
       <Div className="px-0.5 py-2 w-5 text-center shrink-0">
       {selectMode ? (
         <Span className={`inline-flex w-4 h-4 rounded-full items-center justify-center border-2 ${selected ? 'bg-violet-500 border-violet-500' : 'border-muted-foreground/40'}`}>

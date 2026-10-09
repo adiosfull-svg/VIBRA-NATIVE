@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientFamilyTree.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <div> gesture/eventi web rimossi: onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { GitBranch, Users, Euro, Star, ChevronDown, ChevronRight, Eye, EyeOff, X, ZoomIn, ZoomOut, RotateCcw } from '@/ui/icons.generated';
@@ -368,7 +366,14 @@ function TreeScrollWrapper({ children, treeKey }) {
     <Div
       ref={scrollRef}
       className="overflow-x-auto cursor-grab select-none"
-      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', scrollBehavior: 'smooth' }}>
+      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', scrollBehavior: 'smooth' }}
+      onMouseDown={onDown}
+      onMouseMove={onMove}
+      onMouseUp={onUp}
+      onMouseLeave={onUp}
+      onTouchStart={onDown}
+      onTouchMove={onMove}
+      onTouchEnd={onUp}>
       <Div className="flex justify-center min-w-max px-8">
         {children}
       </Div>
@@ -652,7 +657,14 @@ export default function ClientFamilyTree({ clients, attendances, events, onClien
       <Div
         ref={viewportRef}
         className="overflow-hidden select-none rounded-xl border border-border/40 cursor-grab active:cursor-grabbing"
-        style={{ touchAction: 'none', minHeight: '55vh' }}>
+        style={{ touchAction: 'none', minHeight: '55vh' }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}>
         <Div
           ref={canvasRef}
           style={{ transformOrigin: '0 0' }}
