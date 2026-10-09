@@ -1,0 +1,70 @@
+# APK Android di prova (release, firmata con la chiave di debug: si installa direttamente sul telefono).
+# Backend: Base44 vero in modalità prova (sola lettura), come l'app senza .env.
+# Parte a mano (Actions → "APK Android" → Run workflow) oppure con un push il cui messaggio contiene [apk].
+# L'APK si scarica dalla pagina della run, sezione Artifacts (vibra-apk).
+name: APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app/**'
+      - '.github/workflows/android-apk.yml'
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Dipendenze (con patch-package)
+        run: npm ci
+
+      - name: Controlli veloci
+        run: |
+          npx tsc --noEmit
+          npm test
+
+      - name: Progetto Android (expo prebuild)
+        run: npx expo prebuild -p android --no-install
+        env:
+          CI: 1
+
+      - name: Compila APK (solo arm64-v8a, i telefoni di oggi)
+        working-directory: app/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: Nome con commit
+        id: name
+        run: echo "file=vibra-$(git rev-parse --short HEAD).apk" >> "$GITHUB_OUTPUT"
+
+      - name: Rinomina
+        run: cp android/app/build/outputs/apk/release/app-release.apk "${{ steps.name.outputs.file }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vibra-apk
+          path: app/${{ steps.name.outputs.file }}
+          retention-days: 14
