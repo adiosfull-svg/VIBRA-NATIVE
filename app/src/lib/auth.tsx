@@ -19,6 +19,8 @@ type AuthState = {
   isLoadingAuth: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Alias dell'app web (AuthContext.logout) */
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
@@ -72,6 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Email o password errati' : error.message);
       },
       async signOut() {
+        await supabase.auth.signOut();
+      },
+      async logout() {
         await supabase.auth.signOut();
       },
       async refreshUser() {

@@ -113,9 +113,9 @@ export const AlertDialogTitle = ({ className, children }: WithChildren) => (
 export const AlertDialogDescription = ({ className, children }: WithChildren) => (
   <AlertDialogPrimitive.Description asChild><Text className={cn('text-sm text-muted-foreground', className)}>{children}</Text></AlertDialogPrimitive.Description>
 );
-export function AlertDialogAction({ className, children, onClick }: WithChildren & { onClick?: () => void }) {
+export function AlertDialogAction({ className, children, onClick, disabled }: WithChildren & { onClick?: () => void; disabled?: boolean }) {
   return (
-    <AlertDialogPrimitive.Action onPress={onClick} className={cn(buttonVariants(), 'flex-row', className)}>
+    <AlertDialogPrimitive.Action onPress={onClick} disabled={disabled} className={cn(buttonVariants(), 'flex-row', disabled && 'opacity-50', className)}>
       <Text className="text-sm font-medium text-primary-foreground">{children}</Text>
     </AlertDialogPrimitive.Action>
   );

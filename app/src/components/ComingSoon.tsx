@@ -1,22 +1,17 @@
-import { StyleSheet, View } from 'react-native';
-import { Hammer } from 'lucide-react-native';
-import { AppText } from './ui';
-import { colors } from '../theme';
+// Segnaposto per le sezioni non ancora portate dall'app web: stessa cornice (intestazione,
+// contenuto) delle pagine vere.
+import Page from '../web/components/layout/Page';
+import { Div, P } from '../ui/html';
+import { Clock } from '../ui/icons.generated';
 
-/** Segnaposto per le sezioni non ancora portate dall'app web. */
-export function ComingSoon({ title, source }: { title: string; source?: string }) {
+export function ComingSoon({ title, source }: { title?: string; source?: string }) {
   return (
-    <View style={s.wrap}>
-      <Hammer size={32} color={colors.mutedForeground} />
-      <AppText weight="700" size={18} style={{ marginTop: 12 }}>{title}</AppText>
-      <AppText muted style={{ textAlign: 'center', marginTop: 6 }}>
-        Sezione in fase di porting dall'app web.
-      </AppText>
-      {source ? <AppText muted size={11} style={{ marginTop: 10 }}>Origine: {source}</AppText> : null}
-    </View>
+    <Page title={title}>
+      <Div className="items-center justify-center py-24 px-6">
+        <Clock className="w-8 h-8 text-muted-foreground" />
+        <P className="text-sm text-muted-foreground text-center mt-3">Sezione in fase di porting dall'app web.</P>
+        {source ? <P className="text-[11px] text-muted-foreground/60 mt-2">{source}</P> : null}
+      </Div>
+    </Page>
   );
 }
-
-const s = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background },
-});

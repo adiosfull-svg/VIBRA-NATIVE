@@ -1,19 +1,15 @@
+// Shell dell'app (AppLayout.jsx): sidebar globale + stack delle pagine. Ogni pagina disegna la
+// propria intestazione in linea (Page → AppHeader), come nell'originale.
 import { Stack } from 'expo-router';
-import { colors } from '../../theme';
+import Sidebar from '../../web/components/layout/Sidebar';
+import { LayoutUIProvider } from '../../web/lib/layoutUI';
+import { THEME } from '../../ui/palette.generated';
 
 export default function AppLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.foreground,
-        headerTitleStyle: { fontWeight: '700' },
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="cliente/[id]" options={{ title: 'Cliente' }} />
-      <Stack.Screen name="sezione/[name]" options={{ title: '' }} />
-    </Stack>
+    <LayoutUIProvider>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
+      <Sidebar />
+    </LayoutUIProvider>
   );
 }
