@@ -73,6 +73,15 @@ export async function signInWithGoogle(): Promise<boolean> {
   return true;
 }
 
+/**
+ * Ritorno del login sul web: Base44 apre <sito>/api/apps/auth/final-callback?access_token=...
+ * (route app/api/apps/auth/final-callback.tsx), come fa con l'app originale sul suo dominio.
+ */
+export async function completeLogin(token: string) {
+  await tokenStore.set(token);
+  sdk.auth.setToken(token, false);
+}
+
 export async function signOut() {
   await tokenStore.clear();
   signOutListeners.forEach((cb) => cb());
