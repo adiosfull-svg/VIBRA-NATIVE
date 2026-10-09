@@ -15,12 +15,15 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
+import { CrashBoundary, CrashOverlay, installCrashHandler } from '../lib/crashReport';
 import { hoverRootProps } from '../ui/gestures';
 import { queryClient } from '../lib/queryClient';
 import { ViewAsPromoterProvider } from '../lib/viewAs';
 import { Toaster } from '../ui/use-toast';
 import { Loading } from '../components/ui';
 import { colors } from '../theme';
+
+installCrashHandler();
 
 function RootNavigator() {
   const { user, isLoadingAuth } = useAuth();
@@ -53,9 +56,12 @@ export default function RootLayout() {
         <AuthProvider>
           <ViewAsPromoterProvider>
             <StatusBar style="light" />
-            <RootNavigator />
-            <PortalHost />
-            <Toaster />
+            <CrashBoundary>
+              <RootNavigator />
+              <PortalHost />
+              <Toaster />
+            </CrashBoundary>
+            <CrashOverlay />
           </ViewAsPromoterProvider>
         </AuthProvider>
       </QueryClientProvider>
