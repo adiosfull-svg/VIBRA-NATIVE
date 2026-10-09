@@ -1,6 +1,4 @@
 // Port di src/components/client/QuickNoteEdit.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <textarea> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useEffect, useCallback } from 'react';
 import { StickyNote, Check, X, Pencil } from '@/ui/icons.generated';
 import { base44 } from '@/lib/base44';
@@ -57,7 +55,8 @@ export default function QuickNoteEdit({ client, onSaved }) {
             onChange={e => setValue(e.target.value)}
             rows={2}
             placeholder="Es. ama il tavolo in prima fila, allergico al lime, viene sempre con la sorella…"
-            className="w-full text-xs bg-transparent border border-border rounded-lg px-2 py-1.5 text-foreground outline-none focus:border-primary resize-none" />
+            className="w-full text-xs bg-transparent border border-border rounded-lg px-2 py-1.5 text-foreground outline-none focus:border-primary resize-none"
+            onKeyDown={handleKeyDown} />
           <Div className="flex justify-end gap-1">
             <Btn onClick={cancel} className="p-1 rounded text-muted-foreground hover:text-foreground" accessibilityLabel="Annulla">
               <X className="w-3.5 h-3.5" />

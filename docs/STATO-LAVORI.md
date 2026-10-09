@@ -61,17 +61,48 @@
   - `VirtualizedClientList`: ogni riga è in un contenitore alto 110px con overflow nascosto come nell'originale
     (la card ha `h-full`; prima ogni riga risultava alta 1500px).
 
+- **Pulsanti Clienti — FATTO**: `useMinContentWidth` in `app/src/ui/html.tsx` emula `min-width: auto` per gli
+  elementi `whitespace-nowrap` (primo layout alla larghezza naturale → minWidth). Corretto anche un bug: lo `style`
+  a funzione del `Pressable` di `Btn` era ignorato sul web (NativeWind); ora array + stato premuto a mano.
+- **Shim API del browser — FATTO** (`app/src/web/shims/`): `dom.ts` (telefono: Dimensions, BackHandler per
+  history/popstate, Share, expo-clipboard, Linking, AsyncStorage) / `dom.web.ts` (oggetti veri); nessun globale
+  (lo SDK Base44 usa `typeof document` per riconoscere RN). `pageScroll.ts` + `Page.tsx`: window.scrollY/scrollTo/
+  evento scroll = ScrollView della pagina (ora funzionano barra tab fissa e pulsante "torna su" anche sul web).
+  `react-dom.tsx`: createPortal → @rn-primitives/portal. Il codemod li applica da solo (`applyDomShims`);
+  per file già portati: `node scripts/port/codemod.mjs --shims <file...>`.
+- **onKeyDown dei campi di testo — FATTO**: `app/src/ui/keyEvents.ts` (Invio/Esc; sul telefono Invio =
+  onSubmitEditing), usato da HtmlInput/HtmlTextarea/Input/Textarea; ripristinati i 12 handler originali
+  (il codemod ora non li toglie più per input/textarea). Verificati typecheck e test; da provare a mano.
+
 ## In corso / prossimi passi
-1. **Larghezza pulsanti Clienti**: "Importa più clienti / Aggiungi presenze / Singolo cliente" nel nativo si
-   restringono e troncano il testo; nell'originale i flex item hanno `min-width: auto` (non scendono sotto il
-   contenuto, la riga sborda a destra). Emulare `min-width: auto` (es. minWidth dal contenuto per i flex item
-   con testo `whitespace-nowrap`). Dopo ogni nuovo porting: `node --experimental-strip-types scripts/gen_safelist.mjs`.
-2. Sistemare i `PORT-TODO` dei file Clienti (listener window/document, createPortal→Modal, input date/file,
-   clipboard/share), poi dettaglio cliente, dialog, tab Gruppi/Parco/Albero/Tabelle/Growth/Analitica.
+1. **Completare Clienti, PORT-TODO rimasti** (`grep -rn PORT-TODO app/src/web`):
+   - `ClientFormDialog.jsx`: il `<form onSubmit>` è stato rimosso → il pulsante `type="submit"` "Salva/Aggiungi"
+     NON fa nulla. Soluzione: Button `type="submit"` → `onClick={handleSubmit}` (handleSubmit chiama
+     e.preventDefault(): passare un evento finto) o supporto `type="submit"` via contesto form in `ui/button.tsx`.
+     Ci sono 6 `<form>` nell'originale: farlo in modo generale.
+   - Campi data: `type="date"` (ClientBirthDateEditor, ClientSerateMenu) e `datetime-local` (BulkActions):
+     gestirli dentro `HtmlInput` (telefono: @react-native-community/datetimepicker /
+     react-native-modal-datetime-picker; web: `<input type="date">` invisibile sopra il campo + showPicker()),
+     formato valore come il browser (YYYY-MM-DD, YYYY-MM-DDTHH:mm).
+   - `type="file"` (foto cliente in ClientFormDialog, usata con ref.click()): HtmlInput type=file → ref con
+     click() che apre expo-image-picker e chiama onChange({ target: { files: [{ uri, name, type }] } }).
+     onPaste di immagini/testo: non supportato su RN (onBlur fa già il parsing Instagram).
+   - Gesture rimosse su `<div>`: onPointerDown (ClientSerateMenu, ClientDetailDialog, AttendanceHubDialog: chiusura
+     cliccando fuori?), touch/mouse per swipe/drag (LeadersList, ClientStatsBar, ClientFamilyTree(Mobile),
+     ClientSourceDisplay, ClientCostanzaChart hover, ClientTableRow hover): valutare caso per caso
+     (Pressable / PanResponder / ScrollView orizzontale).
+2. Poi: confronto screenshot di dettaglio cliente, dialog (Aggiungi presenze, Importa, Singolo cliente) e tab
+   Gruppi/Parco/Albero/Tabelle/Growth/Analitica per pr/admin/super4 (`tools/compare/measure.mjs` con percorso e
+   click: estendere lo script per aprire tab/dialog).
 3. ClientMap (Leaflet) → react-native-maps (ora segnaposto). VibraSearch (pulsante Cerca) da portare.
-4. Altre pagine con lo stesso metodo (tree.mjs → codemod → shim → confronto screenshot): Il Mio Vibra,
+4. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
    Dashboard, Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
-5. Funzioni server, automazioni, file: restano su Base44 (niente da riscrivere). Notifiche push sul telefono:
-   l'originale usa web push (PushSubscription + sendPushNotification); per l'app nativa valutare expo-notifications.
+5. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
+   expo-notifications. Funzioni server, automazioni, file: restano su Base44.
 6. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
 7. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+
+## In attesa dell'utente
+- Prova del login Google con Base44 vero: sul PC (`npx expo start --web`, http://localhost:8081) e sul telefono
+  (Expo Go). Se Base44 rifiuta il ritorno (`from_url` localhost / exp:// / vibra://): pagina ponte https che
+  rimbalza `access_token` all'app.

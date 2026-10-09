@@ -7,6 +7,7 @@ import { cssInterop } from 'nativewind';
 import { Children, forwardRef, isValidElement, type ReactNode } from 'react';
 import { Linking, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { cn } from './cn';
+import { keyDownProps, type WebKeyEvent } from './keyEvents';
 import { Btn, Div } from './html';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './menu';
 import { THEME } from './palette.generated';
@@ -88,6 +89,7 @@ type RawInputProps = TextInputProps & {
   onChange?: (e: { target: { value: string } }) => void;
   min?: number | string; max?: number | string; step?: number | string; rows?: number;
   autoFocus?: boolean; maxLength?: number; list?: string; accept?: string;
+  onKeyDown?: (e: WebKeyEvent) => void;
 };
 
 function inputTypeProps(type?: string): TextInputProps {
@@ -101,11 +103,12 @@ function inputTypeProps(type?: string): TextInputProps {
   }
 }
 
-function rawInput({ className, type, value, onChange, onChangeText, min: _min, max: _max, step: _s, rows, list: _l, accept: _a, style, ...props }: RawInputProps) {
+function rawInput({ className, type, value, onChange, onChangeText, onKeyDown, min: _min, max: _max, step: _s, rows, list: _l, accept: _a, style, ...props }: RawInputProps, multiline = false) {
   const cls = cn('text-foreground text-base', className);
   return {
     ...inputTypeProps(type),
     ...props,
+    ...keyDownProps(onKeyDown, value == null ? '' : String(value), multiline),
     value: value == null ? '' : String(value),
     onChangeText: (t: string) => { onChangeText?.(t); onChange?.({ target: { value: t } }); },
     placeholderTextColor: THEME['muted-foreground'],
@@ -118,7 +121,7 @@ function rawInput({ className, type, value, onChange, onChangeText, min: _min, m
 export const HtmlInput = forwardRef<TextInput, RawInputProps>((p, ref) => <TextInput ref={ref} {...rawInput(p)} />);
 HtmlInput.displayName = 'HtmlInput';
 export const HtmlTextarea = forwardRef<TextInput, RawInputProps>((p, ref) => (
-  <TextInput ref={ref} multiline textAlignVertical="top" {...rawInput(p)} />
+  <TextInput ref={ref} multiline textAlignVertical="top" {...rawInput(p, true)} />
 ));
 HtmlTextarea.displayName = 'HtmlTextarea';
 

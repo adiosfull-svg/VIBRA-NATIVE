@@ -1,6 +1,4 @@
 // Port di src/components/client/SmartBatchImport.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { base44 } from '@/lib/base44';
 import { useQueryClient } from '@tanstack/react-query';
@@ -628,7 +626,8 @@ export default function SmartBatchImport({
                     value={groupName}
                     onChange={e => setGroupName(e.target.value)}
                     placeholder="Nome gruppo..."
-                    className="flex-1 h-8 text-xs px-3 rounded-lg bg-background border border-violet-500/30 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
+                    className="flex-1 h-8 text-xs px-3 rounded-lg bg-background border border-violet-500/30 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                    onKeyDown={e => { if (e.key === 'Enter') handleCreateGroup(); if (e.key === 'Escape') setShowGroupCreate(false); }} />
                   <Button size="sm" disabled={!groupName.trim() || creatingGroup} onClick={handleCreateGroup} className="bg-violet-600 hover:bg-violet-500 text-white border-0">
                     {creatingGroup ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                   </Button>

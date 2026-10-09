@@ -2,7 +2,6 @@
 // PORT-TODO (da sistemare a mano):
 //  - <div> gesture/eventi web rimossi: onPointerDown
 //  - <input type="date"> da sostituire con il controllo nativo
-//  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { format, parseISO } from 'date-fns';
@@ -1289,7 +1288,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
                 value={groupSearch}
                 onChange={e => setGroupSearch(e.target.value)}
                 placeholder="Cerca gruppo o membro..."
-                className="w-full pl-7 pr-2 py-1.5 rounded-md bg-secondary/40 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                className="w-full pl-7 pr-2 py-1.5 rounded-md bg-secondary/40 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                onKeyDown={e => { if (e.key === 'Enter' && onCreateGroup) { e.preventDefault(); setCreateMode(true); setGroupSearch(''); } }} />
             </Div>
             {onCreateGroup && !createMode && (
               <Btn
@@ -1306,7 +1306,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
                   value={newGroupName}
                   onChange={e => setNewGroupName(e.target.value)}
                   placeholder="Nome nuovo gruppo..."
-                  className="w-full px-2.5 py-1.5 rounded-md bg-secondary/40 border border-violet-500/40 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-400" />
+                  className="w-full px-2.5 py-1.5 rounded-md bg-secondary/40 border border-violet-500/40 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitCreateGroup(); } }} />
                 <Div className="flex gap-2">
                   <Btn onClick={() => { setCreateMode(false); setNewGroupName(''); }} className="flex-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground">Annulla</Btn>
                   <Btn

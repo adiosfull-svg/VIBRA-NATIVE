@@ -1,6 +1,4 @@
 // Port di src/components/client/ParsedEntryCard.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/lib/base44';
 import { useQueryClient } from '@tanstack/react-query';
@@ -259,7 +257,8 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
               value={createName}
               onChange={e => setCreateName(e.target.value)}
               className="flex-1 h-9 text-xs px-3 rounded-lg bg-background border border-violet-500/40 focus:outline-none focus:ring-2 focus:ring-violet-500/30 shadow-sm"
-              placeholder="Nome cliente..." />
+              placeholder="Nome cliente..."
+              onKeyDown={e => { if (e.key === 'Enter') handleConfirmCreate(); if (e.key === 'Escape') setCreateMode(false); }} />
             <Btn
               onClick={() => setCreateMode(false)}
               className="text-muted-foreground hover:text-destructive shrink-0 p-1">
@@ -457,7 +456,8 @@ export default function ParsedEntryCard({ entry, clients, groups, existingClient
               value={groupName}
               onChange={e => setGroupName(e.target.value)}
               placeholder="Nome gruppo..."
-              className="flex-1 h-7 text-[11px] px-2 rounded-lg bg-background border border-amber-500/30 focus:outline-none focus:ring-1 focus:ring-amber-500/40" />
+              className="flex-1 h-7 text-[11px] px-2 rounded-lg bg-background border border-amber-500/30 focus:outline-none focus:ring-1 focus:ring-amber-500/40"
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateEntryGroup(); if (e.key === 'Escape') setShowGroupCreate(false); }} />
             <Btn
               disabled={!groupName.trim() || creatingGroup}
               onClick={handleCreateEntryGroup}

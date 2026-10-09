@@ -1,7 +1,6 @@
 // Port di src/components/client/QuickContactEdit.jsx (convertito da scripts/port/codemod.mjs).
 // PORT-TODO (da sistemare a mano):
-//  - <input> gesture/eventi web rimossi: onKeyDown
-//  - <input> gesture/eventi web rimossi: onKeyDown, onPaste
+//  - <input> gesture/eventi web rimossi: onPaste
 import React, { useState, useEffect, useCallback } from 'react';
 import { Phone, Instagram, Check, X, Pencil } from '@/ui/icons.generated';
 import { base44 } from '@/lib/base44';
@@ -96,7 +95,8 @@ export default function QuickContactEdit({ client, onSaved }) {
             value={editValue}
             onChange={e => setEditValue(e.target.value)}
             className="w-[105px] h-6 text-[10px] px-2 rounded-full border border-primary bg-transparent text-foreground outline-none"
-            placeholder="+39..." />
+            placeholder="+39..."
+            onKeyDown={handleKeyDown} />
           <Btn onClick={saveEdit} className="p-0.5 rounded text-emerald-400 hover:bg-emerald-400/10" accessibilityLabel="Salva"><Check className="w-3 h-3" /></Btn>
           <Btn onClick={() => setEditingField(null)} className="p-0.5 rounded text-muted-foreground hover:text-foreground" accessibilityLabel="Annulla"><X className="w-3 h-3" /></Btn>
         </Div>
@@ -143,7 +143,8 @@ export default function QuickContactEdit({ client, onSaved }) {
               if (parsed && parsed !== editValue.trim()) setEditValue(parsed);
             }}
             className="w-[100px] h-6 text-[10px] px-2 rounded-full bg-transparent text-pink-400 outline-none"
-            placeholder="@handle" />
+            placeholder="@handle"
+            onKeyDown={handleKeyDown} />
           <Btn onClick={saveEdit} className="p-0.5 rounded text-emerald-400 hover:bg-emerald-400/10" accessibilityLabel="Salva"><Check className="w-3 h-3" /></Btn>
           <Btn onClick={() => setEditingField(null)} className="p-0.5 rounded text-muted-foreground hover:text-foreground" accessibilityLabel="Annulla"><X className="w-3 h-3" /></Btn>
         </Div>

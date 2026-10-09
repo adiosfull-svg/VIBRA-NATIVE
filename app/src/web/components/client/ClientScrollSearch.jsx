@@ -1,6 +1,4 @@
 // Port di src/components/client/ClientScrollSearch.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { motion, AnimatePresence } from '@/ui/motion';
@@ -84,7 +82,11 @@ export default function ClientScrollSearch({ clients, onScrollToClient }) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Cerca cliente..."
-                  className="w-full pl-7 pr-9 py-2 rounded-lg bg-secondary/40 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                  className="w-full pl-7 pr-9 py-2 rounded-lg bg-secondary/40 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && matches.length > 0) handleSelect(matches[0]);
+                    if (e.key === 'Escape') setOpen(false);
+                  }} />
               
                 <Btn
                 onClick={() => setOpen(false)}

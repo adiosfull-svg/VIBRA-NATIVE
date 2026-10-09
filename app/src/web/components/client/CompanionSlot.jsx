@@ -1,6 +1,4 @@
 // Port di src/components/client/CompanionSlot.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useMemo } from 'react';
 import { Search, X, Star, UserPlus, Plus } from '@/ui/icons.generated';
 import ClientAvatar from '@/web/components/client/ClientAvatar';
@@ -108,7 +106,8 @@ export default function CompanionSlot({ slot, clients, existingClientIds, onChan
         placeholder="Cerca o digita nome..."
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
-        className="w-full h-7 text-xs pl-12 pr-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary" />
+        className="w-full h-7 text-xs pl-12 pr-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+        onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim() && filteredClients.length === 0) handleCreateNew(); }} />
       {searchQuery.trim() && (
         <Div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-xl max-h-32 overflow-y-auto p-1 space-y-0.5">
           {filteredClients.map(c => (

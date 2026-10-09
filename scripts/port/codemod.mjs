@@ -196,6 +196,8 @@ export function transform(code, originalPath = '') {
         const n = attrName(a);
         if (DROP_ATTR.test(n)) continue;
         if (GESTURE_ATTR.test(n)) { removedGestures.push(n); continue; }
+        // onKeyDown dei campi di testo è supportato (ui/keyEvents.ts: Invio/Esc anche sul telefono)
+        if (n === 'onKeyDown' && (tag === 'input' || tag === 'textarea')) { attrs.push(a); continue; }
         if (n === 'onKeyDown' || n === 'onPaste' || n === 'onInput' || n === 'onSubmit') { removedGestures.push(n); continue; }
         if (n === 'aria-label') { ariaLabel = a.value; continue; }
         if (n === 'title' && !['Svg', 'Path'].includes(name)) { ariaLabel = ariaLabel ?? a.value; continue; }

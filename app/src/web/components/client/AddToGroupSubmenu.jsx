@@ -1,6 +1,4 @@
 // Port di src/components/client/AddToGroupSubmenu.jsx (convertito da scripts/port/codemod.mjs).
-// PORT-TODO (da sistemare a mano):
-//  - <input> gesture/eventi web rimossi: onKeyDown
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
@@ -100,7 +98,8 @@ export default function AddToGroupSubmenu({ client }) {
             onChange={e => setSearch(e.target.value)}
             placeholder="Cerca gruppo o membro..."
             className="w-full pl-7 pr-2 py-1.5 rounded-md bg-secondary/40 border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-            autoFocus />
+            autoFocus
+            onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); setCreateMode(true); setSearch(''); } }} />
         </Div>
         {createMode ? (
           <Div className="space-y-2 py-1">
@@ -110,7 +109,8 @@ export default function AddToGroupSubmenu({ client }) {
                 onChange={e => setNewGroupName(e.target.value)}
                 placeholder="Nome nuovo gruppo..."
                 className="w-full pl-2 pr-7 py-1.5 rounded-md bg-secondary/40 border border-violet-500/40 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
-                autoFocus />
+                autoFocus
+                onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); handleCreate(); } }} />
               <Btn
                 onClick={() => { setCreateMode(false); setNewGroupName(''); }}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">

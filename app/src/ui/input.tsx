@@ -2,6 +2,7 @@
 import { forwardRef } from 'react';
 import { TextInput, type TextInputProps } from 'react-native';
 import { cn } from './cn';
+import { keyDownProps, type WebKeyEvent } from './keyEvents';
 import { THEME } from './palette.generated';
 import { fontFamilyFor } from './text';
 
@@ -10,6 +11,7 @@ type InputProps = TextInputProps & {
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'search' | 'url' | 'date' | 'time';
   onChange?: (e: { target: { value: string } }) => void;
   value?: string;
+  onKeyDown?: (e: WebKeyEvent) => void;
 };
 
 // type HTML → tastiera/opzioni native equivalenti
@@ -24,11 +26,12 @@ function typeProps(type?: InputProps['type']): TextInputProps {
   }
 }
 
-function useWebInput({ className, type, onChange, onChangeText, value, style, ...props }: InputProps, base: string) {
+function useWebInput({ className, type, onChange, onChangeText, onKeyDown, value, style, ...props }: InputProps, base: string, multiline = false) {
   const merged = cn(base, className);
   return {
     ...typeProps(type),
     ...props,
+    ...keyDownProps(onKeyDown, value == null ? '' : String(value), multiline),
     value: value == null ? value : String(value),
     // onChange del web riceve un evento con target.value: lo ricreiamo
     onChangeText: (t: string) => { onChangeText?.(t); onChange?.({ target: { value: t } }); },
@@ -57,6 +60,7 @@ export const Textarea = forwardRef<TextInput, InputProps>((props, ref) => (
     {...useWebInput(
       props,
       'flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base text-foreground shadow-sm',
+      true,
     )}
   />
 ));
