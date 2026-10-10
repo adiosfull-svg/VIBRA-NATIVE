@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeClasses, spacingPx } from './webClasses.ts';
+import { normalizeClasses, radiusFromClasses, spacingPx } from './webClasses.ts';
 import { themeColor } from './colors.ts';
 
 test('flex del web va in riga', () => {
@@ -28,8 +28,11 @@ test('gradienti con colori risolti', () => {
   assert.deepEqual(n.gradient, { dir: 'br', colors: ['#8b5cf64d', '#d946ef26'] });
 });
 
-test('ring diventa bordo', () => {
-  assert.equal(normalizeClasses('ring-1 ring-violet-400/40').box, 'border border-violet-400/40');
+test('ring diventa boxShadow fuori dal bordo', () => {
+  const n = normalizeClasses('ring-1 ring-violet-400/40');
+  assert.equal(n.box, '');
+  assert.equal(n.ring, `0px 0px 0px 1px ${themeColor('violet-400/40')}`);
+  assert.equal(normalizeClasses('ring-2 ring-offset-2 ring-offset-background ring-primary').ring, `0px 0px 0px 2px ${themeColor('background')}, 0px 0px 0px 4px ${themeColor('primary')}`);
 });
 
 test('line-clamp e classi web senza equivalente', () => {
@@ -51,4 +54,10 @@ test('grid-cols-[1fr_auto]: colonne miste', () => {
   assert.deepEqual(n.grid, { cols: 2, gapX: 8, gapY: 8, template: [{ fr: 1 }, { auto: true }] });
   assert.ok(!/flex-wrap/.test(n.box));
   assert.equal(normalizeClasses('grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))]').grid?.template, undefined);
+});
+
+test('radiusFromClasses: rounded, lati e valori arbitrari', () => {
+  assert.deepEqual(radiusFromClasses('p-2 rounded-xl'), { borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 });
+  assert.deepEqual(radiusFromClasses('rounded-t-2xl rounded-br-[6px]'), { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 6 });
+  assert.deepEqual(radiusFromClasses('h-20 shrink-0'), {});
 });

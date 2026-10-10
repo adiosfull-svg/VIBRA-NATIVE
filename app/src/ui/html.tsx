@@ -4,6 +4,7 @@
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
+import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
 import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -14,7 +15,7 @@ import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
-import { expandGridTemplate, normalizeClasses, parseGridTemplate, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
+import { expandGridTemplate, normalizeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
@@ -82,17 +83,28 @@ function anglePoints(angle: number): [{ x: number; y: number }, { x: number; y: 
 }
 
 /** Sfondo a gradiente (classi bg-gradient-to-* o style linear-gradient) dietro ai figli. */
-export function GradientFill({ gradient }: { gradient: AnyGradient }) {
+const RADIUS_KEYS = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomLeftRadius', 'borderBottomRightRadius'];
+
+/** Raggi dell'elemento (classi rounded-* e style): il gradiente si arrotonda da sé, senza overflow-hidden
+ *  sull'elemento (che taglierebbe i figli che sporgono, es. un avatar -bottom-7). */
+function fillRadius(box: string, style?: Record<string, any>): ViewStyle {
+  const out: Record<string, number> = radiusFromClasses(box);
+  for (const k of RADIUS_KEYS) if (typeof style?.[k] === 'number') out[k] = style[k];
+  if (typeof style?.borderRadius === 'number') for (const k of RADIUS_KEYS.slice(1)) if (typeof style?.[k] !== 'number') out[k] = style.borderRadius;
+  return out;
+}
+
+export function GradientFill({ gradient, radius }: { gradient: AnyGradient; radius?: ViewStyle }) {
   const [start, end] = gradient.angle != null ? anglePoints(gradient.angle) : GRADIENT_POINTS[gradient.dir] ?? GRADIENT_POINTS.b;
   const colors = gradient.colors as [string, string, ...string[]];
   const locations = gradient.locations as [number, number, ...number[]] | undefined;
-  return <LinearGradient pointerEvents="none" colors={colors} locations={locations} start={start} end={end} style={StyleSheet.absoluteFill} />;
+  return <LinearGradient pointerEvents="none" colors={colors} locations={locations} start={start} end={end} style={[StyleSheet.absoluteFill, radius]} />;
 }
 
 /** Converte lo style (anche in sintassi CSS del web) e ne estrae l'eventuale gradiente. */
 function useWebStyle(style: unknown): WebStyleResult {
-  if (Array.isArray(style)) return webStyle(StyleSheet.flatten(style as StyleProp<ViewStyle>));
-  return webStyle(style);
+  if (Array.isArray(style)) return webStyle(StyleSheet.flatten(style as StyleProp<ViewStyle>), Platform.OS === 'web');
+  return webStyle(style, Platform.OS === 'web');
 }
 
 /**
@@ -105,6 +117,23 @@ const GridCellContext = createContext(false);
 const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
 
 /**
+ * Figli "CSS" di un contenitore: Fragment, <Suspense> e i componenti che non creano elementi nel DOM
+ * dell'originale (es. AnimatePresence di framer-motion, segnato con cssTransparent) si aprono, così i
+ * loro figli sono celle della griglia come in CSS.
+ */
+export function cssChildren(children: ReactNode): ReactNode[] {
+  const out: ReactNode[] = [];
+  for (const c of Children.toArray(children)) {
+    const t = isValidElement(c) ? (c.type as { cssTransparent?: boolean }) : null;
+    const el = c as ReactElement;
+    if (t && (el.type === Fragment || el.type === Suspense || t.cssTransparent)) {
+      out.push(...cssChildren(((c as ReactElement).props as { children?: ReactNode }).children));
+    } else out.push(c);
+  }
+  return out;
+}
+
+/**
  * Figli di una griglia CSS: larghezza 1/cols (o col-span) e gap orizzontale come padding.
  * Come in CSS (align-items: stretch) un Div/Btn figlio diretto si allunga all'altezza della riga.
  */
@@ -114,7 +143,7 @@ function gridChildren(children: ReactNode, grid: Grid, className?: string): Reac
   const stretch = !/(^|\s)items-(start|center|end|baseline)(\s|$)/.test(className ?? '');
   const n = grid.cols, g = grid.gapX;
   let col = 0;
-  return Children.map(wrapText(children), (child) => {
+  return Children.map(wrapText(cssChildren(children)), (child) => {
     if (child == null || typeof child === 'boolean') return child;
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
     const span = Math.min(Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1), n);
@@ -166,7 +195,7 @@ function ExplicitGrid({ grid, className, children }: { grid: Grid; className?: s
     return true;
   };
   let cr = 0, cc = 0;
-  for (const child of Children.toArray(wrapText(children))) {
+  for (const child of Children.toArray(wrapText(cssChildren(children)))) {
     const cls = classOf(child);
     if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) { outOfFlow.push(child); continue; }
     const cs = Math.min(Number(cls.match(COL_SPAN)?.[1] ?? 1), n);
@@ -209,7 +238,7 @@ function templateGridRows(children: ReactNode, grid: Grid, className?: string): 
   const align = ITEMS_ALIGN[(className ?? '').match(/(?:^|\s)items-(start|center|end|baseline|stretch)(?=\s|$)/)?.[1] ?? 'stretch'];
   const outOfFlow: ReactNode[] = [];
   const cells: ReactNode[] = [];
-  for (const child of Children.toArray(wrapText(children))) {
+  for (const child of Children.toArray(wrapText(cssChildren(children)))) {
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
     (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls) ? outOfFlow : cells).push(child);
   }
@@ -273,6 +302,9 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
     if (child.type === Fragment) {
       return <Fragment key={child.key}>{visit((child.props as { children?: ReactNode }).children)}</Fragment>;
     }
+    if ((child.type as { cssTransparent?: boolean }).cssTransparent) {
+      return cloneElement(child as ReactElement<{ children?: ReactNode }>, undefined, visit((child.props as { children?: ReactNode }).children));
+    }
     if (child.type === Suspense) {
       const sp = child.props as { children?: ReactNode; fallback?: ReactNode };
       return <Suspense key={child.key} fallback={sp.fallback}>{visit(sp.children)}</Suspense>;
@@ -330,6 +362,39 @@ const SHRINK_CLASS = /(^|\s)(shrink-0|flex-shrink-0|flex-none|shrink|flex-shrink
 // Elementi "in linea a blocco" (inline-flex, inline-block): in un blocco sono larghi quanto il
 // contenuto e li posiziona il text-align del contenitore (in RN si allungherebbero a tutta riga).
 const INLINE_LEVEL = /(^|\s)(inline-flex|inline-block|inline-grid)(\s|$)/;
+const OWN_MARGIN_Y = /(^|\s)-?m[tyb]?-\S+/;
+
+/** Padding + bordo inferiori dalle classi (p-, py-, pb-, border, border-b): la linea di base sta sopra. */
+function bottomInset(cls: string): number {
+  let pad = 0, border = 0;
+  for (const c of cls.split(/\s+/)) {
+    let m: RegExpMatchArray | null;
+    if ((m = c.match(/^p[yb]?-(.+)$/))) pad = spacingPx(m[1]);
+    else if (c === 'border' || c === 'border-b') border = 1;
+    else if ((m = c.match(/^border(?:-b)?-(\d)$/))) border = Number(m[1]);
+  }
+  return pad + border;
+}
+
+/**
+ * inline-flex / inline-block / <button> in linea dentro un blocco: in CSS stanno in una riga alta
+ * almeno quanto lo strut del contenitore, allineati sulla linea di base (inlineBlockMargins).
+ * Misura l'altezza del box e restituisce i margini che lo mettono a posto nella riga.
+ */
+function useInlineBlockStrut(enabled: boolean, inherited: string, text: string, cls: string, onLayout?: (e: LayoutChangeEvent) => void) {
+  const [h, setH] = useState<number | null>(null);
+  const handle = useCallback((e: LayoutChangeEvent) => {
+    onLayout?.(e);
+    const nh = Math.round(e.nativeEvent.layout.height * 100) / 100;
+    if (enabled && nh !== h) setH(nh);
+  }, [onLayout, enabled, h]);
+  if (!enabled) return { style: null, onLayout };
+  if (h == null) return { style: null, onLayout: handle };
+  const parentSize = fontSizeOf(inherited), parentLh = inheritedLineHeight(inherited, parentSize);
+  const own = cn(inherited, text);
+  const size = fontSizeOf(own), lh = inheritedLineHeight(own, size);
+  return { style: inlineBlockMargins(parentSize, parentLh, size, lh, h, bottomInset(cls)) as ViewStyle, onLayout: handle };
+}
 const SELF = /(^|\s)self-/;
 
 function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
@@ -342,10 +407,24 @@ function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
   return align;
 }
 
+// ring-* (webClasses): boxShadow, salvo che lo style della pagina ne dia uno (in CSS lo style inline vince)
+const ringCache = new Map<string, ViewStyle>();
+function ringShadow(ring: string): ViewStyle {
+  let v = ringCache.get(ring);
+  if (!v) { v = { boxShadow: ring } as ViewStyle; ringCache.set(ring, v); }
+  return v;
+}
+
+const POSITIONED = /(^|\s)(relative|absolute|sticky)(\s|$)/;
+const Z_CLASS = /(^|\s)(?:[a-z0-9-]+:)*-?z-/;
+
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
   const base: Record<string, any> = grid ? { rowGap: grid.gapY } : {};
   if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
   if (gridCell && !NO_STRETCH.test(rawClass ?? '') && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
+  // ordine di disegno CSS: gli elementi posizionati stanno sopra ai fratelli non posizionati
+  // (in RN-web tutte le View sono relative e conta solo l'ordine nel codice)
+  if (POSITIONED.test(rawClass ?? '') && !Z_CLASS.test(rawClass ?? '') && style?.zIndex == null) base.zIndex = 1;
   if (layout === 'block' && INLINE_LEVEL.test(rawClass ?? '') && !SELF.test(rawClass ?? '') && style?.alignSelf == null) {
     base.alignSelf = inlineAlign(inherited);
   }
@@ -608,7 +687,8 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   const layout = useContext(FlexParentContext);
   const [text, classRest] = splitTextClasses(className);
   const rest = withStyleGrid(classRest, style);
-  const { box, grid: classGrid, gradient: classGradient } = normalizeClasses(rest);
+  const { box, grid: classGrid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const ringStyle = ring ? ringShadow(ring) : null;
   const grid = withStyleRows(classGrid, style);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
@@ -625,7 +705,13 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
       && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink !== 0 && rnStyle?.flex == null && rnStyle?.position !== 'absolute',
     children, min0.onLayout,
   );
-  const min = rigid.probe ? { minStyle: rigid.minStyle, onLayout: rigid.onLayout } : min0;
+  const min0b = rigid.probe ? { minStyle: rigid.minStyle, onLayout: rigid.onLayout } : min0;
+  const strut = useInlineBlockStrut(
+    layout === 'block' && !gridCell && INLINE_LEVEL.test(rest) && !OUT_OF_FLOW_CLASS.test(rest) && !OWN_MARGIN_Y.test(rest)
+      && rnStyle?.marginTop == null && rnStyle?.marginBottom == null && rnStyle?.marginVertical == null && rnStyle?.margin == null,
+    inherited, text, rest, min0b.onLayout,
+  );
+  const min = { minStyle: strut.style ? [min0b.minStyle, strut.style] : min0b.minStyle, onLayout: strut.onLayout };
   const lead = useLeadMargin(rnStyle);
   let inner = (
     <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
@@ -653,7 +739,7 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   const nativeBlur = blur && Platform.OS !== 'web' ? <BlurFill px={blur.px} /> : null;
   const axis = scrollAxis(rest);
   if (axis) {
-    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, lead, blurStyle, min.minStyle]) as Record<string, any>;
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle]) as Record<string, any>;
     const scroll = (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
         {nativeBlur}
@@ -665,9 +751,9 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle ? AnimatedBox : View;
   return (
-    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, (gradient || nativeBlur) && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle]}>
+    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle]}>
       {nativeBlur}
-      {gradient ? <GradientFill gradient={gradient} /> : null}
+      {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
     </Box>
   );
@@ -742,13 +828,21 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const rest = withStyleGrid(classRest, style);
   // il browser centra il contenuto di <button> (le classi text-left/right della pagina vincono)
   const text = button ? cn('text-center', ownText) : ownText;
-  const { box, grid, gradient: classGradient } = normalizeClasses(rest);
+  const { box, grid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const ringStyle = ring ? ringShadow(ring) : null;
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
-  const min = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
+  const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
   const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
     ? { alignSelf: inlineAlign(inherited) } : null;
+  // <button> in linea / inline-flex dentro un blocco: riga alta quanto lo strut (come in Div)
+  const strut = useInlineBlockStrut(
+    layout === 'block' && !gridCell && (inlineButton != null || INLINE_LEVEL.test(rest)) && !OUT_OF_FLOW_CLASS.test(rest) && !OWN_MARGIN_Y.test(rest)
+      && rnStyle?.marginTop == null && rnStyle?.marginBottom == null && rnStyle?.marginVertical == null && rnStyle?.margin == null,
+    inherited, text, rest, min0.onLayout,
+  );
+  const min = { minStyle: strut.style ? [min0.minStyle, strut.style] : min0.minStyle, onLayout: strut.onLayout };
   // il <button> del browser centra in verticale il contenuto quando è più alto (salvo flex/grid)
   const buttonCenter = button && !CSS_FLEX.test(rest) && rnStyle?.justifyContent == null ? BUTTON_CENTER : null;
   // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
@@ -761,12 +855,12 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       {...gestures}
       disabled={disabled}
       onPress={handlePress}
-      className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
+      className={cn(box, disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
-      {gradient ? <GradientFill gradient={gradient} /> : null}
+      {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <LeadMarginContext.Provider value={null}>
       <GridCellContext.Provider value={false}>
         <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>

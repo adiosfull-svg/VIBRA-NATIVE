@@ -92,3 +92,18 @@ export function inlineLineBox(parentSize: number, parentLh: number, size: number
 export function strutDescent(parentSize: number, parentLh: number): number {
   return Math.round(((parentLh - parentSize * (ASC + DESC)) / 2 + parentSize * DESC) * 100) / 100;
 }
+
+/**
+ * Elemento a blocco in linea (inline-flex, inline-block, <button>) da solo in un blocco: la riga è
+ * alta almeno quanto lo strut del contenitore e il box sta sulla linea di base (quella del suo testo,
+ * cioè sopra il padding/bordo inferiore). Margini sopra/sotto che lo mettono al suo posto nella riga.
+ */
+export function inlineBlockMargins(parentSize: number, parentLh: number, size: number, lh: number, boxH: number, padBottom: number): { marginTop: number; marginBottom: number } {
+  const parentBaseline = (parentLh - parentSize * (ASC + DESC)) / 2 + parentSize * ASC;
+  const boxBaseline = boxH - padBottom - ((lh - size * (ASC + DESC)) / 2 + size * DESC);
+  const ownTop = parentBaseline - boxBaseline;
+  const top = Math.min(0, ownTop);
+  const bottom = Math.max(parentLh, ownTop + boxH);
+  const r = (n: number) => Math.round(n * 100) / 100;
+  return { marginTop: r(ownTop - top), marginBottom: r(bottom - top - (ownTop - top) - boxH) };
+}

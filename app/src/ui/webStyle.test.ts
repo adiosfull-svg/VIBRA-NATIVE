@@ -69,3 +69,10 @@ test('webStyle: vh/dvh e calc semplici con le dimensioni della finestra', () => 
     Object.assign(cssViewport, { width: 0, height: 0 });
   }
 });
+
+test('webStyle: rotateY/perspective e transition (solo web)', () => {
+  assert.deepEqual(webStyle({ transform: 'perspective(1200px) rotateY(180deg)' }).style.transform, [{ perspective: 1200 }, { rotateY: '180deg' }]);
+  const t = webStyle({ transition: 'transform 400ms cubic-bezier(0.22,1,0.36,1)' }, true).style;
+  assert.deepEqual(t, { transitionProperty: 'transform', transitionDuration: '400ms', transitionTimingFunction: 'cubic-bezier(0.22,1,0.36,1)' });
+  assert.equal(webStyle({ transition: 'transform 1s' }).style.transitionProperty, undefined);
+});

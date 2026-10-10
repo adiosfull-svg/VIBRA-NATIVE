@@ -201,18 +201,33 @@ function parseTransform(v: string): AnyStyle[] | undefined {
       case 'scale': out.push({ scale: parseFloat(raw[0]) }); break;
       case 'scaleX': out.push({ scaleX: parseFloat(raw[0]) }); break;
       case 'scaleY': out.push({ scaleY: parseFloat(raw[0]) }); break;
-      case 'rotate': out.push({ rotate: raw[0] }); break;
+      case 'rotate': case 'rotateZ': out.push({ rotate: raw[0] }); break;
+      case 'rotateX': out.push({ rotateX: raw[0] }); break;
+      case 'rotateY': out.push({ rotateY: raw[0] }); break;
+      case 'perspective': if (px(raw[0]) != null) out.push({ perspective: px(raw[0]) }); break;
       default: break;
     }
   }
   return out.length ? out : undefined;
 }
 
-export function webStyle(input: unknown): WebStyleResult {
+/** transition CSS → proprietà di react-native-web (solo web: in RN le animazioni passano da Animated). */
+function parseTransition(v: string): AnyStyle {
+  if (v.trim() === 'none') return { transitionDuration: '0s' };
+  const parts = splitTop(v).map((t) => splitTop(t, ' '));
+  return {
+    transitionProperty: parts.map((p) => p[0]).join(', '),
+    transitionDuration: parts.map((p) => p.find((x) => /^[\d.]+m?s$/.test(x)) ?? '0s').join(', '),
+    transitionTimingFunction: parts.map((p) => p.find((x) => /^(ease|linear|step|cubic-bezier)/.test(x)) ?? 'ease').join(', '),
+  };
+}
+
+export function webStyle(input: unknown, web = false): WebStyleResult {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return { style: (input as AnyStyle) ?? {} };
   const style: AnyStyle = {};
   let gradient: WebStyleResult['gradient'];
   for (const [k, v] of Object.entries(input as AnyStyle)) {
+    if (web && k === 'transition' && typeof v === 'string') { Object.assign(style, parseTransition(v)); continue; }
     if (v == null || DROP.has(k)) continue;
     if (k === 'background' || k === 'backgroundImage') {
       if (typeof v === 'string' && v.includes('linear-gradient')) { gradient = parseLinearGradient(v); continue; }

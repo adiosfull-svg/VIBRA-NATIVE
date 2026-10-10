@@ -129,3 +129,5 @@ export const motion = {
 export function AnimatePresence({ children }: { children?: ReactNode; mode?: string; initial?: boolean }) {
   return <>{useMemo(() => Children.toArray(children), [children])}</>;
 }
+// nel DOM non crea elementi: per griglie e space-y i figli sono figli del contenitore (cssChildren)
+(AnimatePresence as { cssTransparent?: boolean }).cssTransparent = true;

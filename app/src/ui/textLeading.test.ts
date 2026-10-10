@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { fontSizeOf, inheritedLineHeight, inlineLineBox, lineHeightOf, strutDescent, textClassesFor } from './textLeading.ts';
+import { fontSizeOf, inheritedLineHeight, inlineBlockMargins, inlineLineBox, lineHeightOf, strutDescent, textClassesFor } from './textLeading.ts';
 
 test('text-[10px] dentro text-xs eredita 16px come in CSS', () => {
   assert.equal(inheritedLineHeight('text-muted-foreground text-xs', 10), 16);
@@ -29,4 +29,14 @@ test('label text-sm leading-none in un blocco text-base: riga di 24px, testo 5.7
 
 test('textarea in un blocco text-base: 6px sotto (discendente dello strut)', () => {
   assert.equal(strutDescent(16, 24), 6.19);
+});
+
+test('inline-flex in un blocco: riga alta quanto lo strut, box sulla linea di base', () => {
+  // link @handle (11px, leading-tight) in un blocco 16px/24px: la riga resta di 24px
+  const m = inlineBlockMargins(16, 24, 11, 13.75, 14, 0);
+  assert.equal(Math.round((m.marginTop + 14 + m.marginBottom) * 100) / 100, 24);
+  assert.ok(m.marginTop > 6 && m.marginTop < 7);
+  // box più alto dello strut: nessuno spazio sotto oltre la discesa dello strut
+  const big = inlineBlockMargins(16, 24, 16, 24, 40, 8);
+  assert.equal(big.marginTop, 0);
 });
