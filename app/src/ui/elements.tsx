@@ -19,6 +19,7 @@ import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTe
 import { TEXT_COLOR } from './icon';
 import { webStyle } from './webStyle';
 import { inheritedLineHeight } from './textLeading';
+import { useFocusStyle } from './useFocusStyle';
 import RNSvg, { type SvgProps } from 'react-native-svg';
 
 // ── <img> ────────────────────────────────────────────────────────────────────
@@ -230,9 +231,11 @@ const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean
   const { ref: inputRef, submit } = useTextFormField(ref, p.required, p.value);
   const gap = useTextareaBaselineGap(multiline ? p.className : 'block');
   const inherited = useContext(TextClassContext);
+  const focus = useFocusStyle(p.className, p.onFocus as (e: any) => void, p.onBlur as (e: any) => void);
+  const withFocus = { onFocus: focus.onFocus, onBlur: focus.onBlur };
   return multiline
-    ? <TextInput ref={inputRef} multiline textAlignVertical="top" {...rawInput({ ...p, style: [p.style, gap ? { marginBottom: gap } : null] }, submit, true)} />
-    : <TextInput ref={inputRef} {...rawInput({ ...p, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style] }, submit)} />;
+    ? <TextInput ref={inputRef} multiline textAlignVertical="top" {...rawInput({ ...p, ...withFocus, style: [p.style, gap ? { marginBottom: gap } : null, focus.focusStyle] }, submit, true)} />
+    : <TextInput ref={inputRef} {...rawInput({ ...p, ...withFocus, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style, focus.focusStyle] }, submit)} />;
 });
 RawTextInput.displayName = 'RawTextInput';
 
