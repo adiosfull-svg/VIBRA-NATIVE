@@ -244,7 +244,8 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
       {/* Vetro: blur(6px) saturate(160%) + bg-background/30 + border-t */}
       {/* su Android sfoca la pagina in primo piano (ui/pageLayers); blur(6px) → intensità 24 come backdrop-blur */}
       <NativeBlur intensity={24} target={blurTarget} />
-      <Div className="absolute inset-0 border-t border-border bg-background/30" />
+      {/* sopra la riga per l'ordine CSS degli elementi posizionati: non deve prendersi i tocchi */}
+      <Div pointerEvents="none" className="absolute inset-0 border-t border-border bg-background/30" />
 
       <View
         style={{ height: BAR_HEIGHT, width: '100%', maxWidth: 512, alignSelf: 'center', flexDirection: 'row', alignItems: 'center' }}
