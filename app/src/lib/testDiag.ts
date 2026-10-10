@@ -20,3 +20,26 @@ if (TEST_DIAG) {
     last = now;
   }, 2000);
 }
+
+/**
+ * Radiografia del layout (solo diagnostica): albero degli elementi nativi sotto `root` con
+ * posizione/dimensioni (getBoundingClientRect delle API DOM di Fabric) e l'inizio del testo.
+ * Scende fino a `maxDepth` livelli e salta i rami piccoli e senza testo, per restare leggibile.
+ */
+export function dumpLayout(label: string, root: unknown, maxDepth = 14) {
+  if (!TEST_DIAG || !root) return;
+  const lines: string[] = [];
+  const visit = (node: any, depth: number) => {
+    if (!node || depth > maxDepth || lines.length > 400) return;
+    let r: { x: number; y: number; width: number; height: number } | null = null;
+    try { r = node.getBoundingClientRect?.() ?? null; } catch { r = null; }
+    const text = String(node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 50);
+    if (r) lines.push(`${'  '.repeat(depth)}[${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}] ${node.nodeName ?? ''} "${text}"`);
+    const kids = Array.from((node.children ?? []) as ArrayLike<any>);
+    // rami con un solo figlio: non conta come livello (wrapper)
+    for (const k of kids) visit(k, kids.length === 1 ? depth : depth + 1);
+  };
+  visit(root, 0);
+  // il logcat tronca le righe lunghe: un messaggio per gruppo di righe
+  for (let i = 0; i < lines.length; i += 20) console.log(`VIBRA layout ${label} ${i / 20}\n${lines.slice(i, i + 20).join('\n')}`);
+}

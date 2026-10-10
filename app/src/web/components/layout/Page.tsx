@@ -9,6 +9,7 @@ import { Div } from '../../../ui/html';
 import { THEME } from '../../../ui/palette.generated';
 import AppHeader from './AppHeader';
 import { pageScroll } from '../../shims/pageScroll';
+import { dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
 import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
 
@@ -43,7 +44,13 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     blurHandle.current = b;
     return () => { h.unregister(); b.unregister(); blurHandle.current = null; };
   }, []);
-  useFocusEffect(useCallback(() => { handle.current?.focus(); blurHandle.current?.focus(); }, []));
+  useFocusEffect(useCallback(() => {
+    handle.current?.focus(); blurHandle.current?.focus();
+    // diagnostica dell'emulatore: radiografia del layout della pagina dopo il caricamento
+    if (!TEST_DIAG) return;
+    const t = setTimeout(() => dumpLayout(title ?? 'pagina', (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()), 9000);
+    return () => clearTimeout(t);
+  }, [title]));
   const setBlurTarget = useCallback((el: View | null) => { blurHandle.current?.set(el); }, []);
   const layer = useMemo<PageLayer>(() => ({
     scrollY,

@@ -9,7 +9,7 @@ import { NativeBlur, usePageBlurTarget } from '../../../ui/pageLayers';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, Easing, PanResponder, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
 import { Div } from '../../../ui/html';
@@ -142,6 +142,12 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
 
   // Gesture: tap, drag-to-select e long-press radiale, come i pointer handler originali
   const refs = useRef({ startX: 0, startY: 0, moved: false, index: -1, timer: null as ReturnType<typeof setTimeout> | null, radial: false, highlighted: -1 });
+  // posizione del tocco rispetto alla barra: pageX meno il bordo sinistro della barra sullo schermo.
+  // (locationX è relativo all'elemento toccato, cioè l'icona o la scritta, non alla barra: toccando
+  // "Clienti" dava ~0 e si andava sempre sulla prima voce)
+  const barRef = useRef<View>(null);
+  const barLeft = useRef(0);
+  const barX = (e: GestureResponderEvent) => e.nativeEvent.pageX - barLeft.current;
   const indexFromX = (x: number) => Math.max(0, Math.min(NAV_ITEMS.length - 1, Math.floor(x / (itemWidth || 1))));
   const items = useRef(NAV_ITEMS);
   items.current = NAV_ITEMS;
@@ -152,7 +158,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
     onPanResponderTerminationRequest: () => false,
     onPanResponderGrant: (e) => {
       const r = refs.current;
-      const x = e.nativeEvent.locationX;
+      const x = barX(e);
       r.startX = e.nativeEvent.pageX;
       r.startY = e.nativeEvent.pageY;
       r.moved = false;
@@ -194,7 +200,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
         return;
       }
       if (!r.moved && (Math.abs(g.dx) > 10 || Math.abs(g.dy) > 10)) r.moved = true;
-      const x = e.nativeEvent.locationX;
+      const x = barX(e);
       const idx = indexFromX(x);
       if (r.moved) pillX.setValue(Math.max(0, Math.min(width - itemWidth, x - itemWidth / 2)));
       if (idx !== r.index) {
@@ -242,7 +248,11 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
 
       <View
         style={{ height: BAR_HEIGHT, width: '100%', maxWidth: 512, alignSelf: 'center', flexDirection: 'row', alignItems: 'center' }}
-        onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
+        ref={barRef}
+        onLayout={(e: LayoutChangeEvent) => {
+          setWidth(e.nativeEvent.layout.width);
+          barRef.current?.measureInWindow((left) => { barLeft.current = left; });
+        }}
         {...responder.panHandlers}
         accessibilityRole="tablist"
       >
