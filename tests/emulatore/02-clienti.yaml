@@ -3,6 +3,11 @@ appId: com.vibra.mobile
 ---
 - launchApp
 - extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Accedi"
+    timeout: 180000
+- runFlow: sub/login.yaml
+- extendedWaitUntil:
     visible: "FATTURATO TOTALE"
     timeout: 180000
 - tapOn: "Clienti"

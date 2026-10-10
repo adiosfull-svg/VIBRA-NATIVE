@@ -15,6 +15,10 @@ on:
         description: 'Percorsi da eseguire (file o cartella in tests/emulatore)'
         required: false
         default: 'tests/emulatore'
+      app_ref:
+        description: 'Commit da cui prendere app/ (vuoto = quello del branch): per confrontare con versioni precedenti'
+        required: false
+        default: ''
   push:
     paths:
       - 'app/**'
@@ -23,7 +27,7 @@ on:
       - '.github/workflows/emulatore.yml'
 
 concurrency:
-  group: emulatore-${{ github.ref }}
+  group: emulatore-${{ github.ref }}-${{ github.event.inputs.app_ref || 'head' }}
   cancel-in-progress: true
 
 jobs:
@@ -37,6 +41,13 @@ jobs:
       FLOWS: ${{ github.event.inputs.flows || 'tests/emulatore' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: app/ da un altro commit (confronti)
+        if: github.event.inputs.app_ref != ''
+        run: |
+          git fetch -q --depth=1 origin ${{ github.event.inputs.app_ref }}
+          rm -rf app && git checkout FETCH_HEAD -- app
+          echo "app/ da ${{ github.event.inputs.app_ref }}"
 
       - uses: actions/setup-node@v4
         with:
@@ -77,6 +88,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
           EXPO_PUBLIC_SUPABASE_ANON_KEY=dev
           EXPO_PUBLIC_TEST_LOGIN=admin@vibra.local:vibra
+          EXPO_PUBLIC_TEST_DIAG=1
           ENV
 
       - name: Progetto Android
@@ -125,7 +137,8 @@ jobs:
           git init -q -b emulatore-risultati
           git config user.name "emulatore"
           git config user.email "emulatore@users.noreply.github.com"
-          echo "run ${{ github.run_id }} — commit ${{ github.sha }} — $(date -u)" > INFO.txt
+          echo "run ${{ github.run_id }} — commit ${{ github.sha }} — app_ref ${{ github.event.inputs.app_ref || 'head' }} — $(date -u)" > INFO.txt
           git add -A
           git commit -qm "Risultati emulatore: run ${{ github.run_id }} (${GITHUB_SHA::7})"
-          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:emulatore-risultati
+          # un branch per run (emulatore-risultati/<run>) + l'ultimo su emulatore-risultati
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:emulatore-risultati HEAD:refs/heads/emulatore-risultati-${{ github.run_id }}

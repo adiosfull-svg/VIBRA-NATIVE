@@ -16,6 +16,7 @@ import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
+import { diagCount } from '../lib/testDiag';
 import { expandGridTemplate, normalizeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
@@ -714,6 +715,7 @@ function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProp
 }
 
 function DivBox({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
+  diagCount('div');
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
@@ -852,6 +854,7 @@ const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
+  diagCount('btn');
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const form = useForm();

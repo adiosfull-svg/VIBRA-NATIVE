@@ -1,0 +1,13 @@
+# Login con l'utente di prova se l'app mostra la schermata di accesso (build senza accesso automatico).
+appId: com.vibra.mobile
+---
+- runFlow:
+    when:
+      visible: "Accedi"
+    commands:
+      - tapOn: "Email"
+      - inputText: "admin@vibra.local"
+      - tapOn: "Password"
+      - inputText: "vibra"
+      - hideKeyboard
+      - tapOn: "Accedi"
