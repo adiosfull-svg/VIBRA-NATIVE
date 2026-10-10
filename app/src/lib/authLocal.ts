@@ -32,7 +32,17 @@ export function useLocalAuth(): AuthState {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
+    supabase.auth.getSession().then(async ({ data }) => {
+      // Build di test sull'emulatore (workflow "Emulatore"): accesso automatico con l'utente di
+      // prova, EXPO_PUBLIC_TEST_LOGIN="email:password". Solo stack locale, mai nell'APK pubblicato.
+      const test = process.env.EXPO_PUBLIC_TEST_LOGIN;
+      if (!data.session && test) {
+        const i = test.indexOf(':');
+        const { data: signed } = await supabase.auth.signInWithPassword({ email: test.slice(0, i), password: test.slice(i + 1) });
+        if (signed.session) return; // apply arriva da onAuthStateChange
+      }
+      apply(data.session);
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       // TOKEN_REFRESHED non cambia il profilo: evitiamo una query inutile.
       if (event === 'TOKEN_REFRESHED') setSession(s);

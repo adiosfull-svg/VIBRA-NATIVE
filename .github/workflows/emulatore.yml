@@ -1,0 +1,131 @@
+# Emulatore Android per i test automatici (li lancia Claude e ne legge i risultati).
+# - compila l'app per x86_64 col backend di PROVA locale (scripts/local, dati sintetici) e accesso
+#   automatico con l'utente di prova: nessun login Google, nessun dato reale, nessuna scrittura su Base44
+# - avvia lo stack locale sul runner e un emulatore Android 14 (KVM dei runner Linux di GitHub)
+# - esegue i percorsi Maestro di tests/emulatore (screenshot, log, albero della UI)
+# - pubblica i risultati sul branch "emulatore-risultati" (sovrascritto a ogni run)
+# Parte a mano (Actions → "Emulatore" → Run workflow) o con un push il cui messaggio contiene [emu].
+# L'APK di questa build NON va distribuito (backend locale e utente di prova incorporati).
+name: Emulatore
+
+on:
+  workflow_dispatch:
+    inputs:
+      flows:
+        description: 'Percorsi da eseguire (file o cartella in tests/emulatore)'
+        required: false
+        default: 'tests/emulatore'
+  push:
+    paths:
+      - 'app/**'
+      - 'tests/emulatore/**'
+      - 'scripts/local/**'
+      - '.github/workflows/emulatore.yml'
+
+concurrency:
+  group: emulatore-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  emulatore:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    env:
+      FLOWS: ${{ github.event.inputs.flows || 'tests/emulatore' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # ── stack locale (Postgres + PostgREST + gateway su :54321) ──
+      - name: Stack locale di prova
+        run: |
+          ls -d /usr/lib/postgresql/*/bin
+          mkdir -p scripts/local/bin
+          curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin
+          scripts/local/dev_stack.sh --reset
+          # più clienti per avere liste lunghe come quelle vere (450)
+          P="psql -h $PWD/scripts/local/.data/sock -p 55433 -U postgres -d postgres"
+          cols=$($P -At -c "select string_agg(quote_ident(column_name), ',') from information_schema.columns where table_schema='public' and table_name='client' and column_name not in ('id','name')")
+          $P -c "insert into client (name, $cols) select c.name || ' ' || g, $cols from client c, generate_series(1,9) g"
+          curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
+
+      # ── APK x86_64 di prova ──
+      - name: Dipendenze
+        working-directory: app
+        run: npm ci
+
+      - name: Configurazione di prova
+        working-directory: app
+        run: |
+          cat > .env <<'ENV'
+          EXPO_PUBLIC_BACKEND=local
+          EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=dev
+          EXPO_PUBLIC_TEST_LOGIN=admin@vibra.local:vibra
+          ENV
+
+      - name: Progetto Android
+        working-directory: app
+        run: |
+          npx expo prebuild -p android --no-install
+          # lo stack locale è http (adb reverse su 127.0.0.1): permesso solo in questa build
+          sed -i 's/<application /<application android:usesCleartextTraffic="true" /' android/app/src/main/AndroidManifest.xml
+        env:
+          CI: 1
+
+      - name: Compila APK (x86_64)
+        working-directory: app/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+
+      # ── emulatore ──
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Test sull'emulatore
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          ram-size: 4096M
+          disk-size: 6000M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash tests/emulatore/run.sh
+
+      - name: Pubblica i risultati
+        if: always()
+        run: |
+          [ -d out ] || exit 0
+          cd out
+          git init -q -b emulatore-risultati
+          git config user.name "emulatore"
+          git config user.email "emulatore@users.noreply.github.com"
+          echo "run ${{ github.run_id }} — commit ${{ github.sha }} — $(date -u)" > INFO.txt
+          git add -A
+          git commit -qm "Risultati emulatore: run ${{ github.run_id }} (${GITHUB_SHA::7})"
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:emulatore-risultati

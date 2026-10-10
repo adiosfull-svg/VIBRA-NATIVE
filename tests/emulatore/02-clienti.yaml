@@ -1,0 +1,55 @@
+# Clienti: lista virtualizzata (scorrimento lungo), dettaglio cliente, chiusura.
+appId: com.vibra.mobile
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 60000
+- takeScreenshot: clienti-01
+- swipe:
+    start: 50%, 80%
+    end: 50%, 15%
+    duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: clienti-02
+- swipe:
+    start: 50%, 80%
+    end: 50%, 15%
+    duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: clienti-03
+- swipe:
+    start: 50%, 80%
+    end: 50%, 15%
+    duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: clienti-04
+- swipe:
+    start: 50%, 80%
+    end: 50%, 15%
+    duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: clienti-05
+- swipe:
+    start: 50%, 80%
+    end: 50%, 15%
+    duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: clienti-06
+- swipe:
+    start: 50%, 80%
+    end: 50%, 15%
+    duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: clienti-07
+- tapOn:
+    point: "50%,50%"
+- waitForAnimationToEnd
+- takeScreenshot: clienti-dettaglio
+- back
+- waitForAnimationToEnd
+- takeScreenshot: clienti-chiuso
