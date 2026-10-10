@@ -34,7 +34,9 @@
    `node tools/compare/measure.mjs out/growth /clienti pr "click:Growth;wait:2500"`,
    `"click:Sofia Colombo;wait:2500"` (dettaglio cliente; per super4 "Alessandro Conti"), `"click:Singolo cliente"`,
    `"click:Importa più clienti"`, `"click:Aggiungi presenze"`, `"click:Mappa;wait:4000"`,
-   `"click:Cerca;wait:2000;type:sofia"`. Anche `probe.mjs` accetta i passi (5° argomento).
+   `"click:Cerca;wait:2000;type:sofia"`. Anche `probe.mjs` accetta i passi (5° argomento). Parti basse della
+   pagina: `scrollto:<y>` (es. `"click:Il Mio Team;wait:4000;scrollto:2950"`); tab di Il Mio Vibra anche via URL
+   (`/il-mio-vibra?tab=guadagni|guadagni-dettagli|serate|progressi|accordi|note|achievements|vibravs`).
 7. I processi in background possono spegnersi tra un turno e l'altro: `tools/compare/up.sh` riavvia stack, app
    originale e app nativa (solo quelli spenti) e aspetta che rispondano.
 
@@ -214,19 +216,50 @@
 - Emulatore: discusso il piano (Claude Code sul PC Windows dell'utente + Android Studio + Maestro); l'utente ha
   rimandato. In alternativa: emulatore su GitHub Actions.
 
+- **Il Mio Vibra — confronto di tutte le tab FATTO** (sessione del 10 ottobre 2026, stesso branch), per pr e
+  super4: I Miei Progressi, I Miei Guadagni, Guadagni Dettagliati, Le Mie Serate, Il Mio Team, Le Mie Note,
+  Achievement, Vibra VS e Calcolatrice coincidono con l'originale (anche le parti basse della pagina, con il
+  nuovo passo `scrollto:<y>` di `tools/compare/steps.mjs`). Scostamenti residui ≤ 2px, oppure solo di misura
+  (il web misura il testo sul `<td>`/sul pulsante). Sostituti delle librerie web (dalla sessione precedente):
+  uPlot → `ui/uplot.tsx`, react-markdown → `ui/markdown.tsx`, @hello-pangea/dnd → `web/shims/dnd.tsx`.
+  Correzioni, quasi tutte nello strato `ui/` (valgono per ogni pagina; Clienti e Dashboard riverificate, nessuna
+  regressione):
+  - `space-y`: in Tailwind 3 il selettore vince su `mt-*`/`mb-*`/`my-*` dei figli dopo il primo (tolte,
+    `spaceMargins.ts` + test); il `mb` del primo figlio di un blocco collassa col margine del successivo (max,
+    non somma); un componente senza className (es. `<SectionHeader/>`) primo nel flusso dopo un div assoluto
+    riceve il margine (`LeadMarginContext`, consumato dal primo Div/Btn che disegna).
+  - `boxShadow` passato a RN così com'è (spread, più ombre, inset; colori risolti): RN 0.86 e react-native-web
+    lo supportano. Prima spread ignorato → bagliori troppo forti.
+  - `motion.div` anima il Div stesso (`AnimatedBox` = Animated.View con className via `cssInterop`): prima un
+    Animated.View esterno rompeva absolute/h-full (barre delle streak vuote). Animabili anche `width`/`height`
+    (px o %) e `x`/`y` in % o px (il luccichio del RankCard mandava in crash la tab Achievement).
+  - `style={{ gridTemplateColumns }}` (anche `repeat()`) su un `grid` = classe `grid-cols-[...]`;
+    `gridTemplateRows` e `row-span-N`: `ExplicitGrid` (posizionamento automatico CSS, celle assolute dalle
+    misure del contenitore, serve un'altezza definita).
+  - `<input>` a riga singola: `line-height` ereditata dal contenitore (preflight `inherit`), righe di
+    I Miei Guadagni alte come l'originale.
+  - min-width: auto (`useRigidMinWidth`) non blocca i contenitori `flex-wrap` (vanno a capo come in CSS).
+  - `ui/uplot.tsx`: `rangeNum` identico a uPlot (scala Y).
+  - Select: il valore nel trigger ha le classi di testo del trigger (sul web è l'ItemText portato lì da Radix:
+    `SelectLookContext`), freccia `shrink-0`.
+  - `<button>` non flex/grid: contenuto centrato in verticale come nel browser.
+  - Telefono: la ref di un Div `overflow-*-auto` (ScrollView) accetta `scrollTo({ left, top, behavior })`,
+    `scrollBy`, `scrollLeft/scrollTop` anche in scrittura (`domScrollRef`); `offsetLeft/offsetWidth` li dà la
+    nuova architettura di RN. Centratura della tab attiva e della «Strada verso la vetta» da provare sul telefono.
+  - Calcolatrice: `components/ilmiovibra/Calcolatrice.jsx` convertita e montata nella shell
+    (`app/(app)/_layout.tsx`, `CalcolatriceProvider` + `GlobalCalcolatrice` come AppLayout.jsx). Trascinamento
+    e ridimensionamento da provare sul telefono.
+  - RankCard: ref sul rank attuale al posto di `querySelector('[data-current]')` (il codemod toglie i `data-*`).
+  Differenze note: «Strada verso la vetta» nell'originale è ~20px a sinistra del centro (offsetLeft relativo a
+  un antenato posizionato; in RN-web tutte le View sono relative, il nativo centra esattamente); frecce «→»
+  (nel container l'originale usa un font di ripiego: il sottoinsieme latin di Inter non ha U+2192); la riga di
+  un `<button>` in linea in un blocco resta 2px più bassa (Top 5 streak); il logo «Vibra» dell'header manca
+  in entrambe (immagine esterna non raggiungibile dal container).
+
 ## In corso / prossimi passi
-1. **Il Mio Vibra (in corso)**: 35 file
-   convertiti col codemod (tree in `scripts/port/tree.mjs .../pages/IlMioVibra.jsx`), route
-   `(tabs)/il-mio-vibra.tsx` collegata. Sostituti delle librerie web:
-   - uPlot → `ui/uplot.tsx` (SVG: assi 50px, tick come uPlot, spline monotona, barre raggruppate, tooltip al
-     tocco, pinch e trascinamento); `components/promoter/UPlot{Line,Bar}Chart.jsx` lo riesportano.
-   - react-markdown → `ui/markdown.tsx` (marked 18.0.14: preflight + varianti `[&>p]:mb-2`, `[&_li]:list-disc`...).
-   - @hello-pangea/dnd → `web/shims/dnd.tsx` (pressione lunga + trascinamento, onDragEnd come l'originale).
-   Primo confronto (pr, tab di default «I Miei Progressi»): quasi identico. Da fare: confrontare TUTTE le tab
-   (`click:I Miei Guadagni`, `Guadagni Dettagliati`, `Le Mie Serate`, `Il Mio Team`, `Le Mie Note`,
-   `Achievement`, `Vibra VS`) e la Calcolatrice, per pr/super4; scostamenti residui di 2–8px nelle intestazioni
-   delle sezioni (icona+titolo) da indagare con `probe.mjs`; frecce "→" con un font diverso.
-   Poi build `[apk]` e prova dell'utente (grafici, note trascinabili, chat AI).
+1. **Il Mio Vibra sul telefono**: build `[apk]` e prova dell'utente (grafici uPlot con tocco/pinch, note
+   trascinabili e chat AI in Le Mie Note — lo stack locale non ha note per pr —, Calcolatrice trascinabile,
+   barra delle tab centrata, Achievement).
 2. **Da provare sul telefono** (build `[apk]`): selettori data/ora, scelta foto/file, swipe dei leader,
    trascinamento e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza,
    scorrimento del dettaglio cliente/liste nei dialog/Growth League, export PDF/CSV della Dashboard.
