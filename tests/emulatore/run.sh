@@ -6,6 +6,9 @@ OUT=$PWD/out
 mkdir -p "$OUT/screens"
 APK=${APK:-app/android/app/build/outputs/apk/release/app-release.apk}
 adb reverse tcp:54321 tcp:54321
+# niente finestre "X isn't responding" del sistema (l'emulatore senza GPU è lento): coprirebbero l'app
+adb shell settings put global hide_error_dialogs 1 || true
+adb shell settings put secure anr_show_background 0 || true
 adb install -r "$APK"
 adb logcat -c
 adb logcat -v time > "$OUT/logcat-full.txt" 2>&1 &
