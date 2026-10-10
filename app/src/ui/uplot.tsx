@@ -32,18 +32,25 @@ const MIN_RANGE = 3;
 // ── scale (come uPlot) ───────────────────────────────────────────────────────
 const roundDec = (v: number) => Math.round(v * 1e9) / 1e9;
 
-/** rangeNum(min, max, 0.1, true) di uPlot con lo zero "morbido" (non scende sotto 0 se i dati sono ≥ 0). */
+/** rangeNum(min, max, 0.1, true) di uPlot (_rangeNum con pad 0.1 e zero "morbido", mode 3). */
 function rangeNum(min: number, max: number): [number, number] {
-  const delta = max - min;
-  const nonZero = delta || Math.abs(max) || 1e3;
-  const base = 10 ** Math.floor(Math.log10(nonZero));
-  const pad = nonZero * (delta === 0 ? (min === 0 ? 0.1 : 1) : 0.1);
-  const step = base / 10;
-  const buf = roundDec(Math.round(pad / step) * step);
-  let lo = roundDec(Math.floor((min - buf) / step) * step);
-  const hi = roundDec(Math.ceil((max + buf) / step) * step);
-  if (min >= 0 && lo < 0) lo = 0;
-  return [lo, hi === lo ? lo + 1 : hi];
+  let delta = max - min;
+  const scalarMax = Math.max(Math.abs(min), Math.abs(max));
+  if (delta < 1e-24 || Math.abs(Math.log10(scalarMax) - Math.log10(delta)) > 10) {
+    delta = 0;
+    if (min === 0 || max === 0) delta = 1e-24;
+  }
+  const nonZero = delta || scalarMax || 1e3;
+  const step = 10 ** Math.floor(Math.log10(nonZero)) / 10;
+  const fix = (v: number) => Math.round(v * 1e12) / 1e12;
+  const padMin = nonZero * (delta === 0 ? (min === 0 ? 0.1 : 1) : 0.1);
+  const padMax = nonZero * (delta === 0 ? (max === 0 ? 0.1 : 1) : 0.1);
+  const newMin = fix(Math.floor(fix((min - padMin) / step)) * step);
+  const newMax = fix(Math.ceil(fix((max + padMax) / step)) * step);
+  // soft 0, mode 3: se il minimo imbottito scende sotto 0 con dati ≥ 0, si ferma a 0
+  const lo = min >= 0 && newMin <= 0 ? 0 : newMin;
+  const hi = lo === newMax && lo === 0 ? 100 : newMax;
+  return [lo, hi];
 }
 
 /** Tick dell'asse y: il primo incremento "bello" con almeno `space` px fra un tick e l'altro. */

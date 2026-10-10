@@ -333,6 +333,7 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
 const FlexRowContext = createContext(false);
 const FLEX_COL = /(^|\s)(?:max-sm:)?flex-col(-reverse)?(\s|$)/;
 const FLEX_ROW = /(^|\s)(?:max-sm:)?(flex|inline-flex)(\s|$)/;
+const FLEX_WRAP = /(^|\s)flex-wrap(\s|$)/;
 const OUT_OF_FLOW_CLASS = /(^|\s)(absolute|fixed|hidden)(\s|$)/;
 const isFlexRow = (cls: string) => FLEX_ROW.test(cls) && !FLEX_COL.test(cls);
 
@@ -488,8 +489,13 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   const gridCell = useContext(GridCellContext);
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout);
   const rowParent = useContext(FlexRowContext);
+  // flex-wrap: in CSS la sua larghezza minima è quella dell'elemento più largo, non della riga intera:
+  // può restringersi (e rende restringibili gli antenati) come il testo che va a capo
+  const wraps = FLEX_WRAP.test(rest);
+  const wrapProbe = useContext(WrapProbeContext);
+  if (wraps && wrapProbe && !wrapProbe.flexible) wrapProbe.mark();
   const rigid = useRigidMinWidth(
-    rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
+    rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest) && !wraps
       && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink !== 0 && rnStyle?.flex == null && rnStyle?.position !== 'absolute',
     children, min0.onLayout,
   );

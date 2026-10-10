@@ -7,8 +7,8 @@ import * as PopoverPrimitive from '@rn-primitives/popover';
 import * as SelectPrimitive from '@rn-primitives/select';
 import * as SwitchPrimitive from '@rn-primitives/switch';
 import * as TabsPrimitive from '@rn-primitives/tabs';
-import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
 import { Div } from './html';
 import { IconClassContext } from './icon';
@@ -117,19 +117,35 @@ export function Select({ value, defaultValue, onValueChange, children, disabled 
 }) {
   const labels = collectLabels(children);
   const opt = (v?: string) => (v == null ? undefined : { value: v, label: labels[v] ?? v });
+  const [open, setOpen] = useState(false);
+  const [triggerText, setTriggerText] = useState('text-sm');
+  const look = useMemo(() => ({ open, triggerText, setTriggerText }), [open, triggerText]);
   return (
-    <SelectPrimitive.Root value={opt(value)} defaultValue={opt(defaultValue)} disabled={disabled}
-      onValueChange={(o) => o && onValueChange?.(o.value)}>
-      {children}
-    </SelectPrimitive.Root>
+    <SelectLookContext.Provider value={look}>
+      <SelectPrimitive.Root value={opt(value)} defaultValue={opt(defaultValue)} disabled={disabled}
+        onOpenChange={setOpen} onValueChange={(o) => o && onValueChange?.(o.value)}>
+        {children}
+      </SelectPrimitive.Root>
+    </SelectLookContext.Provider>
   );
 }
 
+/**
+ * Sul web (Radix) il valore nel trigger è l'ItemText della voce scelta, portato lì con un portale:
+ * nell'originale eredita il testo del trigger (es. text-xs), qui servono le classi giuste. A menu
+ * chiuso l'ItemText usa le classi di testo del trigger, aperto quelle della voce.
+ */
+const SelectLookContext = createContext<{ open: boolean; triggerText: string; setTriggerText: (t: string) => void } | null>(null);
+
 export function SelectTrigger({ className, children }: WithChildren) {
+  const look = useContext(SelectLookContext);
+  const text = cn('text-sm', textOf(className));
+  const setTriggerText = look?.setTriggerText;
+  useEffect(() => { setTriggerText?.(text); }, [setTriggerText, text]);
   return (
     <SelectPrimitive.Trigger className={cn('flex h-9 w-full flex-row items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 shadow-sm', className)}>
-      <TextClassContext.Provider value={cn('text-sm', textOf(className))}>{children}</TextClassContext.Provider>
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <TextClassContext.Provider value={text}>{children}</TextClassContext.Provider>
+      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
     </SelectPrimitive.Trigger>
   );
 }
@@ -149,7 +165,9 @@ export function BrowserSelectTrigger({ className, label }: { className?: string;
 }
 
 export function SelectValue({ placeholder, className }: { placeholder?: string; className?: string }) {
-  return <SelectPrimitive.Value placeholder={placeholder ?? ''} className={cn('text-sm text-foreground', className)} />;
+  // come lo <span> dentro il trigger: eredita le classi di testo del trigger (es. text-xs)
+  const inherited = useContext(TextClassContext);
+  return <SelectPrimitive.Value placeholder={placeholder ?? ''} className={cn('text-sm text-foreground', inherited, className)} />;
 }
 
 export function SelectContent({ className, children }: WithChildren) {
@@ -165,13 +183,17 @@ export function SelectContent({ className, children }: WithChildren) {
 }
 
 export function SelectItem({ className, children, value, disabled }: ItemProps) {
+  const look = useContext(SelectLookContext);
+  const itemText = look && !look.open && Platform.OS === 'web'
+    ? cn('text-foreground', look.triggerText)
+    : cn('text-sm text-popover-foreground', textOf(className));
   return (
     <SelectPrimitive.Item value={value} label={textContent(children)} disabled={disabled}
       className={cn('relative flex w-full flex-row items-center rounded-sm py-1.5 pl-2 pr-8 active:bg-accent', disabled && 'opacity-50', className)}>
       <View className="absolute right-2 h-3.5 w-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator><Check className="h-4 w-4" /></SelectPrimitive.ItemIndicator>
       </View>
-      <SelectPrimitive.ItemText className="text-sm text-popover-foreground" />
+      <SelectPrimitive.ItemText className={itemText} />
     </SelectPrimitive.Item>
   );
 }
