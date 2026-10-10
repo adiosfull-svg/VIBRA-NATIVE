@@ -9,6 +9,7 @@ import SelectCheckbox from '@/web/components/client/SelectCheckbox';
 import { useBulkSelection } from '@/web/lib/bulkSelectionContext';
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
+import { usePageWindow } from '@/web/hooks/usePageWindow';
 import { A, HtmlInput, Table, Tbody, Td, Th, Thead, Tr } from '@/ui/elements';
 
 import { win as webWindow } from '@/web/shims/dom';
@@ -94,35 +95,9 @@ export default function ClientGrowthLeague({ rows, onContact, onDetail, search =
   }, [sorted, search]);
 
   // ── Virtualizzazione (window-scroll based, come RecontactList) ──
-  const tbodyRef = useRef(null);
-  const [view, setView] = useState({ start: 0, end: Math.min(filtered.length, 30) });
-
-  const compute = useCallback(() => {
-    const el = tbodyRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const top = rect.top;
-    const vh = webWindow.innerHeight;
-    if (top > vh || top + rect.height < 0) return;
-    const start = Math.max(0, Math.floor(-top / ROW_HEIGHT) - OVERSCAN);
-    const end = Math.min(filtered.length, Math.ceil((vh - top) / ROW_HEIGHT) + OVERSCAN);
-    setView(prev => (prev.start === start && prev.end === end ? prev : { start, end }));
-  }, [filtered.length]);
-
-  useEffect(() => {
-    compute();
-    let raf = 0;
-    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(compute); };
-    webWindow.addEventListener('scroll', onScroll, { passive: true });
-    webWindow.addEventListener('resize', onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      webWindow.removeEventListener('scroll', onScroll);
-      webWindow.removeEventListener('resize', onScroll);
-    };
-  }, [compute]);
-
-  useEffect(() => { compute(); }, [filtered.length, compute]);
+  // PORT: la pagina è lo ScrollView di Page: finestra calcolata da hooks/usePageWindow
+  const { containerRef: tbodyRef, start: viewStart, end: viewEnd } = usePageWindow(filtered.length, ROW_HEIGHT, OVERSCAN, 30);
+  const view = { start: viewStart, end: viewEnd };
 
   const toggleSort = (key) => {
     if (key === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');

@@ -15,6 +15,7 @@ import { useBulkSelection } from '@/web/lib/bulkSelectionContext';
 import { formatContactTime, formatDaysAgo, urgencyColor } from '@/legacy/utils/relativeTime';
 
 import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
+import { usePageWindow } from '@/web/hooks/usePageWindow';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { A, HtmlInput, Img } from '@/ui/elements';
 
@@ -284,11 +285,10 @@ export default function RecontactList({ clients, clientStatsMap, events, onConta
   ), [toRecontact, search]);
 
   // ── Virtualizzazione (window-scroll based, come VirtualizedClientList) ──
-  const containerRef = useRef(null);
+  // PORT: la pagina è lo ScrollView di Page: finestra calcolata da hooks/usePageWindow
   const [itemHeight, setItemHeight] = useState(() =>
     typeof window !== 'undefined' && webWindow.matchMedia('(min-width: 640px)').matches ? DESKTOP_ROW_HEIGHT : MOBILE_ROW_HEIGHT
   );
-  const [view, setView] = useState({ start: 0, end: Math.min(filtered.length, 20) });
 
   useEffect(() => {
     const mq = webWindow.matchMedia('(min-width: 640px)');
@@ -297,32 +297,7 @@ export default function RecontactList({ clients, clientStatsMap, events, onConta
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const compute = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const top = rect.top;
-    const vh = webWindow.innerHeight;
-    if (top > vh || top + rect.height < 0) return;
-    const start = Math.max(0, Math.floor(-top / itemHeight) - OVERSCAN);
-    const end = Math.min(filtered.length, Math.ceil((vh - top) / itemHeight) + OVERSCAN);
-    setView(prev => (prev.start === start && prev.end === end ? prev : { start, end }));
-  }, [filtered.length, itemHeight]);
-
-  useEffect(() => {
-    compute();
-    let raf = 0;
-    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(compute); };
-    webWindow.addEventListener('scroll', onScroll, { passive: true });
-    webWindow.addEventListener('resize', onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      webWindow.removeEventListener('scroll', onScroll);
-      webWindow.removeEventListener('resize', onScroll);
-    };
-  }, [compute]);
-
-  useEffect(() => { compute(); }, [filtered.length, compute]);
+  const { containerRef, start: viewStart, end: viewEnd } = usePageWindow(filtered.length, itemHeight, OVERSCAN);
 
   return (
     <Div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card" style={{ boxShadow: '0 4px 32px -8px rgba(251,146,60,0.10)' }}>
@@ -422,8 +397,8 @@ export default function RecontactList({ clients, clientStatsMap, events, onConta
           </Div>
         ) : (
           <Div ref={containerRef} style={{ position: 'relative', height: filtered.length * itemHeight }}>
-            {filtered.slice(view.start, view.end).map((item, i) => {
-              const idx = view.start + i;
+            {filtered.slice(viewStart, viewEnd).map((item, i) => {
+              const idx = viewStart + i;
               const { client, daysAgo, lastRevenue, lastEvent, rating } = item;
               const initials = client.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
               const phrase = getPhrase(client);

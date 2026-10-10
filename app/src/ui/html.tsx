@@ -534,6 +534,7 @@ type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & {
   className?: string; children?: ReactNode;
   /** Stile Animated (ui/motion.tsx): l'elemento diventa un Animated.View. */
   animatedStyle?: any;
+  ref?: Ref<View>;
 };
 
 // ── overflow-*-auto sul telefono ─────────────────────────────────────────────

@@ -271,7 +271,11 @@ export function webStyle(input: unknown, web = false): WebStyleResult {
       continue;
     }
     if (k === 'display' && v !== 'none' && v !== 'flex') continue;
-    if (k === 'position' && v !== 'absolute' && v !== 'relative') { if (v === 'fixed' || v === 'sticky') style.position = v === 'fixed' ? 'absolute' : 'relative'; continue; }
+    if (k === 'position') {
+      if (v === 'absolute' || v === 'relative') style.position = v;
+      else if (v === 'fixed' || v === 'sticky') style.position = v === 'fixed' ? 'absolute' : 'relative';
+      continue;
+    }
     if (COLOR_KEYS.has(k) || k === 'fill' || k === 'stroke') { const c = cssColor(v); if (c) style[k] = c; continue; }
     if (k === 'fontWeight') { style.fontWeight = String(v); continue; }
     if (typeof v === 'string' && k !== 'fontFamily' && k !== 'textAlign' && k !== 'flexDirection' && k !== 'alignItems'

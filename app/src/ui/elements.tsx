@@ -4,7 +4,7 @@
 //   <svg>/<path>/... → react-native-svg (via Svg* re-export)   <hr> → Hr
 import { Image, type ImageProps } from 'expo-image';
 import { cssInterop } from 'nativewind';
-import { Children, createContext, forwardRef, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Children, createContext, forwardRef, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, TextInput, View, type LayoutChangeEvent, type TextInputProps } from 'react-native';
 import { cn } from './cn';
 import { DateField } from './dateField';
@@ -136,7 +136,7 @@ export function Table({ className, children, style }: { className?: string; chil
     </TableContext.Provider>
   );
 }
-export const Thead = ({ className, children }: { className?: string; children?: ReactNode; ref?: unknown }) => <Div className={cn('flex flex-col', className)}>{children}</Div>;
+export const Thead = ({ className, children, ref }: { className?: string; children?: ReactNode; ref?: Ref<View> }) => <Div ref={ref} className={cn('flex flex-col', className)}>{children}</Div>;
 export const Tbody = Thead;
 export const Tfoot = Thead;
 

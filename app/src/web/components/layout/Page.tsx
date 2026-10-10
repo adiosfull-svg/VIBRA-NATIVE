@@ -2,7 +2,7 @@
 // (pt 0.5rem) + spazio in fondo per la barra di navigazione (4.5rem + safe area).
 import { useFocusEffect } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
+import { RefreshControl, ScrollView, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '../../../ui/cn';
 import { Div } from '../../../ui/html';
@@ -19,13 +19,16 @@ type Props = Omit<ScrollViewProps, 'children'> & {
 };
 
 // Lo scroll di questa pagina fa le veci di quello della finestra nel codice web (shims/pageScroll).
-const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefresh, refreshing = false, onScroll, onContentSizeChange, ...props }, ref) => {
+const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefresh, refreshing = false, onScroll, onContentSizeChange, onLayout, ...props }, ref) => {
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   useImperativeHandle(ref, () => scrollRef.current as ScrollView);
   const handle = useRef<ReturnType<typeof pageScroll.register> | null>(null);
   useEffect(() => {
-    const h = pageScroll.register((y, animated) => scrollRef.current?.scrollTo({ y, animated }));
+    const h = pageScroll.register(
+      (y, animated) => scrollRef.current?.scrollTo({ y, animated }),
+      () => (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.() ?? null,
+    );
     handle.current = h;
     return () => h.unregister();
   }, []);
@@ -38,9 +41,14 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     handle.current?.setContentHeight(h);
     onContentSizeChange?.(w, h);
   }, [onContentSizeChange]);
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    handle.current?.setViewportHeight(e.nativeEvent.layout.height);
+    onLayout?.(e);
+  }, [onLayout]);
   return (
     <ScrollView
       ref={scrollRef}
+      onLayout={handleLayout}
       onScroll={handleScroll}
       scrollEventThrottle={16}
       onContentSizeChange={handleContentSize}

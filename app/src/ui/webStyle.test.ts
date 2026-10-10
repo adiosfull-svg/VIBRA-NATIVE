@@ -76,3 +76,10 @@ test('webStyle: rotateY/perspective e transition (solo web)', () => {
   assert.deepEqual(t, { transitionProperty: 'transform', transitionDuration: '400ms', transitionTimingFunction: 'cubic-bezier(0.22,1,0.36,1)' });
   assert.equal(webStyle({ transition: 'transform 1s' }).style.transitionProperty, undefined);
 });
+
+test('position inline (absolute/relative restano, fixed/sticky convertiti)', () => {
+  assert.equal(webStyle({ position: 'absolute', top: 10 }, false).style.position, 'absolute');
+  assert.equal(webStyle({ position: 'relative' }, true).style.position, 'relative');
+  assert.equal(webStyle({ position: 'sticky' }, false).style.position, 'relative');
+  assert.equal(webStyle({ position: 'static' }, false).style.position, undefined);
+});
