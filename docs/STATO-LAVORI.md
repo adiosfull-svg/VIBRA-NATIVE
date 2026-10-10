@@ -71,13 +71,36 @@
     (`gestures.ts`), form/data/file nativi; sul web classi proprie dell'index.css in `customCss.web.ts`.
   - card che si gira sul telefono: `ui/flip.tsx` + `web/hooks/useFlipGesture.native.jsx`.
 
+## PRIORITÀ: prestazioni e struttura sul telefono (richiesta dell'utente, 10/10)
+L'utente ha provato l'APK: app lenta e bloccata, inutilizzabile (lenta ad aprire Clienti, la lista, il
+dettaglio cliente); mancano blur della sticky bar e della nav bar. Prima di convertire altre pagine si lavora
+su questo. Cause già individuate nel codice:
+1. **Liste non virtualizzate**: `web/components/client/VirtualizedClientList.jsx` rende TUTTI i clienti
+   (`clients.map`) dentro lo ScrollView della pagina (l'originale virtualizza in base allo scroll). Idem
+   probabilmente RecontactList, Growth League, tabelle. → virtualizzare (FlatList/FlashList o finestra calcolata
+   dallo scroll di `Page` via `pageScroll`), righe a altezza fissa 110 già note.
+2. **Costo per ogni Div/Btn** (`ui/html.tsx`): ogni elemento esegue molti hook (contesti, `useMinContentWidth`,
+   `useRigidMinWidth` che misura al primo frame → secondo render + onLayout per ogni figlio di una riga flex,
+   `useInlineBlockStrut` (stato + onLayout), `useFlipFace` (crea un Animated.Value e un effect in OGNI Div),
+   gesture, NativeWind css-interop). Da fare: misurare (profiler React / tempi di mount in build release o
+   `expo start --no-dev --minify`), rendere gratuiti i casi comuni (hook condizionati spostati in componenti
+   separati usati solo quando servono, es. un `<FlipFace>`/`<RigidBox>` scelto da Div), evitare doppi render
+   da misura, memo dove le props sono stabili.
+3. **Blur mancanti**: `sticky-glass` e `mobile-nav-glass` sono classi dell'index.css non emulate sul telefono
+   (sul web ci sono). Su Android `expo-blur` senza `experimentalBlurMethod="dimezisBlurView"` NON sfoca (solo
+   velo): anche MobileNavBar e `backdrop-blur` di html.tsx. → emulare le due classi (BlurView dietro ai figli)
+   e attivare il metodo di blur Android (attenzione al costo: BlurTargetView/target).
+4. Dettaglio cliente lento ad aprire: profilare il mount di ClientDetailDialog (899 righe) dopo i punti 1–2.
+Verifica: build release (`[apk]`) sul telefono dell'utente; in locale tempi sul web con build di produzione
+(`npx expo export -p web`) come confronto relativo.
+
 ## Da fare
 1. **Prova dell'utente sull'APK** (build del 10/10 con tutto il lavoro): Il Mio Vibra (grafici tocco/pinch,
    note trascinabili, chat AI, Calcolatrice trascinabile, tab centrata), Weekend (menu del tasto lungo,
    swipe in Da ricontattare), Semine (Gira e trascinamento delle card), e dalle sessioni prima: selettori
    data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
    scorrimento dei dialog e del dettaglio cliente, export PDF/CSV della Dashboard. Correggere gli errori segnalati.
-2. **Pagine ancora `ComingSoon`** (stesso metodo): Promoter (lista e dettaglio `promoter/[id]`), Serate,
+2. **Pagine ancora `ComingSoon`** (stesso metodo, DOPO le prestazioni): Promoter (lista e dettaglio `promoter/[id]`), Serate,
    Importa serata, Locali, Messaggi, VibraGPT, Ricerca AI, Report, Clienti analytics, Notifiche,
    Impostazioni app, Formazione, Academy, Download, Admin console.
 3. Telefono: pull-to-refresh di Semine (oggi inerte: ascolta i touch del `document`; usare il RefreshControl
