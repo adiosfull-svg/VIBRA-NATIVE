@@ -18,7 +18,7 @@ cd "$OUT/screens"
 for f in $(ls "$OLDPWD"/${FLOWS:-tests/emulatore}/*.yaml 2>/dev/null || echo "$OLDPWD/${FLOWS}"); do
   name=$(basename "$f" .yaml)
   echo "== $name"
-  maestro test "$f" --format junit --output "$OUT/$name.xml" > "$OUT/$name.log" 2>&1 || { status=1; echo "FALLITO $name"; }
+  maestro test -e EMAIL="${EMAIL:-admin@vibra.local}" "$f" --format junit --output "$OUT/$name.xml" > "$OUT/$name.log" 2>&1 || { status=1; echo "FALLITO $name"; }
   adb exec-out uiautomator dump /dev/tty > "$OUT/$name-ui.xml" 2>/dev/null || true
   adb exec-out screencap -p > "$OUT/screens/$name-fine.png" || true
 done

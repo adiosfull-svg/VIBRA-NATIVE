@@ -1,0 +1,35 @@
+# Admin: ogni voce della nav bar apre la sua pagina.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- waitForAnimationToEnd
+- tapOn: "Weekend"
+- extendedWaitUntil:
+    visible: "Weekend"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: nav-weekend
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "Gruppi"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: nav-clienti
+- tapOn: "Il Mio"
+- waitForAnimationToEnd
+- takeScreenshot: nav-ilmio
+- tapOn: "Dashboard"
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 60000
+- takeScreenshot: nav-dashboard

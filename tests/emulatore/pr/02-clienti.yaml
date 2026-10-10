@@ -1,60 +1,68 @@
-# Clienti: lista virtualizzata (scorrimento lungo), dettaglio cliente, chiusura.
+# PR: Clienti, lista virtualizzata lunga, dettaglio cliente e chiusura.
 appId: com.vibra.mobile
 ---
 - launchApp
-- runFlow: sub/sistema.yaml
+- runFlow: ../sub/sistema.yaml
 - extendedWaitUntil:
     visible:
-      text: "FATTURATO TOTALE|Accedi"
+      text: "I Miei Progressi|Password"
     timeout: 180000
-- runFlow: sub/sistema.yaml
-- runFlow: sub/login.yaml
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
 - extendedWaitUntil:
-    visible: "FATTURATO TOTALE"
+    visible: "I Miei Progressi"
     timeout: 180000
+- waitForAnimationToEnd
 - tapOn: "Clienti"
 - extendedWaitUntil:
     visible: "LISTA CLIENTI"
     timeout: 60000
+- waitForAnimationToEnd
 - takeScreenshot: clienti-01
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
     duration: 300
 - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-02
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
     duration: 300
 - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-03
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
     duration: 300
 - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-04
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
     duration: 300
 - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-05
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
     duration: 300
 - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-06
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
     duration: 300
 - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-07
 - tapOn:
-    point: "50%,50%"
+    point: "50%,55%"
 - waitForAnimationToEnd
 - takeScreenshot: clienti-dettaglio
 - back

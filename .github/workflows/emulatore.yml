@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       flows:
-        description: 'Percorsi da eseguire (file o cartella in tests/emulatore)'
+        description: 'Percorsi da eseguire (file o cartella; vuoto = tests/emulatore/<utente>)'
         required: false
-        default: 'tests/emulatore'
+        default: ''
       gpu:
         description: 'Grafica dell emulatore (swangle_indirect; swiftshader_indirect fa cadere l emulatore scorrendo i grafici)'
         required: false
@@ -44,10 +44,16 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]')
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    # un job per utente di prova (pagine e permessi diversi), in parallelo
+    strategy:
+      fail-fast: false
+      matrix:
+        utente: [admin, pr]
     permissions:
       contents: write
     env:
-      FLOWS: ${{ github.event.inputs.flows || 'tests/emulatore' }}
+      FLOWS: ${{ github.event.inputs.flows || format('tests/emulatore/{0}', matrix.utente) }}
+      EMAIL: ${{ matrix.utente }}@vibra.local
     steps:
       - uses: actions/checkout@v4
 
@@ -96,7 +102,7 @@ jobs:
           EXPO_PUBLIC_BACKEND=local
           EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
           EXPO_PUBLIC_SUPABASE_ANON_KEY=dev
-          EXPO_PUBLIC_TEST_LOGIN=admin@vibra.local:vibra
+          EXPO_PUBLIC_TEST_LOGIN=${{ matrix.utente }}@vibra.local:vibra
           EXPO_PUBLIC_TEST_DIAG=1
           ENV
           echo "${{ github.event.inputs.extra_env }}" | tr ';' '\n' | grep '=' >> .env || true
@@ -195,8 +201,8 @@ jobs:
           git init -q -b emulatore-risultati
           git config user.name "emulatore"
           git config user.email "emulatore@users.noreply.github.com"
-          echo "run ${{ github.run_id }} — commit ${{ github.sha }} — app_ref ${{ github.event.inputs.app_ref || 'head' }} — $(date -u)" > INFO.txt
+          echo "run ${{ github.run_id }} — utente ${{ matrix.utente }} — commit ${{ github.sha }} — app_ref ${{ github.event.inputs.app_ref || 'head' }} — $(date -u)" > INFO.txt
           git add -A
-          git commit -qm "Risultati emulatore: run ${{ github.run_id }} (${GITHUB_SHA::7})"
-          # un branch per run (emulatore-risultati/<run>) + l'ultimo su emulatore-risultati
-          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:emulatore-risultati HEAD:refs/heads/emulatore-risultati-${{ github.run_id }}
+          git commit -qm "Risultati emulatore: run ${{ github.run_id }} ${{ matrix.utente }} (${GITHUB_SHA::7})"
+          # un branch per run e utente + l'ultimo per utente
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/emulatore-risultati-${{ matrix.utente }} HEAD:refs/heads/emulatore-risultati-${{ github.run_id }}-${{ matrix.utente }}
