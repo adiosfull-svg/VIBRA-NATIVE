@@ -2,8 +2,10 @@
 // portano riga per riga mantenendo className e struttura:
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
+import { cssInterop } from 'nativewind';
+import { stripSpacedMargins } from './spaceMargins';
 import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
@@ -173,6 +175,19 @@ function inlinePx(v: unknown): number | null {
   return null;
 }
 
+/** Margine di space-* destinato alla radice di un componente (vedi spaceOverrides). */
+const LeadMarginContext = createContext<{ marginTop?: number; marginLeft?: number } | null>(null);
+
+/** Consuma il margine di LeadMarginContext: lo style inline vince, come in CSS. */
+function useLeadMargin(rnStyle: Record<string, any> | undefined): ViewStyle | null {
+  const lead = useContext(LeadMarginContext);
+  if (!lead) return null;
+  const out: ViewStyle = {};
+  if (lead.marginTop != null && rnStyle?.marginTop == null && rnStyle?.marginVertical == null && rnStyle?.margin == null) out.marginTop = lead.marginTop;
+  if (lead.marginLeft != null && rnStyle?.marginLeft == null && rnStyle?.marginHorizontal == null && rnStyle?.margin == null) out.marginLeft = lead.marginLeft;
+  return out;
+}
+
 /**
  * space-y-N/space-x-N diventano gap (normalizeClasses), ma in CSS sono margini sui figli: un
  * figlio con marginTop/marginLeft inline (es. style={{ marginTop: 0 }}) li sostituisce.
@@ -199,7 +214,17 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
     const drawn = typeof child.type === 'string' || props.className != null || props.style != null;
     const outOfFlow = OUT_OF_FLOW.test(props.className ?? '');
     if (drawn) { seen = true; if (!outOfFlow) seenInFlow = true; }
+    if (!drawn && hadPrev && !hadInFlow) {
+      // componente senza className/style (es. <SectionHeader/>) primo nel flusso dopo elementi
+      // assoluti: il margine lo prende il primo Div/Btn che disegna (se rende null, nessuno)
+      seenInFlow = true;
+      const lead = { marginTop: gaps.y, marginLeft: gaps.x };
+      return <LeadMarginContext.Provider key={child.key} value={lead}>{child}</LeadMarginContext.Provider>;
+    }
     if (!hadPrev || !drawn || outOfFlow) return child;
+    // in CSS il selettore di space-* è più specifico di mt-*/mb-*: sui figli dopo il primo li annulla
+    const cls = typeof props.className === 'string' ? stripSpacedMargins(props.className, gaps) : props.className;
+    if (cls !== props.className) child = cloneElement(child as ReactElement<{ className?: string }>, { className: cls });
     const flat = (Array.isArray(props.style) ? StyleSheet.flatten(props.style as StyleProp<ViewStyle>) : (props.style ?? {})) as Record<string, unknown>;
     const fix: Record<string, number> = {};
     const mt = inlinePx(flat.marginTop);
@@ -325,7 +350,15 @@ function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: 
   return { minStyle, onLayout: handleLayout, probe: probe.current };
 }
 
-type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & { className?: string; children?: ReactNode };
+// View animata che accetta className (NativeWind registra solo View, non Animated.View)
+const AnimatedBox = Animated.createAnimatedComponent(View);
+cssInterop(AnimatedBox, { className: 'style' });
+
+type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & {
+  className?: string; children?: ReactNode;
+  /** Stile Animated (ui/motion.tsx): l'elemento diventa un Animated.View. */
+  animatedStyle?: any;
+};
 
 // ── overflow-*-auto sul telefono ─────────────────────────────────────────────
 // Sul web una View con overflow auto scorre (CSS); su Android/iOS no: lì diventa una ScrollView.
@@ -426,7 +459,7 @@ export function hiddenAtWidth(className: string, width: number): boolean {
   return width < min;
 }
 
-export function Div({ className, children, style, onLayout, ...all }: DivProps) {
+export function Div({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
@@ -444,12 +477,14 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
     children, min0.onLayout,
   );
   const min = rigid.probe ? { minStyle: rigid.minStyle, onLayout: rigid.onLayout } : min0;
+  const lead = useLeadMargin(rnStyle);
   let inner = (
     <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
       <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>{boxContent(children, grid, rest)}</FlexRowContext.Provider>
     </FlexParentContext.Provider>
   );
   if (rigid.probe) inner = <WrapProbeContext.Provider value={rigid.probe}>{inner}</WrapProbeContext.Provider>;
+  if (lead) inner = <LeadMarginContext.Provider value={null}>{inner}</LeadMarginContext.Provider>;
   // la cella della griglia la "consuma" questo elemento, non i suoi discendenti
   const content = gridCell ? <GridCellContext.Provider value={false}>{inner}</GridCellContext.Provider> : inner;
   const inPortal = useContext(InPortalContext);
@@ -460,7 +495,7 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   // di sovrapposizione, z-50 non uscirebbe dalla pagina) e sul web anche position: fixed vero
   const fixed = FIXED.test(rest);
   if (fixed && !inPortal) {
-    return <PortalToRoot><Div className={className} style={style} onLayout={onLayout} {...all}>{children}</Div></PortalToRoot>;
+    return <PortalToRoot><Div className={className} style={style} onLayout={onLayout} animatedStyle={animatedStyle} {...all}>{children}</Div></PortalToRoot>;
   }
   const fixedStyle = fixed && Platform.OS === 'web' ? WEB_FIXED : null;
   const blur = backdropBlur(rest, style);
@@ -469,20 +504,23 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   const nativeBlur = blur && Platform.OS !== 'web' ? <BlurFill px={blur.px} /> : null;
   const axis = scrollAxis(rest);
   if (axis) {
-    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, blurStyle, min.minStyle]) as Record<string, any>;
-    return (
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, lead, blurStyle, min.minStyle]) as Record<string, any>;
+    const scroll = (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
         {nativeBlur}
         <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
       </ScrollBox>
     );
+    return animatedStyle ? <Animated.View style={animatedStyle}>{scroll}</Animated.View> : scroll;
   }
+  // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
+  const Box = animatedStyle ? AnimatedBox : View;
   return (
-    <View {...props} {...gestures} onLayout={min.onLayout} className={cn(box, (gradient || nativeBlur) && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, blurStyle, min.minStyle]}>
+    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, (gradient || nativeBlur) && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle]}>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} /> : null}
       <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
-    </View>
+    </Box>
   );
 }
 
@@ -556,6 +594,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const min = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
+  const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
     ? { alignSelf: inlineAlign(inherited) } : null;
   // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
@@ -571,9 +610,10 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), inlineButton, rnStyle, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), inlineButton, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
+      <LeadMarginContext.Provider value={null}>
       <GridCellContext.Provider value={false}>
         <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
           <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>
@@ -581,6 +621,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
           </FlexRowContext.Provider>
         </FlexParentContext.Provider>
       </GridCellContext.Provider>
+      </LeadMarginContext.Provider>
     </Pressable>
   );
 }
