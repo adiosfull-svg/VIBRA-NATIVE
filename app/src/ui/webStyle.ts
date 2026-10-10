@@ -13,7 +13,7 @@ export type WebStyleResult = { style: AnyStyle; gradient?: Gradient & { angle?: 
 const DROP = new Set([
   'filter', 'backdropFilter', 'WebkitBackdropFilter', 'transition', 'transitionDelay', 'animation', 'animationDelay',
   'animationDuration', 'cursor', 'willChange', 'touchAction', 'userSelect', 'WebkitUserSelect', 'WebkitTapHighlightColor',
-  'WebkitTouchCallout', 'pointerEvents', 'overscrollBehavior', 'scrollbarWidth', 'msOverflowStyle', 'WebkitOverflowScrolling',
+  'WebkitTouchCallout', 'overscrollBehavior', 'scrollbarWidth', 'msOverflowStyle', 'WebkitOverflowScrolling',
   'WebkitTransform', 'transformOrigin', 'contain', 'isolation', 'mixBlendMode', 'outline', 'visibility', 'clipPath',
   'maskImage', 'WebkitMaskImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat', 'boxSizing', 'whiteSpace',
   'wordBreak', 'overflowWrap', 'textOverflow', 'WebkitLineClamp', 'WebkitBoxOrient', 'listStyle', 'resize', 'appearance',
@@ -227,6 +227,7 @@ export function webStyle(input: unknown, web = false): WebStyleResult {
   const style: AnyStyle = {};
   let gradient: WebStyleResult['gradient'];
   for (const [k, v] of Object.entries(input as AnyStyle)) {
+    if (k === 'pointerEvents') { style.pointerEvents = v === 'none' ? 'none' : 'auto'; continue; }
     if (web && k === 'transition' && typeof v === 'string') { Object.assign(style, parseTransition(v)); continue; }
     if (v == null || DROP.has(k)) continue;
     if (k === 'background' || k === 'backgroundImage') {

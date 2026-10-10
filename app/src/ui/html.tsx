@@ -4,6 +4,7 @@
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
+import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
 import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
@@ -690,7 +691,11 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   const { box, grid: classGrid, gradient: classGradient, ring } = normalizeClasses(rest);
   const ringStyle = ring ? ringShadow(ring) : null;
   const grid = withStyleRows(classGrid, style);
-  const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
+  const { style: webRnStyle, gradient: styleGradient } = useWebStyle(style);
+  // card che si gira (semina-flip-*, solo telefono): il contenitore passa la rotazione alle facce
+  const inner = flipInner(className, webRnStyle, style);
+  const rnStyle = inner ? inner.style : webRnStyle;
+  const faceStyle = useFlipFace(className);
   const gradient = styleGradient ?? classGradient;
   const gridCell = useContext(GridCellContext);
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout);
@@ -713,15 +718,16 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   );
   const min = { minStyle: strut.style ? [min0b.minStyle, strut.style] : min0b.minStyle, onLayout: strut.onLayout };
   const lead = useLeadMargin(rnStyle);
-  let inner = (
+  let content0 = (
     <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
       <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>{boxContent(children, grid, rest)}</FlexRowContext.Provider>
     </FlexParentContext.Provider>
   );
-  if (rigid.probe) inner = <WrapProbeContext.Provider value={rigid.probe}>{inner}</WrapProbeContext.Provider>;
-  if (lead) inner = <LeadMarginContext.Provider value={null}>{inner}</LeadMarginContext.Provider>;
+  if (inner) content0 = <FlipContext.Provider value={inner.flip}>{content0}</FlipContext.Provider>;
+  if (rigid.probe) content0 = <WrapProbeContext.Provider value={rigid.probe}>{content0}</WrapProbeContext.Provider>;
+  if (lead) content0 = <LeadMarginContext.Provider value={null}>{content0}</LeadMarginContext.Provider>;
   // la cella della griglia la "consuma" questo elemento, non i suoi discendenti
-  const content = gridCell ? <GridCellContext.Provider value={false}>{inner}</GridCellContext.Provider> : inner;
+  const content = gridCell ? <GridCellContext.Provider value={false}>{content0}</GridCellContext.Provider> : content0;
   const inPortal = useContext(InPortalContext);
   // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
   // sul web lo nasconde il CSS, qui costerebbe come se fosse visibile.
@@ -749,9 +755,9 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
     return animatedStyle ? <Animated.View style={animatedStyle}>{scroll}</Animated.View> : scroll;
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
-  const Box = animatedStyle ? AnimatedBox : View;
+  const Box = animatedStyle || faceStyle ? AnimatedBox : View;
   return (
-    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle]}>
+    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle]}>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
