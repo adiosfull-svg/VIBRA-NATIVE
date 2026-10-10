@@ -11,6 +11,17 @@ const stack: Scroller[] = [];
 const listeners = new Set<Listener>();
 const top = () => stack[stack.length - 1];
 
+function offsetIn(el: any, content: any): number | null {
+  if (!el || !content) return null;
+  if (Platform.OS === 'web') {
+    if (typeof el.getBoundingClientRect !== 'function' || typeof content.getBoundingClientRect !== 'function') return null;
+    return el.getBoundingClientRect().top - content.getBoundingClientRect().top;
+  }
+  let y: number | null = null;
+  try { el.measureLayout?.(content, (_x: number, yy: number) => { y = yy; }, () => {}); } catch { /* elemento smontato */ }
+  return y;
+}
+
 export const pageScroll = {
   get y() { return top()?.y ?? 0; },
   get contentHeight() { return top()?.contentHeight ?? 0; },
@@ -24,15 +35,12 @@ export const pageScroll = {
    * Fabric), sul web la differenza dei getBoundingClientRect. null se non misurabile.
    */
   offsetOf(el: any): number | null {
-    const content = top()?.content();
-    if (!el || !content) return null;
-    if (Platform.OS === 'web') {
-      if (typeof el.getBoundingClientRect !== 'function' || typeof content.getBoundingClientRect !== 'function') return null;
-      return el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-    }
-    let y: number | null = null;
-    try { el.measureLayout?.(content, (_x: number, yy: number) => { y = yy; }, () => {}); } catch { /* elemento smontato */ }
-    return y;
+    return offsetIn(el, top()?.content());
+  },
+
+  /** Come offsetOf, ma rispetto al contenuto indicato (la propria pagina: con le tab ne sono montate più d'una). */
+  offsetIn(el: any, content: any): number | null {
+    return offsetIn(el, content);
   },
 
   /** Page al montaggio: restituisce le funzioni per riportare lo stato e per deregistrarsi. */

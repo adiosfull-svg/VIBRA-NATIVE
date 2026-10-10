@@ -54,7 +54,9 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const setBlurTarget = useCallback((el: View | null) => { blurHandle.current?.set(el); }, []);
   const layer = useMemo<PageLayer>(() => ({
     scrollY,
-    offsetOf: (el) => pageScroll.offsetOf(el),
+    // rispetto al contenuto di QUESTA pagina (con le tab ne sono montate più d'una e quella "in
+    // primo piano" cambia solo dopo il layout: la barra sticky si misurava sulla pagina sbagliata)
+    offsetOf: (el) => pageScroll.offsetIn(el, (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()),
     onContentChange: (fn) => { contentListeners.add(fn); return () => { contentListeners.delete(fn); }; },
   }), [scrollY, contentListeners]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
