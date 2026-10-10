@@ -8,7 +8,7 @@
   (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
 - Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
 - Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Lavoro sul branch **`claude/awesome-tesla-ovfcmf`**
-  (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1).
+  (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1); prestazioni su `claude/ecstatic-dirac-k411yk`.
 
 ## Ambiente (nuova sessione)
 1. Originale: `add_repo` adiosfull-svg/VIBRA (sola lettura), poi
@@ -73,26 +73,33 @@
 
 ## PRIORITÀ: prestazioni e struttura sul telefono (richiesta dell'utente, 10/10)
 L'utente ha provato l'APK: app lenta e bloccata, inutilizzabile (lenta ad aprire Clienti, la lista, il
-dettaglio cliente); mancano blur della sticky bar e della nav bar. Prima di convertire altre pagine si lavora
-su questo. Cause già individuate nel codice:
-1. **Liste non virtualizzate**: `web/components/client/VirtualizedClientList.jsx` rende TUTTI i clienti
-   (`clients.map`) dentro lo ScrollView della pagina (l'originale virtualizza in base allo scroll). Idem
-   probabilmente RecontactList, Growth League, tabelle. → virtualizzare (FlatList/FlashList o finestra calcolata
-   dallo scroll di `Page` via `pageScroll`), righe a altezza fissa 110 già note.
-2. **Costo per ogni Div/Btn** (`ui/html.tsx`): ogni elemento esegue molti hook (contesti, `useMinContentWidth`,
-   `useRigidMinWidth` che misura al primo frame → secondo render + onLayout per ogni figlio di una riga flex,
-   `useInlineBlockStrut` (stato + onLayout), `useFlipFace` (crea un Animated.Value e un effect in OGNI Div),
-   gesture, NativeWind css-interop). Da fare: misurare (profiler React / tempi di mount in build release o
-   `expo start --no-dev --minify`), rendere gratuiti i casi comuni (hook condizionati spostati in componenti
-   separati usati solo quando servono, es. un `<FlipFace>`/`<RigidBox>` scelto da Div), evitare doppi render
-   da misura, memo dove le props sono stabili.
-3. **Blur mancanti**: `sticky-glass` e `mobile-nav-glass` sono classi dell'index.css non emulate sul telefono
-   (sul web ci sono). Su Android `expo-blur` senza `experimentalBlurMethod="dimezisBlurView"` NON sfoca (solo
-   velo): anche MobileNavBar e `backdrop-blur` di html.tsx. → emulare le due classi (BlurView dietro ai figli)
-   e attivare il metodo di blur Android (attenzione al costo: BlurTargetView/target).
-4. Dettaglio cliente lento ad aprire: profilare il mount di ClientDetailDialog (899 righe) dopo i punti 1–2.
-Verifica: build release (`[apk]`) sul telefono dell'utente; in locale tempi sul web con build di produzione
-(`npx expo export -p web`) come confronto relativo.
+dettaglio cliente); mancano blur della sticky bar e della nav bar. Lavoro sul branch
+`claude/ecstatic-dirac-k411yk` (partito da `claude/awesome-tesla-ovfcmf`), un APK per passo.
+Fatto (in attesa della prova dell'utente):
+1. **Liste virtualizzate** (`web/hooks/usePageWindow.js`): finestra delle liste window-based calcolata
+   dallo ScrollView di Page (`pageScroll.offsetOf`: measureLayout sul contenuto dello ScrollView, sincrono in
+   Fabric; sul web differenza dei getBoundingClientRect). VirtualizedClientList come l'originale (righe
+   memoizzate, callback stabili, scroll al cliente cercato), RecontactList e ClientGrowthLeague. Corretti
+   anche: `Tbody` perdeva il ref (Growth League ferma a 30 righe), `webStyle` scartava
+   `style={{ position: 'absolute' }}` (righe virtuali, share card, bacheca).
+   Misura (web produzione, CPU 4x, 150 clienti; script in scratchpad, rifarli con Playwright):
+   apertura Clienti 7,1→4,2 s, dettaglio cliente 4,7→0,83 s, chiusura 2,4→0,49 s, ritorno al tab 6,4→1,7 s.
+2. **Elementi più leggeri**: `useFlipFace` non crea più un Animated.Value a ogni render di ogni Div;
+   `cn()` con cache ampia (quella di twMerge è di 500 voci). Effetto non misurabile sul web (V8).
+   Provato e SCARTATO il React Compiler (Expo `experiments.reactCompiler`): nessun guadagno misurato
+   (né tempi né render contati), solo rischio. Note se lo si riprova: salta i componenti con `||=`,
+   try/finally, ref letti o passati durante il render (`makeTapHandlers(ref, …)`).
+3. **Sticky e blur** (`ui/pageLayers.tsx`): sul telefono `sticky` non esisteva (la barra scorreva via) e
+   `useStickySentinel` dava sempre "non incollata" (niente vetro neanche sul web). Ora Page dà lo scroll
+   come Animated.Value (driver nativo) e lo sticky è un translateY; la sentinella misura lo scroll.
+   Blur Android: Dimezis (`dimezisBlurViewSdk31Plus`, da Android 12) con BlurTargetView, che non può
+   contenere la sua BlurView: nav bar → la pagina (Page avvolta in BlurTargetView); barra sticky → i
+   fratelli che la seguono (il contenitore li raccoglie in un BlurTargetView, `StickySplit` in html.tsx).
+   I backdrop-blur dentro la pagina restano velo (nessun bersaglio possibile).
+Ancora da fare se l'APK resta lento: profilare sul telefono (Hermes) il mount del dettaglio cliente
+(ClientDetailDialog) e di Clienti; candidati: hook di misura di Div (`useRigidMinWidth`/`useMinContentWidth`
+fanno un secondo render dopo il layout), `textSignature` che percorre i figli a ogni render, css-interop.
+Verifica: build release (`[apk]`) sul telefono dell'utente.
 
 ## Da fare
 1. **Prova dell'utente sull'APK** (build del 10/10 con tutto il lavoro): Il Mio Vibra (grafici tocco/pinch,
