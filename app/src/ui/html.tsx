@@ -117,6 +117,11 @@ const GridCellContext = createContext(false);
 
 // Figli che in CSS non si allungano all'altezza della riga della griglia
 const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
+// h-full in una cella: in CSS è l'altezza della riga della griglia (definita dopo il calcolo delle
+// tracce). In Yoga la cella non ha altezza definita e il 100% esplode (Dashboard: card alte 25.000 px,
+// pagina "vuota" sotto la Classifica). Nella cella h-full diventa quindi "allungati alla riga".
+const H_FULL = /(^|\s)h-full(?=\s|$)/g;
+const withoutHFull = (cls: string) => cls.replace(H_FULL, ' ');
 
 /**
  * Figli "CSS" di un contenitore: Fragment, <Suspense> e i componenti che non creano elementi nel DOM
@@ -433,7 +438,7 @@ const Z_CLASS = /(^|\s)(?:[a-z0-9-]+:)*-?z-/;
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
   const base: Record<string, any> = grid ? { rowGap: grid.gapY } : {};
   if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
-  if (gridCell && !NO_STRETCH.test(rawClass ?? '') && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
+  if (gridCell && !NO_STRETCH.test(withoutHFull(rawClass ?? '')) && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
   // ordine di disegno CSS: gli elementi posizionati stanno sopra ai fratelli non posizionati
   // (in RN-web tutte le View sono relative e conta solo l'ordine nel codice)
   if (POSITIONED.test(rawClass ?? '') && !Z_CLASS.test(rawClass ?? '') && style?.zIndex == null) base.zIndex = 1;
@@ -722,7 +727,7 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
   const layout = useContext(FlexParentContext);
   const [text, classRest] = splitTextClasses(className);
   const rest = withStyleGrid(classRest, style);
-  const { box, grid: classGrid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const { box: box0, grid: classGrid, gradient: classGradient, ring } = normalizeClasses(rest);
   const ringStyle = ring ? ringShadow(ring) : null;
   const grid = withStyleRows(classGrid, style);
   const { style: webRnStyle, gradient: styleGradient } = useWebStyle(style);
@@ -732,6 +737,7 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
   const faceStyle = useFlipFace(className);
   const gradient = styleGradient ?? classGradient;
   const gridCell = useContext(GridCellContext);
+  const box = gridCell ? withoutHFull(box0) : box0;
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout);
   const rowParent = useContext(FlexRowContext);
   // flex-wrap: in CSS la sua larghezza minima è quella dell'elemento più largo, non della riga intera:
@@ -869,7 +875,8 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const rest = withStyleGrid(classRest, style);
   // il browser centra il contenuto di <button> (le classi text-left/right della pagina vincono)
   const text = button ? cn('text-center', ownText) : ownText;
-  const { box, grid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const { box: box0, grid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const box = gridCell ? withoutHFull(box0) : box0;
   const ringStyle = ring ? ringShadow(ring) : null;
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
