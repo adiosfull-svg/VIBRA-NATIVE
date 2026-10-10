@@ -4,7 +4,7 @@
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
-import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
+import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -269,9 +269,13 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
   let seenInFlow = false;
   const visit = (nodes: ReactNode): ReactNode => Children.map(nodes, (child) => {
     if (!isValidElement(child)) return child;
-    // i figli di un Fragment in CSS sono fratelli diretti
+    // i figli di un Fragment (e di <Suspense>, che non crea elementi) in CSS sono fratelli diretti
     if (child.type === Fragment) {
       return <Fragment key={child.key}>{visit((child.props as { children?: ReactNode }).children)}</Fragment>;
+    }
+    if (child.type === Suspense) {
+      const sp = child.props as { children?: ReactNode; fallback?: ReactNode };
+      return <Suspense key={child.key} fallback={sp.fallback}>{visit(sp.children)}</Suspense>;
     }
     const props = child.props as { className?: string; style?: unknown };
     const hadPrev = seen;

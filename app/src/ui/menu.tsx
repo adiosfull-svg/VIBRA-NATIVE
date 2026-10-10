@@ -10,6 +10,7 @@ import * as TabsPrimitive from '@rn-primitives/tabs';
 import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
+import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
 import { IconClassContext } from './icon';
 import { Check, ChevronDown, ChevronRight } from './icons.generated';
@@ -19,7 +20,7 @@ type WithChildren = { className?: string; children?: ReactNode };
 type Handler = { onClick?: () => void; onSelect?: (e?: unknown) => void };
 
 // ── DropdownMenu ─────────────────────────────────────────────────────────────
-export const DropdownMenu = DropdownPrimitive.Root;
+export const DropdownMenu = (props: DropdownPrimitive.RootProps) => <DropdownPrimitive.Root style={ROOT_CONTENTS} {...props} />;
 export function DropdownMenuTrigger({ children, asChild = true }: { children?: ReactNode; asChild?: boolean }) {
   return <DropdownPrimitive.Trigger asChild={asChild}>{children as ReactElement}</DropdownPrimitive.Trigger>;
 }
@@ -75,7 +76,7 @@ export const DropdownMenuLabel = ({ className, children, inset }: WithChildren &
 export const DropdownMenuSeparator = ({ className }: { className?: string }) => <View className={cn('-mx-1 my-1 h-px bg-muted', className)} />;
 
 // ── Popover ──────────────────────────────────────────────────────────────────
-export const Popover = PopoverPrimitive.Root;
+export const Popover = (props: PopoverPrimitive.RootProps) => <PopoverPrimitive.Root style={ROOT_CONTENTS} {...props} />;
 export function PopoverTrigger({ children, asChild = true }: { children?: ReactNode; asChild?: boolean }) {
   return <PopoverPrimitive.Trigger asChild={asChild}>{children as ReactElement}</PopoverPrimitive.Trigger>;
 }
@@ -122,7 +123,7 @@ export function Select({ value, defaultValue, onValueChange, children, disabled 
   const look = useMemo(() => ({ open, triggerText, setTriggerText }), [open, triggerText]);
   return (
     <SelectLookContext.Provider value={look}>
-      <SelectPrimitive.Root value={opt(value)} defaultValue={opt(defaultValue)} disabled={disabled}
+      <SelectPrimitive.Root style={ROOT_CONTENTS} value={opt(value)} defaultValue={opt(defaultValue)} disabled={disabled}
         onOpenChange={setOpen} onValueChange={(o) => o && onValueChange?.(o.value)}>
         {children}
       </SelectPrimitive.Root>

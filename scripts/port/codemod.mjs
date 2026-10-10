@@ -65,8 +65,8 @@ function rewriteImport(src) {
 }
 
 // ── API del browser → shim (app/src/web/shims/dom: veri oggetti sul web, equivalenti nativi sul telefono)
-const DOM_SHIMS = { window: 'webWindow', document: 'webDocument', navigator: 'webNavigator', localStorage: 'webStorage', URL: 'webURL' };
-const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage', WebCustomEvent: 'CustomEvt', webURL: 'url' };
+const DOM_SHIMS = { window: 'webWindow', document: 'webDocument', navigator: 'webNavigator', localStorage: 'webStorage', sessionStorage: 'webSessionStorage', URL: 'webURL' };
+const SHIM_EXPORT = { webWindow: 'win', webDocument: 'doc', webNavigator: 'nav', webStorage: 'storage', webSessionStorage: 'sessionStore', WebCustomEvent: 'CustomEvt', webURL: 'url' };
 // new X(...) di classi del browser che sul telefono non esistono
 const NEW_SHIMS = { CustomEvent: 'WebCustomEvent' };
 
@@ -119,7 +119,7 @@ export function shimFile(code) {
   applyDomShims(ast);
   let out = recast.print(ast, { quote: 'single', wrapColumn: 160 }).code;
   const lines = out.split('\n');
-  const resolved = /^\/\/ {2}- (window|document|navigator|localStorage)\.|^\/\/ {2}- createPortal/;
+  const resolved = /^\/\/ {2}- (window|document|navigator|localStorage|sessionStorage)\.|^\/\/ {2}- createPortal/;
   const kept = lines.filter((l) => !resolved.test(l));
   const i = kept.findIndex((l) => l.startsWith('// PORT-TODO'));
   if (i >= 0 && !(kept[i + 1] ?? '').startsWith('//  - ')) kept.splice(i, 1);
@@ -290,11 +290,6 @@ export function transform(code, originalPath = '') {
       this.traverse(p);
     },
 
-    visitMemberExpression(p) {
-      const o = p.node.object;
-      if (o.type === 'Identifier' && o.name === 'sessionStorage') todos.push(`sessionStorage.${p.node.property.name ?? ''}`);
-      this.traverse(p);
-    },
   });
 
   applyDomShims(ast);

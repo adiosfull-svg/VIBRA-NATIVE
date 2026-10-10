@@ -5,7 +5,7 @@
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import * as AlertDialogPrimitive from '@rn-primitives/alert-dialog';
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { buttonVariants } from './button';
@@ -50,8 +50,14 @@ function useMaxHeight(popup?: boolean) {
 /** <Dialog modal={false}>: niente velo scuro dietro (come Radix), il resto uguale. */
 const ModalContext = createContext(true);
 
+/**
+ * La radice di Radix non crea elementi; quella di rn-primitives una View, che da sola (dialog chiuso)
+ * occuperebbe un posto nel contenitore (gap, space-y): display: contents la rende trasparente.
+ */
+export const ROOT_CONTENTS = { display: 'contents' } as unknown as ViewStyle;
+
 export function Dialog({ modal = true, ...props }: DialogPrimitive.RootProps & { modal?: boolean }) {
-  return <ModalContext.Provider value={modal}><DialogPrimitive.Root {...props} /></ModalContext.Provider>;
+  return <ModalContext.Provider value={modal}><DialogPrimitive.Root style={ROOT_CONTENTS} {...props} /></ModalContext.Provider>;
 }
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
@@ -98,7 +104,7 @@ export const DialogDescription = ({ className, children }: WithChildren) => (
   <DialogPrimitive.Description asChild><Text className={cn('text-sm text-muted-foreground', className)}>{children}</Text></DialogPrimitive.Description>
 );
 
-export const AlertDialog = AlertDialogPrimitive.Root;
+export const AlertDialog = (props: AlertDialogPrimitive.RootProps) => <AlertDialogPrimitive.Root style={ROOT_CONTENTS} {...props} />;
 export const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
 export function AlertDialogContent({ className, children }: WithChildren) {
