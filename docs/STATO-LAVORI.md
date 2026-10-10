@@ -1,300 +1,93 @@
 # Stato lavori VIBRA nativa (da riprendere in una nuova sessione)
 
 ## Obiettivo e regole
-- Copia **identica** (grafica e funzioni) dell'app web VIBRA su Base44 (app `69de4f1f7f53d9f187d01392`) in React Native/Expo, Android + iOS.
-- **Backend: Base44** (decisione dell'utente, ottobre 2026): l'app nativa usa il vero SDK `@base44/sdk` 0.8.53
-  con dati, funzioni, automazioni, file e login di Base44. Si riscrive solo l'interfaccia.
-- **Sola lettura**: con i tool MCP mai scritture su Base44; l'app nativa è in "modalità prova" (non scrive sui dati
-  veri, `app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
-- Supabase resta SOLO come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti grafici.
-- Repo: https://github.com/adiosfull-svg/VIBRA-NATIVE (branch `main`).
+- Copia **identica** (grafica e funzioni) dell'app web VIBRA su Base44 (app `69de4f1f7f53d9f187d01392`) in
+  React Native/Expo (Expo 57, RN 0.86 nuova architettura), Android + iOS. Si riscrive solo l'interfaccia.
+- **Backend: Base44** vero (`@base44/sdk` 0.8.53: dati, funzioni, automazioni, file, login).
+- **Sola lettura**: mai scritture su Base44 né sul repo originale; l'app è in "modalità prova"
+  (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
+- Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
+- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Lavoro sul branch **`claude/awesome-tesla-ovfcmf`**
+  (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1).
 
-## Ambiente da ricreare in una nuova sessione
-1. Codice originale (riferimento, NON in questo repo): l'app Base44 è sincronizzata col repo GitHub
-   **`adiosfull-svg/VIBRA`** (verificato: stesso commit del sandbox Base44). Aggiungerlo alla sessione con
-   `add_repo` (owner adiosfull-svg, repo VIBRA, sola lettura) e clonarlo:
-   `git clone --depth 1 https://github.com/adiosfull-svg/vibra /home/user/vibra-reference` (secondi, invece di
-   rileggere 475 file da Base44). Mai scrivere su quel repo né su Base44.
-2. Backend locale: `scripts/local/dev_stack.sh --reset` (serve il binario PostgREST v12.2.3 in
-   `scripts/local/bin/`: `mkdir -p scripts/local/bin && curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin`).
-   Con admin la lista Clienti locale è vuota (i dati di prova sono di altri promoter): per provare form e dettaglio
-   creare un cliente con "Singolo cliente". Prove Playwright con touch: contesto `{ hasTouch: true, isMobile: true }`. Utenti: admin/pr/super4 `@vibra.local`, password `vibra`.
-3. App: `cd app && npm install && printf 'EXPO_PUBLIC_BACKEND=local\nEXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\nEXPO_PUBLIC_SUPABASE_ANON_KEY=dev\n' > .env && EXPO_OFFLINE=1 npx expo start --web --port 8081`
-   (senza `.env` l'app usa Base44 vero, irraggiungibile dal container: lo prova l'utente con il suo account Google)
-   (`EXPO_OFFLINE=1` perché api.expo.dev è bloccato dal proxy; idem per `npx expo install`).
-4. App originale di riferimento: `tools/web-ref/setup.sh /home/user/vibra-reference` poi `tools/web-ref/run.sh`
-   (porta 5173, `?as=pr|admin|super4`). Confronti con Playwright (Chromium in /opt/pw-browsers).
-5. Tool del codemod: `cd scripts/port && npm install`.
-6. Confronto originale vs nativo (entrambe le app avviate): `node tools/compare/measure.mjs <out> /clienti pr,admin,super4`
-   (screenshot `<ruolo>-ref.png`/`-nat.png` + posizione verticale dei testi comuni, `dy` = scostamento) e
-   `node tools/compare/probe.mjs <ruolo> /clienti "<testo>"` (stili calcolati della catena di antenati, per la causa).
-   Nota: dy/dx piccoli su pillole, pulsanti, iniziali avatar sono normali (nel web il testo è misurato sul contenitore);
-   "Weekend"/"Cerca"/"Chiudi" con dy enormi sono elementi nascosti con la stessa etichetta.
-   Tab e dialog: quarto argomento con i passi, uguali sulle due app (`tools/compare/steps.mjs`), es.
-   `node tools/compare/measure.mjs out/growth /clienti pr "click:Growth;wait:2500"`,
-   `"click:Sofia Colombo;wait:2500"` (dettaglio cliente; per super4 "Alessandro Conti"), `"click:Singolo cliente"`,
-   `"click:Importa più clienti"`, `"click:Aggiungi presenze"`, `"click:Mappa;wait:4000"`,
-   `"click:Cerca;wait:2000;type:sofia"`. Anche `probe.mjs` accetta i passi (5° argomento). Parti basse della
-   pagina: `scrollto:<y>` (es. `"click:Il Mio Team;wait:4000;scrollto:2950"`); tab di Il Mio Vibra anche via URL
-   (`/il-mio-vibra?tab=guadagni|guadagni-dettagli|serate|progressi|accordi|note|achievements|vibravs`).
-7. I processi in background possono spegnersi tra un turno e l'altro: `tools/compare/up.sh` riavvia stack, app
-   originale e app nativa (solo quelli spenti) e aspetta che rispondano.
+## Ambiente (nuova sessione)
+1. Originale: `add_repo` adiosfull-svg/VIBRA (sola lettura), poi
+   `git clone --depth 1 https://github.com/adiosfull-svg/vibra /home/user/vibra-reference`.
+2. Stack locale: `mkdir -p scripts/local/bin && curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin`
+   poi `scripts/local/dev_stack.sh --reset`. Utenti admin/pr/super4 `@vibra.local`, password `vibra`.
+   Lo stack accetta scritture: per avere dati (clienti, semine) crearli dai form del nativo.
+3. App: `cd app && npm install && printf 'EXPO_PUBLIC_BACKEND=local\nEXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321\nEXPO_PUBLIC_SUPABASE_ANON_KEY=dev\n' > .env`
+   (`EXPO_OFFLINE=1` per expo: api.expo.dev è bloccato). Codemod: `cd scripts/port && npm install`.
+4. Originale avviabile: `tools/web-ref/setup.sh /home/user/vibra-reference` (porta 5173, `?as=pr|admin|super4`).
+5. `tools/compare/up.sh` avvia (o riavvia) stack :54321, originale :5173, nativo web :8081.
+6. Verifiche: `cd app && npx tsc --noEmit -p . && npm test`; bundle Android:
+   `EXPO_OFFLINE=1 npx expo export --platform android --output-dir <tmp>`.
+7. APK: commit con `[apk]` nel messaggio → GitHub Actions (~14 min), link fisso
+   https://github.com/adiosfull-svg/VIBRA-NATIVE/releases/download/anteprima/vibra.apk
+   (stato con l'MCP GitHub `actions_list`). Nella release gli errori JS mostrano la schermata di
+   `lib/crashReport.tsx`: chiedere all'utente testo/screenshot.
+
+## Metodo per una pagina
+1. File mancanti: `node scripts/port/tree.mjs /home/user/vibra-reference/src /home/user/vibra-reference/src/pages/<Pagina>.jsx`
+   (elenco dei file della pagina) e conversione di ognuno che manca in `app/src/web/`:
+   `node scripts/port/codemod.mjs <src-originale>/<f> app/src/web/<f> --src /home/user/vibra-reference/src`
+   (i `.js` diventano `.jsx`). Il codemod segna i punti manuali con `PORT-TODO`.
+2. Route: sostituire il `ComingSoon` in `app/src/app/(app)/...` con `<Page><Pagina /></Page>` (vedi
+   `(tabs)/programmazione.tsx`).
+3. Confronto: `node tools/compare/measure.mjs <out> /<route> pr,super4 "<passi>"` (screenshot `-ref/-nat` +
+   `dy` dei testi comuni; passi: `click:<testo>`, `click~`, `nth:`, `wait:`, `type:`, `key:`, `scroll:`,
+   `scrollto:<y>`), causa con `node tools/compare/probe.mjs <ruolo> <route> "<testo>" [livelli] [passi]`.
+   Normali: dy/dx piccoli su pulsanti, badge, celle `<td>` (il web misura il contenitore), testi nascosti duplicati.
+   La tabella mensile di I Miei Progressi a volte misura righe più alte (intermittente: rimisurare).
+4. Correggere nello strato `app/src/ui/` (vale per tutte le pagine), modificare il codice di pagina solo se
+   necessario (commento `// PORT:`); dopo ogni correzione rimisurare Clienti/Dashboard/Il Mio Vibra (regressioni).
 
 ## Fatto
-- **Collegamento a Base44** (`app/src/lib/`): `base44.ts` sceglie il backend (`backend.ts`);
-  `base44Remote.ts` = SDK vero (appId, serverUrl https://base44.app), token in SecureStore/localStorage,
-  login Google (web: redirect come l'originale; telefono: `WebBrowser.openAuthSessionAsync` con ritorno
-  `Linking.createURL('auth')`, route `app/src/app/auth.tsx`); `readonlyGuard.ts` (+ test) blocca scritture,
-  funzioni server e integrazioni; `auth.tsx` = AuthProvider (Base44 o locale `authLocal.ts`);
-  `localBackend.ts` = vecchio adattatore Supabase per lo stack di prova.
-  Verificato: login web porta a `https://base44.app/api/apps/auth/login?...`; bundle Android compila.
-  DA VERIFICARE dall'utente: login Google sul telefono (Base44 potrebbe rifiutare `from_url` exp:// o vibra://:
-  in quel caso pagina ponte https che rimbalza il token verso l'app).
-- (Storico, non più usato in produzione) Progetto Supabase `iapybtpkvgryqxtapsll` e `supabase/setup_completo.sql`:
-  si può eliminare il progetto.
-- Schema Supabase dalle entità (`scripts/gen_schema.py`), RLS (`scripts/test_db.sh`): ora serve solo allo stack di prova.
-- Strato di compatibilità web→nativo in `app/src/ui/`:
-  `html.tsx` (Div/Span/P/Btn con ereditarietà stili testo), `text.tsx` (font Inter per peso, line-height 1.5,
-  flex-shrink 1 come CSS), `webClasses.ts` (flex in riga, space→gap, grid, gradienti, ring),
-  `webStyle.ts` (style CSS → RN), `elements.tsx` (img, a, table, input, select, svg),
-  componenti shadcn (`button, card, badge, input, dialog, menu, misc`), `icons.generated.ts`
-  (178 icone da lucide 0.475 identiche), `motion.tsx` (framer-motion), `recharts.tsx`, `use-toast.tsx`, `sonner.ts`.
-- `app/src/web/router.tsx`: API react-router.
-- Shell portata e verificata uguale all'originale: header, MobileNavBar (pill, drag, menu radiale), Sidebar,
-  NotificationBell, AccountMenu. Route con gli stessi percorsi dell'originale.
-- Codemod `scripts/port/codemod.mjs` (+ `tree.mjs` per trovare i file di una pagina): converte i file originali
-  in `app/src/web/...` mantenendo codice identico; segna i punti manuali con `PORT-TODO`.
-- Pagina Clienti: 74 file convertiti, compila e si vede quasi identica all'originale.
-- **Spaziature Clienti (ex punto 1) — FATTO**, verificato con `tools/compare/measure.mjs` per pr, admin e super4:
-  sezioni e righe della lista nella stessa posizione verticale dell'originale (dy=0).
-  - La safelist `gap-x/y-*` (0–24, mezzi passi, px; base/sm/md/lg) era già in `app/tailwind.config.js`
-    e funziona (gap-y-3 = 12px); `gen_safelist.mjs` produce solo le classi usate, la safelist resta come rete.
-  - Causa vera dello scostamento: in CSS `space-y-N` sono margini sui figli e un figlio con `style={{ marginTop: 0 }}`
-    li annulla (i sentinel della tab bar e della ricerca); col gap no. `Div`/`Btn` (`app/src/ui/html.tsx`,
-    `spaceOverrides`) ora danno a quei figli margine − gap, attraversando i Fragment.
-  - `VirtualizedClientList`: ogni riga è in un contenitore alto 110px con overflow nascosto come nell'originale
-    (la card ha `h-full`; prima ogni riga risultava alta 1500px).
+- **Shell**: header, MobileNavBar, Sidebar, NotificationBell, AccountMenu, Ricerca (VibraSearch), Calcolatrice
+  globale (`app/(app)/_layout.tsx`), route con gli stessi percorsi. Login Google con Base44: PC ok; telefono ok
+  tramite la pagina ponte `/accesso-app` dell'app Base44 (`LOGIN_BRIDGE_URL` in `base44Remote.ts`, da passare a
+  `https://vibrayourparty.com/accesso-app` quando l'utente pubblica).
+- **Pagine convertite e identiche all'originale (web, pr/admin/super4)**: Clienti (tutte le tab, dettaglio,
+  dialog, Mappa Leaflet in iframe/WebView), Dashboard, Il Mio Vibra (tutte le 8 tab + Calcolatrice),
+  Weekend/Programmazione (6 tab, Aggiungi Semina), Semine (card che si girano).
+- **APK**: si avvia, login ok (fix TextDecoder latin1 per Hermes, jsPDF caricato solo all'export).
+- **Strato `ui/`** (emulazione CSS/DOM, principali regole):
+  - testo: ereditarietà classi/stile, Inter per peso, line-height ereditata (`textLeading.ts`), strut delle
+    righe per span/label e per inline-flex/inline-block/`<button>` in linea (`inlineBlockMargins`),
+    campi di testo a 16px con line-height ereditata e classi `focus:` (ring/bordo, `focusStyle.ts`).
+  - layout: flex-shrink solo nei flex CSS, min-width:auto (`useMinContentWidth`, `useRigidMinWidth`; non per
+    flex-wrap), space-x/y come gap con le regole CSS (margini inline, figli dopo assoluti, mt/mb annullati,
+    primo mb che collassa: `spaceMargins.ts`), griglie (colonne uguali, template fr/auto/px anche da
+    `style.gridTemplateColumns`/`repeat()`, righe esplicite e `row-span` con `ExplicitGrid`),
+    Fragment/Suspense/AnimatePresence trasparenti (`cssChildren`), tabelle a layout automatico, `fixed` alla radice.
+  - aspetto: gradienti (arrotondati col raggio, senza overflow-hidden), `boxShadow` CSS completo, `ring-*` come
+    boxShadow, backdrop-blur, zIndex 1 agli elementi posizionati (ordine di disegno CSS), `pointerEvents`,
+    radici di Dialog/Popover/Menu/Select con `display: contents`, testo del Select ereditato dal trigger.
+  - animazioni: `motion.tsx` (opacity/x/y/scale/rotate, width/height, %; anima il Div stesso).
+  - librerie sostituite: recharts (`recharts.tsx`), uPlot (`uplot.tsx`, scala come uPlot), react-markdown
+    (`markdown.tsx`), @hello-pangea/dnd (`web/shims/dnd.tsx`), Leaflet (`ui/map/`), Radix (`@rn-primitives`).
+  - DOM sul telefono: shim `web/shims/dom.ts` (window/document/localStorage/sessionStorage/scroll della
+    pagina/eventi), ref delle ScrollView con `scrollTo({left})`/`scrollLeft`, gesture web sui Div
+    (`gestures.ts`), form/data/file nativi; sul web classi proprie dell'index.css in `customCss.web.ts`.
+  - card che si gira sul telefono: `ui/flip.tsx` + `web/hooks/useFlipGesture.native.jsx`.
 
-- **Pulsanti Clienti — FATTO**: `useMinContentWidth` in `app/src/ui/html.tsx` emula `min-width: auto` per gli
-  elementi `whitespace-nowrap` (primo layout alla larghezza naturale → minWidth). Corretto anche un bug: lo `style`
-  a funzione del `Pressable` di `Btn` era ignorato sul web (NativeWind); ora array + stato premuto a mano.
-- **Shim API del browser — FATTO** (`app/src/web/shims/`): `dom.ts` (telefono: Dimensions, BackHandler per
-  history/popstate, Share, expo-clipboard, Linking, AsyncStorage) / `dom.web.ts` (oggetti veri); nessun globale
-  (lo SDK Base44 usa `typeof document` per riconoscere RN). `pageScroll.ts` + `Page.tsx`: window.scrollY/scrollTo/
-  evento scroll = ScrollView della pagina (ora funzionano barra tab fissa e pulsante "torna su" anche sul web).
-  `react-dom.tsx`: createPortal → @rn-primitives/portal. Il codemod li applica da solo (`applyDomShims`);
-  per file già portati: `node scripts/port/codemod.mjs --shims <file...>`.
-- **onKeyDown dei campi di testo — FATTO**: `app/src/ui/keyEvents.ts` (Invio/Esc; sul telefono Invio =
-  onSubmitEditing), usato da HtmlInput/HtmlTextarea/Input/Textarea; ripristinati i 12 handler originali
-  (il codemod ora non li toglie più per input/textarea). Verificati typecheck e test; da provare a mano.
+## Da fare
+1. **Prova dell'utente sull'APK** (build del 10/10 con tutto il lavoro): Il Mio Vibra (grafici tocco/pinch,
+   note trascinabili, chat AI, Calcolatrice trascinabile, tab centrata), Weekend (menu del tasto lungo,
+   swipe in Da ricontattare), Semine (Gira e trascinamento delle card), e dalle sessioni prima: selettori
+   data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
+   scorrimento dei dialog e del dettaglio cliente, export PDF/CSV della Dashboard. Correggere gli errori segnalati.
+2. **Pagine ancora `ComingSoon`** (stesso metodo): Promoter (lista e dettaglio `promoter/[id]`), Serate,
+   Importa serata, Locali, Messaggi, VibraGPT, Ricerca AI, Report, Clienti analytics, Notifiche,
+   Impostazioni app, Formazione, Academy, Download, Admin console.
+3. Telefono: pull-to-refresh di Semine (oggi inerte: ascolta i touch del `document`; usare il RefreshControl
+   della ScrollView di `Page`); `onPaste` (incolla foto/contatto) non esiste su RN (accettato).
+4. Notifiche push (expo-notifications al posto del web push).
+5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
 
-- **PORT-TODO di Clienti — FATTO** (resta solo onPaste, vedi sotto):
-  - `<form>`: `ui/form.tsx` + `ui/formContext.ts`. `<form onSubmit>` → `Form`; `Btn`/`Button` con `type="submit"`
-    inviano il form più vicino (prima il loro onClick), l'Invio nei campi a riga singola lo invia (salvo
-    `e.preventDefault()` in onKeyDown), i campi `required` vuoti bloccano l'invio e prendono il fuoco.
-    Verificato sul web: "Singolo cliente" → Aggiungi a vuoto non invia, Invio sul nome crea il cliente.
-  - Data/ora: `HtmlInput`/`Input` con `type="date|time|datetime-local"` → `ui/dateField.tsx` (telefono,
-    @react-native-community/datetimepicker) / `dateField.web.tsx` (input vero trasparente + showPicker).
-    Valori come il browser, testo come Chrome in italiano (`ui/dateValue.ts` + test). min/max rispettati.
-  - File: `type="file"` → `ui/fileField.tsx` (expo-image-picker per `accept="image/*"`, altrimenti
-    expo-document-picker; `ref.current.click()` apre la scelta; i file sono `instanceof File` con uri/name/type
-    per il FormData di RN) / `fileField.web.tsx` (input vero).
-  - Gesture dei `<div>`: `ui/gestures.ts`, usato da `Div` e `Btn`. Sul web gli handler passano al DOM; sul telefono
-    onTouch* ricevono eventi in forma web (touches[i].clientX...), onPointerDown/Move/Up arrivano dai touch,
-    onMouse* sono emulati dopo un tap come nel browser del telefono (mouseleave quando si tocca altrove:
-    `hoverRootProps` sulla radice in `app/_layout.tsx`), onTouchCancel ricade su onTouchEnd. Ripristinati gli
-    handler originali in 9 file (ClientFamilyTree(Mobile), LeadersList, ClientStatsBar, ClientSourceDisplay,
-    ClientCostanzaChart, ClientTableRow, ClientDetailDialog, AttendanceHubDialog, ClientSerateMenu).
-  - Codemod aggiornato: `<form>` → `Form` con onSubmit, `type="submit"` conservato sui pulsanti, gesture
-    conservate su Div/Btn, date/file non più segnati come TODO (restano checkbox/radio/color/range).
-
-- **Confronto tab e dialog di Clienti (ex punto 2) — FATTO** per pr/admin/super4: Gruppi, Parco Paganti,
-  Albero, Tabelle, Growth, Analitica, dettaglio cliente, Aggiungi presenze, Importa, Singolo cliente coincidono
-  con l'originale (scostamenti residui ≤ 8px solo dove il web misura il testo sul contenitore). Correzioni,
-  tutte nello strato `app/src/ui/` (valgono per ogni pagina):
-  - `flex-shrink: 1` solo ai figli di contenitori flex in CSS (`FlexParentContext` in `text.tsx`): i figli di un
-    blocco non si restringono (il dettaglio cliente era tutto sovrapposto).
-  - Interlinea ereditata come in CSS (`textLeading.ts` + test): `text-[10px]` dentro `text-xs` ha 16px.
-  - `<span>`/`<label>` in linea in un blocco: riga alta quanto l'interlinea del blocco (`useInlineBox`);
-    `<textarea>` in un blocco: ~6px sotto (linea di base). Il form "Nuovo Cliente" era 40px più corto.
-  - Campi di testo sempre 16px come nell'`index.css` originale (`inputFontSize`, tranne `.semina-note-textarea`).
-  - Tabelle con layout automatico del browser (`Table`/`Tr`/`Td` in `elements.tsx`): colonne larghe quanto il
-    contenuto (prima tutte uguali: nomi del Growth League tagliati a una lettera).
-  - Griglie: Div/Btn figli si allungano all'altezza della riga; `inline-flex`/`inline-block` larghi quanto il
-    contenuto e allineati dal `text-align` del contenitore.
-  - Testo contiguo (`Tutti ({n})`) in un solo Text: niente gap in mezzo.
-  - `style` con `vh/dvh/vw` e `calc()` semplici (`webStyle.ts` + test): il popup Aggiungi presenze era in alto.
-  - recharts: tick con `recharts-scale` (stessa libreria dell'originale), radar con raggio, anelli, etichette e
-    pallini come recharts.
-  - `<svg>` (`Svg` di `elements.tsx`): className e colore ereditato (fill="currentColor") anche sul telefono.
-  - Sul telefono i Div con `overflow-*-auto` diventano ScrollView (prima non scorrevano: corpo del dettaglio
-    cliente, liste nei dialog, tabelle larghe); onScroll riceve `e.target.scrollTop/...` come sul web.
-    Bundle Android verificato (`npx expo export --platform android`), comportamento da provare sul telefono.
-  - Differenze note non emulate: i dialog Radix mettono il fuoco sul primo campo (bordo viola della textarea di
-    Importa e del riquadro foto); nel form "Nuovo Cliente" l'originale è 7px più largo (dimensione min-content della
-    griglia del dialog) e il pulsante del Guidatore tocca l'etichetta; un `<button>` in linea dentro un blocco
-    (es. "Carica dal dispositivo") ha la riga 8px più bassa (Btn non distingue `<button>` dai div cliccabili);
-    colonne `sticky left-0` delle tabelle non bloccate.
-
-- **Mappa clienti (ClientMap) — FATTO**: stessa pagina Leaflet dell'originale (leaflet 1.9.4 +
-  markercluster 1.5.3 incorporati da `scripts/gen_leaflet.mjs` in `ui/map/leafletAssets.generated.ts`; codice di
-  buildMarkerIcon/cluster/ViewportTracker/MapGestureSync e stili in `ui/map/leafletHtml.ts`), mostrata in un
-  iframe sul web (`leafletMap.web.tsx`) e in una WebView sul telefono (`leafletMap.tsx`, react-native-webview);
-  messaggi: clienti inquadrati → MapBottomBar/legenda, nome nel popup → dettaglio. Il resto di ClientMap.jsx
-  è il codice originale convertito. Verificato sul web: identica (gruppi, segnaposti, popup, dettaglio, schermo
-  intero). Le tile OSM servono internet. Differenza nota: a schermo intero copre anche la barra in basso.
-- `fixed` come nel browser (`ui/fixedPortal.tsx`): i Div `fixed` vanno alla radice (PortalHost), relativi allo
-  schermo e sopra alla pagina; sul web anche position: fixed. Limite: i context della pagina non arrivano
-  nel portale (come già per createPortal).
-- Codemod: `export ... from` riscritti come gli import.
-
-- **Ricerca (VibraSearch, pulsante Cerca) — FATTO**: codice originale convertito (con EventPromoterChart,
-  PiantinaFullscreen, utils/downloadMaterials), montata in `app/(app)/_layout.tsx` come in AppLayout.jsx; si apre
-  con l'evento `vibra:search-open` e comunica lo stato con `vibra:search-state` (LayoutUIProvider → pill della nav),
-  `CustomEvt` negli shim (il codemod riscrive `new CustomEvent`). Verificata sul web: identica vuota e con risultati.
-- Strato UI (vale per tutte le pagine): DialogContent applica le classi della pagina alla finestra come l'originale
-  (base `grid w-full max-w-lg ... overflow-y-auto`, `modal={false}` senza velo); `backdrop-filter`/`backdrop-blur`
-  (CSS sul web, expo-blur sul telefono); griglie `grid-cols-[1fr_auto...]` (righe con colonne fr/auto/px);
-  `<span>` che contiene blocchi (span block, div) diventa una View; nelle griglie gli elementi assoluti non
-  prendono una cella.
-- Avvisi di sviluppo sul web da capire: "styleq: transition/opacity typeof ..." (NativeWind, classi transition-*).
-
-- **Login Google con Base44 vero**:
-  - PC: FUNZIONA (verificato dall'utente). Base44 rimanda a `<sito>/api/apps/auth/final-callback?access_token=`,
-    gestito da `app/src/app/api/apps/auth/final-callback.tsx`.
-  - Telefono: Base44 rifiuta exp:// e vibra:// ("Invalid redirect domain"; accetta solo localhost, i domini
-    *.base44.app dell'app e vibrayourparty.com). Con l'ok dell'utente aggiunta all'app Base44 la pagina ponte
-    `src/pages/AccessoApp.jsx` (route `/accesso-app` in `App.jsx`, fuori da login/layout; checkpoint
-    "Pagina ponte /accesso-app...", NON pubblicata): legge il token e lo rimanda a `?return=` (solo vibra:// o
-    exp:// su IP di rete locale). L'app la usa da `LOGIN_BRIDGE_URL` in `base44Remote.ts` (anteprima
-    `preview--club-track-live.base44.app`; dopo la pubblicazione passare a `https://vibrayourparty.com/accesso-app`,
-    o `EXPO_PUBLIC_BASE44_LOGIN_BRIDGE`). Copia locale del codice originale aggiornata con gli stessi 2 file.
-
-- **Telefono, primo avvio dell'utente (Expo Go)**: login con la pagina ponte OK. Errore "View config getter
-  callback for component `div`" in ClientStatMiniCard (`const Comp = onClick ? 'button' : 'div'`): corretto, e il
-  codemod ora converte i tag scritti come stringa in variabili con la maiuscola (`dynamicTag`).
-- Telefono: "cannot add a new property" (react-native-css-interop fa push su array di stile congelati quando
-  due classi scrivono la stessa proprietà, es. `shadow-xl shadow-black/50`): patch in
-  `app/patches/react-native-css-interop+0.2.7.patch`, applicata da `postinstall: patch-package` (copia gli
-  array non estendibili; due transform si fondono per chiave, invece di annidarsi: "exactly one property per
-  transform object").
-- Sul telefono i Div `hidden sm:block` (e md/lg...) non costruiscono i figli se lo schermo è più stretto
-  (`hiddenAtWidth` in `html.tsx`): es. la tabella desktop di Clienti non si costruisce più (prestazioni).
-- **Prestazioni** (l'utente trova l'app lenta in Expo Go): cambio tab Clienti sul web, sviluppo: nativo 90–190ms vs
-  originale 35–65ms; build di produzione (`expo export -p web`): 40–90ms (originale in sviluppo 25–60ms). Profilo:
-  il grosso è React in modalità sviluppo e il runtime di NativeWind (jsx di react-native-css-interop). Messe in
-  cache normalizeClasses/splitTextClasses/textClassesFor. Expo Go in sviluppo è molto più lento di una build:
-  provare con `npx expo start --no-dev --minify`; da rivedere dopo una build vera (punto 6).
-
-## Sessione del 9–10 ottobre 2026 (branch `claude/awesome-tesla-ovfcmf`, NON ancora unito a `main`)
-- Confronti di Clienti (tutte le tab, dettaglio, dialog, Cerca, Mappa) e Dashboard rifatti dopo le modifiche
-  precedenti: coincidono. Corretti, nello strato `ui/` (valgono per tutte le pagine):
-  - `.gitignore` escludeva ogni cartella `export/` → `components/export/ExportReportButton.jsx` non era mai stato
-    committato (la Dashboard non compilava): ora solo `/export/` e `/app/export/`.
-  - Griglie: padding della cella secondo la colonna (niente margine negativo sul contenitore, che nei dialog
-    lasciava 8px di rientro: testo di Importa Clienti più stretto).
-  - `space-y`: margine al primo figlio dopo elementi `absolute` (titolo di Esporta Report 16px troppo in alto).
-  - recharts: lineette dei tick sugli assi; `font-mono` sul web con la pila di Tailwind.
-  - `Img`: style CSS convertito (errori "styleq: opacity typeof 0" in Cerca).
-  - `MobileNavBar` anche fuori dalle 5 tab (Dashboard, Serate...) come AppLayout dell'originale.
-  - `HtmlSelect` → `BrowserSelectTrigger` (menu.tsx): come il `<select>` del browser (16px, freccia, 32px).
-  - **min-width: auto generale** (`useRigidMinWidth` in html.tsx + `WrapProbeContext` in text.tsx): un flex
-    item in una riga senza testo che possa andare a capo (icone, select, pulsanti di una parola) non si
-    restringe sotto la larghezza naturale; il testo con spazi e i campi di testo lo rendono restringibile.
-    Verificato senza regressioni su Clienti/Dashboard; tenerlo d'occhio (primo frame a larghezza naturale).
-- **APK Android su GitHub Actions** (`.github/workflows/android-apk.yml`): parte con `[apk]` nel messaggio del
-  commit (o Run workflow quando sarà su main); expo prebuild + gradle release (chiave di debug, solo arm64),
-  ~14 min; link fisso: https://github.com/adiosfull-svg/VIBRA-NATIVE/releases/download/anteprima/vibra.apk
-  (stato con l'MCP GitHub: `actions_list`/`get_release_by_tag`; il container non può scaricare l'APK).
-  L'utente l'ha installato: **si avvia, login OK**.
-- Crash dopo il login nella release: `new TextDecoder('latin1')` di fast-png (jsPDF) → Hermes conosce solo
-  UTF-8. Polyfill `lib/textDecoderLatin1.ts` (+ test) importato per primo in `app/_layout.tsx`; `shims/jspdf.ts`
-  carica jsPDF solo al primo `new jsPDF()`. Export PDF da provare sul telefono.
-- `lib/crashReport.tsx`: nella release gli errori JS mostrano una schermata con messaggio/stack (Copia) invece di
-  chiudere l'app; quelli fatali sono salvati e mostrati al riavvio. Metro conserva i nomi di funzioni
-  (`metro.config.js`). Per un crash: chiedere all'utente lo screenshot/testo di quella schermata.
-- Emulatore: discusso il piano (Claude Code sul PC Windows dell'utente + Android Studio + Maestro); l'utente ha
-  rimandato. In alternativa: emulatore su GitHub Actions.
-
-- **Il Mio Vibra — confronto di tutte le tab FATTO** (sessione del 10 ottobre 2026, stesso branch), per pr e
-  super4: I Miei Progressi, I Miei Guadagni, Guadagni Dettagliati, Le Mie Serate, Il Mio Team, Le Mie Note,
-  Achievement, Vibra VS e Calcolatrice coincidono con l'originale (anche le parti basse della pagina, con il
-  nuovo passo `scrollto:<y>` di `tools/compare/steps.mjs`). Scostamenti residui ≤ 2px, oppure solo di misura
-  (il web misura il testo sul `<td>`/sul pulsante). Sostituti delle librerie web (dalla sessione precedente):
-  uPlot → `ui/uplot.tsx`, react-markdown → `ui/markdown.tsx`, @hello-pangea/dnd → `web/shims/dnd.tsx`.
-  Correzioni, quasi tutte nello strato `ui/` (valgono per ogni pagina; Clienti e Dashboard riverificate, nessuna
-  regressione):
-  - `space-y`: in Tailwind 3 il selettore vince su `mt-*`/`mb-*`/`my-*` dei figli dopo il primo (tolte,
-    `spaceMargins.ts` + test); il `mb` del primo figlio di un blocco collassa col margine del successivo (max,
-    non somma); un componente senza className (es. `<SectionHeader/>`) primo nel flusso dopo un div assoluto
-    riceve il margine (`LeadMarginContext`, consumato dal primo Div/Btn che disegna).
-  - `boxShadow` passato a RN così com'è (spread, più ombre, inset; colori risolti): RN 0.86 e react-native-web
-    lo supportano. Prima spread ignorato → bagliori troppo forti.
-  - `motion.div` anima il Div stesso (`AnimatedBox` = Animated.View con className via `cssInterop`): prima un
-    Animated.View esterno rompeva absolute/h-full (barre delle streak vuote). Animabili anche `width`/`height`
-    (px o %) e `x`/`y` in % o px (il luccichio del RankCard mandava in crash la tab Achievement).
-  - `style={{ gridTemplateColumns }}` (anche `repeat()`) su un `grid` = classe `grid-cols-[...]`;
-    `gridTemplateRows` e `row-span-N`: `ExplicitGrid` (posizionamento automatico CSS, celle assolute dalle
-    misure del contenitore, serve un'altezza definita).
-  - `<input>` a riga singola: `line-height` ereditata dal contenitore (preflight `inherit`), righe di
-    I Miei Guadagni alte come l'originale.
-  - min-width: auto (`useRigidMinWidth`) non blocca i contenitori `flex-wrap` (vanno a capo come in CSS).
-  - `ui/uplot.tsx`: `rangeNum` identico a uPlot (scala Y).
-  - Select: il valore nel trigger ha le classi di testo del trigger (sul web è l'ItemText portato lì da Radix:
-    `SelectLookContext`), freccia `shrink-0`.
-  - `<button>` non flex/grid: contenuto centrato in verticale come nel browser.
-  - Telefono: la ref di un Div `overflow-*-auto` (ScrollView) accetta `scrollTo({ left, top, behavior })`,
-    `scrollBy`, `scrollLeft/scrollTop` anche in scrittura (`domScrollRef`); `offsetLeft/offsetWidth` li dà la
-    nuova architettura di RN. Centratura della tab attiva e della «Strada verso la vetta» da provare sul telefono.
-  - Calcolatrice: `components/ilmiovibra/Calcolatrice.jsx` convertita e montata nella shell
-    (`app/(app)/_layout.tsx`, `CalcolatriceProvider` + `GlobalCalcolatrice` come AppLayout.jsx). Trascinamento
-    e ridimensionamento da provare sul telefono.
-  - RankCard: ref sul rank attuale al posto di `querySelector('[data-current]')` (il codemod toglie i `data-*`).
-  Differenze note: «Strada verso la vetta» nell'originale è ~20px a sinistra del centro (offsetLeft relativo a
-  un antenato posizionato; in RN-web tutte le View sono relative, il nativo centra esattamente); frecce «→»
-  (nel container l'originale usa un font di ripiego: il sottoinsieme latin di Inter non ha U+2192); la riga di
-  un `<button>` in linea in un blocco resta 2px più bassa (Top 5 streak); il logo «Vibra» dell'header manca
-  in entrambe (immagine esterna non raggiungibile dal container).
-
-- **Weekend (Programmazione) e Semine — FATTE** (10 ottobre 2026, stesso branch): convertite col codemod
-  (20 + 5 file), route `(tabs)/programmazione` e `(tabs)/semine` collegate. Tutte le tab di Weekend (Inviti,
-  Da ricontattare, Semina, Target, Leader, Tabelle), il dialog Aggiungi Semina e Semine (vuota e con card,
-  anche girata) coincidono con l'originale per pr/super4. Per avere card nello stack locale: creare semine dal
-  form del nativo (lo stack di prova accetta scritture). Correzioni nello strato `ui/` (Clienti, Dashboard e
-  Il Mio Vibra riverificate):
-  - radici di Dialog/AlertDialog/Popover/DropdownMenu/Select con `display: contents` (in Radix non creano
-    elementi; da chiuse prendevano il gap); `spaceOverrides` e griglie attraversano `<Suspense>`, Fragment e
-    `AnimatePresence` (`cssChildren`, flag `cssTransparent`).
-  - `ring-*` → boxShadow fuori dal bordo (prima bordo interno); gradienti arrotondati col raggio
-    dell'elemento invece di `overflow-hidden` (tagliava i figli che sporgono).
-  - elementi `relative/absolute/sticky` senza `z-*`: zIndex 1 (ordine di disegno CSS).
-  - `inline-flex`/`inline-block`/`<button>` in linea in un blocco: riga alta quanto lo strut, box sulla linea
-    di base (`inlineBlockMargins`, `useInlineBlockStrut`).
-  - campi di testo: classi `focus:`/`focus-visible:` (ring, bordo, outline-none) applicate col fuoco
-    (`focusStyle.ts`, `useFocusStyle.ts`): niente più contorno bianco al posto dell'anello viola.
-  - web: classi proprie dell'index.css `semina-flip-*`, `no-scrollbar` (`customCss.web.ts`); transform
-    `rotateY/rotateX/perspective`; `transition` passata a react-native-web; `pointerEvents` dello style.
-  - telefono: card che si gira con le facce ruotate (`ui/flip.tsx`) e `useFlipGesture.native.jsx` (l'originale
-    scrive su `element.style`); `sessionStorage` → shim `sessionStore` in memoria (codemod aggiornato).
-  - Pull-to-refresh di Semine: sul telefono non fa nulla (ascolta i touch del `document`); da sostituire con
-    il RefreshControl della ScrollView della pagina se serve.
-
-## In corso / prossimi passi
-1. **Prova sul telefono** (build `[apk]`) di Il Mio Vibra (grafici uPlot con tocco/pinch, note trascinabili e
-   chat AI, Calcolatrice trascinabile, barra delle tab centrata, Achievement), Weekend (menu del tasto lungo
-   sui clienti, swipe in Da ricontattare) e Semine (Gira e trascinamento delle card, Aggiungi Semina).
-2. **Da provare sul telefono** (build `[apk]`): selettori data/ora, scelta foto/file, swipe dei leader,
-   trascinamento e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza,
-   scorrimento del dettaglio cliente/liste nei dialog/Growth League, export PDF/CSV della Dashboard.
-   PORT-TODO accettati: `onPaste` (incolla foto/contatto) non esiste su RN.
-3. Differenze note: tabella "Media tavoli" (colonna Locale non va a capo: min-content colonne); form Nuovo
-   Cliente dell'originale sborda di qualche px; i dialog Radix mettono il fuoco (bordo viola) sul primo campo,
-   nel nativo il campo con autoFocus ha il contorno bianco del browser.
-4. Altre pagine con lo stesso metodo: Promoter, Serate, Locali, Messaggi,
-   VibraGPT, Report, Impostazioni...
-5. Notifiche push (expo-notifications al posto del web push). Funzioni server/automazioni/file restano su Base44.
-6. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
-7. Unire il branch a `main` quando l'utente lo chiede (c'è la PR adiosfull-svg/VIBRA-NATIVE#1 sul branch).
-
-## In attesa dell'utente
-- Prova dell'APK: errori eventuali arrivano come testo/screenshot della schermata di crashReport.
+## Differenze note (accettate)
+- Dialog Radix: nell'originale il primo campo prende il fuoco all'apertura.
+- Form Nuovo Cliente: l'originale è 7px più largo; tabella "Media tavoli": colonna Locale non va a capo.
+- «Strada verso la vetta» (Achievement): l'originale è ~20px a sinistra del centro (offsetLeft del DOM).
+- Freccia «→»: nel container l'originale usa un font di ripiego (il sottoinsieme latin di Inter non ce l'ha).
+- Logo «Vibra» dell'header: immagine esterna non raggiungibile dal container (manca in entrambe).
