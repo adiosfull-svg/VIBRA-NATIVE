@@ -15,6 +15,14 @@ on:
         description: 'Percorsi da eseguire (file o cartella in tests/emulatore)'
         required: false
         default: 'tests/emulatore'
+      gpu:
+        description: 'Grafica dell emulatore (swiftshader_indirect, swangle_indirect, guest)'
+        required: false
+        default: 'swiftshader_indirect'
+      extra_env:
+        description: 'Variabili in più per la build di test, separate da ; (es. EXPO_PUBLIC_TEST_NO_BLUR=1)'
+        required: false
+        default: ''
       app_ref:
         description: 'Commit da cui prendere app/ (vuoto = quello del branch): per confrontare con versioni precedenti'
         required: false
@@ -27,7 +35,8 @@ on:
       - '.github/workflows/emulatore.yml'
 
 concurrency:
-  group: emulatore-${{ github.ref }}-${{ github.event.inputs.app_ref || 'head' }}
+  # i push si annullano a vicenda; le esecuzioni a mano (prove in parallelo) no
+  group: emulatore-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}
   cancel-in-progress: true
 
 jobs:
@@ -90,6 +99,8 @@ jobs:
           EXPO_PUBLIC_TEST_LOGIN=admin@vibra.local:vibra
           EXPO_PUBLIC_TEST_DIAG=1
           ENV
+          echo "${{ github.event.inputs.extra_env }}" | tr ';' '\n' | grep '=' >> .env || true
+          cat .env
 
       # APK nativo in cache: si ricompila con Gradle (~11 min) solo se cambia la parte nativa
       # (dipendenze, configurazione, immagini); altrimenti si rigenera solo il bundle JS (~1 min) e lo
@@ -98,7 +109,8 @@ jobs:
         id: native
         working-directory: app
         run: |
-          h=$(cat package-lock.json app.json .env ../.github/workflows/emulatore.yml $(find patches assets plugins -type f 2>/dev/null | sort) | sha256sum | cut -c1-16)
+          # solo ciò che entra nella parte nativa (le variabili EXPO_PUBLIC_ finiscono nel bundle JS)
+          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1) | sha256sum | cut -c1-16)
           echo "key=apk-x86_64-$h" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache/restore@v4
@@ -171,7 +183,7 @@ jobs:
           profile: pixel_6
           ram-size: 4096M
           disk-size: 6000M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu ${{ github.event.inputs.gpu || 'swiftshader_indirect' }} -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: bash tests/emulatore/run.sh
 

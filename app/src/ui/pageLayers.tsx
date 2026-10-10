@@ -97,8 +97,9 @@ export function usePageBlurTarget(): View | null {
   return useSyncExternalStore(subscribe, topTarget, topTarget);
 }
 
-// Android: blur vero solo da Android 12 (prima Dimezis è lento: velo come prima)
-const BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
+// Android: blur vero solo da Android 12 (prima Dimezis è lento: velo come prima).
+// EXPO_PUBLIC_TEST_NO_BLUR=1 (solo build di test sull'emulatore): sempre velo.
+const BLUR_METHOD = process.env.EXPO_PUBLIC_TEST_NO_BLUR === '1' ? 'none' as const : 'dimezisBlurViewSdk31Plus' as const;
 
 /** BlurView di expo-blur col bersaglio giusto (vedi in cima). */
 export function NativeBlur({ intensity, tint = 'dark', target, style }: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object }) {
