@@ -91,7 +91,24 @@ jobs:
           EXPO_PUBLIC_TEST_DIAG=1
           ENV
 
+      # APK nativo in cache: si ricompila con Gradle (~11 min) solo se cambia la parte nativa
+      # (dipendenze, configurazione, immagini); altrimenti si rigenera solo il bundle JS (~1 min) e lo
+      # si sostituisce nell'APK in cache (stessa chiave di debug con cui è firmato).
+      - name: Chiave della parte nativa
+        id: native
+        working-directory: app
+        run: |
+          h=$(cat package-lock.json app.json .env ../.github/workflows/emulatore.yml $(find patches assets plugins -type f 2>/dev/null | sort) | sha256sum | cut -c1-16)
+          echo "key=apk-x86_64-$h" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache/restore@v4
+        id: apkcache
+        with:
+          path: app/apk-cache
+          key: ${{ steps.native.outputs.key }}
+
       - name: Progetto Android
+        if: steps.apkcache.outputs.cache-hit != 'true'
         working-directory: app
         run: |
           npx expo prebuild -p android --no-install
@@ -101,8 +118,37 @@ jobs:
           CI: 1
 
       - name: Compila APK (x86_64)
+        if: steps.apkcache.outputs.cache-hit != 'true'
         working-directory: app/android
-        run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+        run: |
+          ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+          mkdir -p ../apk-cache
+          cp app/build/outputs/apk/release/app-release.apk app/debug.keystore ../apk-cache/
+
+      - uses: actions/cache/save@v4
+        if: steps.apkcache.outputs.cache-hit != 'true'
+        with:
+          path: app/apk-cache
+          key: ${{ steps.native.outputs.key }}
+
+      - name: Solo JS nell'APK in cache
+        if: steps.apkcache.outputs.cache-hit == 'true'
+        working-directory: app
+        run: |
+          mkdir -p /tmp/emb/res /tmp/swap/assets
+          npx expo export:embed --platform android --dev false --minify true --entry-file node_modules/expo-router/entry.js \
+            --bundle-output /tmp/emb/index.android.bundle --assets-dest /tmp/emb/res
+          node_modules/hermes-compiler/hermesc/linux64-bin/hermesc -emit-binary -O -w -out /tmp/swap/assets/index.android.bundle /tmp/emb/index.android.bundle
+          cp apk-cache/app-release.apk /tmp/js.apk
+          (cd /tmp/swap && zip -q -0 /tmp/js.apk assets/index.android.bundle)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -f -p 4 /tmp/js.apk apk-cache/app-test.apk
+          "$BT/apksigner" sign --ks apk-cache/debug.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey apk-cache/app-test.apk
+
+      - name: APK da provare
+        working-directory: app
+        run: |
+          if [ -f apk-cache/app-test.apk ]; then echo "APK=$PWD/apk-cache/app-test.apk" >> "$GITHUB_ENV"; else echo "APK=$PWD/apk-cache/app-release.apk" >> "$GITHUB_ENV"; fi
 
       # ── emulatore ──
       - name: KVM

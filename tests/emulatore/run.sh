@@ -4,7 +4,7 @@
 set -u
 OUT=$PWD/out
 mkdir -p "$OUT/screens"
-APK=app/android/app/build/outputs/apk/release/app-release.apk
+APK=${APK:-app/android/app/build/outputs/apk/release/app-release.apk}
 adb reverse tcp:54321 tcp:54321
 adb install -r "$APK"
 adb logcat -c
