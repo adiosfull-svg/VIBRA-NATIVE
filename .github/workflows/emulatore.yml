@@ -34,14 +34,13 @@ on:
       - 'scripts/local/**'
       - '.github/workflows/emulatore.yml'
 
-concurrency:
-  # i push si annullano a vicenda; le esecuzioni a mano (prove in parallelo) no
-  group: emulatore-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}
-  cancel-in-progress: true
-
 jobs:
   emulatore:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]')
+    # a livello di job (i push senza [emu] non annullano niente); le esecuzioni a mano non si annullano
+    concurrency:
+      group: emulatore-${{ github.ref }}-${{ matrix.utente }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 75
     # un job per utente di prova (pagine e permessi diversi), in parallelo

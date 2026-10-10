@@ -13,13 +13,13 @@ on:
       - 'app/**'
       - '.github/workflows/android-apk.yml'
 
-concurrency:
-  group: apk-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   apk:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[apk]')
+    # a livello di job: i push senza [apk] (job saltato) non annullano una build in corso
+    concurrency:
+      group: apk-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
