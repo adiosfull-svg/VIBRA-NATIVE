@@ -2,7 +2,7 @@
 // portano riga per riga mantenendo className e struttura:
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
-import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useState, type ReactElement, type ReactNode } from 'react';
+import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,7 @@ import { cn } from './cn';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
-import { FlexParentContext, splitTextClasses, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
+import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
@@ -286,11 +286,43 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
     onLayout?.(e);
     if (measuring) setMeasured({ sig: signature, width: Math.ceil(e.nativeEvent.layout.width) });
   }, [onLayout, measuring, signature]);
-  if (!enabled) return { minStyle: null, onLayout };
+  if (!enabled) return { minStyle: null, onLayout, enabled };
   const minStyle = measuring
     ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const, alignSelf: 'flex-start' as const }
     : { minWidth: measured!.width };
-  return { minStyle, onLayout: handleLayout };
+  return { minStyle, onLayout: handleLayout, enabled };
+}
+
+// min-width: auto anche per gli altri flex item di una riga: un Div senza testo che possa andare a capo
+// (solo icone, pulsanti di una parola, select, contenitori di questi) non si restringe sotto la sua
+// larghezza naturale, come in CSS; quello col testo sì (es. un titolo accanto a dei controlli va a capo
+// invece di spingere fuori i controlli). Il testo lo dice con WrapProbeContext (text.tsx).
+const FlexRowContext = createContext(false);
+const FLEX_COL = /(^|\s)(?:max-sm:)?flex-col(-reverse)?(\s|$)/;
+const FLEX_ROW = /(^|\s)(?:max-sm:)?(flex|inline-flex)(\s|$)/;
+const OUT_OF_FLOW_CLASS = /(^|\s)(absolute|fixed|hidden)(\s|$)/;
+const isFlexRow = (cls: string) => FLEX_ROW.test(cls) && !FLEX_COL.test(cls);
+
+function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
+  const parent = useContext(WrapProbeContext);
+  const probe = useRef<WrapProbe | null>(null);
+  if (enabled && !probe.current) {
+    const p: WrapProbe = { flexible: false, mark: () => { p.flexible = true; parent?.mark(); } };
+    probe.current = p;
+  }
+  const signature = enabled ? textSignature(children) : '';
+  const [measured, setMeasured] = useState<{ sig: string; width: number; rigid: boolean } | null>(null);
+  const measuring = enabled && measured?.sig !== signature;
+  if (measuring && probe.current) probe.current.flexible = false;
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    onLayout?.(e);
+    if (measuring) setMeasured({ sig: signature, width: Math.ceil(e.nativeEvent.layout.width), rigid: !probe.current?.flexible });
+  }, [onLayout, measuring, signature]);
+  if (!enabled) return { minStyle: null, onLayout, probe: null };
+  const minStyle = measuring
+    ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const }
+    : measured!.rigid ? { minWidth: measured!.width } : null;
+  return { minStyle, onLayout: handleLayout, probe: probe.current };
 }
 
 type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & { className?: string; children?: ReactNode };
@@ -404,10 +436,22 @@ export function Div({ className, children, style, onLayout, ...all }: DivProps) 
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const gridCell = useContext(GridCellContext);
-  const inner = <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>{boxContent(children, grid, rest)}</FlexParentContext.Provider>;
+  const min0 = useMinContentWidth(className, rnStyle, children, onLayout);
+  const rowParent = useContext(FlexRowContext);
+  const rigid = useRigidMinWidth(
+    rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
+      && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink !== 0 && rnStyle?.flex == null && rnStyle?.position !== 'absolute',
+    children, min0.onLayout,
+  );
+  const min = rigid.probe ? { minStyle: rigid.minStyle, onLayout: rigid.onLayout } : min0;
+  let inner = (
+    <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
+      <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>{boxContent(children, grid, rest)}</FlexRowContext.Provider>
+    </FlexParentContext.Provider>
+  );
+  if (rigid.probe) inner = <WrapProbeContext.Provider value={rigid.probe}>{inner}</WrapProbeContext.Provider>;
   // la cella della griglia la "consuma" questo elemento, non i suoi discendenti
   const content = gridCell ? <GridCellContext.Provider value={false}>{inner}</GridCellContext.Provider> : inner;
-  const min = useMinContentWidth(className, rnStyle, children, onLayout);
   const inPortal = useContext(InPortalContext);
   // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
   // sul web lo nasconde il CSS, qui costerebbe come se fosse visibile.
@@ -532,7 +576,9 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       {gradient ? <GradientFill gradient={gradient} /> : null}
       <GridCellContext.Provider value={false}>
         <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
-          <TextInherit inherited={inherited} text={text} style={rnStyle}>{boxContent(children, grid, rest)}</TextInherit>
+          <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>
+            <TextInherit inherited={inherited} text={text} style={rnStyle}>{boxContent(children, grid, rest)}</TextInherit>
+          </FlexRowContext.Provider>
         </FlexParentContext.Provider>
       </GridCellContext.Provider>
     </Pressable>

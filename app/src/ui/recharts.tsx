@@ -99,7 +99,7 @@ function valueDomain(data: Datum[], keys: string[], stacked: boolean, domain?: a
 }
 
 /** Curva monotone (Fritsch–Carlson, come d3.curveMonotoneX). */
-function monotonePath(pts: { x: number; y: number }[]) {
+export function monotonePath(pts: { x: number; y: number }[]) {
   const n = pts.length;
   if (n === 0) return '';
   if (n === 1) return `M${pts[0].x},${pts[0].y}`;

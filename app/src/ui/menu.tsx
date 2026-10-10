@@ -134,6 +134,20 @@ export function SelectTrigger({ className, children }: WithChildren) {
   );
 }
 
+/**
+ * Trigger di un <select> del browser (HtmlSelect): solo le classi della pagina (niente stile shadcn),
+ * largo quanto il contenuto, testo a 16px come in index.css (`select { font-size: 16px }`) e la freccia
+ * di Chrome a destra. Con py-1 è alto 32px come nel browser.
+ */
+export function BrowserSelectTrigger({ className, label }: { className?: string; label: string }) {
+  return (
+    <SelectPrimitive.Trigger className={cn('flex-row items-center self-start', className)}>
+      <Text className={textOf(className)} style={{ fontSize: 16, lineHeight: 22 }} numberOfLines={1}>{label}</Text>
+      <ChevronDown className="ml-1 h-4 w-4" />
+    </SelectPrimitive.Trigger>
+  );
+}
+
 export function SelectValue({ placeholder, className }: { placeholder?: string; className?: string }) {
   return <SelectPrimitive.Value placeholder={placeholder ?? ''} className={cn('text-sm text-foreground', className)} />;
 }

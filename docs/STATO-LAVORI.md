@@ -10,8 +10,11 @@
 - Repo: https://github.com/adiosfull-svg/VIBRA-NATIVE (branch `main`).
 
 ## Ambiente da ricreare in una nuova sessione
-1. Codice originale (riferimento, NON nel repo): rileggerlo da Base44 con `read_file` a blocchi di 50 file
-   in `/home/user/vibra-reference` (475 file; elenco con `list_directory` ricorsivo, max_depth 10).
+1. Codice originale (riferimento, NON in questo repo): l'app Base44 è sincronizzata col repo GitHub
+   **`adiosfull-svg/VIBRA`** (verificato: stesso commit del sandbox Base44). Aggiungerlo alla sessione con
+   `add_repo` (owner adiosfull-svg, repo VIBRA, sola lettura) e clonarlo:
+   `git clone --depth 1 https://github.com/adiosfull-svg/vibra /home/user/vibra-reference` (secondi, invece di
+   rileggere 475 file da Base44). Mai scrivere su quel repo né su Base44.
 2. Backend locale: `scripts/local/dev_stack.sh --reset` (serve il binario PostgREST v12.2.3 in
    `scripts/local/bin/`: `mkdir -p scripts/local/bin && curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin`).
    Con admin la lista Clienti locale è vuota (i dati di prova sono di altri promoter): per provare form e dettaglio
@@ -181,40 +184,61 @@
   cache normalizeClasses/splitTextClasses/textClassesFor. Expo Go in sviluppo è molto più lento di una build:
   provare con `npx expo start --no-dev --minify`; da rivedere dopo una build vera (punto 6).
 
+## Sessione del 9–10 ottobre 2026 (branch `claude/awesome-tesla-ovfcmf`, NON ancora unito a `main`)
+- Confronti di Clienti (tutte le tab, dettaglio, dialog, Cerca, Mappa) e Dashboard rifatti dopo le modifiche
+  precedenti: coincidono. Corretti, nello strato `ui/` (valgono per tutte le pagine):
+  - `.gitignore` escludeva ogni cartella `export/` → `components/export/ExportReportButton.jsx` non era mai stato
+    committato (la Dashboard non compilava): ora solo `/export/` e `/app/export/`.
+  - Griglie: padding della cella secondo la colonna (niente margine negativo sul contenitore, che nei dialog
+    lasciava 8px di rientro: testo di Importa Clienti più stretto).
+  - `space-y`: margine al primo figlio dopo elementi `absolute` (titolo di Esporta Report 16px troppo in alto).
+  - recharts: lineette dei tick sugli assi; `font-mono` sul web con la pila di Tailwind.
+  - `Img`: style CSS convertito (errori "styleq: opacity typeof 0" in Cerca).
+  - `MobileNavBar` anche fuori dalle 5 tab (Dashboard, Serate...) come AppLayout dell'originale.
+  - `HtmlSelect` → `BrowserSelectTrigger` (menu.tsx): come il `<select>` del browser (16px, freccia, 32px).
+  - **min-width: auto generale** (`useRigidMinWidth` in html.tsx + `WrapProbeContext` in text.tsx): un flex
+    item in una riga senza testo che possa andare a capo (icone, select, pulsanti di una parola) non si
+    restringe sotto la larghezza naturale; il testo con spazi e i campi di testo lo rendono restringibile.
+    Verificato senza regressioni su Clienti/Dashboard; tenerlo d'occhio (primo frame a larghezza naturale).
+- **APK Android su GitHub Actions** (`.github/workflows/android-apk.yml`): parte con `[apk]` nel messaggio del
+  commit (o Run workflow quando sarà su main); expo prebuild + gradle release (chiave di debug, solo arm64),
+  ~14 min; link fisso: https://github.com/adiosfull-svg/VIBRA-NATIVE/releases/download/anteprima/vibra.apk
+  (stato con l'MCP GitHub: `actions_list`/`get_release_by_tag`; il container non può scaricare l'APK).
+  L'utente l'ha installato: **si avvia, login OK**.
+- Crash dopo il login nella release: `new TextDecoder('latin1')` di fast-png (jsPDF) → Hermes conosce solo
+  UTF-8. Polyfill `lib/textDecoderLatin1.ts` (+ test) importato per primo in `app/_layout.tsx`; `shims/jspdf.ts`
+  carica jsPDF solo al primo `new jsPDF()`. Export PDF da provare sul telefono.
+- `lib/crashReport.tsx`: nella release gli errori JS mostrano una schermata con messaggio/stack (Copia) invece di
+  chiudere l'app; quelli fatali sono salvati e mostrati al riavvio. Metro conserva i nomi di funzioni
+  (`metro.config.js`). Per un crash: chiedere all'utente lo screenshot/testo di quella schermata.
+- Emulatore: discusso il piano (Claude Code sul PC Windows dell'utente + Android Studio + Maestro); l'utente ha
+  rimandato. In alternativa: emulatore su GitHub Actions.
+
 ## In corso / prossimi passi
-1. **Da provare sul telefono** (Expo Go / build): selettori data/ora (Android: data poi ora per datetime-local,
-   "Cancella" svuota; iOS: pannello in basso), scelta foto/file e caricamento su Base44 (quando si toglie la
-   modalità prova: `UploadPublicFile` con il File "nativo" di `ui/fileField.tsx`), swipe dei leader, trascinamento
-   e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza col tap.
-   Restano 2 PORT-TODO accettati: `onPaste` (incolla foto con Ctrl+V in ClientFormDialog, incolla in
-   QuickContactEdit) non esiste su RN; l'Instagram si normalizza già all'onBlur.
-   Nuovo da provare: scorrimento del dettaglio cliente, delle liste nei dialog e della tabella Growth League
-   (ScrollView sul telefono), icone svg (WhatsApp, auto "Non guidatore") con dimensione e colore giusti.
-2. **Dashboard: collegata (route `/` e `/dashboard`), confronto web quasi identico** (admin; super4 uguale).
-   Differenza nota: la tabella "Media tavoli" non va a capo nella colonna Locale (servirebbe la larghezza
-   min-content delle colonne, non misurabile in RN). Export PDF/CSV: `shims/jspdf.ts`, `shims/files.ts`.
-   **DA FARE SUBITO nella prossima sessione** (modifiche dell'ultimo commit, typecheck e test OK ma confronto
-   NON rifatto): rilanciare i confronti di Clienti (tutte le tab/dialog, Cerca, Mappa) e Dashboard dopo:
-   - `button` su Btn: i `<button>` veri (codemod ora aggiunge `button`; `scripts/port/mark-buttons.mjs` li ha
-     segnati nei file già convertiti, 48 file, abbinando in ordine con l'originale) → testo centrato e
-     inline-block (larghezza del contenuto) in un blocco, come nel browser;
-   - celle di griglia allungate tramite `GridCellContext` (anche se la cella è un componente);
-   - testo vuoto/solo spazi non crea box; sul web le parole non si spezzano (CSS overflow-wrap: normal);
-   - style di testo ereditato (`ui/textStyleInherit.ts` + TextStyleContext: `<p style={{color}}><span>`),
-     anche per icone e svg (currentColor); fontWeight da style → file Inter giusto;
-   - `Link` (router) ora è un Btn; codemod tiene `id` negli elementi SVG (gradienti `url(#...)`).
-3. **Emulatore Android**: in questo container impossibile (niente /dev/kvm, dl.google.com bloccato). Proposta da
-   valutare con l'utente: workflow GitHub Actions (runner con KVM) che avvia stack locale + build Android e
-   l'emulatore (reactivecircus/android-emulator-runner), naviga le schermate (Maestro/adb), raccoglie
-   screenshot e errori JS (logcat ReactNativeJS) e li pubblica (artifact o branch) — costa minuti di Actions.
-4. Altre pagine con lo stesso metodo (tree.mjs → codemod → confronto screenshot): Il Mio Vibra,
-   Weekend, Semine, Promoter, Serate, Locali, Messaggi, VibraGPT, Report, Impostazioni...
-5. Notifiche push sul telefono: l'originale usa web push (PushSubscription + sendPushNotification); valutare
-   expo-notifications. Funzioni server, automazioni, file: restano su Base44.
+1. **Il Mio Vibra (in corso)**: 35 file
+   convertiti col codemod (tree in `scripts/port/tree.mjs .../pages/IlMioVibra.jsx`), route
+   `(tabs)/il-mio-vibra.tsx` collegata. Sostituti delle librerie web:
+   - uPlot → `ui/uplot.tsx` (SVG: assi 50px, tick come uPlot, spline monotona, barre raggruppate, tooltip al
+     tocco, pinch e trascinamento); `components/promoter/UPlot{Line,Bar}Chart.jsx` lo riesportano.
+   - react-markdown → `ui/markdown.tsx` (marked 18.0.14: preflight + varianti `[&>p]:mb-2`, `[&_li]:list-disc`...).
+   - @hello-pangea/dnd → `web/shims/dnd.tsx` (pressione lunga + trascinamento, onDragEnd come l'originale).
+   Primo confronto (pr, tab di default «I Miei Progressi»): quasi identico. Da fare: confrontare TUTTE le tab
+   (`click:I Miei Guadagni`, `Guadagni Dettagliati`, `Le Mie Serate`, `Il Mio Team`, `Le Mie Note`,
+   `Achievement`, `Vibra VS`) e la Calcolatrice, per pr/super4; scostamenti residui di 2–8px nelle intestazioni
+   delle sezioni (icona+titolo) da indagare con `probe.mjs`; frecce "→" con un font diverso.
+   Poi build `[apk]` e prova dell'utente (grafici, note trascinabili, chat AI).
+2. **Da provare sul telefono** (build `[apk]`): selettori data/ora, scelta foto/file, swipe dei leader,
+   trascinamento e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza,
+   scorrimento del dettaglio cliente/liste nei dialog/Growth League, export PDF/CSV della Dashboard.
+   PORT-TODO accettati: `onPaste` (incolla foto/contatto) non esiste su RN.
+3. Differenze note: tabella "Media tavoli" (colonna Locale non va a capo: min-content colonne); form Nuovo
+   Cliente dell'originale sborda di qualche px; i dialog Radix mettono il fuoco (bordo viola) sul primo campo,
+   nel nativo il campo con autoFocus ha il contorno bianco del browser.
+4. Altre pagine con lo stesso metodo: Weekend (programmazione), Semine, Promoter, Serate, Locali, Messaggi,
+   VibraGPT, Report, Impostazioni...
+5. Notifiche push (expo-notifications al posto del web push). Funzioni server/automazioni/file restano su Base44.
 6. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
-7. Build: `npx eas-cli build -p android --profile preview` (APK), iOS con Apple Developer.
+7. Unire il branch a `main` quando l'utente lo chiede (c'è la PR adiosfull-svg/VIBRA-NATIVE#1 sul branch).
 
 ## In attesa dell'utente
-- Errori sul telefono quando si cambia tab in Clienti (l'utente manderà le schermate rosse). Prima verificare che
-  usi l'ultimo codice (`git log --oneline -1`) e che `npm install` applichi la patch (`react-native-css-interop@0.2.7 ✔`;
-  in sviluppo l'app segnala "[VIBRA] Patch ... NON applicata" se manca).
+- Prova dell'APK: errori eventuali arrivano come testo/screenshot della schermata di crashReport.

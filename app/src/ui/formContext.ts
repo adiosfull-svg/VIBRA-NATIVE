@@ -3,6 +3,7 @@
 // come nel browser (il primo viene messo a fuoco).
 import { createContext, useCallback, useContext, useEffect, useRef, type ForwardedRef } from 'react';
 import type { TextInput } from 'react-native';
+import { WrapProbeContext } from './text';
 
 export type FormField = { required: boolean; isEmpty: () => boolean; focus?: () => void };
 
@@ -48,6 +49,9 @@ export function firstInvalid(fields: Iterable<{ current: FormField }>): FormFiel
  * registrazione per `required` e funzione di invio per l'Invio (null fuori da un form).
  */
 export function useTextFormField(forwarded: ForwardedRef<TextInput>, required?: boolean, value?: unknown) {
+  // un campo dentro una riga flex la rende restringibile (vedi WrapProbeContext)
+  const probe = useContext(WrapProbeContext);
+  if (probe && !probe.flexible) probe.mark();
   const inner = useRef<TextInput | null>(null);
   const ref = useCallback((node: TextInput | null) => {
     inner.current = node;

@@ -13,7 +13,7 @@ import { FileField } from './fileField';
 import { useTextFormField } from './formContext';
 import { keyDownProps, type WebKeyEvent } from './keyEvents';
 import { Btn, Div } from './html';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './menu';
+import { BrowserSelectTrigger, Select, SelectContent, SelectItem } from './menu';
 import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
@@ -262,9 +262,7 @@ export function HtmlSelect({ value, onChange, children, className, disabled }: {
   const current = options.find((o) => o.value === String(value ?? ''));
   return (
     <Select value={String(value ?? '')} onValueChange={(v) => onChange?.({ target: { value: v } })} disabled={disabled}>
-      <SelectTrigger className={className}>
-        <SelectValue placeholder={current?.label ?? ''} />
-      </SelectTrigger>
+      <BrowserSelectTrigger className={className} label={current?.label ?? options[0]?.label ?? ''} />
       <SelectContent>
         {options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent>
