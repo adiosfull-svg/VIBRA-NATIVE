@@ -17,6 +17,25 @@ export { textClassesFor };
  * linea vi sta in una riga alta almeno quanto l'interlinea del blocco, vedi useInlineBox) o 'text'.
  */
 export type ParentLayout = 'flex' | 'block' | 'text';
+/**
+ * Sonda di min-width: auto (html.tsx, useRigidMinWidth): un flex item in una riga si restringe solo se
+ * contiene testo che può andare a capo (o un campo di testo); altrimenti in CSS la sua larghezza minima
+ * è quella del contenuto. Il testo e i campi la "marcano" (anche per i contenitori più esterni).
+ */
+export type WrapProbe = { flexible: boolean; mark: () => void };
+export const WrapProbeContext = createContext<WrapProbe | null>(null);
+
+/** Testo con almeno uno spazio fra due parole (in CSS una parola sola non va a capo). */
+function hasBreakableText(children: ReactNode): boolean {
+  if (typeof children === 'string') return /\S\s+\S/.test(children);
+  if (Array.isArray(children)) {
+    const flat = children.filter((c) => typeof c === 'string' || typeof c === 'number').join('');
+    return /\S\s+\S/.test(flat) || children.some((c) => typeof c === 'object' && c != null && hasBreakableText((c as { props?: { children?: ReactNode } }).props?.children));
+  }
+  if (typeof children === 'object' && children != null) return hasBreakableText((children as { props?: { children?: ReactNode } }).props?.children);
+  return false;
+}
+
 export const FlexParentContext = createContext<ParentLayout>('flex');
 
 /** Proprietà di testo scritte in `style` dai contenitori (colore, dimensione...), ereditate come in CSS. */
@@ -73,9 +92,12 @@ const DISPLAY_FAMILY: Record<string, string> = {
   'font-bold': 'PlayfairDisplay_700Bold',
 };
 
+// pila `font-mono` di Tailwind, come l'originale (sul web `monospace` da solo sceglie un altro font)
+const MONO_WEB = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+
 export function fontFamilyFor(classes: string): string | undefined {
   const list = classes.split(/\s+/);
-  if (list.includes('font-mono')) return Platform.select({ ios: 'Menlo', default: 'monospace' });
+  if (list.includes('font-mono')) return Platform.select({ ios: 'Menlo', web: MONO_WEB, default: 'monospace' });
   let weight = 'font-normal';
   for (const c of list) if (WEIGHT_FAMILY[c]) weight = c; // vince l'ultima, come in CSS
   if (list.includes('font-display')) return DISPLAY_FAMILY[weight] ?? DISPLAY_FAMILY['font-normal'];
@@ -126,6 +148,8 @@ export function Text({ className, style, numberOfLines, children, ...props }: Ap
   const childStyle = nextTextStyle(inheritedStyle, className, converted);
   const truncate = /(^|\s)truncate(\s|$)/.test(merged);
   const clamp = Number(merged.match(/(?:^|\s)line-clamp-(\d+)/)?.[1] ?? 0);
+  const probe = useContext(WrapProbeContext);
+  if (probe && !probe.flexible && !numberOfLines && !truncate && !clamp && !/(^|\s)whitespace-nowrap(\s|$)/.test(merged) && hasBreakableText(children)) probe.mark();
   return (
     <RNText
       {...props}

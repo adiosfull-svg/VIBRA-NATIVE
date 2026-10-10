@@ -2,7 +2,7 @@
 // regole differiscono:
 //  - `flex`/`inline-flex` sul web vanno in riga, in RN in colonna → aggiunge flex-row
 //  - `space-y-N`/`space-x-N` (margini tra figli) → gap-y-N/gap-x-N
-//  - `ring-N ring-<colore>` (box-shadow) → bordo
+//  - `ring-N ring-<colore> ring-offset-N` → boxShadow (anello fuori dal bordo, come in CSS)
 //  - `grid grid-cols-N gap-*` → descrittore griglia (resa da Div con righe a capo)
 //  - `bg-gradient-to-* from-* via-* to-*` → descrittore gradiente (reso con LinearGradient)
 //  - `line-clamp-N` → numberOfLines
@@ -12,7 +12,13 @@ import { themeColor } from './colors.ts';
 
 /** Colonna di grid-cols-[...]: frazione (1fr), larghezza del contenuto (auto) o fissa (px). */
 export type GridTrack = { fr: number } | { auto: true } | { px: number };
-export type Grid = { cols: number; gapX: number; gapY: number; template?: GridTrack[] };
+export type Grid = { cols: number; gapX: number; gapY: number; template?: GridTrack[]; rows?: GridTrack[] };
+
+/** 'repeat(5, 1fr) 80px' → '1fr_1fr_1fr_1fr_1fr_80px' (forma delle classi grid-cols-[...]). */
+export function expandGridTemplate(css: string): string {
+  return css.replace(/repeat\(\s*(\d+)\s*,\s*([^)]+?)\s*\)/g, (_, n: string, t: string) => Array(Number(n)).fill(t.trim()).join(' '))
+    .trim().split(/\s+/).join('_');
+}
 
 /** grid-cols-[1fr_auto_120px] → colonne; null se contiene forme non gestite (repeat, minmax...). */
 export function parseGridTemplate(v: string): GridTrack[] | null {
@@ -27,7 +33,7 @@ export function parseGridTemplate(v: string): GridTrack[] | null {
   return tracks.length ? tracks : null;
 }
 export type Gradient = { dir: string; colors: string[] };
-export type Normalized = { box: string; grid?: Grid; gradient?: Gradient; lineClamp?: number };
+export type Normalized = { box: string; grid?: Grid; gradient?: Gradient; lineClamp?: number; ring?: string };
 
 const REM = 16;
 /** Scala spacing di Tailwind (n × 0.25rem) e valori arbitrari [12px]. */
@@ -74,6 +80,8 @@ function computeNormalized(className?: string): Normalized {
   let to: string | undefined;
   let ring: string | null = null;
   let ringColor: string | null = null;
+  let ringOffset = 0;
+  let ringOffsetColor = '#ffffff';
 
   for (const c of list) {
     const responsive = BREAKPOINT.test(c);
@@ -98,8 +106,10 @@ function computeNormalized(className?: string): Normalized {
     if (!responsive && (m = c.match(/^via-(.+)$/))) { via = m[1]; continue; }
     if (!responsive && (m = c.match(/^to-(.+)$/)) && !/^to-(\d|\[)/.test(c)) { to = m[1]; continue; }
     if (!responsive && (m = c.match(/^ring(?:-(\d))?$/))) { ring = m[1] ?? '3'; continue; }
-    if (!responsive && (m = c.match(/^ring-([a-z]+-\d+(?:\/\d+)?|white|black|primary|border|background)$/))) { ringColor = m[1]; continue; }
+    if (!responsive && (m = c.match(/^ring-offset-(\d)$/))) { ringOffset = Number(m[1]); continue; }
+    if (!responsive && (m = c.match(/^ring-offset-(.+)$/))) { ringOffsetColor = themeColor(m[1]) ?? ringOffsetColor; continue; }
     if (/^ring-offset/.test(base)) continue;
+    if (!responsive && (m = c.match(/^ring-(.+)$/)) && themeColor(m[1])) { ringColor = m[1]; continue; }
     if ((m = base.match(/^line-clamp-(\d+)$/))) { out.lineClamp = Number(m[1]); continue; }
     if (c === 'inline-block' || c === 'block' || c === 'inline') continue;
     if (c === 'fixed') { box.push('absolute'); continue; }
@@ -107,9 +117,13 @@ function computeNormalized(className?: string): Normalized {
   }
 
   if (isFlex && !hasDirection) box.push('flex-row');
-  if (ring) {
-    box.push(ring === '1' ? 'border' : `border-${ring}`);
-    if (ringColor) box.push(`border-${ringColor}`);
+  if (ring && ring !== '0') {
+    // colore di default di Tailwind 3: blue-500 al 50%
+    const color = (ringColor && themeColor(ringColor)) ?? 'rgba(59,130,246,0.5)';
+    const w = Number(ring);
+    out.ring = ringOffset
+      ? `0px 0px 0px ${ringOffset}px ${ringOffsetColor}, 0px 0px 0px ${ringOffset + w}px ${color}`
+      : `0px 0px 0px ${w}px ${color}`;
   }
   if (isGrid) {
     out.grid = { cols, gapX: gapX ?? gap ?? 0, gapY: gapY ?? gap ?? 0, ...(template ? { template } : null) };
@@ -125,5 +139,25 @@ function computeNormalized(className?: string): Normalized {
     if (colors.length) out.gradient = { dir: gradDir, colors };
   }
   out.box = box.join(' ');
+  return out;
+}
+
+const RADIUS: Record<string, number> = { none: 0, sm: 2, '': 4, md: 6, lg: 8, xl: 12, '2xl': 16, '3xl': 24, full: 9999 };
+const CORNERS: Record<string, string[]> = {
+  '': ['TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'],
+  t: ['TopLeft', 'TopRight'], b: ['BottomLeft', 'BottomRight'], l: ['TopLeft', 'BottomLeft'], r: ['TopRight', 'BottomRight'],
+  s: ['TopLeft', 'BottomLeft'], e: ['TopRight', 'BottomRight'],
+  tl: ['TopLeft'], tr: ['TopRight'], bl: ['BottomLeft'], br: ['BottomRight'],
+};
+
+/** Raggi degli angoli dati dalle classi rounded-* (senza varianti): per arrotondare uno sfondo senza overflow-hidden. */
+export function radiusFromClasses(className: string): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const c of className.split(/\s+/)) {
+    const m = c.match(/^rounded(?:-(t|b|l|r|s|e|tl|tr|bl|br))?(?:-(none|sm|md|lg|xl|2xl|3xl|full|\[(\d+(?:\.\d+)?)px\]))?$/);
+    if (!m) continue;
+    const v = m[3] != null ? Number(m[3]) : RADIUS[m[2] ?? ''];
+    for (const corner of CORNERS[m[1] ?? '']) out[`border${corner}Radius`] = v;
+  }
   return out;
 }

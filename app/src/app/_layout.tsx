@@ -1,6 +1,9 @@
 // crypto.getRandomValues per lo SDK Base44 (uuid): deve essere il primo import
 import 'react-native-get-random-values';
+// TextDecoder('latin1') (fast-png, jsPDF) sul telefono: prima di ogni altro modulo
+import '../lib/textDecoderLatin1';
 import '../../global.css';
+import '../ui/customCss';
 import {
   Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
   Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black,
@@ -15,12 +18,15 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
+import { CrashBoundary, CrashOverlay, installCrashHandler } from '../lib/crashReport';
 import { hoverRootProps } from '../ui/gestures';
 import { queryClient } from '../lib/queryClient';
 import { ViewAsPromoterProvider } from '../lib/viewAs';
 import { Toaster } from '../ui/use-toast';
 import { Loading } from '../components/ui';
 import { colors } from '../theme';
+
+installCrashHandler();
 
 function RootNavigator() {
   const { user, isLoadingAuth } = useAuth();
@@ -53,9 +59,12 @@ export default function RootLayout() {
         <AuthProvider>
           <ViewAsPromoterProvider>
             <StatusBar style="light" />
-            <RootNavigator />
-            <PortalHost />
-            <Toaster />
+            <CrashBoundary>
+              <RootNavigator />
+              <PortalHost />
+              <Toaster />
+            </CrashBoundary>
+            <CrashOverlay />
           </ViewAsPromoterProvider>
         </AuthProvider>
       </QueryClientProvider>

@@ -3,6 +3,7 @@
 // - drag-to-select stile Instagram: il dito scorre sulla barra e il pill lo segue
 // - long-press (250ms) su Weekend → menu radiale a ventaglio (Semine, Messaggi)
 // - vetro: blur(6px) + bg-background/30 + bordo superiore
+import { usePathname, useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
@@ -88,14 +89,21 @@ function NavIcon({ item, active, dragging, logo }: { item: NavItem; active: bool
   );
 }
 
-export default function MobileNavBar({ state, navigation }: BottomTabBarProps) {
+/**
+ * Tab bar delle 5 tab (props di expo-router) e, senza props, barra delle altre pagine
+ * (Dashboard, Serate, Locali...): come nell'originale (AppLayout) la barra c'è ovunque;
+ * fuori dalle tab nessuna voce è attiva e si naviga col router.
+ */
+export default function MobileNavBar({ state, navigation }: Partial<BottomTabBarProps>) {
+  const pathname = usePathname();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAdmin, isSuper4 } = useRoleAccess();
   const { logoDataUrl } = useVibraLogo();
   const { searchOpen, setSearchOpen } = useLayoutUI();
   const NAV_ITEMS = isAdmin || isSuper4 ? ADMIN_NAV_ITEMS : LIMITED_NAV_ITEMS;
 
-  const activeRoute = state.routes[state.index]?.name;
+  const activeRoute = state ? state.routes[state.index]?.name : pathname.split('/')[1] || 'index';
   const activeIndex = NAV_ITEMS.findIndex((i) => i.route === activeRoute);
   const searchIndex = NAV_ITEMS.findIndex((i) => i.route === '__search__');
 
@@ -121,7 +129,10 @@ export default function MobileNavBar({ state, navigation }: BottomTabBarProps) {
   const go = (item: NavItem | { path: string }) => {
     if ('route' in item) {
       if (item.route === '__search__') { setSearchOpen(true); return; }
-      navigation.navigate(item.route as never);
+      if (!navigation) router.navigate(item.route === 'index' ? '/' : `/${item.route}`);
+      else navigation.navigate(item.route as never);
+    } else if (!navigation) {
+      router.navigate(item.path.startsWith('/') ? item.path : `/${item.path}`);
     } else if (item.path.startsWith('/')) {
       navigation.getParent()?.navigate(item.path.slice(1) as never);
     } else {

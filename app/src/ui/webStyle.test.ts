@@ -30,8 +30,7 @@ test('webStyle: ombre, misure, proprietà solo-web', () => {
   assert.equal(gradient, undefined);
   assert.equal(style.width, 75);
   assert.equal(style.backgroundColor, '#561a8e8c');
-  assert.equal(style.shadowColor, '#561a8e73');
-  assert.equal(style.shadowRadius, 6);
+  assert.equal(style.boxShadow, 'inset 0px 0px 0px 1px red, 0px 0px 12px -2px #561a8e73');
   assert.equal(style.minHeight, undefined);
   assert.equal(style.transition, undefined);
   assert.deepEqual(style.transform, [{ translateY: -1 }, { scale: 1.15 }]);
@@ -69,4 +68,11 @@ test('webStyle: vh/dvh e calc semplici con le dimensioni della finestra', () => 
   } finally {
     Object.assign(cssViewport, { width: 0, height: 0 });
   }
+});
+
+test('webStyle: rotateY/perspective e transition (solo web)', () => {
+  assert.deepEqual(webStyle({ transform: 'perspective(1200px) rotateY(180deg)' }).style.transform, [{ perspective: 1200 }, { rotateY: '180deg' }]);
+  const t = webStyle({ transition: 'transform 400ms cubic-bezier(0.22,1,0.36,1)' }, true).style;
+  assert.deepEqual(t, { transitionProperty: 'transform', transitionDuration: '400ms', transitionTimingFunction: 'cubic-bezier(0.22,1,0.36,1)' });
+  assert.equal(webStyle({ transition: 'transform 1s' }).style.transitionProperty, undefined);
 });

@@ -1,7 +1,7 @@
 // Converte gli oggetti `style` scritti per il web (CSS) in stile React Native:
 //  - colori: hsl(var(--primary) / 0.55), hsl(240,5%,50%), var(--x) → #rrggbbaa
 //  - background(Image): linear-gradient(...) → descrittore gradiente (reso da Div/Btn)
-//  - boxShadow: '0 0 12px -2px <colore>' → shadow* (iOS) + elevation (Android)
+//  - boxShadow: '0 0 12px -2px <colore>' → boxShadow di RN con i colori risolti
 //  - textShadow, transform in stringa, misure '12px'
 //  - proprietà solo-web (filter, transition, cursor, willChange...) → scartate
 import { THEME } from './palette.generated.ts';
@@ -13,7 +13,7 @@ export type WebStyleResult = { style: AnyStyle; gradient?: Gradient & { angle?: 
 const DROP = new Set([
   'filter', 'backdropFilter', 'WebkitBackdropFilter', 'transition', 'transitionDelay', 'animation', 'animationDelay',
   'animationDuration', 'cursor', 'willChange', 'touchAction', 'userSelect', 'WebkitUserSelect', 'WebkitTapHighlightColor',
-  'WebkitTouchCallout', 'pointerEvents', 'overscrollBehavior', 'scrollbarWidth', 'msOverflowStyle', 'WebkitOverflowScrolling',
+  'WebkitTouchCallout', 'overscrollBehavior', 'scrollbarWidth', 'msOverflowStyle', 'WebkitOverflowScrolling',
   'WebkitTransform', 'transformOrigin', 'contain', 'isolation', 'mixBlendMode', 'outline', 'visibility', 'clipPath',
   'maskImage', 'WebkitMaskImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat', 'boxSizing', 'whiteSpace',
   'wordBreak', 'overflowWrap', 'textOverflow', 'WebkitLineClamp', 'WebkitBoxOrient', 'listStyle', 'resize', 'appearance',
@@ -160,22 +160,21 @@ function extractColor(s: string): string | undefined {
   return hex?.[0];
 }
 
-/** Primo box-shadow non inset → ombra RN (iOS) + elevation (Android). */
+/**
+ * box-shadow CSS → `boxShadow` di RN (nuova architettura, e react-native-web): stessa sintassi
+ * (più ombre, spread, inset), con i colori risolti (hsl(var(--x) / a) → #rrggbbaa).
+ */
 function parseBoxShadow(v: string): AnyStyle {
-  const shadows = splitTop(v).filter((s) => !/^inset\b/.test(s) && s !== 'none');
-  if (!shadows.length) return {};
-  const s = shadows[0];
-  const color = extractColor(s);
-  const nums = s.replace(color ?? '', '').trim().split(/\s+/).map((n) => parseFloat(n)).filter((n) => !Number.isNaN(n));
-  const [x = 0, y = 0, blur = 0] = nums;
-  const c = cssColor(color ?? 'rgba(0,0,0,0.25)');
-  return {
-    shadowColor: c,
-    shadowOffset: { width: x, height: y },
-    shadowOpacity: 1,
-    shadowRadius: blur / 2,
-    elevation: Math.min(24, Math.round(blur / 3)),
-  };
+  if (v.trim() === 'none') return {};
+  const shadows = splitTop(v).map((s) => {
+    // colore: funzione/hex, altrimenti una parola (red, transparent, currentColor) che non sia inset
+    const color = extractColor(s) ?? s.split(/\s+/).find((t) => /^[a-z]+$/i.test(t) && t !== 'inset');
+    const c = (color && cssColor(color)) || color || 'rgba(0,0,0,0.25)';
+    const rest = (color ? s.replace(color, '') : s).trim().split(/\s+/).filter(Boolean)
+      .map((n) => (/^-?[\d.]+$/.test(n) ? `${n}px` : n));
+    return [...rest, c].join(' ');
+  });
+  return { boxShadow: shadows.join(', ') };
 }
 
 function parseTextShadow(v: string): AnyStyle {
@@ -202,18 +201,34 @@ function parseTransform(v: string): AnyStyle[] | undefined {
       case 'scale': out.push({ scale: parseFloat(raw[0]) }); break;
       case 'scaleX': out.push({ scaleX: parseFloat(raw[0]) }); break;
       case 'scaleY': out.push({ scaleY: parseFloat(raw[0]) }); break;
-      case 'rotate': out.push({ rotate: raw[0] }); break;
+      case 'rotate': case 'rotateZ': out.push({ rotate: raw[0] }); break;
+      case 'rotateX': out.push({ rotateX: raw[0] }); break;
+      case 'rotateY': out.push({ rotateY: raw[0] }); break;
+      case 'perspective': if (px(raw[0]) != null) out.push({ perspective: px(raw[0]) }); break;
       default: break;
     }
   }
   return out.length ? out : undefined;
 }
 
-export function webStyle(input: unknown): WebStyleResult {
+/** transition CSS → proprietà di react-native-web (solo web: in RN le animazioni passano da Animated). */
+function parseTransition(v: string): AnyStyle {
+  if (v.trim() === 'none') return { transitionDuration: '0s' };
+  const parts = splitTop(v).map((t) => splitTop(t, ' '));
+  return {
+    transitionProperty: parts.map((p) => p[0]).join(', '),
+    transitionDuration: parts.map((p) => p.find((x) => /^[\d.]+m?s$/.test(x)) ?? '0s').join(', '),
+    transitionTimingFunction: parts.map((p) => p.find((x) => /^(ease|linear|step|cubic-bezier)/.test(x)) ?? 'ease').join(', '),
+  };
+}
+
+export function webStyle(input: unknown, web = false): WebStyleResult {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return { style: (input as AnyStyle) ?? {} };
   const style: AnyStyle = {};
   let gradient: WebStyleResult['gradient'];
   for (const [k, v] of Object.entries(input as AnyStyle)) {
+    if (k === 'pointerEvents') { style.pointerEvents = v === 'none' ? 'none' : 'auto'; continue; }
+    if (web && k === 'transition' && typeof v === 'string') { Object.assign(style, parseTransition(v)); continue; }
     if (v == null || DROP.has(k)) continue;
     if (k === 'background' || k === 'backgroundImage') {
       if (typeof v === 'string' && v.includes('linear-gradient')) { gradient = parseLinearGradient(v); continue; }

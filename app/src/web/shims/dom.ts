@@ -92,6 +92,17 @@ export const storage = {
   get length() { return mem.size; },
 };
 
+// ── sessionStorage: in memoria, dura quanto l'app è aperta (come una scheda del browser) ──
+const sessionMem = new Map<string, string>();
+export const sessionStore = {
+  getItem: (k: string) => (sessionMem.has(k) ? sessionMem.get(k)! : null),
+  setItem: (k: string, v: string) => { sessionMem.set(k, String(v)); },
+  removeItem: (k: string) => { sessionMem.delete(k); },
+  clear: () => { sessionMem.clear(); },
+  key: (i: number) => [...sessionMem.keys()][i] ?? null,
+  get length() { return sessionMem.size; },
+};
+
 // ── navigator ──────────────────────────────────────────────────────────────
 export const nav = {
   userAgent: 'ReactNative',

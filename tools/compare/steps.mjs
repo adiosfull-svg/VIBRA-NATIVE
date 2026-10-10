@@ -21,14 +21,27 @@ const findText = ([text, exact, nth]) => {
 };
 export async function runSteps(page, steps, label) {
   for (const step of steps) {
-    const [kind, ...rest] = step.split(/(?<=^(?:click|nth|wait|scroll|key|type))[:~]/);
+    const [kind, ...rest] = step.split(/(?<=^(?:click|nth|wait|scrollto|scroll|key|type))[:~]/);
     const exact = !step.startsWith('click~');
     let arg = rest.join(':'), nth = 0;
     if (kind === 'nth') { const i = arg.indexOf(':'); nth = Number(arg.slice(0, i)); arg = arg.slice(i + 1); }
     if (kind === 'wait') await page.waitForTimeout(Number(arg));
     else if (kind === 'key') await page.keyboard.press(arg);
     else if (kind === 'type') { await page.keyboard.type(arg, { delay: 30 }); await page.waitForTimeout(600); }
-    else if (kind === 'scroll') {
+    else if (kind === 'scrollto') {
+      await page.evaluate((y) => {
+        window.scrollTo(0, y);
+        // nativo sul web: la pagina è uno ScrollView (il più grande elemento scorrevole in verticale)
+        let best = null;
+        for (const el of document.querySelectorAll('div')) {
+          const s = getComputedStyle(el);
+          if (!/auto|scroll/.test(s.overflowY) || el.scrollHeight <= el.clientHeight + 1) continue;
+          if (!best || el.clientHeight * el.scrollHeight > best.clientHeight * best.scrollHeight) best = el;
+        }
+        if (best && best.clientHeight > innerHeight / 2) best.scrollTop = y;
+      }, Number(arg));
+      await page.waitForTimeout(800);
+    } else if (kind === 'scroll') {
       await page.mouse.move(195, 500); await page.mouse.wheel(0, Number(arg)); await page.waitForTimeout(600);
     } else if (kind === 'click' || kind === 'nth') {
       let pt = null;

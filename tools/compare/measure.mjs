@@ -7,6 +7,7 @@
 //   nth:<n>:<testo>   tocca l'n-esimo (da 0) elemento visibile con quel testo esatto
 //   wait:<ms>         attende
 //   scroll:<px>       scorre la pagina (window e scroller interni) di px
+//   scrollto:<y>      porta la pagina (window o ScrollView principale) alla posizione y (screenshot più in basso)
 //   key:<tasto>       preme un tasto (es. key:Escape)
 //   type:<testo>      scrive nel campo che ha il fuoco
 // es.: node tools/compare/measure.mjs out/gruppi /clienti pr "click:Gruppi;wait:1500"
