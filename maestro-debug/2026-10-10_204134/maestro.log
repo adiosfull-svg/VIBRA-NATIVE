@@ -1,0 +1,117 @@
+20:41:35.113 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-10_204134
+20:41:35.120 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+20:41:35.120 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+20:41:35.120 [ INFO] MAESTRO.logSystemInfo: CI: github
+20:41:35.121 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+20:41:35.121 [ INFO] MAESTRO.logSystemInfo: OS Version: 6.17.0-1022-azure
+20:41:35.121 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+20:41:35.126 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+20:41:35.131 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+20:41:35.134 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+20:41:35.138 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+20:41:35.138 [ INFO] MAESTRO.logSystemInfo: ---------------------
+20:41:35.172 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+20:41:41.229 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 37207 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/pr/02-clienti.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+20:41:53.807 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 02-clienti
+20:41:53.825 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+20:41:54.623 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+20:41:54.881 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+20:41:54.890 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+20:41:54.891 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:41:54.891 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:41:54.892 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+20:41:56.620 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:41:56.995 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:41:57.312 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+20:41:57.312 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+20:41:57.522 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+20:41:57.522 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+20:41:57.527 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:41:57.528 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:41:57.528 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+20:42:04.922 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+20:42:04.923 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+20:42:04.923 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+20:42:04.923 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi|Password" is visible RUNNING
+20:42:05.045 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi|Password" is visible COMPLETED
+20:42:05.045 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+20:42:05.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:42:05.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:42:05.047 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+20:42:05.390 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+20:42:05.390 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+20:42:05.390 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+20:42:05.391 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+20:42:05.391 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:42:05.391 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:42:05.391 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+20:42:05.593 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Email" RUNNING
+20:42:05.828 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=Email, hintText=Email, ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[63,1183][1017,1309], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.EditText, important-for-accessibility=true, error=}, children=[], clickable=true, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=63, y=1183, width=954, height=126))
+20:42:07.230 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+20:42:07.234 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 1246) using hierarchy based logic for wait
+20:42:16.415 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+20:42:16.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Email" COMPLETED
+20:42:16.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Input text ${EMAIL} RUNNING
+20:42:17.827 [ INFO] maestro.Maestro.inputText: Inputting text: admin@vibra.local
+20:42:26.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Input text ${EMAIL} COMPLETED
+20:42:26.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Password" RUNNING
+20:42:27.337 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=Password, hintText=Password, ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[63,1340][1017,1466], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.EditText, important-for-accessibility=true, error=}, children=[], clickable=true, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=63, y=1340, width=954, height=126))
+20:42:28.773 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+20:42:28.775 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 1403) using hierarchy based logic for wait
+20:42:30.884 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+20:42:30.884 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Password" COMPLETED
+20:42:30.884 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Input text vibra RUNNING
+20:42:30.885 [ INFO] maestro.Maestro.inputText: Inputting text: vibra
+20:42:34.519 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Input text vibra COMPLETED
+20:42:34.520 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Hide Keyboard RUNNING
+20:42:34.524 [ INFO] maestro.Maestro.hideKeyboard$lambda$12: Hiding Keyboard
+20:42:36.442 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Hide Keyboard COMPLETED
+20:42:36.442 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Accedi" RUNNING
+20:42:36.932 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Accedi, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[63,1498][1017,1549], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=63, y=1498, width=954, height=51))
+20:42:39.145 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+20:42:39.146 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 1523) using hierarchy based logic for wait
+20:42:40.952 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Accedi" COMPLETED
+20:42:40.953 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible COMPLETED
+20:42:40.953 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+20:42:40.953 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi" is visible RUNNING
+20:45:41.223 [ERROR] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandFailed: Assertion is false: "I Miei Progressi" is visible
+20:45:41.406 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+20:45:41.407 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:45:41.618 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi" is visible FAILED
+20:45:42.617 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
