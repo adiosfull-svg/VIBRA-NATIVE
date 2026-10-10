@@ -5,6 +5,7 @@
 import { createContext, useContext } from 'react';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 import { cssInterop } from 'nativewind';
+import { Platform, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
 import { TextClassContext, TextStyleContext } from './text';
 
@@ -32,9 +33,16 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
   className?: string;
   node: IconNode; width?: number; height?: number; color?: string; fill?: string; strokeWidth?: number | string; style?: object;
 }) {
-  return (
+  // posizione e trasformazioni (absolute top-1/2 -translate-y-1/2 delle icone dentro i campi):
+  // sull'Svg di Android il translate in percentuale non si applica, su una View sì
+  const flat = (StyleSheet.flatten(style) ?? {}) as Record<string, unknown>;
+  const outer: Record<string, unknown> = {};
+  const inner: Record<string, unknown> = {};
+  const wrap = Platform.OS !== 'web' && Object.keys(flat).some((k) => POSITIONED_KEYS.test(k));
+  for (const [k, v] of Object.entries(flat)) (wrap && WRAP_KEYS.test(k) ? outer : inner)[k] = v;
+  const svg = (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth}
-      strokeLinecap="round" strokeLinejoin="round" style={style}>
+      strokeLinecap="round" strokeLinejoin="round" style={wrap ? inner : style}>
       {node.map(([tag, attrs], i) => {
         const El = ELEMENTS[tag];
         if (!El) return null;
@@ -43,7 +51,11 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
       })}
     </Svg>
   );
+  return wrap ? <View style={outer}>{svg}</View> : svg;
 }
+
+const POSITIONED_KEYS = /^(position|transform|top|left|right|bottom)$/;
+const WRAP_KEYS = /^(position|top|left|right|bottom|transform|margin|zIndex|alignSelf|flexShrink|flexGrow)/;
 
 cssInterop(SvgIcon, {
   className: {
