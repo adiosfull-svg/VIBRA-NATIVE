@@ -11,6 +11,7 @@ import * as Clipboard from 'expo-clipboard';
 import { BackHandler, Dimensions, Linking, PixelRatio, Share } from 'react-native';
 import { blobToBase64, saveBase64File } from './files';
 import { pageScroll } from './pageScroll';
+import { windowTouchSink } from '../../ui/gestures';
 
 type AnyFn = (...a: any[]) => any;
 
@@ -31,6 +32,8 @@ function makeTarget(name: string) {
 }
 const winEvents = makeTarget('window');
 const docEvents = makeTarget('document');
+// move/up di un tocco partito su un elemento arrivano anche qui (ui/gestures), come nel browser
+windowTouchSink.emit = (type, event) => { winEvents.emit(type, event); docEvents.emit(type, event); };
 
 Dimensions.addEventListener('change', () => {
   winEvents.emit('resize');

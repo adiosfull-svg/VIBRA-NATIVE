@@ -19,6 +19,21 @@ appId: com.vibra.mobile
     timeout: 60000
 - waitForAnimationToEnd
 - takeScreenshot: clienti-01
+# dettaglio del primo cliente e chiusura
+- tapOn: "Sofia Colombo"
+- extendedWaitUntil:
+    visible: "Skill del cliente"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: clienti-dettaglio
+- swipe:
+    start: 50%, 75%
+    end: 50%, 25%
+    duration: 600
+- takeScreenshot: clienti-dettaglio-2
+- back
+- waitForAnimationToEnd
+- takeScreenshot: clienti-chiuso
 - swipe:
     start: 50%, 80%
     end: 50%, 15%
@@ -61,10 +76,3 @@ appId: com.vibra.mobile
 - waitForAnimationToEnd
 - runFlow: ../sub/sistema.yaml
 - takeScreenshot: clienti-07
-- tapOn:
-    point: "50%,55%"
-- waitForAnimationToEnd
-- takeScreenshot: clienti-dettaglio
-- back
-- waitForAnimationToEnd
-- takeScreenshot: clienti-chiuso

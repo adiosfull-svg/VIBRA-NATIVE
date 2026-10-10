@@ -8,6 +8,10 @@
 //    sull'elemento toccato mousemove/mouseenter/mousedown/mouseup, e mouseleave su quelli
 //    toccati prima quando il tap cade altrove (serve HoverRoot attorno all'app)
 //  - onWheel: non esiste, ignorato
+//  - un tocco iniziato su un elemento con onPointerDown/onTouchStart/onMouseDown continua (move,
+//    up/end, cancel) anche verso i listener di window/document, come nel browser: il codice web li
+//    registra lì (pressione lunga, trascinamenti). Senza, es. la card record non annullava mai il
+//    timer della pressione lunga e uno scorrimento apriva la condivisione.
 import { useRef } from 'react';
 import { Platform, type GestureResponderEvent } from 'react-native';
 
@@ -20,6 +24,14 @@ const TOUCH = ['onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel'] as 
 const POINTER = ['onPointerDown', 'onPointerMove', 'onPointerUp', 'onPointerCancel', 'onPointerEnter', 'onPointerLeave'] as const;
 const MOUSE = ['onMouseDown', 'onMouseMove', 'onMouseUp', 'onMouseEnter', 'onMouseLeave'] as const;
 const ALL = [...TOUCH, ...POINTER, ...MOUSE, 'onWheel'] as const;
+
+/** Destinazione degli eventi di window/document (la imposta web/shims/dom). */
+export const windowTouchSink: { emit: ((type: string, event: Record<string, unknown>) => void) | null } = { emit: null };
+function toWindow(e: GestureResponderEvent, types: string[]) {
+  const sink = windowTouchSink.emit;
+  if (!sink) return;
+  for (const t of types) sink(t, webTouchEvent(e, t) as unknown as Record<string, unknown>);
+}
 
 /** Separa gli handler web dalle altre prop. */
 export function splitGestureProps<P extends object>(props: P): [Handlers, Omit<P, (typeof ALL)[number]>] {
@@ -96,6 +108,8 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
   const hasMouse = MOUSE.some((k) => h[k]);
   const hasPointer = h.onPointerDown || h.onPointerMove || h.onPointerUp || h.onPointerCancel;
   const out: Record<string, AnyFn> = {};
+  // il tocco è partito qui: move/up arrivano anche a window/document (vedi in cima)
+  const starts = !!(h.onTouchStart || h.onPointerDown || h.onMouseDown);
   if (h.onTouchStart || hasPointer || hasMouse) {
     out.onTouchStart = (e: GestureResponderEvent) => {
       start.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
@@ -103,16 +117,18 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
       ref.current.onPointerDown?.(webTouchEvent(e, 'pointerdown'));
     };
   }
-  if (h.onTouchMove || h.onPointerMove) {
+  if (h.onTouchMove || h.onPointerMove || starts) {
     out.onTouchMove = (e: GestureResponderEvent) => {
       ref.current.onTouchMove?.(webTouchEvent(e, 'touchmove'));
       ref.current.onPointerMove?.(webTouchEvent(e, 'pointermove'));
+      if (starts) toWindow(e, ['pointermove', 'touchmove']);
     };
   }
-  if (h.onTouchEnd || h.onPointerUp || hasMouse) {
+  if (h.onTouchEnd || h.onPointerUp || hasMouse || starts) {
     out.onTouchEnd = (e: GestureResponderEvent) => {
       ref.current.onTouchEnd?.(webTouchEvent(e, 'touchend'));
       ref.current.onPointerUp?.(webTouchEvent(e, 'pointerup'));
+      if (starts) toWindow(e, ['pointerup', 'touchend']);
       const s = start.current;
       const { pageX, pageY } = e.nativeEvent;
       if (hasMouse && s && Math.abs(pageX - s.x) < TAP_SLOP && Math.abs(pageY - s.y) < TAP_SLOP) {
@@ -126,10 +142,11 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
       }
     };
   }
-  if (h.onTouchCancel || h.onTouchEnd || h.onPointerCancel || h.onPointerUp) {
+  if (h.onTouchCancel || h.onTouchEnd || h.onPointerCancel || h.onPointerUp || starts) {
     out.onTouchCancel = (e: GestureResponderEvent) => {
       (ref.current.onTouchCancel ?? ref.current.onTouchEnd)?.(webTouchEvent(e, 'touchcancel'));
       (ref.current.onPointerCancel ?? ref.current.onPointerUp)?.(webTouchEvent(e, 'pointercancel'));
+      if (starts) toWindow(e, ['pointercancel', 'touchcancel']);
     };
   }
   return out;

@@ -141,7 +141,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   };
 
   // Gesture: tap, drag-to-select e long-press radiale, come i pointer handler originali
-  const refs = useRef({ startX: 0, startY: 0, moved: false, index: -1, timer: null as ReturnType<typeof setTimeout> | null, radial: false, highlighted: -1 });
+  const refs = useRef({ downAt: 0, startX: 0, startY: 0, moved: false, index: -1, timer: null as ReturnType<typeof setTimeout> | null, radial: false, highlighted: -1 });
   // posizione del tocco rispetto alla barra: pageX meno il bordo sinistro della barra sullo schermo.
   // (locationX è relativo all'elemento toccato, cioè l'icona o la scritta, non alla barra: toccando
   // "Clienti" dava ~0 e si andava sempre sulla prima voce)
@@ -159,6 +159,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
     onPanResponderGrant: (e) => {
       const r = refs.current;
       const x = barX(e);
+      r.downAt = e.nativeEvent.timestamp;
       r.startX = e.nativeEvent.pageX;
       r.startY = e.nativeEvent.pageY;
       r.moved = false;
@@ -209,10 +210,19 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
         Haptics.selectionAsync().catch(() => {});
       }
     },
-    onPanResponderRelease: () => {
+    onPanResponderRelease: (e) => {
       const r = refs.current;
       if (r.timer) { clearTimeout(r.timer); r.timer = null; }
       dragging.current = false;
+      // tocco breve (orari nativi del dito): è un tap anche se il timer del ventaglio è scattato
+      // in ritardo perché il JS era occupato (succedeva sull'emulatore: "Weekend" non si apriva)
+      if (r.radial && r.highlighted < 0 && e.nativeEvent.timestamp - r.downAt < 250) {
+        r.radial = false;
+        setRadial(null);
+        setDragIndex(null);
+        go(items.current[r.index]);
+        return;
+      }
       if (r.radial) {
         r.radial = false;
         const opts = RADIAL_MENUS[items.current[r.index].route] ?? [];
