@@ -3,7 +3,7 @@
 //   <div> → Div   <span>/<p>/<h*> → Span/P/H   <button> → Btn (onClick come sul web)
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { cssInterop } from 'nativewind';
-import { stripSpacedMargins } from './spaceMargins';
+import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -14,7 +14,7 @@ import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
-import { normalizeClasses, spacingPx, type Gradient, type Grid } from './webClasses';
+import { normalizeClasses, parseGridTemplate, spacingPx, type Gradient, type Grid } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
@@ -221,6 +221,14 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
       const lead = { marginTop: gaps.y, marginLeft: gaps.x };
       return <LeadMarginContext.Provider key={child.key} value={lead}>{child}</LeadMarginContext.Provider>;
     }
+    if (!hadPrev && drawn && !outOfFlow && gaps.y != null && typeof props.className === 'string' && !CSS_FLEX.test(className)) {
+      // primo figlio di un blocco: il suo mb collassa col margine di space-y del successivo
+      const c = collapseFirstMargin(props.className, gaps.y);
+      if (!c) return child;
+      const flat0 = (Array.isArray(props.style) ? StyleSheet.flatten(props.style as StyleProp<ViewStyle>) : (props.style ?? {})) as Record<string, unknown>;
+      const style = c.marginBottom != null && inlinePx(flat0.marginBottom) == null ? { ...flat0, marginBottom: c.marginBottom } : props.style;
+      return cloneElement(child as ReactElement<{ className?: string; style?: unknown }>, { className: c.className, style });
+    }
     if (!hadPrev || !drawn || outOfFlow) return child;
     // in CSS il selettore di space-* è più specifico di mt-*/mb-*: sui figli dopo il primo li annulla
     const cls = typeof props.className === 'string' ? stripSpacedMargins(props.className, gaps) : props.className;
@@ -350,6 +358,14 @@ function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: 
   return { minStyle, onLayout: handleLayout, probe: probe.current };
 }
 
+/** style={{ gridTemplateColumns: '1fr 80px 60px' }} su un `grid`: come la classe grid-cols-[1fr_80px_60px]. */
+function withStyleGrid(rest: string, style: unknown): string {
+  const t = style && typeof style === 'object' && !Array.isArray(style) ? (style as { gridTemplateColumns?: unknown }).gridTemplateColumns : undefined;
+  if (typeof t !== 'string' || !/(^|\s)grid(\s|$)/.test(rest)) return rest;
+  const cols = t.trim().split(/\s+/).join('_');
+  return parseGridTemplate(cols) ? `${rest} grid-cols-[${cols}]` : rest;
+}
+
 // View animata che accetta className (NativeWind registra solo View, non Animated.View)
 const AnimatedBox = Animated.createAnimatedComponent(View);
 cssInterop(AnimatedBox, { className: 'style' });
@@ -464,7 +480,8 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
   const layout = useContext(FlexParentContext);
-  const [text, rest] = splitTextClasses(className);
+  const [text, classRest] = splitTextClasses(className);
+  const rest = withStyleGrid(classRest, style);
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
@@ -587,7 +604,8 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
     : press;
   const inherited = useContext(TextClassContext);
   const layout = useContext(FlexParentContext);
-  const [ownText, rest] = splitTextClasses(className);
+  const [ownText, classRest] = splitTextClasses(className);
+  const rest = withStyleGrid(classRest, style);
   // il browser centra il contenuto di <button> (le classi text-left/right della pagina vincono)
   const text = button ? cn('text-center', ownText) : ownText;
   const { box, grid, gradient: classGradient } = normalizeClasses(rest);

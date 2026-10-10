@@ -18,6 +18,7 @@ import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
 import { webStyle } from './webStyle';
+import { inheritedLineHeight } from './textLeading';
 import RNSvg, { type SvgProps } from 'react-native-svg';
 
 // ── <img> ────────────────────────────────────────────────────────────────────
@@ -222,12 +223,16 @@ function rawInput({ className, type, value, onChange, onChangeText, onKeyDown, m
   };
 }
 
+/** Preflight: `line-height: inherit` sui campi (16px dall'index.css): l'interlinea del contenitore. */
+const inputLineHeight = (inherited: string, className?: string) => inheritedLineHeight(cn(inherited, className), 16);
+
 const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean }>(({ multiline = false, ...p }, ref) => {
   const { ref: inputRef, submit } = useTextFormField(ref, p.required, p.value);
   const gap = useTextareaBaselineGap(multiline ? p.className : 'block');
+  const inherited = useContext(TextClassContext);
   return multiline
     ? <TextInput ref={inputRef} multiline textAlignVertical="top" {...rawInput({ ...p, style: [p.style, gap ? { marginBottom: gap } : null] }, submit, true)} />
-    : <TextInput ref={inputRef} {...rawInput(p, submit)} />;
+    : <TextInput ref={inputRef} {...rawInput({ ...p, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style] }, submit)} />;
 });
 RawTextInput.displayName = 'RawTextInput';
 

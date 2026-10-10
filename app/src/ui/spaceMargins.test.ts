@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { stripSpacedMargins } from './spaceMargins.ts';
+import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins.ts';
 
 test('space-y annulla mt/mb/my dei figli (anche con varianti e negativi)', () => {
   assert.equal(stripSpacedMargins('text-xs text-primary hover:underline mt-1', { y: 16 }), 'text-xs text-primary hover:underline');
@@ -17,4 +17,11 @@ test('space-x tocca solo ml/mr/mx; niente margini: stessa stringa', () => {
   assert.equal(stripSpacedMargins('ml-auto mt-1 mr-2', { x: 8 }), 'mt-1');
   const cls = 'flex items-center gap-2 mx-auto';
   assert.equal(stripSpacedMargins(cls, { y: 8 }), cls);
+});
+
+test('primo figlio con mb in un blocco space-y: i margini collassano', () => {
+  assert.deepEqual(collapseFirstMargin('grid text-[10px] px-3 mb-1', 8), { className: 'grid text-[10px] px-3' });
+  assert.deepEqual(collapseFirstMargin('mb-6 p-2', 8), { className: 'p-2', marginBottom: 16 });
+  assert.deepEqual(collapseFirstMargin('my-2', 4), { className: 'mt-2', marginBottom: 4 });
+  assert.equal(collapseFirstMargin('sm:mb-2 p-1', 8), null);
 });
