@@ -256,10 +256,33 @@
   un `<button>` in linea in un blocco resta 2px più bassa (Top 5 streak); il logo «Vibra» dell'header manca
   in entrambe (immagine esterna non raggiungibile dal container).
 
+- **Weekend (Programmazione) e Semine — FATTE** (10 ottobre 2026, stesso branch): convertite col codemod
+  (20 + 5 file), route `(tabs)/programmazione` e `(tabs)/semine` collegate. Tutte le tab di Weekend (Inviti,
+  Da ricontattare, Semina, Target, Leader, Tabelle), il dialog Aggiungi Semina e Semine (vuota e con card,
+  anche girata) coincidono con l'originale per pr/super4. Per avere card nello stack locale: creare semine dal
+  form del nativo (lo stack di prova accetta scritture). Correzioni nello strato `ui/` (Clienti, Dashboard e
+  Il Mio Vibra riverificate):
+  - radici di Dialog/AlertDialog/Popover/DropdownMenu/Select con `display: contents` (in Radix non creano
+    elementi; da chiuse prendevano il gap); `spaceOverrides` e griglie attraversano `<Suspense>`, Fragment e
+    `AnimatePresence` (`cssChildren`, flag `cssTransparent`).
+  - `ring-*` → boxShadow fuori dal bordo (prima bordo interno); gradienti arrotondati col raggio
+    dell'elemento invece di `overflow-hidden` (tagliava i figli che sporgono).
+  - elementi `relative/absolute/sticky` senza `z-*`: zIndex 1 (ordine di disegno CSS).
+  - `inline-flex`/`inline-block`/`<button>` in linea in un blocco: riga alta quanto lo strut, box sulla linea
+    di base (`inlineBlockMargins`, `useInlineBlockStrut`).
+  - campi di testo: classi `focus:`/`focus-visible:` (ring, bordo, outline-none) applicate col fuoco
+    (`focusStyle.ts`, `useFocusStyle.ts`): niente più contorno bianco al posto dell'anello viola.
+  - web: classi proprie dell'index.css `semina-flip-*`, `no-scrollbar` (`customCss.web.ts`); transform
+    `rotateY/rotateX/perspective`; `transition` passata a react-native-web; `pointerEvents` dello style.
+  - telefono: card che si gira con le facce ruotate (`ui/flip.tsx`) e `useFlipGesture.native.jsx` (l'originale
+    scrive su `element.style`); `sessionStorage` → shim `sessionStore` in memoria (codemod aggiornato).
+  - Pull-to-refresh di Semine: sul telefono non fa nulla (ascolta i touch del `document`); da sostituire con
+    il RefreshControl della ScrollView della pagina se serve.
+
 ## In corso / prossimi passi
-1. **Il Mio Vibra sul telefono**: build `[apk]` e prova dell'utente (grafici uPlot con tocco/pinch, note
-   trascinabili e chat AI in Le Mie Note — lo stack locale non ha note per pr —, Calcolatrice trascinabile,
-   barra delle tab centrata, Achievement).
+1. **Prova sul telefono** (build `[apk]`) di Il Mio Vibra (grafici uPlot con tocco/pinch, note trascinabili e
+   chat AI, Calcolatrice trascinabile, barra delle tab centrata, Achievement), Weekend (menu del tasto lungo
+   sui clienti, swipe in Da ricontattare) e Semine (Gira e trascinamento delle card, Aggiungi Semina).
 2. **Da provare sul telefono** (build `[apk]`): selettori data/ora, scelta foto/file, swipe dei leader,
    trascinamento e pinch dell'albero, chiusura dei dialog toccando fuori, tooltip del grafico costanza,
    scorrimento del dettaglio cliente/liste nei dialog/Growth League, export PDF/CSV della Dashboard.
@@ -267,7 +290,7 @@
 3. Differenze note: tabella "Media tavoli" (colonna Locale non va a capo: min-content colonne); form Nuovo
    Cliente dell'originale sborda di qualche px; i dialog Radix mettono il fuoco (bordo viola) sul primo campo,
    nel nativo il campo con autoFocus ha il contorno bianco del browser.
-4. Altre pagine con lo stesso metodo: Weekend (programmazione), Semine, Promoter, Serate, Locali, Messaggi,
+4. Altre pagine con lo stesso metodo: Promoter, Serate, Locali, Messaggi,
    VibraGPT, Report, Impostazioni...
 5. Notifiche push (expo-notifications al posto del web push). Funzioni server/automazioni/file restano su Base44.
 6. Quando l'utente dà l'ok: togliere la modalità prova (`EXPO_PUBLIC_BASE44_READONLY=0`) e provare i salvataggi.
