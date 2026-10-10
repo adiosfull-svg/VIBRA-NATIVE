@@ -4,7 +4,7 @@
 // Le classi passano da normalizeClasses (flex in riga, space-*, griglie, gradienti, ring...).
 import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
-import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { Children, cloneElement, createContext, Fragment, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,7 +14,7 @@ import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
-import { normalizeClasses, parseGridTemplate, spacingPx, type Gradient, type Grid } from './webClasses';
+import { expandGridTemplate, normalizeClasses, parseGridTemplate, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
@@ -109,6 +109,7 @@ const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
  * Come in CSS (align-items: stretch) un Div/Btn figlio diretto si allunga all'altezza della riga.
  */
 function gridChildren(children: ReactNode, grid: Grid, className?: string): ReactNode {
+  if (grid.rows || hasRowSpan(children)) return <ExplicitGrid grid={grid} className={className}>{children}</ExplicitGrid>;
   if (grid.template) return templateGridRows(children, grid, className);
   const stretch = !/(^|\s)items-(start|center|end|baseline)(\s|$)/.test(className ?? '');
   const n = grid.cols, g = grid.gapX;
@@ -130,6 +131,70 @@ function gridChildren(children: ReactNode, grid: Grid, className?: string): Reac
       </View>
     );
   });
+}
+
+const ROW_SPAN = /(?:^|\s)row-span-(\d+)(?=\s|$)/;
+const COL_SPAN = /(?:^|\s)col-span-(\d+)(?=\s|$)/;
+const classOf = (child: ReactNode) => (isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '');
+function hasRowSpan(children: ReactNode): boolean {
+  return Children.toArray(children).some((c) => ROW_SPAN.test(classOf(c)));
+}
+
+/** Larghezze/altezze delle tracce: px fissi, il resto diviso fra le fr (auto conta come 1fr). */
+function trackSizes(tracks: GridTrack[], total: number, gap: number): number[] {
+  const fixed = tracks.reduce((s, t) => s + ('px' in t ? t.px : 0), 0);
+  const fr = tracks.reduce((s, t) => s + ('fr' in t ? t.fr : 'px' in t ? 0 : 1), 0);
+  const free = Math.max(0, total - fixed - gap * (tracks.length - 1));
+  return tracks.map((t) => ('px' in t ? t.px : (free * ('fr' in t ? t.fr : 1)) / (fr || 1)));
+}
+
+/**
+ * Griglia con righe esplicite (gridTemplateRows) o celle row-span-N: posizionamento automatico
+ * come in CSS (riga per riga, primo posto libero) e celle assolute dalle misure del contenitore
+ * (le righe fr dividono la sua altezza, quindi serve un'altezza definita: es. h-full).
+ */
+function ExplicitGrid({ grid, className, children }: { grid: Grid; className?: string; children: ReactNode }) {
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  const stretch = !/(^|\s)items-(start|center|end|baseline)(\s|$)/.test(className ?? '');
+  const outOfFlow: ReactNode[] = [];
+  const items: { child: ReactNode; r: number; c: number; rs: number; cs: number }[] = [];
+  const cols = grid.template ?? Array.from({ length: grid.cols }, () => ({ fr: 1 } as GridTrack));
+  const n = cols.length;
+  const taken: boolean[][] = [];
+  const free = (r: number, c: number, rs: number, cs: number) => {
+    for (let i = r; i < r + rs; i++) for (let j = c; j < c + cs; j++) if (taken[i]?.[j]) return false;
+    return true;
+  };
+  let cr = 0, cc = 0;
+  for (const child of Children.toArray(wrapText(children))) {
+    const cls = classOf(child);
+    if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) { outOfFlow.push(child); continue; }
+    const cs = Math.min(Number(cls.match(COL_SPAN)?.[1] ?? 1), n);
+    const rs = Number(cls.match(ROW_SPAN)?.[1] ?? 1);
+    while (cc + cs > n || !free(cr, cc, rs, cs)) { cc++; if (cc + cs > n) { cc = 0; cr++; } }
+    for (let i = cr; i < cr + rs; i++) for (let j = cc; j < cc + cs; j++) (taken[i] ??= [])[j] = true;
+    items.push({ child, r: cr, c: cc, rs, cs });
+    cc += cs;
+  }
+  const rowCount = Math.max(grid.rows?.length ?? 0, taken.length);
+  const rows = Array.from({ length: rowCount }, (_, i) => grid.rows?.[i] ?? ({ fr: 1 } as GridTrack));
+  const colW = box ? trackSizes(cols, box.w, grid.gapX) : [];
+  const rowH = box ? trackSizes(rows, box.h, grid.gapY) : [];
+  const at = (sizes: number[], gap: number, i: number) => sizes.slice(0, i).reduce((s, v) => s + v + gap, 0);
+  const span = (sizes: number[], gap: number, i: number, k: number) => sizes.slice(i, i + k).reduce((s, v) => s + v, 0) + gap * (k - 1);
+  return (
+    <View style={{ width: '100%', height: '100%' }} onLayout={(e) => {
+      const { width: w, height: h } = e.nativeEvent.layout;
+      if (!box || Math.abs(box.w - w) > 0.5 || Math.abs(box.h - h) > 0.5) setBox({ w, h });
+    }}>
+      {outOfFlow}
+      {box ? items.map(({ child, r, c, rs, cs }, i) => (
+        <View key={i} style={{ position: 'absolute', left: at(colW, grid.gapX, c), top: at(rowH, grid.gapY, r), width: span(colW, grid.gapX, c, cs), height: span(rowH, grid.gapY, r, rs) }}>
+          {stretch ? <GridCellContext.Provider value>{child}</GridCellContext.Provider> : child}
+        </View>
+      )) : null}
+    </View>
+  );
 }
 
 const ITEMS_ALIGN: Record<string, ViewStyle['alignItems']> = { start: 'flex-start', center: 'center', end: 'flex-end', baseline: 'baseline', stretch: 'stretch' };
@@ -363,8 +428,18 @@ function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: 
 function withStyleGrid(rest: string, style: unknown): string {
   const t = style && typeof style === 'object' && !Array.isArray(style) ? (style as { gridTemplateColumns?: unknown }).gridTemplateColumns : undefined;
   if (typeof t !== 'string' || !/(^|\s)grid(\s|$)/.test(rest)) return rest;
-  const cols = t.trim().split(/\s+/).join('_');
-  return parseGridTemplate(cols) ? `${rest} grid-cols-[${cols}]` : rest;
+  const cols = expandGridTemplate(t);
+  // repeat(N, 1fr): colonne uguali come grid-cols-N
+  const tracks = parseGridTemplate(cols);
+  if (tracks && tracks.every((x) => 'fr' in x && x.fr === 1)) return `${rest} grid-cols-${tracks.length}`;
+  return tracks ? `${rest} grid-cols-[${cols}]` : rest;
+}
+
+/** style={{ gridTemplateRows: 'repeat(5, 1fr)' }}: righe esplicite della griglia (ExplicitGrid). */
+function withStyleRows(grid: Grid | undefined, style: unknown): Grid | undefined {
+  const t = grid && style && typeof style === 'object' && !Array.isArray(style) ? (style as { gridTemplateRows?: unknown }).gridTemplateRows : undefined;
+  const rows = typeof t === 'string' ? parseGridTemplate(expandGridTemplate(t)) : null;
+  return rows ? { ...grid!, rows } : grid;
 }
 
 // View animata che accetta className (NativeWind registra solo View, non Animated.View)
@@ -406,9 +481,54 @@ function webScrollHandler(onScroll: ((e: any) => void) | undefined) {
   };
 }
 
-function ScrollBox({ axis, box, style, children, onScroll, ...props }: Omit<ViewProps, 'style'> & {
-  axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void;
+/**
+ * Ref della ScrollView con l'API del DOM usata dalle pagine: scrollTo({ left, top, behavior }),
+ * scrollBy, scrollLeft/scrollTop (anche in scrittura). Il resto (offsetWidth, offsetLeft... della
+ * nuova architettura di RN, scrollTo(x, y) di RN) passa alla ScrollView.
+ */
+function domScrollRef(view: ScrollView, offset: { x: number; y: number }) {
+  const to = (x: number, y: number, animated = false) => view.scrollTo({ x: Math.max(0, x), y: Math.max(0, y), animated });
+  return new Proxy(view as any, {
+    get(target, prop) {
+      if (prop === 'scrollLeft') return offset.x;
+      if (prop === 'scrollTop') return offset.y;
+      if (prop === 'scrollTo' || prop === 'scrollBy') {
+        return (a?: any, b?: any, c?: any) => {
+          const by = prop === 'scrollBy';
+          if (a && typeof a === 'object' && ('left' in a || 'top' in a)) {
+            const x = a.left == null ? (by ? 0 : offset.x) : a.left;
+            const y = a.top == null ? (by ? 0 : offset.y) : a.top;
+            return to(by ? offset.x + x : x, by ? offset.y + y : y, a.behavior === 'smooth');
+          }
+          if (typeof a === 'number' && typeof b === 'number' && c === undefined) return to(by ? offset.x + a : a, by ? offset.y + b : b); // scrollTo(x, y) del DOM
+          return by ? undefined : target.scrollTo(a, b, c);
+        };
+      }
+      const v = Reflect.get(target, prop);
+      return typeof v === 'function' ? v.bind(target) : v;
+    },
+    set(target, prop, value) {
+      if (prop === 'scrollLeft') { to(Number(value), offset.y); return true; }
+      if (prop === 'scrollTop') { to(offset.x, Number(value)); return true; }
+      return Reflect.set(target, prop, value);
+    },
+  });
+}
+
+function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
+  axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void; ref?: Ref<unknown>;
 }) {
+  const offset = useRef({ x: 0, y: 0 }).current;
+  const setRef = useCallback((view: ScrollView | null) => {
+    const value = view ? domScrollRef(view, offset) : null;
+    if (typeof ref === 'function') ref(value);
+    else if (ref) (ref as { current: unknown }).current = value;
+  }, [ref, offset]);
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    offset.x = e.nativeEvent.contentOffset.x;
+    offset.y = e.nativeEvent.contentOffset.y;
+    webScrollHandler(onScroll)?.(e);
+  }, [onScroll, offset]);
   const outer: string[] = [];
   const inner: string[] = [];
   for (const c of box.split(/\s+/)) {
@@ -424,12 +544,13 @@ function ScrollBox({ axis, box, style, children, onScroll, ...props }: Omit<View
   return (
     <ScrollView
       {...props}
+      ref={setRef}
       horizontal={axis === 'x'}
       className={outer.join(' ')}
       contentContainerClassName={inner.join(' ')}
       style={outerStyle}
       contentContainerStyle={innerStyle}
-      onScroll={webScrollHandler(onScroll)}
+      onScroll={handleScroll}
       scrollEventThrottle={16}
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
@@ -483,7 +604,8 @@ export function Div({ className, children, style, onLayout, animatedStyle, ...al
   const layout = useContext(FlexParentContext);
   const [text, classRest] = splitTextClasses(className);
   const rest = withStyleGrid(classRest, style);
-  const { box, grid, gradient: classGradient } = normalizeClasses(rest);
+  const { box, grid: classGrid, gradient: classGradient } = normalizeClasses(rest);
+  const grid = withStyleRows(classGrid, style);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const gridCell = useContext(GridCellContext);
@@ -595,6 +717,8 @@ type BtnProps = Omit<PressableProps, 'children' | 'style' | keyof WebGestureProp
   button?: boolean;
 };
 
+const BUTTON_CENTER: ViewStyle = { justifyContent: 'center' };
+
 // <button> senza classi di visualizzazione/larghezza: inline-block come nel browser
 const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+|self-\S+|absolute|fixed)(\s|$)/;
 
@@ -621,6 +745,8 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
     ? { alignSelf: inlineAlign(inherited) } : null;
+  // il <button> del browser centra in verticale il contenuto quando è più alto (salvo flex/grid)
+  const buttonCenter = button && !CSS_FLEX.test(rest) && rnStyle?.justifyContent == null ? BUTTON_CENTER : null;
   // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
   const [pressed, setPressed] = useState(false);
   return (
@@ -634,7 +760,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, gradient && 'overflow-hidden', disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), inlineButton, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} /> : null}
       <LeadMarginContext.Provider value={null}>

@@ -22,13 +22,15 @@ function rankIndex(key) {
 function RankRoadmap({ current, next, prPoints, rankHistory, tiers }) {
   const RANK_TIERS_LOCAL = tiers || RANK_TIERS;
   const scrollRef = useRef(null);
+  // PORT: querySelector('[data-current]') non esiste in RN: ref sull'elemento del rank attuale
+  const currentRef = useRef(null);
   const [tooltip, setTooltip] = useState(null); // { rankKey, label, date, x, y }
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const t = setTimeout(() => {
-      const currentEl = el.querySelector('[data-current="true"]');
+      const currentEl = currentRef.current;
       if (currentEl) {
         const containerCenter = el.offsetWidth / 2;
         const itemCenter = currentEl.offsetLeft + currentEl.offsetWidth / 2;
@@ -62,6 +64,7 @@ function RankRoadmap({ current, next, prPoints, rankHistory, tiers }) {
           return (
             <Div
               key={rank.key}
+              ref={isCurrent ? currentRef : undefined}
               className={`shrink-0 rounded-xl px-2 py-1.5 flex flex-col items-center gap-0.5 border transition-all ${isMobileHidden ? 'hidden sm:flex' : 'flex'}`}
               style={{
                 borderColor: isCurrent ? `${rank.color}60` : isNext ? `${rank.color}40` : `${rank.color}20`,

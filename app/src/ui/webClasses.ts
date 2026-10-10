@@ -12,7 +12,13 @@ import { themeColor } from './colors.ts';
 
 /** Colonna di grid-cols-[...]: frazione (1fr), larghezza del contenuto (auto) o fissa (px). */
 export type GridTrack = { fr: number } | { auto: true } | { px: number };
-export type Grid = { cols: number; gapX: number; gapY: number; template?: GridTrack[] };
+export type Grid = { cols: number; gapX: number; gapY: number; template?: GridTrack[]; rows?: GridTrack[] };
+
+/** 'repeat(5, 1fr) 80px' → '1fr_1fr_1fr_1fr_1fr_80px' (forma delle classi grid-cols-[...]). */
+export function expandGridTemplate(css: string): string {
+  return css.replace(/repeat\(\s*(\d+)\s*,\s*([^)]+?)\s*\)/g, (_, n: string, t: string) => Array(Number(n)).fill(t.trim()).join(' '))
+    .trim().split(/\s+/).join('_');
+}
 
 /** grid-cols-[1fr_auto_120px] → colonne; null se contiene forme non gestite (repeat, minmax...). */
 export function parseGridTemplate(v: string): GridTrack[] | null {

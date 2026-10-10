@@ -35,14 +35,29 @@ function sizeOf(v: unknown): Size | null {
   return null;
 }
 
+// x/y in stringa ('12px', '-100%'): numeri; con % la traslazione è relativa all'elemento stesso
+const PCT_KEYS = ['x', 'y'] as const;
+const toNum = (v: unknown) => (typeof v === 'string' && /^-?[\d.]+(px|%)?$/.test(v.trim()) ? parseFloat(v) : v);
+const isPct = (v: unknown) => (Array.isArray(v) ? v.some(isPct) : typeof v === 'string' && v.trim().endsWith('%'));
+function numeric(t: Record<string, any> | undefined) {
+  if (!t) return t;
+  const out: Record<string, any> = { ...t };
+  for (const k of PCT_KEYS) if (out[k] != null) out[k] = Array.isArray(out[k]) ? out[k].map(toNum) : toNum(out[k]);
+  return out;
+}
+
 function useMotion(initial: Target, animate: Target, transition?: Transition) {
-  const from = typeof initial === 'object' ? initial : undefined;
-  const to = typeof animate === 'object' ? animate : undefined;
+  const rawFrom = typeof initial === 'object' ? initial : undefined;
+  const rawTo = typeof animate === 'object' ? animate : undefined;
+  const pct = new Set(PCT_KEYS.filter((k) => isPct(rawFrom?.[k]) || isPct(rawTo?.[k])));
+  const from = numeric(rawFrom);
+  const to = numeric(rawTo);
   const values = useRef<Record<string, Animated.Value>>({}).current;
   for (const k of KEYS) {
     if (!values[k]) {
       const start = initial === false ? (Array.isArray(to?.[k]) ? to![k].at(-1) : to?.[k]) : from?.[k];
-      values[k] = new Animated.Value(typeof start === 'number' ? start : Array.isArray(to?.[k]) ? to![k][0] : DEFAULTS[k]);
+      const first = Array.isArray(to?.[k]) ? to![k][0] : undefined;
+      values[k] = new Animated.Value(typeof start === 'number' ? start : typeof first === 'number' ? first : DEFAULTS[k]);
     }
   }
   // dimensioni: l'unità la decide il valore di arrivo (0 → '45%' parte da 0%)
@@ -54,13 +69,15 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
     }
   }
   // width/height non vanno col driver nativo: allora niente driver nativo per tutto l'elemento
-  const nativeDriver = sizes.length === 0;
+  const nativeDriver = sizes.length === 0 && pct.size === 0;
   const targetKey = JSON.stringify(to ?? {});
   useEffect(() => {
     if (!to) return;
     const duration = (transition?.duration ?? 0.3) * 1000;
     const delay = (transition?.delay ?? 0) * 1000;
-    const anims = KEYS.filter((k) => to[k] !== undefined).map((k) => {
+    // valori non numerici (es. 'auto') non si animano: l'elemento resta com'è
+    const ok = (v: unknown) => (Array.isArray(v) ? v.every((n) => typeof n === 'number') : Number.isFinite(Number(v)));
+    const anims = KEYS.filter((k) => to[k] !== undefined && ok(to[k])).map((k) => {
       const v = to[k];
       if (Array.isArray(v)) {
         const step = duration / Math.max(1, v.length - 1);
@@ -79,8 +96,9 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
   }, [targetKey]);
   const used = new Set([...Object.keys(from ?? {}), ...Object.keys(to ?? {})]);
   const transform: any[] = [];
-  if (used.has('x')) transform.push({ translateX: values.x });
-  if (used.has('y')) transform.push({ translateY: values.y });
+  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] });
+  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(values.x) : values.x });
+  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(values.y) : values.y });
   if (used.has('scale')) transform.push({ scale: values.scale });
   if (used.has('rotate')) transform.push({ rotate: values.rotate.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
   const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: values.opacity } : null), ...(transform.length ? { transform } : null) };
