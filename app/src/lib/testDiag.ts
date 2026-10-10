@@ -5,8 +5,17 @@
 export const TEST_DIAG = process.env.EXPO_PUBLIC_TEST_DIAG === '1';
 
 export const diagCounts: Record<string, number> = {};
-export function diagCount(name: string) {
-  if (TEST_DIAG) diagCounts[name] = (diagCounts[name] ?? 0) + 1;
+/** EXPO_PUBLIC_TEST_TRACE=1: una riga nel logcat per ogni elemento disegnato (trovare un blocco). */
+const TEST_TRACE = process.env.EXPO_PUBLIC_TEST_TRACE === '1';
+let traceN = 0;
+export function diagCount(name: string, detail?: string) {
+  if (!TEST_DIAG) return;
+  diagCounts[name] = (diagCounts[name] ?? 0) + 1;
+  if (TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${name} ${(detail ?? '').slice(0, 80)}`);
+}
+/** Traccia di un punto preciso del codice (solo con EXPO_PUBLIC_TEST_TRACE=1). */
+export function diagTrace(label: string) {
+  if (TEST_DIAG && TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${label}`);
 }
 
 if (TEST_DIAG) {

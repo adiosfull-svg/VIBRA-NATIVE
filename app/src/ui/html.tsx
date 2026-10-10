@@ -720,7 +720,7 @@ function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProp
 }
 
 function DivBox({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
-  diagCount('div');
+  diagCount('div', className);
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
@@ -860,7 +860,7 @@ const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
-  diagCount('btn');
+  diagCount('btn', className);
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const form = useForm();
