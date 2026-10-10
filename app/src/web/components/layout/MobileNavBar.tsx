@@ -5,7 +5,7 @@
 // - vetro: blur(6px) + bg-background/30 + bordo superiore
 import { usePathname, useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
-import { BlurView } from 'expo-blur';
+import { NativeBlur, usePageBlurTarget } from '../../../ui/pageLayers';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -229,13 +229,15 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [itemWidth, width, navigation]);
 
+  const blurTarget = usePageBlurTarget();
   const radialOptions = radial ? RADIAL_MENUS[NAV_ITEMS[radial.anchorIndex].route] ?? [] : [];
   const offsets = getRadialOffsets(radialOptions.length);
 
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }}>
       {/* Vetro: blur(6px) saturate(160%) + bg-background/30 + border-t */}
-      <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+      {/* su Android sfoca la pagina in primo piano (ui/pageLayers); blur(6px) → intensità 24 come backdrop-blur */}
+      <NativeBlur intensity={24} target={blurTarget} />
       <Div className="absolute inset-0 border-t border-border bg-background/30" />
 
       <View

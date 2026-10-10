@@ -8,10 +8,10 @@ import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
 import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
+import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
@@ -256,7 +256,17 @@ function templateGridRows(children: ReactNode, grid: Grid, className?: string): 
 }
 
 function boxContent(children: ReactNode, grid?: Grid, className?: string) {
-  return grid ? gridChildren(children, grid, className) : wrapText(spaceOverrides(children, className));
+  return grid ? gridChildren(children, grid, className) : stickySplit(wrapText(spaceOverrides(children, className)), className);
+}
+
+/** Figlio `sticky` (telefono): i fratelli che lo seguono diventano il bersaglio del suo blur (pageLayers). */
+function stickySplit(nodes: ReactNode, className?: string): ReactNode {
+  if (Platform.OS === 'web' || (className && isFlexRow(className))) return nodes;
+  const list = Children.toArray(nodes);
+  const i = list.findIndex((c) => isValidElement(c) && isNativeSticky(String((c.props as { className?: unknown }).className ?? '')));
+  if (i < 0) return nodes;
+  const gap = className?.match(/(?:^|\s)(?:space-y|gap-y|gap(?!-x))-(\S+)/)?.[1];
+  return <StickySplit before={list.slice(0, i)} sticky={list[i]} after={list.slice(i + 1)} gap={gap ? spacingPx(gap) : 0} />;
 }
 
 const SPACE = /(?:^|\s)space-([xy])-(\S+)/g;
@@ -663,8 +673,13 @@ function backdropBlur(className: string, style: unknown): { css?: string; px: nu
 }
 
 function BlurFill({ px }: { px: number }) {
+  // bersaglio (pageLayers): dentro una barra sticky ciò che le scorre sotto; fuori dalla pagina
+  // (portale alla radice) la pagina; dentro la pagina nessuno (velo semitrasparente)
+  const sticky = useContext(StickyBlurTargetContext);
+  const inPortal = useContext(InPortalContext);
+  const page = usePageBlurTarget();
   if (!px) return null;
-  return <BlurView pointerEvents="none" intensity={Math.min(100, px * 4)} tint="dark" style={StyleSheet.absoluteFill} />;
+  return <NativeBlur intensity={Math.min(100, px * 4)} target={sticky ?? (inPortal ? page : null)} />;
 }
 
 const FIXED = /(^|\s)fixed(\s|$)/;
@@ -682,7 +697,23 @@ export function hiddenAtWidth(className: string, width: number): boolean {
   return width < min;
 }
 
-export function Div({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
+export function Div(props: DivProps) {
+  // position: sticky sul telefono (pageLayers): l'elemento segue lo scroll della pagina
+  return isNativeSticky(props.className) ? <StickyDiv {...props} /> : <DivBox {...props} />;
+}
+
+function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProps) {
+  const pin = useStickyPin(props.className ?? '');
+  const setRef = useCallback((node: View | null) => {
+    (pin.ref as { current: View | null }).current = node;
+    if (typeof outerRef === 'function') outerRef(node);
+    else if (outerRef) (outerRef as { current: View | null }).current = node;
+  }, [pin.ref, outerRef]);
+  const handleLayout = useCallback((e: LayoutChangeEvent) => { pin.onLayout(e); onLayout?.(e); }, [pin, onLayout]);
+  return <DivBox {...props} ref={setRef} onLayout={handleLayout} animatedStyle={[animatedStyle, pin.style]} />;
+}
+
+function DivBox({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
   const [handlers, props] = splitGestureProps(all);
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
