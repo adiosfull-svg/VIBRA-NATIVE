@@ -3,7 +3,7 @@
 // item nel viewport + overscan, posizionati in assoluto in un contenitore alto quanto la lista.
 // PORT: l'originale misurava il primo item; sul web la misura legge l'altezza del contenitore
 // (alto itemHeight con overflow nascosto), quindi l'altezza resta sempre 110.
-import React, { memo, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import ClientRowCard from './ClientRowCard';
 import { Div } from '@/ui/html';
 import { usePageWindow } from '@/web/hooks/usePageWindow';
@@ -18,7 +18,7 @@ export default function VirtualizedClientList({ clients, getClientStats, clientB
   // handlers è un oggetto nuovo a ogni render di Clienti: callback stabili che chiamano le ultime,
   // così le righe memoizzate non si ridisegnano a ogni scroll o render della pagina
   const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
+  useLayoutEffect(() => { handlersRef.current = handlers; });
   const stableHandlers = useMemo(() => Object.fromEntries(HANDLER_NAMES.map(k => [k, (...a) => handlersRef.current[k]?.(...a)])), []);
 
   // Scrolla la pagina alla riga del cliente richiesto (da ClientScrollSearch)

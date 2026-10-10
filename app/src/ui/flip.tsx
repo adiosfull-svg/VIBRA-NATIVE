@@ -27,17 +27,20 @@ export function flipInner(className: string | undefined, style: Record<string, a
 export function useFlipFace(className: string | undefined) {
   const flip = useContext(FlipContext);
   const kind = className?.match(FACE)?.[2] as 'front' | 'back' | undefined;
-  const value = useRef(new Animated.Value(flip?.deg ?? 0)).current;
+  // l'Animated.Value serve solo alle facce: niente allocazione a ogni render di ogni Div
+  const ref = useRef<Animated.Value | null>(null);
+  if (kind && !ref.current) ref.current = new Animated.Value(flip?.deg ?? 0);
+  const value = ref.current;
   const deg = flip?.deg ?? 0;
   const animate = flip?.animate ?? false;
   useEffect(() => {
-    if (!kind) return;
+    if (!kind || !value) return;
     if (!animate) { value.setValue(deg); return; }
     const a = Animated.timing(value, { toValue: deg, duration: 400, easing: EASE, useNativeDriver: true });
     a.start();
     return () => a.stop();
   }, [deg, animate, kind, value]);
-  if (!flip || !kind) return null;
+  if (!flip || !kind || !value) return null;
   const offset = kind === 'back' ? 180 : 0;
   const rotateY = value.interpolate({ inputRange: [-360, 360], outputRange: [`${-360 + offset}deg`, `${360 + offset}deg`] });
   return [
