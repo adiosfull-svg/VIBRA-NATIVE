@@ -24,6 +24,10 @@ export type PageLayer = {
   offsetOf: (el: unknown) => number | null;
   /** avvisa quando cambia l'altezza del contenuto (gli sticky rimisurano la loro posizione) */
   onContentChange: (fn: () => void) => () => void;
+  /** scroll di QUESTA pagina (valore e ascolto): con le tab montate quello globale è della pagina visibile */
+  y: () => number;
+  viewportHeight: () => number;
+  onScroll: (fn: () => void) => () => void;
 };
 export const PageLayerContext = createContext<PageLayer | null>(null);
 

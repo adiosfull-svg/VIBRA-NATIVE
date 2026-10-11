@@ -33,6 +33,8 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const handle = useRef<ReturnType<typeof pageScroll.register> | null>(null);
   const blurHandle = useRef<ReturnType<typeof registerPageBlurTarget> | null>(null);
   const contentListeners = useRef(new Set<() => void>()).current;
+  const scrollListeners = useRef(new Set<() => void>()).current;
+  const own = useRef({ y: 0, viewportHeight: 0 }).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
   useEffect(() => {
@@ -67,11 +69,16 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     // primo piano" cambia solo dopo il layout: la barra sticky si misurava sulla pagina sbagliata)
     offsetOf: (el) => pageScroll.offsetIn(el, (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()),
     onContentChange: (fn) => { contentListeners.add(fn); return () => { contentListeners.delete(fn); }; },
-  }), [scrollY, contentListeners]);
+    y: () => own.y,
+    viewportHeight: () => own.viewportHeight,
+    onScroll: (fn) => { scrollListeners.add(fn); return () => { scrollListeners.delete(fn); }; },
+  }), [scrollY, contentListeners, scrollListeners, own]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    handle.current?.report(e.nativeEvent.contentOffset.y);
+    own.y = e.nativeEvent.contentOffset.y;
+    handle.current?.report(own.y);
+    scrollListeners.forEach((fn) => fn());
     onScroll?.(e);
-  }, [onScroll]);
+  }, [onScroll, own, scrollListeners]);
   const animatedScroll = useMemo(
     () => Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE_DRIVER, listener: handleScroll }),
     [scrollY, handleScroll],
@@ -83,8 +90,12 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   }, [onContentSizeChange, contentListeners]);
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
     handle.current?.setViewportHeight(e.nativeEvent.layout.height);
+    if (own.viewportHeight !== e.nativeEvent.layout.height) {
+      own.viewportHeight = e.nativeEvent.layout.height;
+      scrollListeners.forEach((fn) => fn());
+    }
     onLayout?.(e);
-  }, [onLayout]);
+  }, [onLayout, own, scrollListeners]);
   return (
     <BlurTargetView ref={setBlurTarget as never} style={{ flex: 1, backgroundColor: THEME.background }}>
       <Animated.ScrollView
