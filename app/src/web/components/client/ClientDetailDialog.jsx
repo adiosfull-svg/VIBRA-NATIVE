@@ -416,6 +416,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         className={`fixed inset-0 bg-black/80 touch-none ${internalOpen ? 'opacity-100' : 'opacity-0 transition-opacity duration-200'}`}
         onPointerDown={(e) => { if (e.target === e.currentTarget) handleOpenChange(false); }} />
       <Div className={`relative w-full max-sm:w-[calc(100%-1.5rem)] max-sm:rounded-2xl max-sm:max-h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-full bg-gradient-to-b from-background to-background/95 border border-border/50 shadow-lg flex flex-col overflow-hidden [will-change:transform,opacity] [backface-visibility:hidden] transition-[transform,opacity] duration-200 sm:max-w-2xl sm:max-h-[90vh] sm:rounded-2xl ${internalOpen ? 'opacity-100' : 'opacity-0 scale-95'}`}>
+        <TestCut id="dialog">{/* PORT: bisezione sull'emulatore (lib/testDiag) */}
         {/* Header persistente */}
         <Div className="shrink-0 border-b border-border/40 bg-gradient-to-r from-secondary/15 to-transparent px-4 py-3 flex flex-col gap-2">
           {/* Riga 1: foto, nome completo, leader, rating, chiudi */}
@@ -897,6 +898,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         )}
         </TestCut>
         </Div>
+        </TestCut>
       </Div>
     </Div>,
     webDocument.body

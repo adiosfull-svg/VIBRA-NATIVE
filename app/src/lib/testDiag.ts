@@ -54,14 +54,15 @@ export function dumpLayout(label: string, root: unknown, maxDepth = 14) {
 }
 
 /**
- * Bisezione sull'emulatore (EXPO_PUBLIC_TEST_CUT=<id>:<da>-<a>, oppure <id>:none): dei figli di
+ * Bisezione sull'emulatore (EXPO_PUBLIC_TEST_CUT=<id>:<da>-<a> oppure <id>:none, più tagli separati da virgola): dei figli di
  * <TestCut id> tiene solo quelli con indice nell'intervallo, per trovare la parte che blocca.
  * Senza la variabile (build normali) restituisce i figli così come sono.
  */
 const TEST_CUT = process.env.EXPO_PUBLIC_TEST_CUT ?? '';
 export function TestCut({ id, children }: { id: string; children?: unknown }): any {
-  const m = TEST_CUT.match(new RegExp(`^${id}:(none|(\\d+)-(\\d+))$`));
+  const m = TEST_CUT.match(new RegExp(`(?:^|,)${id}:(none|(\\d+)-(\\d+))(?:,|$)`));
   if (!m) return children;
+  console.log(`VIBRA taglio ${id}:${m[1]}`);
   if (m[1] === 'none') return null;
   const list = Array.isArray(children) ? children : [children];
   return list.filter((_, i) => i >= Number(m[2]) && i <= Number(m[3]));
