@@ -13,7 +13,7 @@ import {
 import { useAppSetting } from '../../hooks/useAppSetting';
 import { useVibraLogo } from '../../hooks/useVibraLogo';
 import { useLayoutUI } from '../../lib/layoutUI';
-import { useLocation, useNavigate } from '../../router';
+import { useCurrentLocation, useNavigate } from '../../router';
 
 type Item = { label: string; icon: React.ComponentType<any>; path: string; routeName?: RouteName };
 
@@ -47,7 +47,7 @@ const WIDTH = 256; // w-64
 export default function Sidebar() {
   const { sidebarOpen: open, setSidebarOpen, setSearchOpen } = useLayoutUI();
   const { progress, mounted } = usePresence(open, 300, 300);
-  const location = useLocation();
+  const location = useCurrentLocation(); // layout: segue tutti i percorsi
   const navigate = useNavigate();
   const insets = useSafeAreaInsets();
   const { logoDataUrl: vibraLogoUrl } = useVibraLogo();

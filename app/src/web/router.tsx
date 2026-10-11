@@ -19,8 +19,9 @@ export function useNavigate() {
 
 // Percorso corrente: lo pubblica <LocationPublisher/> (layout dell'app). usePathname/useGlobalSearchParams
 // in ogni pagina la ridisegnavano a ogni cambio di percorso anche da nascosta: con le tab montate, toccare
-// "Weekend" ridisegnava anche Clienti, Il Mio Vibra e Semine (~2 s sul telefono). Qui una pagina senza
-// focus tiene l'ultimo percorso visto e si aggiorna solo quando torna in primo piano.
+// "Weekend" ridisegnava anche Clienti e Il Mio Vibra (~2 s sul telefono). Qui una pagina segue solo il
+// SUO percorso (quello che aveva la prima volta che ha avuto il focus); i componenti del layout (Sidebar)
+// usano useCurrentLocation, che li segue tutti.
 type Loc = { pathname: string; params: Record<string, string | string[] | undefined> };
 let currentLoc: Loc = { pathname: '/', params: {} };
 const locListeners = new Set<() => void>();
@@ -40,28 +41,45 @@ function useNavigationSafe(): Nav {
   try { return useNavigation() as Nav; } catch { return undefined; }
 }
 
+function toLocation({ pathname, params }: Loc) {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (typeof v === 'string') sp.set(k, v);
+  const s = sp.toString();
+  return { pathname, search: s ? `?${s}` : '', hash: '', state: null as unknown };
+}
+
+const subscribeAll = (fn: () => void) => { locListeners.add(fn); return () => { locListeners.delete(fn); }; };
+const getCurrent = () => currentLoc;
+
+/** Percorso corrente, sempre aggiornato (componenti del layout, fuori dalle pagine). */
+export function useCurrentLocation() {
+  const loc = useSyncExternalStore(subscribeAll, getCurrent, getCurrent);
+  return useMemo(() => toLocation(loc), [loc]);
+}
+
 export function useLocation() {
   const navigation = useNavigationSafe();
+  const own = useRef<string | null>(null);
   const seen = useRef<Loc | null>(null);
   const getSnapshot = () => {
-    let focused = true;
-    try { focused = navigation?.isFocused?.() ?? true; } catch { /* fuori da un navigatore */ }
-    if (focused || !seen.current) seen.current = currentLoc;
-    return seen.current;
+    if (own.current == null) {
+      let focused = true;
+      try { focused = navigation?.isFocused?.() ?? true; } catch { /* fuori da un navigatore */ }
+      if (focused) { own.current = currentLoc.pathname; seen.current = currentLoc; }
+      // pagina montata in background (tab precaricata): niente parametri della pagina visibile
+      else seen.current ??= { pathname: currentLoc.pathname, params: {} };
+    } else if (currentLoc.pathname === own.current) {
+      seen.current = currentLoc;
+    }
+    return seen.current!;
   };
   const subscribe = useCallback((fn: () => void) => {
     locListeners.add(fn);
     const off = navigation?.addListener?.('focus', fn);
     return () => { locListeners.delete(fn); off?.(); };
   }, [navigation]);
-  const { pathname, params } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  const search = useMemo(() => {
-    const sp = new URLSearchParams();
-    for (const [k, v] of Object.entries(params)) if (typeof v === 'string') sp.set(k, v);
-    const s = sp.toString();
-    return s ? `?${s}` : '';
-  }, [params]);
-  return { pathname, search, hash: '', state: null as unknown };
+  const loc = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useMemo(() => toLocation(loc), [loc]);
 }
 
 export function useSearchParams(): [URLSearchParams, (next: Record<string, string> | URLSearchParams) => void] {
