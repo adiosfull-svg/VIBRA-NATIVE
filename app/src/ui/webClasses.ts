@@ -34,7 +34,7 @@ export function parseGridTemplate(v: string): GridTrack[] | null {
 }
 export type Gradient = { dir: string; colors: string[] };
 /**
- * Altezze/larghezze arbitrarie relative alla finestra (h-[88vh], max-sm:max-h-[calc(100dvh-7rem-env(...))]):
+ * Altezze/larghezze arbitrarie relative alla finestra (classi h, max-h ecc. con vh, dvh, calc, env):
  * NativeWind non traduce dvh/env()/calc() e le scarterebbe (dialog senza limite di altezza, alto quanto
  * tutto il contenuto: sul telefono bitmap enormi e app uccisa per memoria). Si calcolano al render.
  */
