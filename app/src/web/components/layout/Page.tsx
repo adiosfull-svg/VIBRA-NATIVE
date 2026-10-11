@@ -1,7 +1,7 @@
 // Struttura di pagina di AppLayout.jsx: intestazione in linea + contenuto "main-content p-4"
 // (pt 0.5rem) + spazio in fondo per la barra di navigazione (4.5rem + safe area).
 import { useFocusEffect, useNavigation } from 'expo-router';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, type ReactNode } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Platform, RefreshControl, ScrollView, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '../../../ui/cn';
@@ -37,6 +37,15 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const own = useRef({ y: 0, viewportHeight: 0 }).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
+  // pull-to-refresh chiesto dal contenuto (hooks/usePullToRefresh.native): RefreshControl nativo,
+  // gesto e animazione sul thread UI (docs/REGOLE-PRESTAZIONI.md §5)
+  const pageRefresh = useRef<(() => Promise<unknown> | void) | null>(null);
+  const [hasPageRefresh, setHasPageRefresh] = useState(false);
+  const [pageRefreshing, setPageRefreshing] = useState(false);
+  const runPageRefresh = useCallback(async () => {
+    setPageRefreshing(true);
+    try { await pageRefresh.current?.(); } finally { setPageRefreshing(false); }
+  }, []);
   useEffect(() => {
     // tab precaricata (montata in background): in fondo agli stack finché non prende il focus
     let front = true;
@@ -72,6 +81,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     y: () => own.y,
     viewportHeight: () => own.viewportHeight,
     onScroll: (fn) => { scrollListeners.add(fn); return () => { scrollListeners.delete(fn); }; },
+    setRefreshHandler: (fn) => { pageRefresh.current = fn; setHasPageRefresh(!!fn); },
   }), [scrollY, contentListeners, scrollListeners, own]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     own.y = e.nativeEvent.contentOffset.y;
@@ -107,7 +117,11 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
         style={{ flex: 1, backgroundColor: THEME.background }}
         contentContainerStyle={{ paddingBottom: 72 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
-        refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME['accent-foreground']} /> : undefined}
+        refreshControl={onRefresh
+          ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME['accent-foreground']} />
+          : hasPageRefresh
+            ? <RefreshControl refreshing={pageRefreshing} onRefresh={runPageRefresh} tintColor={THEME['accent-foreground']} progressBackgroundColor={THEME.card} colors={[THEME.primary]} />
+            : undefined}
         {...props}
       >
         <PageLayerContext.Provider value={layer}>

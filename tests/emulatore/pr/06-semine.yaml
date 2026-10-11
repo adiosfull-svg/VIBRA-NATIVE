@@ -19,6 +19,16 @@ appId: com.vibra.mobile
     timeout: 60000
 - waitForAnimationToEnd
 - takeScreenshot: semine-01
+# pull-to-refresh (RefreshControl nativo della pagina): la pagina resta usabile dopo il ricaricamento
+- swipe:
+    start: 50%, 25%
+    end: 50%, 70%
+    duration: 500
+- extendedWaitUntil:
+    visible: "Semina \\d+"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: semine-refresh
 - swipe:
     start: 50%, 75%
     end: 50%, 30%

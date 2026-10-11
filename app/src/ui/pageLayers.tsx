@@ -28,6 +28,8 @@ export type PageLayer = {
   y: () => number;
   viewportHeight: () => number;
   onScroll: (fn: () => void) => () => void;
+  /** pull-to-refresh della pagina (RefreshControl nativo dello ScrollView): null per toglierlo */
+  setRefreshHandler: (fn: (() => Promise<unknown> | void) | null) => void;
 };
 export const PageLayerContext = createContext<PageLayer | null>(null);
 
