@@ -1,6 +1,6 @@
 // API di react-router-dom usate dall'app web, sopra expo-router. Le route native hanno gli
 // stessi percorsi dell'originale (/clienti, /il-mio-vibra?tab=..., /promoter/:id).
-import { router, useGlobalSearchParams, useLocalSearchParams, useNavigation, usePathname, type Href } from 'expo-router';
+import { router, useGlobalSearchParams, useLocalSearchParams, useNavigation, usePathname, useRoutePath, type Href } from 'expo-router';
 import { useCallback, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Btn } from '../ui/html';
 
@@ -48,6 +48,13 @@ function toLocation({ pathname, params }: Loc) {
   return { pathname, search: s ? `?${s}` : '', hash: '', state: null as unknown };
 }
 
+/** Stesso percorso e stessi parametri: tornando su una pagina non la si ridisegna per un oggetto nuovo. */
+function sameLoc(a: Loc | null, b: Loc): boolean {
+  if (!a || a.pathname !== b.pathname) return false;
+  const ka = Object.keys(a.params), kb = Object.keys(b.params);
+  return ka.length === kb.length && ka.every((k) => String(a.params[k]) === String(b.params[k]));
+}
+
 const subscribeAll = (fn: () => void) => { locListeners.add(fn); return () => { locListeners.delete(fn); }; };
 const getCurrent = () => currentLoc;
 
@@ -57,19 +64,32 @@ export function useCurrentLocation() {
   return useMemo(() => toLocation(loc), [loc]);
 }
 
+/** Percorso proprio dello schermo che contiene il componente (anche se precaricato e mai visto). */
+function useOwnPathname(): string | null {
+  try {
+    const p = useRoutePath();
+    return p ? (p.split('?')[0] || '/') : null;
+  } catch { return null; /* fuori da uno schermo */ }
+}
+
 export function useLocation() {
   const navigation = useNavigationSafe();
-  const own = useRef<string | null>(null);
+  const ownPath = useOwnPathname();
+  const own = useRef<string | null>(ownPath);
+  if (ownPath) own.current = ownPath;
   const seen = useRef<Loc | null>(null);
   const getSnapshot = () => {
     if (own.current == null) {
+      // senza schermo noto: il percorso che c'è la prima volta che ha il focus
       let focused = true;
       try { focused = navigation?.isFocused?.() ?? true; } catch { /* fuori da un navigatore */ }
-      if (focused) { own.current = currentLoc.pathname; seen.current = currentLoc; }
-      // pagina montata in background (tab precaricata): niente parametri della pagina visibile
-      else seen.current ??= { pathname: currentLoc.pathname, params: {} };
-    } else if (currentLoc.pathname === own.current) {
-      seen.current = currentLoc;
+      if (focused) own.current = currentLoc.pathname;
+    }
+    if (own.current != null && currentLoc.pathname === own.current) {
+      if (!sameLoc(seen.current, currentLoc)) seen.current = currentLoc;
+    } else {
+      // pagina non in primo piano (o precaricata): il suo percorso, senza i parametri di un'altra pagina
+      seen.current ??= { pathname: own.current ?? currentLoc.pathname, params: {} };
     }
     return seen.current!;
   };

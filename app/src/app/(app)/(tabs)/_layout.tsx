@@ -4,29 +4,34 @@ import { InteractionManager } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import MobileNavBar from '../../../web/components/layout/MobileNavBar';
 import { THEME } from '../../../ui/palette.generated';
+import { useRoleAccess } from '../../../lib/useRoleAccess';
 
 // Prima apertura di una tab: caricare il modulo della pagina e montarla bloccava il JS per ~1-2 s
 // sul telefono (Weekend "ci mette due secondi ad aprirsi"). Dopo l'avvio, a app ferma, le tab si
 // precaricano una alla volta (montate in background): il tocco mostra subito la pagina pronta.
-const PRELOAD: string[] = ['/programmazione', '/clienti', '/il-mio-vibra', '/semine', '/'];
+const PRELOAD: string[] = ['/programmazione', '/clienti', '/il-mio-vibra', '/semine'];
 const FIRST_DELAY_MS = 2500;
 const GAP_MS = 1200;
 
 function usePreloadTabs() {
+  // la Dashboard ('/') per chi non può vederla è un Redirect: precaricarla farebbe cambiare pagina
+  const { canAccessRoute } = useRoleAccess();
+  const withHome = canAccessRoute('dashboard');
   useEffect(() => {
+    const routes = withHome ? [...PRELOAD, '/'] : PRELOAD;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const step = (i: number) => {
-      if (cancelled || i >= PRELOAD.length) return;
+      if (cancelled || i >= routes.length) return;
       InteractionManager.runAfterInteractions(() => {
         if (cancelled) return;
-        try { router.prefetch(PRELOAD[i] as never); } catch { /* route non pronta: si salta */ }
+        try { router.prefetch(routes[i] as never); } catch { /* route non pronta: si salta */ }
         timer = setTimeout(() => step(i + 1), GAP_MS);
       });
     };
     timer = setTimeout(() => step(0), FIRST_DELAY_MS);
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, []);
+  }, [withHome]);
 }
 
 export default function TabsLayout() {
