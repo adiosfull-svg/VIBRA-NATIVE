@@ -21,6 +21,7 @@ import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate,
 import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from './webStyle';
 import { initialWindowMetrics } from 'react-native-safe-area-context';
 import { classOpacity, transitionSpec, useCssTransition } from './cssTransition';
+import { useDomStyleRef } from './domStyle';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
 // serve sul telefono; se manca, Clienti va in errore ("cannot add a new property", "exactly one
@@ -729,7 +730,10 @@ function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProp
 
 function DivBox({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
   diagCount('div', className);
-  const [handlers, props] = splitGestureProps(all);
+  const [handlers, props0] = splitGestureProps(all);
+  // el.style.xxx = ... del codice web sul ref: istanza nativa con `style` (ui/domStyle)
+  const domRef = useDomStyleRef((props0 as { ref?: never }).ref);
+  const props = (props0 as { ref?: unknown }).ref ? { ...props0, ref: domRef } : props0;
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
   const layout = useContext(FlexParentContext);

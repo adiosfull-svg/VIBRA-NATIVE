@@ -1,0 +1,35 @@
+# PR: Semine (card con note: l'effect dell'altezza automatica del textarea faceva cadere l'app).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+- tapOn: "Semine"
+- extendedWaitUntil:
+    visible: "Semina 1"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: semine-01
+- swipe:
+    start: 50%, 75%
+    end: 50%, 30%
+    duration: 600
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: semine-02
+- swipe:
+    start: 50%, 75%
+    end: 50%, 30%
+    duration: 600
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: semine-03

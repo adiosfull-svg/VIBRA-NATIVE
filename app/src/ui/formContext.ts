@@ -1,6 +1,7 @@
 // <form onSubmit> del web: i pulsanti type="submit" e l'Invio nei campi a riga singola
 // inviano il form più vicino (ui/form.tsx). I campi `required` vuoti bloccano l'invio
 // come nel browser (il primo viene messo a fuoco).
+import { withDomStyle } from './domStyle';
 import { createContext, useCallback, useContext, useEffect, useRef, type ForwardedRef } from 'react';
 import type { TextInput } from 'react-native';
 import { WrapProbeContext } from './text';
@@ -54,6 +55,7 @@ export function useTextFormField(forwarded: ForwardedRef<TextInput>, required?: 
   if (probe && !probe.flexible) probe.mark();
   const inner = useRef<TextInput | null>(null);
   const ref = useCallback((node: TextInput | null) => {
+    withDomStyle(node);
     inner.current = node;
     if (typeof forwarded === 'function') forwarded(node);
     else if (forwarded) forwarded.current = node;

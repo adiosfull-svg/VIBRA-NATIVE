@@ -87,6 +87,8 @@ jobs:
           P="psql -h $PWD/scripts/local/.data/sock -p 55433 -U postgres -d postgres"
           cols=$($P -At -c "select string_agg(quote_ident(column_name), ',') from information_schema.columns where table_schema='public' and table_name='client' and column_name not in ('id','name')")
           $P -c "insert into client (name, $cols) select c.name || ' ' || g, $cols from client c, generate_series(1,9) g"
+          # semine del PR (con note, recettività e stati diversi: le card della pagina Semine)
+          $P -c "insert into semina (name, promoter_id, instagram, phone, eta, provenienza, notes, status, recettivita, display_order) select 'Semina ' || g, 'prom000000000000000001', 'semina.' || g, '+39 333 000 00' || lpad(g::text, 2, '0'), 18 + g % 10, (array['Napoli','Pozzuoli','Vomero','Posillipo'])[1 + g % 4], case when g % 3 = 0 then 'Nota di prova ' || g || ': da richiamare venerdì' end, (array['nuovo','contattato','interessato','convertito'])[1 + g % 4], 1 + g % 5, g from generate_series(1,12) g"
           curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
 
       # ── APK x86_64 di prova ──
