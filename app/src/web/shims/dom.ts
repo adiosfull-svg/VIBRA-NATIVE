@@ -235,3 +235,49 @@ export class CustomEvt<T = unknown> {
     this.detail = init?.detail as T;
   }
 }
+
+// ── globali del browser usati dal codice portato senza passare dagli shim ───────────────────────
+// (non `document`/`window`: vedi sopra). Su Hermes `new Image()` o `new IntersectionObserver()` in un
+// effect facevano cadere l'app (ReferenceError).
+const g = globalThis as Record<string, unknown>;
+if (typeof g.Image === 'undefined') {
+  /** new Image(); img.src = url → precaricamento con cache su disco di expo-image, poi onload/onerror. */
+  g.Image = class {
+    onload: AnyFn | null = null;
+    onerror: AnyFn | null = null;
+    naturalWidth = 0;
+    naturalHeight = 0;
+    complete = false;
+    private url = '';
+    get src() { return this.url; }
+    set src(v: string) {
+      this.url = v;
+      if (!/^https?:/.test(v)) return;
+      import('expo-image')
+        .then(({ Image }) => Image.prefetch(v, 'disk'))
+        .then(() => { this.complete = true; this.onload?.({ type: 'load', target: this }); })
+        .catch(() => this.onerror?.({ type: 'error', target: this }));
+    }
+    decode() { return Promise.resolve(); }
+    addEventListener(type: string, fn: AnyFn) { if (type === 'load') this.onload = fn; if (type === 'error') this.onerror = fn; }
+    removeEventListener() {}
+  };
+}
+if (typeof g.IntersectionObserver === 'undefined') {
+  /** Senza viewport osservabile: ogni elemento osservato risulta visibile (si carica/mostra subito). */
+  g.IntersectionObserver = class {
+    private cb: AnyFn;
+    private alive = true;
+    constructor(cb: AnyFn) { this.cb = cb; }
+    observe(target: unknown) {
+      setTimeout(() => {
+        if (!this.alive) return;
+        const r = { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
+        this.cb([{ target, isIntersecting: true, intersectionRatio: 1, boundingClientRect: r, intersectionRect: r, rootBounds: null, time: Date.now() }], this);
+      }, 0);
+    }
+    unobserve() {}
+    disconnect() { this.alive = false; }
+    takeRecords() { return []; }
+  };
+}

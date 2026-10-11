@@ -20,6 +20,7 @@ import { diagCount } from '../lib/testDiag';
 import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from './webStyle';
 import { initialWindowMetrics } from 'react-native-safe-area-context';
+import { classOpacity, transitionSpec, useCssTransition } from './cssTransition';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
 // serve sul telefono; se manca, Clienti va in errore ("cannot add a new property", "exactly one
@@ -776,6 +777,12 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
   if (lead) content0 = <LeadMarginContext.Provider value={null}>{content0}</LeadMarginContext.Provider>;
   // la cella della griglia la "consuma" questo elemento, non i suoi discendenti
   const content = gridCell ? <GridCellContext.Provider value={false}>{content0}</GridCellContext.Provider> : content0;
+  const blur = backdropBlur(rest, style);
+  // sul web lo stile backdropFilter passa così com'è (le classi le gestisce già il CSS)
+  const blurStyle = blur?.css && Platform.OS === 'web' ? ({ backdropFilter: blur.css, WebkitBackdropFilter: blur.css } as unknown as ViewStyle) : null;
+  // transizioni CSS (style.transition / classi transition-*) sul telefono: opacità, sfondo, blur
+  const trSpec = Platform.OS === 'web' ? null : transitionSpec(className, (style as { transition?: unknown } | undefined)?.transition);
+  const tr = useCssTransition(trSpec, rnStyle?.opacity ?? classOpacity(rest), rnStyle?.backgroundColor, blur && Platform.OS !== 'web' ? blur.px : 0);
   const inPortal = useContext(InPortalContext);
   // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
   // sul web lo nasconde il CSS, qui costerebbe come se fosse visibile.
@@ -787,10 +794,11 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
     return <PortalToRoot><Div className={className} style={style} onLayout={onLayout} animatedStyle={animatedStyle} {...all}>{children}</Div></PortalToRoot>;
   }
   const fixedStyle = fixed && Platform.OS === 'web' ? WEB_FIXED : null;
-  const blur = backdropBlur(rest, style);
-  // sul web lo stile backdropFilter passa così com'è (le classi le gestisce già il CSS)
-  const blurStyle = blur?.css && Platform.OS === 'web' ? ({ backdropFilter: blur.css, WebkitBackdropFilter: blur.css } as unknown as ViewStyle) : null;
-  const nativeBlur = blur && Platform.OS !== 'web' ? <BlurFill px={blur.px} /> : null;
+  const nativeBlur = tr.blurPx && Platform.OS !== 'web'
+    ? (tr.blurOpacity
+      ? <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: tr.blurOpacity }]}><BlurFill px={tr.blurPx} /></Animated.View>
+      : <BlurFill px={tr.blurPx} />)
+    : null;
   const axis = scrollAxis(rest);
   if (axis) {
     const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle]) as Record<string, any>;
@@ -803,9 +811,9 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
     return animatedStyle ? <Animated.View style={animatedStyle}>{scroll}</Animated.View> : scroll;
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
-  const Box = animatedStyle || faceStyle ? AnimatedBox : View;
+  const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
   return (
-    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle]}>
+    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style]}>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>

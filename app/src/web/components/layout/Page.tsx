@@ -42,6 +42,9 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     handle.current = h;
     const b = registerPageBlurTarget();
     blurHandle.current = b;
+    // il ref del BlurTargetView arriva PRIMA di questo effect: senza questo la nav bar restava senza
+    // bersaglio (niente blur, solo il velo)
+    b.set(blurEl.current);
     return () => { h.unregister(); b.unregister(); blurHandle.current = null; };
   }, []);
   useFocusEffect(useCallback(() => {
@@ -51,7 +54,8 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     const t = setTimeout(() => dumpLayout(title ?? 'pagina', (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()), 9000);
     return () => clearTimeout(t);
   }, [title]));
-  const setBlurTarget = useCallback((el: View | null) => { blurHandle.current?.set(el); }, []);
+  const blurEl = useRef<View | null>(null);
+  const setBlurTarget = useCallback((el: View | null) => { blurEl.current = el; blurHandle.current?.set(el); }, []);
   const layer = useMemo<PageLayer>(() => ({
     scrollY,
     // rispetto al contenuto di QUESTA pagina (con le tab ne sono montate più d'una e quella "in

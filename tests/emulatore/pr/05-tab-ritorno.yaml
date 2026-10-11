@@ -1,0 +1,30 @@
+# PR: tempi del cambio tab (prima apertura di Weekend, poi ritorno da Clienti).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+- tapOn: "Weekend"
+- waitForAnimationToEnd
+- takeScreenshot: tab-weekend-1
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: tab-clienti
+- tapOn: "Weekend"
+- waitForAnimationToEnd
+- takeScreenshot: tab-weekend-2
+- tapOn: "Il Mio"
+- waitForAnimationToEnd
+- takeScreenshot: tab-il-mio-vibra

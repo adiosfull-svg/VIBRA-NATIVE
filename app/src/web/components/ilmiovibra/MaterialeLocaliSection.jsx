@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import PiantinaFullscreen from '@/web/components/ilmiovibra/PiantinaFullscreen';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 import { shareText } from '@/legacy/utils/downloadMaterials';
+import { preloadImages } from '@/legacy/utils/imageCache';
 
 import { doc as webDocument, nav as webNavigator, url as webURL, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
@@ -221,14 +222,9 @@ export default function MaterialeLocaliSection() {
 
   // Precarica subito piantine e listini nella cache del browser (Image() in background),
   // così quando l'utente espande un locale l'immagine è già pronta senza esitazioni.
+  // PORT: Image() del browser non esiste su Hermes → precaricamento con cache su disco di expo-image
   useEffect(() => {
-    venueRows.forEach(v => {
-      [v.piantina, v.listino].forEach(url => {
-        if (!url) return;
-        const img = new Image();
-        img.src = url;
-      });
-    });
+    preloadImages(venueRows.flatMap(v => [v.piantina, v.listino]));
   }, [venueRows]);
 
   const hasAny = venueRows.length > 0;

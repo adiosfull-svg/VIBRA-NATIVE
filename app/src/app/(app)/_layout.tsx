@@ -8,6 +8,26 @@ import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
 import { LayoutUIProvider } from '../../web/lib/layoutUI';
 import { THEME } from '../../ui/palette.generated';
+import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NativeBlur, usePageBlurTarget } from '../../ui/pageLayers';
+import { Div } from '../../ui/html';
+
+/**
+ * Fascia dell'orario (telefono): l'app disegna fino al bordo dello schermo e la pagina scorreva sotto
+ * l'orario nitida. Stesso vetro della nav bar: blur della pagina in primo piano + bg-background/30.
+ */
+function StatusBarGlass() {
+  const top = useSafeAreaInsets().top;
+  const target = usePageBlurTarget();
+  if (Platform.OS === 'web' || !top) return null;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: top }}>
+      <NativeBlur intensity={24} target={target} style={StyleSheet.absoluteFill} />
+      <Div pointerEvents="none" className="absolute inset-0 bg-background/30" />
+    </View>
+  );
+}
 
 // Calcolatrice globale: resta attiva su tutte le rotte finché non la chiudi (come AppLayout.jsx).
 function GlobalCalcolatrice() {
@@ -24,6 +44,7 @@ export default function AppLayout() {
       <CalcolatriceProvider>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       {!inTabs && <MobileNavBar />}
+      <StatusBarGlass />
       <Sidebar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
