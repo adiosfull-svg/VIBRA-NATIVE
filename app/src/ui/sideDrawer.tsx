@@ -88,7 +88,7 @@ function SideDrawerImpl({ name, open, onClose, side, width, backdropOpacity, clo
 
   if (!ready) return null;
   return (
-    <View style={[StyleSheet.absoluteFill, !shown && styles.hidden]} pointerEvents={open ? 'box-none' : 'none'}>
+    <View style={[StyleSheet.absoluteFill, styles.root, !shown && styles.hidden]} pointerEvents={open ? 'box-none' : 'none'}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={closeLabel} />
       </Animated.View>
@@ -100,6 +100,9 @@ function SideDrawerImpl({ name, open, onClose, side, width, backdropOpacity, clo
 }
 
 const styles = StyleSheet.create({
+  // sopra a tutto il layout: su Android l'elevation (ombre della nav bar, pulsante Cerca) scavalca
+  // l'ordine dei fratelli, quindi serve un'elevation più alta (§7 delle regole)
+  root: { zIndex: 1000, elevation: 1000 },
   hidden: { display: 'none' },
   backdrop: { backgroundColor: '#000000' },
   panel: { position: 'absolute', top: 0, bottom: 0 },
