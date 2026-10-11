@@ -1,4 +1,5 @@
 // Portato da src/hooks/useRoleAccess.jsx (Base44): stesse regole di accesso.
+import { useMemo } from 'react';
 import { useAuth, type AppUser } from './auth';
 
 export type RouteName =
@@ -23,18 +24,22 @@ export function canModify(user: AppUser | null, section: string) {
 
 export function useRoleAccess() {
   const { user } = useAuth();
-  const role = user?.role;
-  return {
-    user,
-    hasAccess: (roles: string[]) => !!role && roles.includes(role),
-    canAccessRoute: (r: RouteName) => canAccessRoute(user, r),
-    canModify: (s: string) => canModify(user, s),
-    canAccessRicercaAI: () => !!role,
-    ricercaAIMode: () => (!role ? null : role === 'admin' || role === 'super4' ? 'full' : 'limited'),
-    canAccessIlMioVibra: () => !!role,
-    isAdmin: role === 'admin',
-    isSuper4: role === 'super4',
-    isCapogruppo: role === 'capogruppo',
-    isPR: role === 'pr',
-  };
+  // valore stabile finché non cambia l'utente: funzioni nuove a ogni render facevano ripartire gli
+  // effect e i memo di chi le usa (docs/REGOLE-PRESTAZIONI.md §4)
+  return useMemo(() => {
+    const role = user?.role;
+    return {
+      user,
+      hasAccess: (roles: string[]) => !!role && roles.includes(role),
+      canAccessRoute: (r: RouteName) => canAccessRoute(user, r),
+      canModify: (s: string) => canModify(user, s),
+      canAccessRicercaAI: () => !!role,
+      ricercaAIMode: () => (!role ? null : role === 'admin' || role === 'super4' ? 'full' : 'limited'),
+      canAccessIlMioVibra: () => !!role,
+      isAdmin: role === 'admin',
+      isSuper4: role === 'super4',
+      isCapogruppo: role === 'capogruppo',
+      isPR: role === 'pr',
+    };
+  }, [user]);
 }

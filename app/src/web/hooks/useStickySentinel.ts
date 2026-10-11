@@ -7,15 +7,18 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pageScroll } from '../shims/pageScroll';
 import { PageLayerContext } from '../../ui/pageLayers';
+import { TEST_DIAG, useWhyRender } from '../../lib/testDiag';
 
-export function useStickySentinel(): [(node: unknown) => void, boolean] {
+export function useStickySentinel(diagName?: string): [(node: unknown) => void, boolean] {
   const [stuck, setStuck] = useState(false);
   const [el, setEl] = useState<unknown>(null);
-  const sentinelRef = useCallback((node: unknown) => { setEl(node); }, []);
+  const sentinelRef = useCallback((node: unknown) => { if (diagName && TEST_DIAG) console.log(`VIBRA why ref ${diagName} ${node ? 'nodo' : 'null'}`); setEl(node); }, [diagName]);
   const insetTop = useSafeAreaInsets().top;
   // scroll della PROPRIA pagina: con quello globale (della pagina visibile) le tab nascoste ricalcolavano
   // lo stato con misure sbagliate, lo vedevano cambiare e si ridisegnavano per intero a ogni cambio tab
   const layer = useContext(PageLayerContext);
+  // diagnostica (solo build di test, se la pagina passa un nome)
+  useWhyRender(diagName ? `sentinella ${diagName}` : '', { stuck, el, insetTop, layer });
 
   useEffect(() => {
     if (!el) return;

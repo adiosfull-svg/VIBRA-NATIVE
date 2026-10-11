@@ -81,7 +81,7 @@ export default function IlMioVibra() {
   const scrollRef = useRef(null);
   const activeButtonRef = useRef(null);
   const lastTabTouchRef = useRef(0);
-  const [sentinelRef, stuck] = useStickySentinel();
+  const [sentinelRef, stuck] = useStickySentinel('IlMioVibra');
   useStickyTabFlash(tabsScrollRef);
   const setStuckHeader = useSetStickyHeader();
   useEffect(() => { setStuckHeader(stuck); }, [stuck, setStuckHeader]);
@@ -164,6 +164,7 @@ export default function IlMioVibra() {
     retry: 0,
   });
 
+  useWhyRender('IlMioVibra promoters', { promoters });
   // Trova il promoter corrispondente al promoter_id effettivo (proprio o "visualizza come")
   const myPromoter = effectivePromoterId ? promoters.find(p => p.id === effectivePromoterId) || null : null;
 

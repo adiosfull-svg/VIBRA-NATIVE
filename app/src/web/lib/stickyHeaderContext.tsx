@@ -10,16 +10,20 @@ export function StickyHeaderProvider({ children }: { children: ReactNode }) {
   const [title, setTitle] = useState('');
   return <StickyHeaderContext.Provider value={{ stuck, setStuck, topRightHover, setTopRightHover, title, setTitle }}>{children}</StickyHeaderContext.Provider>;
 }
+// fallback stabili senza Provider (oggi non c'è): una funzione nuova a ogni render faceva ripartire
+// gli effect delle pagine che la usano
+const NOOP = () => {};
+const EMPTY_STATE = { stuck: false, setStuck: NOOP, topRightHover: false, setTopRightHover: NOOP };
 export function useStickyHeaderState() {
-  return useContext(StickyHeaderContext) || { stuck: false, setStuck: () => {}, topRightHover: false, setTopRightHover: () => {} };
+  return useContext(StickyHeaderContext) || EMPTY_STATE;
 }
 export function useSetStickyHeader() {
   const ctx = useContext(StickyHeaderContext);
-  return ctx ? ctx.setStuck : () => {};
+  return ctx ? ctx.setStuck : NOOP;
 }
 export function usePageTitleValue() {
   return useContext(StickyHeaderContext)?.title ?? '';
 }
 export function useSetPageTitle() {
-  return useContext(StickyHeaderContext)?.setTitle ?? (() => {});
+  return useContext(StickyHeaderContext)?.setTitle ?? NOOP;
 }

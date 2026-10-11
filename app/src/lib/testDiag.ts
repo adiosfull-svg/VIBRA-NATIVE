@@ -77,7 +77,7 @@ export function TestCut({ id, children }: { id: string; children?: unknown }): a
  */
 const whyPrev = new Map<string, Record<string, unknown>>();
 export function useWhyRender(name: string, values: Record<string, unknown>) {
-  if (!TEST_DIAG) return;
+  if (!TEST_DIAG || !name) return;
   const prev = whyPrev.get(name);
   whyPrev.set(name, values);
   if (!prev) { console.log(`VIBRA why ${name} primo render`); return; }
