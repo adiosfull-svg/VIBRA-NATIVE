@@ -64,7 +64,7 @@ export function cssColor(input: unknown): string | undefined {
 }
 
 /** Dimensioni della finestra per vh/vw (aggiornate da html.tsx con Dimensions). */
-export const cssViewport = { width: 0, height: 0 };
+export const cssViewport = { width: 0, height: 0, insetTop: 0, insetBottom: 0, insetLeft: 0, insetRight: 0 };
 
 /** Lunghezza assoluta in px: px, rem, (d|s|l)vh, vw; env() vale 0 (aree sicure: non note qui). */
 function absoluteLength(t: string): number | undefined {
@@ -73,6 +73,9 @@ function absoluteLength(t: string): number | undefined {
   if ((m = t.match(/^(-?[\d.]+)rem$/))) return Number(m[1]) * 16;
   if ((m = t.match(/^(-?[\d.]+)[dsl]?vh$/)) && cssViewport.height) return (Number(m[1]) * cssViewport.height) / 100;
   if ((m = t.match(/^(-?[\d.]+)[dsl]?vw$/)) && cssViewport.width) return (Number(m[1]) * cssViewport.width) / 100;
+  if ((m = t.match(/^env\(\s*safe-area-inset-(top|bottom|left|right)\s*\)$/))) {
+    return cssViewport[`inset${m[1][0].toUpperCase()}${m[1].slice(1)}` as 'insetTop'];
+  }
   if (/^env\([^)]*\)$/.test(t) || t === '0') return 0;
   return undefined;
 }
@@ -81,7 +84,8 @@ function absoluteLength(t: string): number | undefined {
 function calcLength(t: string): number | undefined {
   const m = t.match(/^calc\((.*)\)$/);
   if (!m) return undefined;
-  const parts = m[1].replace(/\s+([+-])\s+/g, ' $1 ').trim().split(' ');
+  // dalle classi Tailwind arriva anche senza spazi: calc(100dvh-7rem-env(safe-area-inset-top))
+  const parts = m[1].replace(/([a-z%)])([+-])(?=[\d.]|env\()/g, '$1 $2 ').replace(/\s+([+-])\s+/g, ' $1 ').trim().split(' ');
   let total = absoluteLength(parts[0]);
   for (let i = 1; total !== undefined && i < parts.length; i += 2) {
     const v = absoluteLength(parts[i + 1] ?? '');
@@ -300,4 +304,17 @@ export function webStyle(input: unknown, web = false): WebStyleResult {
     else delete style.borderRadius;
   }
   return { style, gradient };
+}
+
+/** Stile delle classi di dimensione relative alla finestra (webClasses: ViewportSize), alla larghezza attuale. */
+export function viewportSizeStyle(list: { prop: string; value: string; min?: number; max?: number }[] | undefined): Record<string, number> | null {
+  if (!list) return null;
+  let out: Record<string, number> | null = null;
+  for (const { prop, value, min, max } of list) {
+    if (min != null && cssViewport.width < min) continue;
+    if (max != null && cssViewport.width >= max) continue;
+    const v = cssLength(value);
+    if (typeof v === 'number') (out ??= {})[prop] = v;
+  }
+  return out;
 }

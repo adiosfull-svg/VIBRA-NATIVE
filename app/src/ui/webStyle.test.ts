@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cssColor, cssViewport, parseLinearGradient, webStyle } from './webStyle.ts';
+import { cssColor, cssViewport, parseLinearGradient, viewportSizeStyle, webStyle } from './webStyle.ts';
 
 test('colori CSS dell\'app web', () => {
   assert.equal(cssColor('hsl(var(--primary))'), '#561a8e');
@@ -82,4 +82,19 @@ test('position inline (absolute/relative restano, fixed/sticky convertiti)', () 
   assert.equal(webStyle({ position: 'relative' }, true).style.position, 'relative');
   assert.equal(webStyle({ position: 'sticky' }, false).style.position, 'relative');
   assert.equal(webStyle({ position: 'static' }, false).style.position, undefined);
+});
+
+test('dimensioni delle classi relative alla finestra (calc senza spazi, aree sicure, breakpoint)', () => {
+  Object.assign(cssViewport, { width: 390, height: 844, insetTop: 24, insetBottom: 16 });
+  try {
+    const list = [
+      { prop: 'maxHeight', value: 'calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))', max: 640 },
+      { prop: 'maxHeight', value: '90vh', min: 640 },
+    ];
+    assert.deepEqual(viewportSizeStyle(list), { maxHeight: 844 - 112 - 24 - 16 });
+    Object.assign(cssViewport, { width: 800 });
+    assert.deepEqual(viewportSizeStyle(list), { maxHeight: 844 * 0.9 });
+  } finally {
+    Object.assign(cssViewport, { width: 0, height: 0, insetTop: 0, insetBottom: 0 });
+  }
 });

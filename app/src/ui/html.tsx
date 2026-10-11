@@ -17,8 +17,9 @@ import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestu
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount } from '../lib/testDiag';
-import { expandGridTemplate, normalizeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
-import { cssViewport, webStyle, type WebStyleResult } from './webStyle';
+import { expandGridTemplate, normalizeClasses, viewportClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
+import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from './webStyle';
+import { initialWindowMetrics } from 'react-native-safe-area-context';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
 // serve sul telefono; se manca, Clienti va in errore ("cannot add a new property", "exactly one
@@ -37,6 +38,12 @@ if (__DEV__ && Platform.OS !== 'web') {
 
 // vh/vw negli style del web: dimensioni della finestra
 Object.assign(cssViewport, Dimensions.get('window'));
+if (Platform.OS === 'web') viewportClasses.translate = false;
+// env(safe-area-inset-*) nei calc() delle classi
+if (initialWindowMetrics) {
+  const { top, bottom, left, right } = initialWindowMetrics.insets;
+  Object.assign(cssViewport, { insetTop: top, insetBottom: bottom, insetLeft: left, insetRight: right });
+}
 Dimensions.addEventListener('change', ({ window }) => Object.assign(cssViewport, { width: window.width, height: window.height }));
 
 /**
@@ -727,8 +734,9 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
   const layout = useContext(FlexParentContext);
   const [text, classRest] = splitTextClasses(className);
   const rest = withStyleGrid(classRest, style);
-  const { box: box0, grid: classGrid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const { box: box0, grid: classGrid, gradient: classGradient, ring, viewport } = normalizeClasses(rest);
   const ringStyle = ring ? ringShadow(ring) : null;
+  const vpStyle = viewportSizeStyle(viewport);
   const grid = withStyleRows(classGrid, style);
   const { style: webRnStyle, gradient: styleGradient } = useWebStyle(style);
   // card che si gira (semina-flip-*, solo telefono): il contenitore passa la rotazione alle facce
@@ -785,7 +793,7 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
   const nativeBlur = blur && Platform.OS !== 'web' ? <BlurFill px={blur.px} /> : null;
   const axis = scrollAxis(rest);
   if (axis) {
-    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle]) as Record<string, any>;
+    const flat = StyleSheet.flatten([boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle]) as Record<string, any>;
     const scroll = (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
         {nativeBlur}
@@ -797,7 +805,7 @@ function DivBox({ className, children, style, onLayout, animatedStyle, ...all }:
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle ? AnimatedBox : View;
   return (
-    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle]}>
+    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle]}>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
@@ -875,9 +883,10 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const rest = withStyleGrid(classRest, style);
   // il browser centra il contenuto di <button> (le classi text-left/right della pagina vincono)
   const text = button ? cn('text-center', ownText) : ownText;
-  const { box: box0, grid, gradient: classGradient, ring } = normalizeClasses(rest);
+  const { box: box0, grid, gradient: classGradient, ring, viewport } = normalizeClasses(rest);
   const box = gridCell ? withoutHFull(box0) : box0;
   const ringStyle = ring ? ringShadow(ring) : null;
+  const vpStyle = viewportSizeStyle(viewport);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
@@ -906,7 +915,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <LeadMarginContext.Provider value={null}>

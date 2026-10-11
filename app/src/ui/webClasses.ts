@@ -33,7 +33,20 @@ export function parseGridTemplate(v: string): GridTrack[] | null {
   return tracks.length ? tracks : null;
 }
 export type Gradient = { dir: string; colors: string[] };
-export type Normalized = { box: string; grid?: Grid; gradient?: Gradient; lineClamp?: number; ring?: string };
+/**
+ * Altezze/larghezze arbitrarie relative alla finestra (h-[88vh], max-sm:max-h-[calc(100dvh-7rem-env(...))]):
+ * NativeWind non traduce dvh/env()/calc() e le scarterebbe (dialog senza limite di altezza, alto quanto
+ * tutto il contenuto: sul telefono bitmap enormi e app uccisa per memoria). Si calcolano al render.
+ */
+export type ViewportSize = { prop: string; value: string; min?: number; max?: number };
+export type Normalized = { box: string; grid?: Grid; gradient?: Gradient; lineClamp?: number; ring?: string; viewport?: ViewportSize[] };
+
+/** Sul web le classi restano al CSS (vero dvh/env()): html.tsx lo disattiva. */
+export const viewportClasses = { translate: true };
+const SIZE_PROP: Record<string, string> = { h: 'height', w: 'width', 'min-h': 'minHeight', 'max-h': 'maxHeight', 'min-w': 'minWidth', 'max-w': 'maxWidth' };
+const BREAKPOINT_MIN: Record<string, number> = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 };
+/** (bp:)?(min-|max-)?(h|w)-[valore con vh/vw o env(), senza %] */
+const VIEWPORT_SIZE = /^(?:(max-)?(sm|md|lg|xl|2xl):)?((?:min-|max-)?[hw])-\[([^\]%]*(?:[dsl]?v[hw]|env\()[^\]%]*)\]$/;
 
 const REM = 16;
 /** Scala spacing di Tailwind (n × 0.25rem) e valori arbitrari [12px]. */
@@ -84,6 +97,12 @@ function computeNormalized(className?: string): Normalized {
   let ringOffsetColor = '#ffffff';
 
   for (const c of list) {
+    let vm: RegExpMatchArray | null;
+    if (viewportClasses.translate && (vm = c.match(VIEWPORT_SIZE))) {
+      const bp = vm[2] ? BREAKPOINT_MIN[vm[2]] : undefined;
+      (out.viewport ??= []).push({ prop: SIZE_PROP[vm[3]], value: vm[4].replace(/_/g, ' '), ...(bp == null ? null : vm[1] ? { max: bp } : { min: bp }) });
+      continue;
+    }
     const responsive = BREAKPOINT.test(c);
     const base = c.replace(BREAKPOINT, '');
     // griglie responsive: sul telefono conta solo la base

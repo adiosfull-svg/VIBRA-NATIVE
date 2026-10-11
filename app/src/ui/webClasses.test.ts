@@ -61,3 +61,13 @@ test('radiusFromClasses: rounded, lati e valori arbitrari', () => {
   assert.deepEqual(radiusFromClasses('rounded-t-2xl rounded-br-[6px]'), { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomRightRadius: 6 });
   assert.deepEqual(radiusFromClasses('h-20 shrink-0'), {});
 });
+
+test('classi di dimensione relative alla finestra (dvh, env, calc) calcolate al render', () => {
+  const n = normalizeClasses('relative w-full max-sm:max-h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:max-h-[90vh] h-[88vh] w-[calc(100%-1.5rem)] flex');
+  assert.deepEqual(n.viewport, [
+    { prop: 'maxHeight', value: 'calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))', max: 640 },
+    { prop: 'maxHeight', value: '90vh', min: 640 },
+    { prop: 'height', value: '88vh' },
+  ]);
+  assert.equal(n.box, 'relative w-full w-[calc(100%-1.5rem)] flex flex-row');
+});
