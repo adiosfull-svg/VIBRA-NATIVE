@@ -1,7 +1,7 @@
 // API di react-router-dom usate dall'app web, sopra expo-router. Le route native hanno gli
 // stessi percorsi dell'originale (/clienti, /il-mio-vibra?tab=..., /promoter/:id).
-import { router, useGlobalSearchParams, useLocalSearchParams, usePathname, type Href } from 'expo-router';
-import { useMemo, type ReactNode } from 'react';
+import { router, useGlobalSearchParams, useLocalSearchParams, useNavigation, usePathname, type Href } from 'expo-router';
+import { useCallback, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Btn } from '../ui/html';
 
 type NavigateOpts = { replace?: boolean; state?: unknown };
@@ -17,9 +17,44 @@ export function useNavigate() {
   };
 }
 
-export function useLocation() {
+// Percorso corrente: lo pubblica <LocationPublisher/> (layout dell'app). usePathname/useGlobalSearchParams
+// in ogni pagina la ridisegnavano a ogni cambio di percorso anche da nascosta: con le tab montate, toccare
+// "Weekend" ridisegnava anche Clienti, Il Mio Vibra e Semine (~2 s sul telefono). Qui una pagina senza
+// focus tiene l'ultimo percorso visto e si aggiorna solo quando torna in primo piano.
+type Loc = { pathname: string; params: Record<string, string | string[] | undefined> };
+let currentLoc: Loc = { pathname: '/', params: {} };
+const locListeners = new Set<() => void>();
+
+export function LocationPublisher() {
   const pathname = usePathname();
   const params = useGlobalSearchParams();
+  // durante il render (prima delle pagine, che stanno sotto nel layout): leggono già il valore nuovo
+  if (currentLoc.pathname !== pathname || currentLoc.params !== params) currentLoc = { pathname, params };
+  useLayoutEffect(() => { locListeners.forEach((fn) => fn()); }, [pathname, params]);
+  return null;
+}
+
+type Nav = { isFocused?: () => boolean; addListener?: (e: 'focus', fn: () => void) => () => void } | undefined;
+
+function useNavigationSafe(): Nav {
+  try { return useNavigation() as Nav; } catch { return undefined; }
+}
+
+export function useLocation() {
+  const navigation = useNavigationSafe();
+  const seen = useRef<Loc | null>(null);
+  const getSnapshot = () => {
+    let focused = true;
+    try { focused = navigation?.isFocused?.() ?? true; } catch { /* fuori da un navigatore */ }
+    if (focused || !seen.current) seen.current = currentLoc;
+    return seen.current;
+  };
+  const subscribe = useCallback((fn: () => void) => {
+    locListeners.add(fn);
+    const off = navigation?.addListener?.('focus', fn);
+    return () => { locListeners.delete(fn); off?.(); };
+  }, [navigation]);
+  const { pathname, params } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const search = useMemo(() => {
     const sp = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (typeof v === 'string') sp.set(k, v);

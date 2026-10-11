@@ -12,6 +12,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeBlur, usePageBlurTarget } from '../../ui/pageLayers';
 import { Div } from '../../ui/html';
+import { LocationPublisher } from '../../web/router';
 
 /**
  * Fascia dell'orario (telefono): l'app disegna fino al bordo dello schermo e la pagina scorreva sotto
@@ -42,6 +43,7 @@ export default function AppLayout() {
   return (
     <LayoutUIProvider>
       <CalcolatriceProvider>
+      <LocationPublisher />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       {!inTabs && <MobileNavBar />}
       <StatusBarGlass />
