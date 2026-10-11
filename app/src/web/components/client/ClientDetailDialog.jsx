@@ -411,6 +411,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
   return createPortal(
     <Div
       className={`fixed inset-0 z-[10000] flex items-center justify-center max-sm:pt-[env(safe-area-inset-top)] max-sm:pb-[env(safe-area-inset-bottom)] sm:p-8 ${open ? '' : 'pointer-events-none'}`}>
+      <TestCut id="overlay">{/* PORT: bisezione sull'emulatore (lib/testDiag) */}
       <Div
         style={{ transform: 'translateZ(0)' }}
         className={`fixed inset-0 bg-black/80 touch-none ${internalOpen ? 'opacity-100' : 'opacity-0 transition-opacity duration-200'}`}
@@ -900,6 +901,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         </Div>
         </TestCut>
       </Div>
+      </TestCut>
     </Div>,
     webDocument.body
   );

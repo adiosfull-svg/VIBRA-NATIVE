@@ -74,10 +74,14 @@ export function normalizeClasses(className?: string): Normalized {
   return out;
 }
 
+// Diagnostica sull'emulatore: classi da togliere ovunque (EXPO_PUBLIC_TEST_STRIP = espressione regolare)
+const TEST_STRIP = process.env.EXPO_PUBLIC_TEST_STRIP ? new RegExp(`^(?:${process.env.EXPO_PUBLIC_TEST_STRIP})$`) : null;
+
 function computeNormalized(className?: string): Normalized {
   const out: Normalized = { box: '' };
   if (!className) return out;
-  const list = className.split(/\s+/).filter(Boolean);
+  let list = className.split(/\s+/).filter(Boolean);
+  if (TEST_STRIP) list = list.filter((c) => !TEST_STRIP.test(c));
   const box: string[] = [];
   let isFlex = false;
   let hasDirection = false;
