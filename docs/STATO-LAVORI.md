@@ -137,8 +137,40 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   - `EXPO_PUBLIC_TEST_STRIP=<regex>`: classi tolte ovunque (es. per provare se una classe causa un blocco).
   - Si possono lanciare più giri in parallelo con `actions_run_trigger` (input diversi) e confrontare.
 
+## Lavoro dell'11/10 sera (dopo la prova dell'utente sull'APK) — verificato sull'emulatore
+L'utente ha segnalato: crash aprendo Il Mio Vibra/Clienti (`ReferenceError: Property 'Image' doesn't exist`),
+blur che entra a scatto, fascia dell'orario non sfocata, nav bar senza blur, Weekend che si apre in ~2 s.
+- Crash: `new Image()` del browser in `MaterialeLocaliSection` → `preloadImages` (expo-image). In più
+  `shims/dom.ts` definisce globali `Image` e `IntersectionObserver` se mancano (altri punti simili non cadono).
+  (I test non lo vedevano: i dati di prova non hanno piantine/listini dei locali.)
+- Nav bar senza blur: in `Page.tsx` il ref del BlurTargetView arrivava PRIMA dell'effect che registra la
+  pagina → bersaglio perso, solo velo. Corretto (ora sfoca, visto sull'emulatore).
+- Fascia dell'orario: `StatusBarGlass` in `app/(app)/_layout.tsx` (blur della pagina + bg-background/30).
+- Transizioni CSS sul telefono: `ui/cssTransition.ts` (+ `cssTransitionSpec.ts`, testato) anima con Animated
+  opacità, sfondo e comparsa/scomparsa del blur, da `style.transition` e dalle classi transition-*/duration-*
+  (che NativeWind non riceve più). Il vetro sticky ora entra in dissolvenza (0,2 s come il web).
+- Lentezza del cambio tab (misurata con la traccia: ~500 elementi ridisegnati e JS bloccato a ogni tocco):
+  1. tab precaricate in background dopo l'avvio (`router.prefetch` in `(tabs)/_layout.tsx`; Dashboard solo per
+     chi la vede, per gli altri è un Redirect); una pagina montata senza focus va in fondo agli stack di
+     pageScroll e del bersaglio del blur;
+  2. `web/router.tsx`: `useLocation` non usa più usePathname in ogni pagina; `LocationPublisher` nel layout,
+     ogni pagina segue solo il proprio percorso (`useRoutePath`), la Sidebar usa `useCurrentLocation`;
+  3. pagine delle tab in `memo` (il focus della tab non ridisegna la pagina);
+  4. `PageLayer` con scroll per pagina (`y`, `viewportHeight`, `onScroll`): `useStickySentinel` e
+     `usePageWindow` seguono la propria pagina (prima quelle nascoste ricalcolavano con lo scroll di
+     un'altra pagina e si ridisegnavano per intero);
+  5. `calcolatriceContext`: valore memoizzato (il layout si ridisegna a ogni percorso → Il Mio Vibra pure).
+  Risultato sull'emulatore: aprire Weekend ridisegna ~12 elementi (prima ~540), tornarci 4, percorsi di test
+  20-35% più veloci. Resta: tornando su Il Mio Vibra si ridisegna ancora (~540 elementi), da indagare.
+- Test nuovo `tests/emulatore/pr/05-tab-ritorno.yaml` (tempi del cambio tab; con `EXPO_PUBLIC_TEST_TRACE=1`
+  la traccia dice cosa si ridisegna a ogni tocco). Lanciato a mano fallisce per admin (è un percorso pr).
+- NB per misurare: il tempo di `tapOn` di Maestro include la sua attesa; contano i battiti (`ritardo=`) e la
+  traccia nel logcat.
+
 ## PROSSIMO PASSO
-- Prova dell'utente sull'APK con tutte le correzioni (lanciato l'11/10, link fisso release "anteprima").
+- Prova dell'utente sull'APK con tutte le correzioni (link fisso release "anteprima"); l'utente dice che è
+  "piena di glitch": chiedere screenshot/descrizioni precise per ognuno e riprodurli sull'emulatore.
+- Ridisegno di Il Mio Vibra quando ci si torna (vedi sopra).
 - Differenze viste su Clienti (admin, nessun cliente): stato vuoto con pulsante "Aggiungi Cliente" squadrato
   e a sinistra (web: arrotondato, centrato). Da allargare i test: altre tab di Clienti, Semine, dialog, menu.
 - Copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
