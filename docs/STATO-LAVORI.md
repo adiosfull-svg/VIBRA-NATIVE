@@ -10,6 +10,8 @@
 - Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Lavoro sul branch **`claude/awesome-tesla-ovfcmf`**
   (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1). Dal 10/10 sera si lavora su
   **`claude/ecstatic-dirac-k411yk`** (parte da awesome-tesla, contiene tutto: prestazioni + emulatore).
+  Dall'11/10 si lavora su **`claude/practical-mccarthy-js3v4k`** (parte da ecstatic-dirac, contiene tutto).
+  NB: la cache dell'APK nativo dell'emulatore è per branch: il primo giro su un branch nuovo fa la build completa (~25 min).
 
 ## Ambiente (nuova sessione)
 1. Originale: `add_repo` adiosfull-svg/VIBRA (sola lettura), poi
@@ -116,22 +118,30 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Icone con absolute/translate avvolte in una View (la lente dei campi di ricerca usciva dal campo).
 - Esito ultimi giri: admin Dashboard + nav bar PASSATI; pr Il Mio Vibra, Clienti (lista), Weekend PASSATI.
 
-## PROSSIMO PASSO (urgente): crash aprendo il dettaglio cliente
-- Sull'emulatore toccando un cliente (Sofia Colombo, utente pr) l'app viene uccisa per memoria
-  (`lowmemorykiller ... 3 GB rss`): il JS finisce il render del dialog (traccia: ultima riga = la lista
-  presenze) e poi il battito si ferma ~10 s → blocco nella fase nativa (commit/layout/disegno), non nel render.
-- C'era GIÀ nella versione del mattino (2e0e924, test `pr/04-dettaglio.yaml` col deep link `vibra://clienti`),
-  quindi NON è una regressione di oggi; probabile causa del "dettaglio lento/bloccato" visto dall'utente.
-- Indizi da seguire: contenitore del dialog `relative w-full max-sm:max-h-[calc(100dvh-7rem-env(...))] ...
-  shadow-lg bg-gradient-to-b flex flex-col overflow-hidden scale-95/opacity-0` con figlio
-  `flex-1 min-h-0 overflow-y-auto` (ScrollBox): il max-h con calc/dvh/env non si traduce → altezza libera;
-  sospetto layout gigantesco + ombra/gradiente → bitmap enormi. Prossime prove: radiografia del dialog
-  (chiamare dumpLayout sul contenuto del portale), poi tradurre max-h calc/dvh (cssViewport) o limitare
-  all'altezza dello schermo; provare con `EXPO_PUBLIC_TEST_NO_BLUR=1` per escludere il blur.
-- Poi: APK per l'utente con tutte le correzioni (l'ultimo dispatch di android-apk è stato annullato; rilanciare).
+## Lavoro dell'11/10 (branch practical-mccarthy) — fatto e verificato sull'emulatore
+- **Crash del dettaglio cliente RISOLTO** (tutti i 6 percorsi admin/pr passati, nessun OOM). Causa: le classi
+  di transizione CSS del contenitore (`transition-[transform,opacity] duration-200` con `opacity-0 scale-95`)
+  che l'interop di NativeWind trasforma in animazioni: il thread JS restava bloccato e allocava milioni di
+  oggetti nativi ("Scudo OOM ... size class 144" nel logcat) fino all'uccisione dell'app. Correzione in
+  `ui/webClasses.ts`: sul telefono si tolgono `transition-*`, `duration-*`, `ease-*`, `delay-*` (anche con
+  varianti); le animazioni vere restano a `motion.tsx`. Sul web le classi restano al CSS.
+- Classi di dimensione relative alla finestra (`h-/min-h-/max-h-/w-...[...]` con vh/dvh/env()/calc(), anche con
+  `sm:`/`max-sm:`): NativeWind le scartava; ora calcolate al render (`viewportSizeStyle` in `webStyle.ts`,
+  `env(safe-area-inset-*)` dalle aree sicure reali). Il dettaglio cliente ora ha l'altezza massima del web.
+- ATTENZIONE: Tailwind legge anche i commenti dei file in `src/`: scrivere `env(...)` dentro una classe in un
+  commento genera CSS non valido e blocca il bundle Android (`Unexpected token Delim('.')`).
+- Strumenti di diagnostica nuovi (solo build di test, inerti nelle normali), da passare in `extra_env`:
+  - `EXPO_PUBLIC_TEST_CUT=<id>:<da>-<a>` oppure `<id>:none` (più tagli con virgole): `<TestCut id>` di
+    `lib/testDiag.ts` tiene solo i figli con quegli indici (bisezione). Nel dettaglio cliente: `overlay`
+    (sfondo, contenitore), `dialog` (intestazione, corpo), `detail` (sezioni del corpo 0-14).
+  - `EXPO_PUBLIC_TEST_STRIP=<regex>`: classi tolte ovunque (es. per provare se una classe causa un blocco).
+  - Si possono lanciare più giri in parallelo con `actions_run_trigger` (input diversi) e confrontare.
+
+## PROSSIMO PASSO
+- Prova dell'utente sull'APK con tutte le correzioni (lanciato l'11/10, link fisso release "anteprima").
 - Differenze viste su Clienti (admin, nessun cliente): stato vuoto con pulsante "Aggiungi Cliente" squadrato
   e a sinistra (web: arrotondato, centrato). Da allargare i test: altre tab di Clienti, Semine, dialog, menu.
-- Prossimo ancora: copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
+- Copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
   `69de4f1f7f53d9f187d01392`, 500-2000 clienti; l'utente ha dato l'ok) nel seed dello stack di prova.
 - Livello B (più avanti): utente di prova Base44 o token come segreto GitHub per provare il backend vero.
 
