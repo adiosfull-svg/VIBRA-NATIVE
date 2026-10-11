@@ -1,5 +1,10 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+**Performance rules (mandatory for every ported page/component): `../docs/REGOLE-PRESTAZIONI.md`** —
+page preload (`src/lib/preloadRoutes.ts`), data prefetch, list virtualization (`usePageWindow`,
+`src/ui/windowedList.tsx`), no global re-renders, UI-thread animations (`src/ui/sideDrawer.tsx`),
+image cache (`src/ui/imageCache.ts`). Read it before converting a page.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:

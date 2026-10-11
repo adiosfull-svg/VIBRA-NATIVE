@@ -18,6 +18,7 @@ import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
 import { webStyle } from './webStyle';
+import { IMAGE_CACHE, markImageWarm } from './imageCache';
 import { inheritedLineHeight } from './textLeading';
 import { useFocusStyle } from './useFocusStyle';
 import RNSvg, { type SvgProps } from 'react-native-svg';
@@ -49,9 +50,11 @@ export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigi
       accessibilityLabel={alt}
       className={imageClass}
       contentFit={fitFrom(className)}
-      cachePolicy="disk"
+      cachePolicy={IMAGE_CACHE}
+      // righe di liste riciclate: senza chiave l'immagine vecchia resta visibile un frame
+      recyclingKey={src}
       onError={onError ? () => onError() : undefined}
-      onLoad={onLoad ? () => onLoad() : undefined}
+      onLoad={() => { markImageWarm(src); onLoad?.(); }}
       {...props}
       style={imageStyle}
     />

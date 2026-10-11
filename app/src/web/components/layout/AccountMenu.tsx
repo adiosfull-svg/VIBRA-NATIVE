@@ -1,19 +1,22 @@
 // Port di src/components/layout/AccountMenu.jsx: pannello laterale destro (w-72) con social,
 // voci account/admin, "Visualizza come", Instagram, esci, elimina account.
+// PRESTAZIONI (docs/REGOLE-PRESTAZIONI.md §5): il pulsante (AccountMenuButton) è nell'header di ogni
+// pagina, il pannello (AccountMenuPanel) è UNO solo nel layout dell'app. Prima ogni pagina montata
+// aveva il suo pannello e con le tab precaricate all'apertura se ne aprivano 5 insieme.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
-import { Alert, Animated, Linking, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { base44 } from '../../../lib/base44';
 import { useAuth } from '../../../lib/auth';
 import { useViewAsPromoter } from '../../../lib/viewAs';
-import { usePresence } from '../../../ui/anim';
+import { SideDrawer } from '../../../ui/sideDrawer';
 import { Btn, Div, P, Span } from '../../../ui/html';
 import { BookOpen, Eye, FileBarChart, Instagram, Loader2, LogOut, Settings, Settings2, ShieldCheck, Trash2, Unlink, X } from '../../../ui/icons.generated';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/menu';
-import { useLayoutUI } from '../../lib/layoutUI';
+import { useLayoutUI, useLayoutUIActions } from '../../lib/layoutUI';
 import { useNavigate } from '../../router';
 import DeleteAccountDialog from '../shared/DeleteAccountDialog';
 
@@ -47,17 +50,40 @@ function SocialLink({ href, d, title, subtitle, className, gradient }: {
 
 const ITEM = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium';
 
-export default function AccountMenu() {
-  const { accountMenuOpen: open, setAccountMenuOpen: setOpen } = useLayoutUI();
+/** Pulsante dell'header (ingranaggio): usa solo le azioni, non si ridisegna all'apertura. */
+export default function AccountMenuButton() {
+  const { setAccountMenuOpen } = useLayoutUIActions();
+  return (
+    <Btn onClick={() => setAccountMenuOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-secondary/50" accessibilityLabel="Menu account">
+      <Settings className="w-7 h-7 text-foreground" />
+    </Btn>
+  );
+}
+
+/** Pannello unico (nel layout dell'app). */
+export function AccountMenuPanel() {
+  const { accountMenuOpen: open, setAccountMenuOpen } = useLayoutUI();
   const [showDelete, setShowDelete] = useState(false);
+  const { width } = useWindowDimensions();
+  const panelWidth = Math.min(288, width);
+  const close = useCallback(() => setAccountMenuOpen(false), [setAccountMenuOpen]);
+  return (
+    <>
+      <SideDrawer name="account" open={open} onClose={close} side="right" width={panelWidth} backdropOpacity={0.5}>
+        <AccountMenuBody onDelete={setShowDelete} />
+      </SideDrawer>
+      <DeleteAccountDialog open={showDelete} onOpenChange={setShowDelete} />
+    </>
+  );
+}
+
+const AccountMenuBody = memo(function AccountMenuBody({ onDelete }: { onDelete: (v: boolean) => void }) {
+  const { setAccountMenuOpen: setOpen } = useLayoutUIActions();
   const [igDisconnecting, setIgDisconnecting] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const panelWidth = Math.min(288, width);
-  const { progress, mounted } = usePresence(open, 300, 300);
   const { viewAsPromoterId, setViewAs, clearViewAs, isViewingAs, isAdmin } = useViewAsPromoter();
   const { data: promoters = [] } = useQuery({
     queryKey: ['promoters'],
@@ -80,7 +106,8 @@ export default function AccountMenu() {
   const { data: igStatus } = useQuery({
     queryKey: ['my-ig-connection', effectivePromoterId],
     queryFn: async () => (await base44.functions.invoke('getMyIGConnectionStatus', { promoter_id: effectivePromoterId })).data,
-    enabled: !!user && !!effectivePromoterId && open,
+    // prefetch: il pannello è montato in anticipo, lo stato è pronto quando lo si apre
+    enabled: !!user && !!effectivePromoterId,
     staleTime: 30000,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -114,21 +141,6 @@ export default function AccountMenu() {
   };
 
   return (
-    <>
-      <Btn onClick={() => setOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-secondary/50" accessibilityLabel="Menu account">
-        <Settings className="w-7 h-7 text-foreground" />
-      </Btn>
-
-      <Modal visible={mounted} transparent animationType="none" onRequestClose={() => setOpen(false)} statusBarTranslucent>
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]}>
-          <Pressable style={StyleSheet.absoluteFill} className="bg-black/50" onPress={() => setOpen(false)} accessibilityLabel="Chiudi menu" />
-        </Animated.View>
-        <Animated.View
-          style={{
-            position: 'absolute', top: 0, right: 0, bottom: 0, width: panelWidth,
-            transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [panelWidth, 0] }) }],
-          }}
-        >
           <Div className="flex-1 bg-card border-l border-border shadow-2xl" style={{ paddingTop: insets.top }}>
             {/* Header */}
             <Div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -221,7 +233,7 @@ export default function AccountMenu() {
                   <LogOut className="w-4 h-4 text-muted-foreground" />Esci dall'app
                 </Btn>
 
-                <Btn onClick={() => { setOpen(false); setShowDelete(true); }} className={`${ITEM} text-destructive active:bg-destructive/10`}>
+                <Btn onClick={() => { setOpen(false); onDelete(true); }} className={`${ITEM} text-destructive active:bg-destructive/10`}>
                   <Trash2 className="w-4 h-4" />Elimina Account
                 </Btn>
               </Div>
@@ -233,10 +245,5 @@ export default function AccountMenu() {
               </Div>
             </ScrollView>
           </Div>
-        </Animated.View>
-      </Modal>
-
-      <DeleteAccountDialog open={showDelete} onOpenChange={setShowDelete} />
-    </>
   );
-}
+});

@@ -7,9 +7,10 @@ import { Btn, Div } from '../../../ui/html';
 import { Menu } from '../../../ui/icons.generated';
 import { Text } from '../../../ui/text';
 import { useVibraLogo } from '../../hooks/useVibraLogo';
-import { useLayoutUI } from '../../lib/layoutUI';
+import { useLayoutUIActions } from '../../lib/layoutUI';
 import { useLocation } from '../../router';
 import AccountMenu from './AccountMenu';
+import { IMAGE_CACHE } from '../../../ui/imageCache';
 import NotificationBell from './NotificationBell';
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -47,7 +48,8 @@ export default function AppHeader({ title: titleOverride }: { title?: string }) 
   const { pathname } = useLocation();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const { setSidebarOpen } = useLayoutUI();
+  // solo azioni: aprire un menu non ridisegna gli header di tutte le pagine montate
+  const { setSidebarOpen } = useLayoutUIActions();
   const { logoDataUrl } = useVibraLogo();
   const title = titleOverride ?? routeTitleFor(pathname, user?.role);
 
@@ -70,7 +72,7 @@ export default function AppHeader({ title: titleOverride }: { title?: string }) 
           </Text>
           <Div className="flex items-center justify-center min-w-0 h-11 translate-x-[10px]">
             {logoDataUrl ? (
-              <Image source={{ uri: logoDataUrl }} style={{ height: 44, width: '100%' }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy="disk" />
+              <Image source={{ uri: logoDataUrl }} style={{ height: 44, width: '100%' }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy={IMAGE_CACHE} transition={0} />
             ) : null}
           </Div>
         </Div>

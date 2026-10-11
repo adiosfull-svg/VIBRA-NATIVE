@@ -70,7 +70,9 @@ export default function CachedImage({ src, alt = '', loading = 'eager', decoding
   useLayoutEffect(() => {
     if (lockedSrc === EMPTY) { fadeRef.current = false; setReady(false); return; }
     const el = ref.current;
-    if (el && el.complete && el.naturalWidth > 0) {
+    // PORT: il ref di expo-image non ha complete/naturalWidth: "già pronta" = già caricata in questa
+    // sessione (cache in memoria, ui/imageCache). Prima ogni rimontaggio partiva da opacity 0 (flash).
+    if (isShown(src, lockedSrc) || (el && el.complete && el.naturalWidth > 0)) {
       fadeRef.current = false;
       rememberShown(src, lockedSrc);
       setReady(true);

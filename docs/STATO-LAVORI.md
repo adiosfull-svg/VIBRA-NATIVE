@@ -30,6 +30,9 @@
    `lib/crashReport.tsx`: chiedere all'utente testo/screenshot.
 
 ## Metodo per una pagina
+0. **Regole di fluidità: `docs/REGOLE-PRESTAZIONI.md`** (precaricamento, prefetch, liste virtualizzate,
+   niente ridisegni globali, animazioni sul thread UI, cache immagini). Si applicano DURANTE la
+   conversione; la checklist del §9 è parte della definizione di "pagina finita".
 1. File mancanti: `node scripts/port/tree.mjs /home/user/vibra-reference/src /home/user/vibra-reference/src/pages/<Pagina>.jsx`
    (elenco dei file della pagina) e conversione di ognuno che manca in `app/src/web/`:
    `node scripts/port/codemod.mjs <src-originale>/<f> app/src/web/<f> --src /home/user/vibra-reference/src`

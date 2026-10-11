@@ -1,18 +1,20 @@
 // Port di src/components/layout/Sidebar.jsx (versione mobile: pannello sinistro w-64 a comparsa).
 import { Image } from 'expo-image';
-import { Animated, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { memo, useCallback } from 'react';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess, type RouteName } from '../../../lib/useRoleAccess';
-import { usePresence } from '../../../ui/anim';
 import { cn } from '../../../ui/cn';
 import { Btn, Div } from '../../../ui/html';
+import { IMAGE_CACHE } from '../../../ui/imageCache';
+import { SideDrawer } from '../../../ui/sideDrawer';
 import {
   BarChart2, BookOpen, BrainCircuit, Building2, CalendarDays, CalendarRange, ContactRound, Download, Euro, GraduationCap,
   LayoutGrid, NotebookPen, Search, Send, Sprout, Swords, TrendingUp, Trophy, Users2, UsersRound, X,
 } from '../../../ui/icons.generated';
 import { useAppSetting } from '../../hooks/useAppSetting';
 import { useVibraLogo } from '../../hooks/useVibraLogo';
-import { useLayoutUI } from '../../lib/layoutUI';
+import { useLayoutUI, useLayoutUIActions } from '../../lib/layoutUI';
 import { useCurrentLocation, useNavigate } from '../../router';
 
 type Item = { label: string; icon: React.ComponentType<any>; path: string; routeName?: RouteName };
@@ -44,9 +46,20 @@ const myVibraSubItems = [
 
 const WIDTH = 256; // w-64
 
+// Pannello unico nel layout (ui/sideDrawer): il contenuto è in memo e non dipende da `open`, così
+// aprire e chiudere non lo ridisegna (docs/REGOLE-PRESTAZIONI.md §5).
 export default function Sidebar() {
-  const { sidebarOpen: open, setSidebarOpen, setSearchOpen } = useLayoutUI();
-  const { progress, mounted } = usePresence(open, 300, 300);
+  const { sidebarOpen: open, setSidebarOpen } = useLayoutUI();
+  const close = useCallback(() => setSidebarOpen(false), [setSidebarOpen]);
+  return (
+    <SideDrawer name="sidebar" open={open} onClose={close} side="left" width={WIDTH} backdropOpacity={0.6}>
+      <SidebarBody />
+    </SideDrawer>
+  );
+}
+
+const SidebarBody = memo(function SidebarBody() {
+  const { setSidebarOpen, setSearchOpen } = useLayoutUIActions();
   const location = useCurrentLocation(); // layout: segue tutti i percorsi
   const navigate = useNavigate();
   const insets = useSafeAreaInsets();
@@ -66,16 +79,6 @@ export default function Sidebar() {
   const activeTab = new URLSearchParams(location.search).get('tab') || 'progressi';
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress }]}>
-        <Pressable style={StyleSheet.absoluteFill} className="bg-black/60" onPress={close} accessibilityLabel="Chiudi menu" />
-      </Animated.View>
-      <Animated.View
-        style={{
-          position: 'absolute', top: 0, left: 0, bottom: 0, width: WIDTH,
-          transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [-WIDTH, 0] }) }],
-        }}
-      >
         <Div className="flex-1 bg-sidebar border-r border-sidebar-border flex flex-col" style={{ paddingTop: insets.top }}>
           {/* Logo area */}
           <Div className="px-4 pt-3 pb-2 flex flex-col items-center relative">
@@ -83,7 +86,7 @@ export default function Sidebar() {
               <X className="w-5 h-5" />
             </Btn>
             {logoUrl ? (
-              <Image source={{ uri: logoUrl }} style={{ width: 208, height: 208 }} contentFit="contain" accessibilityLabel="logo" />
+              <Image source={{ uri: logoUrl }} style={{ width: 208, height: 208 }} contentFit="contain" accessibilityLabel="logo" cachePolicy={IMAGE_CACHE} transition={0} />
             ) : <Div className="w-52 h-52" />}
           </Div>
 
@@ -119,7 +122,7 @@ export default function Sidebar() {
                   className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#551a8e]', myActive && 'shadow-sm bg-[#551a8e]/[0.13]')}
                 >
                   {vibraLogoUrl
-                    ? <Image source={{ uri: vibraLogoUrl }} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Vibra" />
+                    ? <Image source={{ uri: vibraLogoUrl }} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy={IMAGE_CACHE} transition={0} />
                     : <Div className="w-4 h-4 rounded bg-primary/30 shrink-0" />}
                   Il Mio Vibra
                 </Btn>
@@ -146,7 +149,5 @@ export default function Sidebar() {
             </Div>
           </ScrollView>
         </Div>
-      </Animated.View>
-    </Modal>
   );
-}
+});

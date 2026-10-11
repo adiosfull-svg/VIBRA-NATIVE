@@ -3,6 +3,7 @@
 import { Stack, useSegments } from 'expo-router';
 import MobileNavBar from '../../web/components/layout/MobileNavBar';
 import Sidebar from '../../web/components/layout/Sidebar';
+import { AccountMenuPanel } from '../../web/components/layout/AccountMenu';
 import VibraSearch from '../../web/components/shared/VibraSearch';
 import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
@@ -13,6 +14,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeBlur, usePageBlurTarget } from '../../ui/pageLayers';
 import { Div } from '../../ui/html';
 import { LocationPublisher } from '../../web/router';
+import { useEffect } from 'react';
+import { prefetchImages } from '../../ui/imageCache';
+import { LOGO_URL } from '../../web/hooks/useVibraLogo';
+
+// Immagini del guscio (header, nav bar, sidebar): in memoria prima del primo disegno, mai un flash
+// (docs/REGOLE-PRESTAZIONI.md §6). Le immagini delle pagine le precarica ogni pagina.
+function useShellImages() {
+  useEffect(() => { prefetchImages([LOGO_URL]); }, []);
+}
 
 /**
  * Fascia dell'orario (telefono): l'app disegna fino al bordo dello schermo e la pagina scorreva sotto
@@ -38,6 +48,7 @@ function GlobalCalcolatrice() {
 }
 
 export default function AppLayout() {
+  useShellImages();
   // le 5 tab hanno la barra come tab bar; le altre pagine la ricevono qui (nell'originale è in AppLayout)
   const inTabs = (useSegments() as string[]).includes('(tabs)');
   return (
@@ -47,7 +58,9 @@ export default function AppLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       {!inTabs && <MobileNavBar />}
       <StatusBarGlass />
+      {/* pannelli laterali: uno solo per tutta l'app, montati in anticipo (ui/sideDrawer) */}
       <Sidebar />
+      <AccountMenuPanel />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
       {/* Calcolatrice globale — persiste su tutte le rotte */}

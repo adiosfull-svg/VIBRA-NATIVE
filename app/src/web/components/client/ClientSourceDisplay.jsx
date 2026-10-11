@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Instagram, UserPlus, ArrowRightLeft, Search, UserCheck } from '@/ui/icons.generated';
 
+import { WindowedList } from '@/ui/windowedList';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput, Path, Svg } from '@/ui/elements';
 
@@ -168,34 +169,31 @@ export default function ClientSourceSelector({ value, referredClientId, clients,
               className="w-full bg-secondary/60 border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-400"
             />
           </Div>
-          <Div
-            className="max-h-32 overflow-y-auto space-y-0.5 source-referred-scroll"
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'hsl(240 5% 20%) transparent',
-              WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-y',
-            }}
-            onWheel={e => e.stopPropagation()}
-            onTouchMove={e => e.stopPropagation()}>
-            {filteredClients.length === 0 ? (
-              <P className="text-xs text-muted-foreground px-1 py-2">Nessun cliente trovato</P>
-            ) : (
-              filteredClients.map(c => (
+          {/* PORT: lista virtualizzata (ui/windowedList, REGOLE-PRESTAZIONI §3): senza ricerca erano
+              tutti i clienti (centinaia di pulsanti montati insieme all'apertura). Stesso riquadro
+              max-h-32 (128px) con space-y-0.5; righe px-3 py-2 text-sm = 36px. */}
+          {filteredClients.length === 0 ? (
+            <P className="text-xs text-muted-foreground px-1 py-2">Nessun cliente trovato</P>
+          ) : (
+            <WindowedList
+              items={filteredClients}
+              itemHeight={36}
+              gap={2}
+              maxHeight={128}
+              keyOf={c => c.id}
+              renderItem={c => (
                 <Btn
                   button
-                  key={c.id}
                   onClick={() => handleReferredSelect(c.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  className={`w-full h-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                     referredClientId === c.id
                       ? 'bg-amber-400/10 text-amber-300 border border-amber-400/30'
                       : 'text-foreground/80 hover:bg-secondary/60'
                   }`}>
                   {c.name}
                 </Btn>
-              ))
-            )}
-          </Div>
+              )} />
+          )}
         </Div>
       )}
     </Div>

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { NativeBlur, usePageBlurTarget } from '../../../ui/pageLayers';
 import { Image } from 'expo-image';
+import { IMAGE_CACHE } from '../../../ui/imageCache';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
@@ -58,7 +59,7 @@ function VibraIcon({ active, logo }: { active: boolean; logo?: string }) {
   if (!logo) return <View style={{ width: 28, height: 28 }} />;
   return (
     <View style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: active ? `${PRIMARY}26` : 'transparent', opacity: active ? 1 : 0.5 }}>
-      <Image source={{ uri: logo }} style={{ width: 32, height: 32 }} contentFit="contain" />
+      <Image source={{ uri: logo }} style={{ width: 32, height: 32 }} contentFit="contain" cachePolicy={IMAGE_CACHE} transition={0} />
     </View>
   );
 }

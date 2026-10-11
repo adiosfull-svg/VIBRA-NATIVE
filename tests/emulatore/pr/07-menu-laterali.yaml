@@ -1,0 +1,55 @@
+# PR: menu laterali (sidebar del burger e menu account dell'ingranaggio). Pannelli unici nel layout,
+# montati in anticipo: si aprono, navigano e si chiudono (tocco e tasto Indietro) senza restare a metà.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+# precaricamento di tab e pannelli (lib/preloadRoutes.ts, ui/sideDrawer.tsx)
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+# da chiusi i pannelli non devono essere visibili né toccabili
+- assertNotVisible: "Guida all'uso"
+- assertNotVisible: "Esci dall'app"
+- tapOn: "Menu"
+- extendedWaitUntil:
+    visible: "Guida all'uso"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: menu-sidebar-aperta
+- tapOn: "Messaggi"
+- extendedWaitUntil:
+    visible: "Sezione in fase di porting.*"
+    timeout: 30000
+- waitForAnimationToEnd
+- assertNotVisible: "Guida all'uso"
+- takeScreenshot: menu-sidebar-navigata
+- tapOn: "Menu account"
+- extendedWaitUntil:
+    visible: "Esci dall'app"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: menu-account-aperto
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Esci dall'app"
+- tapOn: "Menu"
+- extendedWaitUntil:
+    visible: "Guida all'uso"
+    timeout: 10000
+- waitForAnimationToEnd
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Guida all'uso"
+- takeScreenshot: menu-chiusi

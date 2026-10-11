@@ -241,7 +241,7 @@ export class CustomEvt<T = unknown> {
 // effect facevano cadere l'app (ReferenceError).
 const g = globalThis as Record<string, unknown>;
 if (typeof g.Image === 'undefined') {
-  /** new Image(); img.src = url → precaricamento con cache su disco di expo-image, poi onload/onerror. */
+  /** new Image(); img.src = url → precaricamento con la cache di ui/imageCache (memoria + disco), poi onload/onerror. */
   g.Image = class {
     onload: AnyFn | null = null;
     onerror: AnyFn | null = null;
@@ -253,8 +253,8 @@ if (typeof g.Image === 'undefined') {
     set src(v: string) {
       this.url = v;
       if (!/^https?:/.test(v)) return;
-      import('expo-image')
-        .then(({ Image }) => Image.prefetch(v, 'disk'))
+      import('../../ui/imageCache')
+        .then(({ prefetchImages }) => prefetchImages([v]))
         .then(() => { this.complete = true; this.onload?.({ type: 'load', target: this }); })
         .catch(() => this.onerror?.({ type: 'error', target: this }));
     }
