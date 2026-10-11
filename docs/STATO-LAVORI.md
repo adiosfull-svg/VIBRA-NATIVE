@@ -8,7 +8,8 @@
   (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
 - Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
 - Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Lavoro sul branch **`claude/awesome-tesla-ovfcmf`**
-  (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1); prestazioni su `claude/ecstatic-dirac-k411yk`.
+  (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1). Dal 10/10 sera si lavora su
+  **`claude/ecstatic-dirac-k411yk`** (parte da awesome-tesla, contiene tutto: prestazioni + emulatore).
 
 ## Ambiente (nuova sessione)
 1. Originale: `add_repo` adiosfull-svg/VIBRA (sola lettura), poi
@@ -71,35 +72,68 @@
     (`gestures.ts`), form/data/file nativi; sul web classi proprie dell'index.css in `customCss.web.ts`.
   - card che si gira sul telefono: `ui/flip.tsx` + `web/hooks/useFlipGesture.native.jsx`.
 
-## PRIORITÀ: prestazioni e struttura sul telefono (richiesta dell'utente, 10/10)
-L'utente ha provato l'APK: app lenta e bloccata, inutilizzabile (lenta ad aprire Clienti, la lista, il
-dettaglio cliente); mancano blur della sticky bar e della nav bar. Lavoro sul branch
-`claude/ecstatic-dirac-k411yk` (partito da `claude/awesome-tesla-ovfcmf`), un APK per passo.
-Fatto (in attesa della prova dell'utente):
-1. **Liste virtualizzate** (`web/hooks/usePageWindow.js`): finestra delle liste window-based calcolata
-   dallo ScrollView di Page (`pageScroll.offsetOf`: measureLayout sul contenuto dello ScrollView, sincrono in
-   Fabric; sul web differenza dei getBoundingClientRect). VirtualizedClientList come l'originale (righe
-   memoizzate, callback stabili, scroll al cliente cercato), RecontactList e ClientGrowthLeague. Corretti
-   anche: `Tbody` perdeva il ref (Growth League ferma a 30 righe), `webStyle` scartava
-   `style={{ position: 'absolute' }}` (righe virtuali, share card, bacheca).
-   Misura (web produzione, CPU 4x, 150 clienti; script in scratchpad, rifarli con Playwright):
-   apertura Clienti 7,1→4,2 s, dettaglio cliente 4,7→0,83 s, chiusura 2,4→0,49 s, ritorno al tab 6,4→1,7 s.
-2. **Elementi più leggeri**: `useFlipFace` non crea più un Animated.Value a ogni render di ogni Div;
-   `cn()` con cache ampia (quella di twMerge è di 500 voci). Effetto non misurabile sul web (V8).
-   Provato e SCARTATO il React Compiler (Expo `experiments.reactCompiler`): nessun guadagno misurato
-   (né tempi né render contati), solo rischio. Note se lo si riprova: salta i componenti con `||=`,
-   try/finally, ref letti o passati durante il render (`makeTapHandlers(ref, …)`).
-3. **Sticky e blur** (`ui/pageLayers.tsx`): sul telefono `sticky` non esisteva (la barra scorreva via) e
-   `useStickySentinel` dava sempre "non incollata" (niente vetro neanche sul web). Ora Page dà lo scroll
-   come Animated.Value (driver nativo) e lo sticky è un translateY; la sentinella misura lo scroll.
-   Blur Android: Dimezis (`dimezisBlurViewSdk31Plus`, da Android 12) con BlurTargetView, che non può
-   contenere la sua BlurView: nav bar → la pagina (Page avvolta in BlurTargetView); barra sticky → i
-   fratelli che la seguono (il contenitore li raccoglie in un BlurTargetView, `StickySplit` in html.tsx).
-   I backdrop-blur dentro la pagina restano velo (nessun bersaglio possibile).
-Ancora da fare se l'APK resta lento: profilare sul telefono (Hermes) il mount del dettaglio cliente
-(ClientDetailDialog) e di Clienti; candidati: hook di misura di Div (`useRigidMinWidth`/`useMinContentWidth`
-fanno un secondo render dopo il layout), `textSignature` che percorre i figli a ogni render, css-interop.
-Verifica: build release (`[apk]`) sul telefono dell'utente.
+## EMULATORE ANDROID (strumento principale da ora: lavorare in autonomia)
+Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo pubblico):
+- APK x86_64 col backend di PROVA locale (stack Postgres+PostgREST+gateway avviato sul runner, `adb reverse
+  tcp:54321`), accesso automatico `EXPO_PUBLIC_TEST_LOGIN` (authLocal.ts), 450 clienti sintetici, Android 14,
+  grafica `swangle_indirect` (swiftshader fa cadere l'emulatore scorrendo i grafici), avvisi ANR spenti.
+- APK nativo in cache (chiave: package-lock, app.json, patches, assets, plugins): se cambia solo il JS si
+  rigenera il bundle Hermes e lo si sostituisce nell'APK (giro ~6-7 min; build completa ~20 min).
+- Matrice per utente `admin` e `pr` in parallelo: percorsi Maestro in `tests/emulatore/<utente>/*.yaml`
+  (sotto-percorsi `tests/emulatore/sub/`: login di riserva, chiusura avvisi di sistema), `tests/emulatore/run.sh`.
+- Risultati: branch `emulatore-risultati-<run_id>-<utente>` (e `emulatore-risultati-<utente>` l'ultimo):
+  `git clone --depth 1 -b <branch> https://github.com/adiosfull-svg/VIBRA-NATIVE`; screenshot in
+  `maestro-debug/*/<flow>/takeScreenshot` e `/screenshots` (fallimenti), `logcat-full.txt`, `*.log` di Maestro.
+- Avvio: push con `[emu]` nel messaggio, oppure MCP GitHub `actions_run_trigger` run_workflow `emulatore.yml`
+  sul branch con input: `flows` (file o cartella), `app_ref` (SHA COMPLETO: confronto con versioni vecchie),
+  `extra_env` (es. `EXPO_PUBLIC_TEST_TRACE=1`, `EXPO_PUBLIC_TEST_NO_BLUR=1`, separati da ;), `gpu`.
+  Stato: `curl -s https://api.github.com/repos/adiosfull-svg/VIBRA-NATIVE/actions/runs/<id>` (pubblico).
+- Diagnostica nelle build di test (`lib/testDiag.ts`, `EXPO_PUBLIC_TEST_DIAG=1`): nel logcat (tag ReactNativeJS)
+  "VIBRA diag battito" ogni 2 s (se si ferma il JS è bloccato) con i render di div/btn/text; "VIBRA layout"
+  = radiografia della pagina 9 s dopo l'apertura (albero con [x,y LxA] e testo, dalle API DOM di Fabric):
+  trova subito elementi giganti/coperti. `EXPO_PUBLIC_TEST_TRACE=1`: una riga per elemento disegnato
+  (l'ultima prima di un blocco dice dove).
+- Concorrenza a livello di job in entrambi i workflow (i push senza tag non annullano build in corso).
+- APK per il telefono dell'utente: `[apk]` o run_workflow `android-apk.yml`; link fisso release "anteprima".
+
+## Lavoro del 10/10 (branch ecstatic-dirac) — fatto e verificato sull'emulatore
+- Prestazioni: liste virtualizzate (`web/hooks/usePageWindow.js`; Clienti, Da ricontattare, Growth League),
+  misurato sul web prod CPU 4x: dettaglio cliente 4,7→0,83 s, ritorno al tab 6,4→1,7 s. `useFlipFace` senza
+  Animated.Value per ogni Div, cache di `cn()`. React Compiler provato e scartato (nessun guadagno).
+- `webStyle`: `style={{position:'absolute'}}` veniva scartato. `Tbody` inoltra il ref.
+- Sticky e blur (`ui/pageLayers.tsx`): sticky vera (translateY col driver nativo dallo scroll di Page, posizione
+  misurata sul contenuto della PROPRIA pagina), `useStickySentinel` reale, blur Dimezis
+  (`dimezisBlurViewSdk31Plus`) con BlurTargetView: nav bar → pagina (Page avvolta), barra sticky → fratelli
+  successivi (`StickySplit` in html.tsx). Sull'emulatore: barre incollate su Clienti/Il Mio Vibra/Weekend ok.
+- Dashboard (bug dell'utente): `h-full` nelle celle di griglia → "allungati alla riga" (Yoga dava card di
+  25.000 px: pagina vuota sotto la Classifica e intestazione coperta). Ora identica al web.
+- Nav bar (bug dell'utente): il vetro `absolute inset-0` stava sopra le icone (zIndex dei posizionati) e
+  prendeva i tocchi → `pointerEvents="none"`; voce calcolata da pageX meno bordo barra (locationX è relativo
+  all'icona); tap breve per orari nativi anche se il timer del ventaglio scatta in ritardo.
+- `ui/gestures`: un tocco iniziato su un elemento con onPointerDown/onTouchStart/onMouseDown inoltra
+  move/up/cancel anche ai listener di window/document (shim dom: `windowTouchSink`). Prima la pressione lunga
+  della card record non si annullava mai: scorrendo su Il Mio Vibra si apriva la condivisione.
+- Icone con absolute/translate avvolte in una View (la lente dei campi di ricerca usciva dal campo).
+- Esito ultimi giri: admin Dashboard + nav bar PASSATI; pr Il Mio Vibra, Clienti (lista), Weekend PASSATI.
+
+## PROSSIMO PASSO (urgente): crash aprendo il dettaglio cliente
+- Sull'emulatore toccando un cliente (Sofia Colombo, utente pr) l'app viene uccisa per memoria
+  (`lowmemorykiller ... 3 GB rss`): il JS finisce il render del dialog (traccia: ultima riga = la lista
+  presenze) e poi il battito si ferma ~10 s → blocco nella fase nativa (commit/layout/disegno), non nel render.
+- C'era GIÀ nella versione del mattino (2e0e924, test `pr/04-dettaglio.yaml` col deep link `vibra://clienti`),
+  quindi NON è una regressione di oggi; probabile causa del "dettaglio lento/bloccato" visto dall'utente.
+- Indizi da seguire: contenitore del dialog `relative w-full max-sm:max-h-[calc(100dvh-7rem-env(...))] ...
+  shadow-lg bg-gradient-to-b flex flex-col overflow-hidden scale-95/opacity-0` con figlio
+  `flex-1 min-h-0 overflow-y-auto` (ScrollBox): il max-h con calc/dvh/env non si traduce → altezza libera;
+  sospetto layout gigantesco + ombra/gradiente → bitmap enormi. Prossime prove: radiografia del dialog
+  (chiamare dumpLayout sul contenuto del portale), poi tradurre max-h calc/dvh (cssViewport) o limitare
+  all'altezza dello schermo; provare con `EXPO_PUBLIC_TEST_NO_BLUR=1` per escludere il blur.
+- Poi: APK per l'utente con tutte le correzioni (l'ultimo dispatch di android-apk è stato annullato; rilanciare).
+- Differenze viste su Clienti (admin, nessun cliente): stato vuoto con pulsante "Aggiungi Cliente" squadrato
+  e a sinistra (web: arrotondato, centrato). Da allargare i test: altre tab di Clienti, Semine, dialog, menu.
+- Prossimo ancora: copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
+  `69de4f1f7f53d9f187d01392`, 500-2000 clienti; l'utente ha dato l'ok) nel seed dello stack di prova.
+- Livello B (più avanti): utente di prova Base44 o token come segreto GitHub per provare il backend vero.
 
 ## Da fare
 1. **Prova dell'utente sull'APK** (build del 10/10 con tutto il lavoro): Il Mio Vibra (grafici tocco/pinch,
