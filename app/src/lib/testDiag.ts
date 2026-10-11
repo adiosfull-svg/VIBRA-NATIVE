@@ -52,3 +52,19 @@ export function dumpLayout(label: string, root: unknown, maxDepth = 14) {
   // il logcat tronca le righe lunghe: un messaggio per gruppo di righe
   for (let i = 0; i < lines.length; i += 20) console.log(`VIBRA layout ${label} ${i / 20}\n${lines.slice(i, i + 20).join('\n')}`);
 }
+
+/**
+ * Bisezione sull'emulatore (EXPO_PUBLIC_TEST_CUT=<id>:<da>-<a>, oppure <id>:none): dei figli di
+ * <TestCut id> tiene solo quelli con indice nell'intervallo, per trovare la parte che blocca.
+ * Senza la variabile (build normali) restituisce i figli così come sono.
+ */
+const TEST_CUT = process.env.EXPO_PUBLIC_TEST_CUT ?? '';
+export function TestCut({ id, children }: { id: string; children?: unknown }): any {
+  const m = TEST_CUT.match(new RegExp(`^${id}:(none|(\\d+)-(\\d+))$`));
+  if (!m) return children;
+  if (m[1] === 'none') return null;
+  const list = Array.isArray(children) ? children : [children];
+  return list.filter((_, i) => i >= Number(m[2]) && i <= Number(m[3]));
+}
+// senza taglio attivo è trasparente per gli space-y/gap del contenitore (ui/html cssChildren)
+(TestCut as { cssTransparent?: boolean }).cssTransparent = !TEST_CUT;

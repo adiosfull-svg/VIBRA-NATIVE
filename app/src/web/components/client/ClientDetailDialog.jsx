@@ -39,6 +39,7 @@ import { lockScroll } from '@/web/lib/scrollLock';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Circle, Defs, Path, Rect, Stop, Svg, SvgLinearGradient } from '@/ui/elements';
 
+import { TestCut } from '@/lib/testDiag';
 import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 
 const BADGE_LEGEND = [
@@ -512,6 +513,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         </Div>
         {/* Content scrollabile, confinato da overflow-hidden del contenitore */}
         <Div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain p-4 space-y-3 sm:space-y-4">
+        <TestCut id="detail">{/* PORT: bisezione sull'emulatore (lib/testDiag), trasparente nelle build normali */}
 
         {/* Info cliente — Riga 1: contatti + provenienza */}
         <Div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -893,6 +895,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
             Nessuna presenza registrata per questo cliente.
           </Div>
         )}
+        </TestCut>
         </Div>
       </Div>
     </Div>,
