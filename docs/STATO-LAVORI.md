@@ -7,10 +7,9 @@
 - **Sola lettura**: mai scritture su Base44 né sul repo originale; l'app è in "modalità prova"
   (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
 - Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
-- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Lavoro sul branch **`claude/awesome-tesla-ovfcmf`**
-  (NON ancora unito a `main`; PR adiosfull-svg/VIBRA-NATIVE#1). Dal 10/10 sera si lavora su
-  **`claude/ecstatic-dirac-k411yk`** (parte da awesome-tesla, contiene tutto: prestazioni + emulatore).
-  Dall'11/10 si lavora su **`claude/practical-mccarthy-js3v4k`** (parte da ecstatic-dirac, contiene tutto).
+- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Branch con TUTTO il lavoro: **`claude/practical-mccarthy-js3v4k`**
+  (catena awesome-tesla → ecstatic-dirac → practical-mccarthy; NON ancora unito a `main`). Una nuova sessione
+  parte da qui (`git checkout -B <suo-branch> origin/claude/practical-mccarthy-js3v4k`).
   NB: la cache dell'APK nativo dell'emulatore è per branch: il primo giro su un branch nuovo fa la build completa (~25 min).
 
 ## Ambiente (nuova sessione)
@@ -98,93 +97,47 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Concorrenza a livello di job in entrambi i workflow (i push senza tag non annullano build in corso).
 - APK per il telefono dell'utente: `[apk]` o run_workflow `android-apk.yml`; link fisso release "anteprima".
 
-## Lavoro del 10/10 (branch ecstatic-dirac) — fatto e verificato sull'emulatore
-- Prestazioni: liste virtualizzate (`web/hooks/usePageWindow.js`; Clienti, Da ricontattare, Growth League),
-  misurato sul web prod CPU 4x: dettaglio cliente 4,7→0,83 s, ritorno al tab 6,4→1,7 s. `useFlipFace` senza
-  Animated.Value per ogni Div, cache di `cn()`. React Compiler provato e scartato (nessun guadagno).
-- `webStyle`: `style={{position:'absolute'}}` veniva scartato. `Tbody` inoltra il ref.
-- Sticky e blur (`ui/pageLayers.tsx`): sticky vera (translateY col driver nativo dallo scroll di Page, posizione
-  misurata sul contenuto della PROPRIA pagina), `useStickySentinel` reale, blur Dimezis
-  (`dimezisBlurViewSdk31Plus`) con BlurTargetView: nav bar → pagina (Page avvolta), barra sticky → fratelli
-  successivi (`StickySplit` in html.tsx). Sull'emulatore: barre incollate su Clienti/Il Mio Vibra/Weekend ok.
-- Dashboard (bug dell'utente): `h-full` nelle celle di griglia → "allungati alla riga" (Yoga dava card di
-  25.000 px: pagina vuota sotto la Classifica e intestazione coperta). Ora identica al web.
-- Nav bar (bug dell'utente): il vetro `absolute inset-0` stava sopra le icone (zIndex dei posizionati) e
-  prendeva i tocchi → `pointerEvents="none"`; voce calcolata da pageX meno bordo barra (locationX è relativo
-  all'icona); tap breve per orari nativi anche se il timer del ventaglio scatta in ritardo.
-- `ui/gestures`: un tocco iniziato su un elemento con onPointerDown/onTouchStart/onMouseDown inoltra
-  move/up/cancel anche ai listener di window/document (shim dom: `windowTouchSink`). Prima la pressione lunga
-  della card record non si annullava mai: scorrendo su Il Mio Vibra si apriva la condivisione.
-- Icone con absolute/translate avvolte in una View (la lente dei campi di ricerca usciva dal campo).
-- Esito ultimi giri: admin Dashboard + nav bar PASSATI; pr Il Mio Vibra, Clienti (lista), Weekend PASSATI.
-
-## Lavoro dell'11/10 (branch practical-mccarthy) — fatto e verificato sull'emulatore
-- **Crash del dettaglio cliente RISOLTO** (tutti i 6 percorsi admin/pr passati, nessun OOM). Causa: le classi
-  di transizione CSS del contenitore (`transition-[transform,opacity] duration-200` con `opacity-0 scale-95`)
-  che l'interop di NativeWind trasforma in animazioni: il thread JS restava bloccato e allocava milioni di
-  oggetti nativi ("Scudo OOM ... size class 144" nel logcat) fino all'uccisione dell'app. Correzione in
-  `ui/webClasses.ts`: sul telefono si tolgono `transition-*`, `duration-*`, `ease-*`, `delay-*` (anche con
-  varianti); le animazioni vere restano a `motion.tsx`. Sul web le classi restano al CSS.
-- Classi di dimensione relative alla finestra (`h-/min-h-/max-h-/w-...[...]` con vh/dvh/env()/calc(), anche con
-  `sm:`/`max-sm:`): NativeWind le scartava; ora calcolate al render (`viewportSizeStyle` in `webStyle.ts`,
-  `env(safe-area-inset-*)` dalle aree sicure reali). Il dettaglio cliente ora ha l'altezza massima del web.
-- ATTENZIONE: Tailwind legge anche i commenti dei file in `src/`: scrivere `env(...)` dentro una classe in un
-  commento genera CSS non valido e blocca il bundle Android (`Unexpected token Delim('.')`).
-- Strumenti di diagnostica nuovi (solo build di test, inerti nelle normali), da passare in `extra_env`:
-  - `EXPO_PUBLIC_TEST_CUT=<id>:<da>-<a>` oppure `<id>:none` (più tagli con virgole): `<TestCut id>` di
-    `lib/testDiag.ts` tiene solo i figli con quegli indici (bisezione). Nel dettaglio cliente: `overlay`
-    (sfondo, contenitore), `dialog` (intestazione, corpo), `detail` (sezioni del corpo 0-14).
-  - `EXPO_PUBLIC_TEST_STRIP=<regex>`: classi tolte ovunque (es. per provare se una classe causa un blocco).
-  - Si possono lanciare più giri in parallelo con `actions_run_trigger` (input diversi) e confrontare.
-
-## Lavoro dell'11/10 sera (dopo la prova dell'utente sull'APK) — verificato sull'emulatore
-L'utente ha segnalato: crash aprendo Il Mio Vibra/Clienti (`ReferenceError: Property 'Image' doesn't exist`),
-blur che entra a scatto, fascia dell'orario non sfocata, nav bar senza blur, Weekend che si apre in ~2 s.
-- Crash: `new Image()` del browser in `MaterialeLocaliSection` → `preloadImages` (expo-image). In più
-  `shims/dom.ts` definisce globali `Image` e `IntersectionObserver` se mancano (altri punti simili non cadono).
-  (I test non lo vedevano: i dati di prova non hanno piantine/listini dei locali.)
-- Nav bar senza blur: in `Page.tsx` il ref del BlurTargetView arrivava PRIMA dell'effect che registra la
-  pagina → bersaglio perso, solo velo. Corretto (ora sfoca, visto sull'emulatore).
-- Fascia dell'orario: `StatusBarGlass` in `app/(app)/_layout.tsx` (blur della pagina + bg-background/30).
-- Transizioni CSS sul telefono: `ui/cssTransition.ts` (+ `cssTransitionSpec.ts`, testato) anima con Animated
-  opacità, sfondo e comparsa/scomparsa del blur, da `style.transition` e dalle classi transition-*/duration-*
-  (che NativeWind non riceve più). Il vetro sticky ora entra in dissolvenza (0,2 s come il web).
-- Lentezza del cambio tab (misurata con la traccia: ~500 elementi ridisegnati e JS bloccato a ogni tocco):
-  1. tab precaricate in background dopo l'avvio (`router.prefetch` in `(tabs)/_layout.tsx`; Dashboard solo per
-     chi la vede, per gli altri è un Redirect); una pagina montata senza focus va in fondo agli stack di
-     pageScroll e del bersaglio del blur;
-  2. `web/router.tsx`: `useLocation` non usa più usePathname in ogni pagina; `LocationPublisher` nel layout,
-     ogni pagina segue solo il proprio percorso (`useRoutePath`), la Sidebar usa `useCurrentLocation`;
-  3. pagine delle tab in `memo` (il focus della tab non ridisegna la pagina);
-  4. `PageLayer` con scroll per pagina (`y`, `viewportHeight`, `onScroll`): `useStickySentinel` e
-     `usePageWindow` seguono la propria pagina (prima quelle nascoste ricalcolavano con lo scroll di
-     un'altra pagina e si ridisegnavano per intero);
-  5. `calcolatriceContext`: valore memoizzato (il layout si ridisegna a ogni percorso → Il Mio Vibra pure).
-  Risultato sull'emulatore: aprire Weekend ridisegna ~12 elementi (prima ~540), tornarci 4, percorsi di test
-  20-35% più veloci. Resta: tornando su Il Mio Vibra si ridisegna ancora (~540 elementi), da indagare.
-- Test nuovo `tests/emulatore/pr/05-tab-ritorno.yaml` (tempi del cambio tab; con `EXPO_PUBLIC_TEST_TRACE=1`
-  la traccia dice cosa si ridisegna a ogni tocco). Lanciato a mano fallisce per admin (è un percorso pr).
-- NB per misurare: il tempo di `tapOn` di Maestro include la sua attesa; contano i battiti (`ritardo=`) e la
-  traccia nel logcat.
+## Lezioni sullo strato ui/ e sul telefono (10-11/10, tutto verificato sull'emulatore)
+- **Classi**: NativeWind scarta dvh/env()/calc() → `viewportSizeStyle` (webStyle) le calcola; le classi
+  `transition-*/duration-*/ease-*/delay-*` NON vanno a NativeWind (la sua interop mandava in loop il JS:
+  "Scudo OOM" nel logcat e app uccisa, era il crash del dettaglio cliente) → `ui/cssTransition.ts` anima
+  opacità/sfondo/blur con Animated (anche da `style.transition`). Tailwind legge anche i COMMENTI di `src/`:
+  mai scrivere classi con `env(...)` nei commenti (bundle Android rotto).
+- **DOM**: `shims/dom.ts` definisce `Image` e `IntersectionObserver` globali; `ui/domStyle.ts` dà ai ref
+  nativi (Div, campi) un `style` alla DOM (`el.style.x = ...` → setNativeProps o ignorato). Cercare altre API
+  del browser usate senza shim quando l'utente segnala un `ReferenceError`/`TypeError`.
+- **Blur** (Dimezis, `ui/pageLayers.tsx`): nav bar e fascia dell'orario (`StatusBarGlass`) sfocano la pagina
+  in primo piano (BlurTargetView di Page); la barra sticky sfoca i fratelli che la seguono (`StickySplit`).
+- **Tab veloci**: tab precaricate dopo l'avvio (`(tabs)/_layout.tsx`), pagine in `memo`, `useLocation`
+  per pagina (`LocationPublisher` + `useRoutePath`; Sidebar `useCurrentLocation`), scroll per pagina nel
+  `PageLayer` (useStickySentinel, usePageWindow), contesti del layout con valore memoizzato. Regola: niente
+  che si iscriva a stato GLOBALE di navigazione/scroll dentro una pagina, o tutte le tab si ridisegnano.
+- **Altro**: `h-full` nelle celle di griglia = "allungati alla riga"; nav bar: vetro con pointerEvents none,
+  voce da pageX; tocchi inoltrati a window/document (`windowTouchSink`); textarea `overflow-hidden` →
+  `scrollEnabled={false}`.
+- **Diagnostica** (solo build di test, `extra_env` del workflow): `EXPO_PUBLIC_TEST_TRACE=1` (riga per ogni
+  elemento disegnato: cosa si ridisegna e quando), `EXPO_PUBLIC_TEST_CUT=<id>:<a>-<b>|<id>:none` (bisezione
+  dei figli di `<TestCut id>`; nel dettaglio cliente: overlay/dialog/detail), `EXPO_PUBLIC_TEST_STRIP=<regex>`
+  (toglie classi), `EXPO_PUBLIC_TEST_NO_BLUR=1`. Più giri in parallelo con `actions_run_trigger`. Per i tempi
+  contano i battiti (`ritardo=`) e la traccia, non la durata dei `tapOn` di Maestro.
+- **Test emulatore**: admin 01-dashboard, 02-navbar; pr 01-il-mio-vibra, 02-clienti, 03-weekend,
+  04-dettaglio, 05-tab-ritorno, 06-semine. Tutti PASSATI sull'ultimo commit. Dati di prova: 450 clienti +
+  12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- Prova dell'utente sull'APK con tutte le correzioni (link fisso release "anteprima"); l'utente dice che è
-  "piena di glitch": chiedere screenshot/descrizioni precise per ognuno e riprodurli sull'emulatore.
-- Ridisegno di Il Mio Vibra quando ci si torna (vedi sopra).
-- Crash Semine (`Cannot set property 'height' of undefined`, effect del textarea delle note) risolto in modo
-  generale: `ui/domStyle.ts` dà ai ref nativi (Div, campi di testo) un `style` alla DOM che traduce le
-  scritte in setNativeProps (o le ignora); c'erano ~40 `el.style.x = ...` nel codice portato.
-  Semine nei dati di prova dell'emulatore + test `pr/06-semine.yaml`.
-- Da controllare: il textarea della nota nelle card di Semine resta alto una riga (sul web cresce col
-  testo) e il testo sembra più grande degli 11px dell'originale (`.semina-note-textarea`).
-- Differenze viste su Clienti (admin, nessun cliente): stato vuoto con pulsante "Aggiungi Cliente" squadrato
-  e a sinistra (web: arrotondato, centrato). Da allargare i test: altre tab di Clienti, Semine, dialog, menu.
+- L'utente prova l'APK dell'11/10 sera (release "anteprima"). Dice che l'app è "piena di glitch": per ognuno
+  chiedere pagina/azione/screenshot o il testo dell'errore (schermata di crashReport), riprodurre
+  sull'emulatore (aggiungendo un test), correggere nello strato `ui/` quando possibile.
+- Aperti: Il Mio Vibra si ridisegna tutto quando ci si torna (~540 elementi; trovare chi cambia: traccia);
+  textarea della nota nelle card di Semine alto una riga e testo più grande degli 11px dell'originale;
+  stato vuoto di Clienti con pulsante "Aggiungi Cliente" squadrato e a sinistra.
 - Copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
-  `69de4f1f7f53d9f187d01392`, 500-2000 clienti; l'utente ha dato l'ok) nel seed dello stack di prova.
+  `69de4f1f7f53d9f187d01392`, 500-2000 clienti; l'utente ha dato l'ok) nel seed dello stack di prova: i dati
+  veri fanno emergere crash che quelli sintetici non mostrano (piantine dei locali, note, foto...).
 - Livello B (più avanti): utente di prova Base44 o token come segreto GitHub per provare il backend vero.
 
 ## Da fare
-1. **Prova dell'utente sull'APK** (build del 10/10 con tutto il lavoro): Il Mio Vibra (grafici tocco/pinch,
+1. **Prova dell'utente sull'APK** (ultima build: 11/10 sera): Il Mio Vibra (grafici tocco/pinch,
    note trascinabili, chat AI, Calcolatrice trascinabile, tab centrata), Weekend (menu del tasto lungo,
    swipe in Da ricontattare), Semine (Gira e trascinamento delle card), e dalle sessioni prima: selettori
    data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
