@@ -44,9 +44,10 @@ export const pageScroll = {
   },
 
   /** Page al montaggio: restituisce le funzioni per riportare lo stato e per deregistrarsi. */
-  register(scrollTo: Scroller['scrollTo'], content: Scroller['content'] = () => null) {
+  register(scrollTo: Scroller['scrollTo'], content: Scroller['content'] = () => null, front = true) {
     const s: Scroller = { scrollTo, y: 0, contentHeight: 0, viewportHeight: 0, content };
-    stack.push(s);
+    // una pagina montata senza focus (tab precaricata) non prende il posto di quella visibile
+    if (front) stack.push(s); else stack.unshift(s);
     return {
       report(y: number) {
         s.y = y;

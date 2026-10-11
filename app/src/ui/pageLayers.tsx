@@ -73,9 +73,10 @@ const targetListeners = new Set<() => void>();
 const notify = () => targetListeners.forEach((fn) => fn());
 
 /** Page: registra il proprio BlurTargetView; focus() quando torna in primo piano. */
-export function registerPageBlurTarget() {
+export function registerPageBlurTarget(front = true) {
   const t: PageTarget = { el: null };
-  pageTargets.push(t);
+  // una pagina montata senza focus (tab precaricata) va in fondo: resta bersaglio quella visibile
+  if (front) pageTargets.push(t); else pageTargets.unshift(t);
   return {
     set(el: View | null) { if (t.el !== el) { t.el = el; if (pageTargets[pageTargets.length - 1] === t) notify(); } },
     focus() {

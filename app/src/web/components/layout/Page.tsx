@@ -1,6 +1,6 @@
 // Struttura di pagina di AppLayout.jsx: intestazione in linea + contenuto "main-content p-4"
 // (pt 0.5rem) + spazio in fondo per la barra di navigazione (4.5rem + safe area).
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useNavigation } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, type ReactNode } from 'react';
 import { Animated, Platform, RefreshControl, ScrollView, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,13 +34,18 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const blurHandle = useRef<ReturnType<typeof registerPageBlurTarget> | null>(null);
   const contentListeners = useRef(new Set<() => void>()).current;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
   useEffect(() => {
+    // tab precaricata (montata in background): in fondo agli stack finché non prende il focus
+    let front = true;
+    try { front = navigation.isFocused(); } catch { /* fuori da un navigatore */ }
     const h = pageScroll.register(
       (y, animated) => scrollRef.current?.scrollTo({ y, animated }),
       () => (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.() ?? null,
+      front,
     );
     handle.current = h;
-    const b = registerPageBlurTarget();
+    const b = registerPageBlurTarget(front);
     blurHandle.current = b;
     // il ref del BlurTargetView arriva PRIMA di questo effect: senza questo la nav bar restava senza
     // bersaglio (niente blur, solo il velo)
