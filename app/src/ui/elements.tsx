@@ -236,10 +236,15 @@ const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean
   const inherited = useContext(TextClassContext);
   const focus = useFocusStyle(p.className, p.onFocus as (e: any) => void, p.onBlur as (e: any) => void);
   const withFocus = { onFocus: focus.onFocus, onBlur: focus.onBlur };
+  // leading-* del campo sulla SUA dimensione (es. semina-note-textarea a 11px): NativeWind la calcolava
+  // sui 16px di text-base (22px di interlinea per un testo da 11: righe alte e testo spinto in basso)
+  const ownLeading = multiline && /(^|\s)leading-/.test(p.className ?? '')
+    ? { lineHeight: inheritedLineHeight(p.className ?? '', inputFontSize(cn('text-base', p.className)).fontSize) }
+    : null;
   return multiline
     // overflow-hidden (textarea ad altezza automatica): in CSS non scorre mai; su Android il campo nativo
     // scorreva al suo interno e mostrava solo l'ultima riga della nota
-    ? <TextInput ref={inputRef} multiline textAlignVertical="top" scrollEnabled={!/(^|\s)overflow(-y)?-hidden(\s|$)/.test(p.className ?? '')} {...rawInput({ ...p, ...withFocus, style: [p.style, gap ? { marginBottom: gap } : null, focus.focusStyle] }, submit, true)} />
+    ? <TextInput ref={inputRef} multiline textAlignVertical="top" scrollEnabled={!/(^|\s)overflow(-y)?-hidden(\s|$)/.test(p.className ?? '')} {...rawInput({ ...p, ...withFocus, style: [ownLeading, p.style, gap ? { marginBottom: gap } : null, focus.focusStyle] }, submit, true)} />
     : <TextInput ref={inputRef} {...rawInput({ ...p, ...withFocus, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style, focus.focusStyle] }, submit)} />;
 });
 RawTextInput.displayName = 'RawTextInput';
