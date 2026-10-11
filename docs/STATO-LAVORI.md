@@ -7,9 +7,9 @@
 - **Sola lettura**: mai scritture su Base44 né sul repo originale; l'app è in "modalità prova"
   (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
 - Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
-- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Branch con TUTTO il lavoro: **`claude/practical-mccarthy-js3v4k`**
-  (catena awesome-tesla → ecstatic-dirac → practical-mccarthy; NON ancora unito a `main`). Una nuova sessione
-  parte da qui (`git checkout -B <suo-branch> origin/claude/practical-mccarthy-js3v4k`).
+- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Branch con TUTTO il lavoro: **`claude/amazing-babbage-bfbu65`**
+  (catena awesome-tesla → ecstatic-dirac → practical-mccarthy → amazing-babbage; NON ancora unito a `main`).
+  Una nuova sessione parte da qui (`git checkout -B <suo-branch> origin/claude/amazing-babbage-bfbu65`).
   NB: la cache dell'APK nativo dell'emulatore è per branch: il primo giro su un branch nuovo fa la build completa (~25 min).
 
 ## Ambiente (nuova sessione)
@@ -75,6 +75,23 @@
     pagina/eventi), ref delle ScrollView con `scrollTo({left})`/`scrollLeft`, gesture web sui Div
     (`gestures.ts`), form/data/file nativi; sul web classi proprie dell'index.css in `customCss.web.ts`.
   - card che si gira sul telefono: `ui/flip.tsx` + `web/hooks/useFlipGesture.native.jsx`.
+
+## Fluidità (12/10) — regole in `docs/REGOLE-PRESTAZIONI.md`
+- Menu laterali (burger e ingranaggio): erano `<Modal>` montati all'apertura e il menu account era nell'header
+  di OGNI pagina (con le tab precaricate se ne aprivano 5 insieme). Ora un pannello unico per tipo nel layout
+  (`ui/sideDrawer.tsx`: Reanimated sul thread UI, contenuto premontato in memo, `display: none` da chiuso,
+  tasto Indietro, elevation sopra la nav bar), `layoutUI` con contesti stato/azioni separati
+  (`useLayoutUIActions` negli header: aprire un menu non ridisegna le pagine). Test `pr/07-menu-laterali`.
+- Elementi `fixed` delle pagine (`ui/fixedPortal.tsx`): solo quelli della pagina in primo piano (il pulsante
+  di ricerca di Clienti compariva su tutte le tab), nell'host `FixedHost` del layout sotto i pannelli.
+- Immagini: `ui/imageCache.ts` (`IMAGE_CACHE` = memory-disk, `prefetchImages`, immagini "già caricate"
+  mostrate da CachedImage senza dissolvenza); il default di expo-image era solo disco (flash al rimontaggio).
+- Precaricamento: elenco unico `lib/preloadRoutes.ts`. Liste in riquadri: `ui/windowedList.tsx`
+  (selettore "Tramite" di ClientSourceDisplay). Pull-to-refresh nativo della pagina
+  (`hooks/usePullToRefresh.native.jsx` → RefreshControl di Page; Semine).
+- Textarea con `leading-*`: interlinea sulla dimensione del campo (nota delle semine a 11px).
+- Diagnostica: `useWhyRender(nome, valori)` (`lib/testDiag.ts`, build di test) dice perché un componente si
+  ridisegna (logcat "VIBRA why").
 
 ## EMULATORE ANDROID (strumento principale da ora: lavorare in autonomia)
 Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo pubblico):

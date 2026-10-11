@@ -1,5 +1,6 @@
 // Port di src/pages/IlMioVibra.jsx (convertito da scripts/port/codemod.mjs).
-import { useWhyRender } from '@/lib/testDiag';
+import { TEST_DIAG, useWhyRender } from '@/lib/testDiag';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation, useSearchParams } from '@/web/router';
 import PageTitle from '@/web/components/shared/PageTitle';
@@ -53,23 +54,29 @@ const TABS = [
   { key: 'vibravs', label: 'Vibra VS', icon: Swords },
 ];
 
+const __diagEmpty = [];
 export default function IlMioVibra() {
   const { canAccessIlMioVibra } = useRoleAccess();
-  const { user } = useAuth();
-  const { effectivePromoterId } = useViewAsPromoter();
+  const __diagAuth = useAuth();
+  const { user } = __diagAuth;
+  const __diagViewAs = useViewAsPromoter();
+  const { effectivePromoterId } = __diagViewAs;
 
   // Carica tutti i settings. Niente refetchInterval: il polling ogni 60s
   // causava traffico continuo su mobile. staleTime 5min (default globale) basta.
-  const { data: allSettings = [] } = useQuery({
+  const __diagQuery = useQuery({
     queryKey: ['all-app-settings'],
     queryFn: () => base44.entities.AppSettings.list(),
     staleTime: 5 * 60000,
   });
+  const allSettings = __diagQuery.data ?? __diagEmpty;
   const globalAnnouncement = allSettings.find(s => s.key === 'global_announcement')?.value || '';
   const prAnnouncement = effectivePromoterId
     ? allSettings.find(s => s.key === `announcement_pr_${effectivePromoterId}`)?.value || ''
     : '';
-  const { open: showCalcoli, toggle: toggleCalcoli } = useCalcolatrice();
+  const __diagCalc = useCalcolatrice();
+  const { open: showCalcoli, toggle: toggleCalcoli } = __diagCalc;
+  const __diagInsets = useSafeAreaInsets();
   const tabsScrollRef = useRef(null);
   const scrollRef = useRef(null);
   const activeButtonRef = useRef(null);
@@ -103,7 +110,10 @@ export default function IlMioVibra() {
   const highlightAchievement = searchParams.get('achievement');
   const scrollTrigger = location.search;
   // diagnostica (solo build di test): cosa ridisegna la pagina al ritorno sulla tab
-  useWhyRender('IlMioVibra', { canAccessIlMioVibra, user, effectivePromoterId, allSettings, showCalcoli, toggleCalcoli, stuck, setStuckHeader, scrollToTab, location, searchParams, sentinelRef });
+  useWhyRender('IlMioVibra', {
+    user, effectivePromoterId, allSettings, showCalcoli, toggleCalcoli, stuck, location, searchParams, sentinelRef,
+    authCtx: __diagAuth, viewAsCtx: __diagViewAs, calcCtx: __diagCalc, insets: __diagInsets, settingsQuery: TEST_DIAG ? __diagQuery.fetchStatus + __diagQuery.dataUpdatedAt : 0,
+  });
 
   const setActiveTab = (key) => {
     const next = new URLSearchParams(searchParams);
