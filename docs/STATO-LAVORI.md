@@ -171,6 +171,12 @@ blur che entra a scatto, fascia dell'orario non sfocata, nav bar senza blur, Wee
 - Prova dell'utente sull'APK con tutte le correzioni (link fisso release "anteprima"); l'utente dice che è
   "piena di glitch": chiedere screenshot/descrizioni precise per ognuno e riprodurli sull'emulatore.
 - Ridisegno di Il Mio Vibra quando ci si torna (vedi sopra).
+- Crash Semine (`Cannot set property 'height' of undefined`, effect del textarea delle note) risolto in modo
+  generale: `ui/domStyle.ts` dà ai ref nativi (Div, campi di testo) un `style` alla DOM che traduce le
+  scritte in setNativeProps (o le ignora); c'erano ~40 `el.style.x = ...` nel codice portato.
+  Semine nei dati di prova dell'emulatore + test `pr/06-semine.yaml`.
+- Da controllare: il textarea della nota nelle card di Semine resta alto una riga (sul web cresce col
+  testo) e il testo sembra più grande degli 11px dell'originale (`.semina-note-textarea`).
 - Differenze viste su Clienti (admin, nessun cliente): stato vuoto con pulsante "Aggiungi Cliente" squadrato
   e a sinistra (web: arrotondato, centrato). Da allargare i test: altre tab di Clienti, Semine, dialog, menu.
 - Copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
