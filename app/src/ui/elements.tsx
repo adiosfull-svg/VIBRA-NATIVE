@@ -234,7 +234,9 @@ const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean
   const focus = useFocusStyle(p.className, p.onFocus as (e: any) => void, p.onBlur as (e: any) => void);
   const withFocus = { onFocus: focus.onFocus, onBlur: focus.onBlur };
   return multiline
-    ? <TextInput ref={inputRef} multiline textAlignVertical="top" {...rawInput({ ...p, ...withFocus, style: [p.style, gap ? { marginBottom: gap } : null, focus.focusStyle] }, submit, true)} />
+    // overflow-hidden (textarea ad altezza automatica): in CSS non scorre mai; su Android il campo nativo
+    // scorreva al suo interno e mostrava solo l'ultima riga della nota
+    ? <TextInput ref={inputRef} multiline textAlignVertical="top" scrollEnabled={!/(^|\s)overflow(-y)?-hidden(\s|$)/.test(p.className ?? '')} {...rawInput({ ...p, ...withFocus, style: [p.style, gap ? { marginBottom: gap } : null, focus.focusStyle] }, submit, true)} />
     : <TextInput ref={inputRef} {...rawInput({ ...p, ...withFocus, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style, focus.focusStyle] }, submit)} />;
 });
 RawTextInput.displayName = 'RawTextInput';
