@@ -13,6 +13,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeBlur, usePageBlurTarget } from '../../ui/pageLayers';
 import { Div } from '../../ui/html';
+import { FixedHost } from '../../ui/fixedPortal';
 import { LocationPublisher } from '../../web/router';
 import { useEffect } from 'react';
 import { prefetchImages } from '../../ui/imageCache';
@@ -54,17 +55,20 @@ export default function AppLayout() {
   return (
     <LayoutUIProvider>
       <CalcolatriceProvider>
+      <FixedHost>
       <LocationPublisher />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       {!inTabs && <MobileNavBar />}
       <StatusBarGlass />
-      {/* pannelli laterali: uno solo per tutta l'app, montati in anticipo (ui/sideDrawer) */}
-      <Sidebar />
-      <AccountMenuPanel />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
       {/* Calcolatrice globale — persiste su tutte le rotte */}
       <GlobalCalcolatrice />
+      </FixedHost>
+      {/* pannelli laterali: uno solo per tutta l'app, montati in anticipo (ui/sideDrawer); per ultimi,
+          così il velo copre tutto (anche il pulsante Cerca flottante e la calcolatrice) */}
+      <Sidebar />
+      <AccountMenuPanel />
       </CalcolatriceProvider>
     </LayoutUIProvider>
   );
