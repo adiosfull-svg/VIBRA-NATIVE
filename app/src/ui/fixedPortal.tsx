@@ -10,10 +10,10 @@
 // in primo piano (display none altrimenti: lo stato resta). Dentro l'app vanno nell'host "fixed"
 // del layout, sotto i pannelli laterali (come z-40 sotto lo z-50 della sidebar) e sotto i dialog.
 import { Portal, PortalHost } from '@rn-primitives/portal';
-import { useNavigation } from 'expo-router';
 import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TextClassContext } from './text';
+import { useScreenNavigation } from '../web/screenNavigation';
 
 export const InPortalContext = createContext(false);
 
@@ -25,15 +25,10 @@ export function FixedHost({ children }: { children?: ReactNode }) {
   return <FixedHostContext.Provider value>{children}<PortalHost name={FIXED_HOST} /></FixedHostContext.Provider>;
 }
 
-type Nav = { isFocused?: () => boolean; addListener?: (e: 'focus' | 'blur', fn: () => void) => () => void } | undefined;
-
-function useNavigationSafe(): Nav {
-  try { return useNavigation() as Nav; } catch { return undefined; }
-}
 
 /** Lo schermo che contiene l'elemento è in primo piano (fuori da un navigatore: sempre). */
 function useScreenFocused(): boolean {
-  const nav = useNavigationSafe();
+  const nav = useScreenNavigation();
   const read = () => { try { return nav?.isFocused?.() ?? true; } catch { return true; } };
   const [focused, setFocused] = useState(read);
   useEffect(() => {

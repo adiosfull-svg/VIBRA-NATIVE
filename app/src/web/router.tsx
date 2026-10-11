@@ -1,7 +1,8 @@
 // API di react-router-dom usate dall'app web, sopra expo-router. Le route native hanno gli
 // stessi percorsi dell'originale (/clienti, /il-mio-vibra?tab=..., /promoter/:id).
-import { router, useGlobalSearchParams, useLocalSearchParams, useNavigation, usePathname, useRoutePath, type Href } from 'expo-router';
-import { useCallback, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { router, useGlobalSearchParams, useLocalSearchParams, usePathname, useRoutePath, type Href } from 'expo-router';
+import { useScreenNavigation, type ScreenNav } from './screenNavigation';
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Btn } from '../ui/html';
 
 type NavigateOpts = { replace?: boolean; state?: unknown };
@@ -35,11 +36,9 @@ export function LocationPublisher() {
   return null;
 }
 
-type Nav = { isFocused?: () => boolean; addListener?: (e: 'focus', fn: () => void) => () => void } | undefined;
-
-function useNavigationSafe(): Nav {
-  try { return useNavigation() as Nav; } catch { return undefined; }
-}
+type Nav = ScreenNav;
+export { useScreenNavigation };
+const useNavigationSafe = useScreenNavigation;
 
 function toLocation({ pathname, params }: Loc) {
   const sp = new URLSearchParams();
@@ -64,12 +63,26 @@ export function useCurrentLocation() {
   return useMemo(() => toLocation(loc), [loc]);
 }
 
-/** Percorso proprio dello schermo che contiene il componente (anche se precaricato e mai visto). */
+/**
+ * Percorso proprio dello schermo (anche se precaricato e mai visto). useRoutePath ridisegna chi lo usa a
+ * ogni navigazione (il suo contesto cambia anche quando cambia un'altra tab): lo legge SOLO
+ * OwnPathProvider (in Page), che passa ai figli una stringa; i figli (stesso elemento) non si ridisegnano.
+ */
+const OwnPathContext = createContext<string | null>(null);
+
+function OwnPathReader({ children }: { children: ReactNode }) {
+  const p = useRoutePath();
+  const path = p ? (p.split('?')[0] || '/') : null;
+  return <OwnPathContext.Provider value={path}>{children}</OwnPathContext.Provider>;
+}
+
+export function OwnPathProvider({ children }: { children: ReactNode }) {
+  // fuori da uno schermo useRoutePath lancia un errore: lì niente percorso proprio
+  return useScreenNavigation() ? <OwnPathReader>{children}</OwnPathReader> : <>{children}</>;
+}
+
 function useOwnPathname(): string | null {
-  try {
-    const p = useRoutePath();
-    return p ? (p.split('?')[0] || '/') : null;
-  } catch { return null; /* fuori da uno schermo */ }
+  return useContext(OwnPathContext);
 }
 
 export function useLocation() {

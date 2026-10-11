@@ -1,6 +1,7 @@
 // Port di AppHeader (src/components/layout/AppLayout.jsx): intestazione in linea che scorre con
 // la pagina. burger · [titolo sezione | logo Vibra] · campanella · impostazioni.
 import { Image } from 'expo-image';
+import { memo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
 import { Btn, Div } from '../../../ui/html';
@@ -44,7 +45,8 @@ export function routeTitleFor(pathname: string, role?: string) {
   return '';
 }
 
-export default function AppHeader({ title: titleOverride }: { title?: string }) {
+// memo: si ridisegna solo se cambia il titolo (o il percorso proprio / l'utente)
+export default memo(function AppHeader({ title: titleOverride }: { title?: string }) {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -83,4 +85,4 @@ export default function AppHeader({ title: titleOverride }: { title?: string }) 
       </Div>
     </Div>
   );
-}
+});

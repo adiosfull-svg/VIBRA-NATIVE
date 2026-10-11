@@ -1,6 +1,5 @@
 // Struttura di pagina di AppLayout.jsx: intestazione in linea + contenuto "main-content p-4"
 // (pt 0.5rem) + spazio in fondo per la barra di navigazione (4.5rem + safe area).
-import { useFocusEffect, useNavigation } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Platform, RefreshControl, ScrollView, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +8,7 @@ import { Div } from '../../../ui/html';
 import { THEME } from '../../../ui/palette.generated';
 import AppHeader from './AppHeader';
 import { pageScroll } from '../../shims/pageScroll';
+import { OwnPathProvider, useScreenNavigation } from '../../router';
 import { dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
 import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
@@ -36,7 +36,9 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const scrollListeners = useRef(new Set<() => void>()).current;
   const own = useRef({ y: 0, viewportHeight: 0 }).current;
   const scrollY = useRef(new Animated.Value(0)).current;
-  const navigation = useNavigation();
+  // contesto stabile dello schermo (useNavigation/useFocusEffect di expo-router ridisegnavano la Page a
+  // ogni navigazione, anche delle altre tab)
+  const navigation = useScreenNavigation();
   // pull-to-refresh chiesto dal contenuto (hooks/usePullToRefresh.native): RefreshControl nativo,
   // gesto e animazione sul thread UI (docs/REGOLE-PRESTAZIONI.md §5)
   const pageRefresh = useRef<(() => Promise<unknown> | void) | null>(null);
@@ -49,7 +51,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   useEffect(() => {
     // tab precaricata (montata in background): in fondo agli stack finché non prende il focus
     let front = true;
-    try { front = navigation.isFocused(); } catch { /* fuori da un navigatore */ }
+    try { front = navigation?.isFocused?.() ?? true; } catch { /* fuori da un navigatore */ }
     const h = pageScroll.register(
       (y, animated) => scrollRef.current?.scrollTo({ y, animated }),
       () => (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.() ?? null,
@@ -63,13 +65,21 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     b.set(blurEl.current);
     return () => { h.unregister(); b.unregister(); blurHandle.current = null; };
   }, []);
-  useFocusEffect(useCallback(() => {
-    handle.current?.focus(); blurHandle.current?.focus();
-    // diagnostica dell'emulatore: radiografia del layout della pagina dopo il caricamento
-    if (!TEST_DIAG) return;
-    const t = setTimeout(() => dumpLayout(title ?? 'pagina', (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()), 9000);
-    return () => clearTimeout(t);
-  }, [title]));
+  useEffect(() => {
+    let diagTimer: ReturnType<typeof setTimeout> | null = null;
+    const onFocus = () => {
+      handle.current?.focus(); blurHandle.current?.focus();
+      // diagnostica dell'emulatore: radiografia del layout della pagina dopo il caricamento
+      if (!TEST_DIAG) return;
+      if (diagTimer) clearTimeout(diagTimer);
+      diagTimer = setTimeout(() => dumpLayout(title ?? 'pagina', (scrollRef.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()), 9000);
+    };
+    let focused = true;
+    try { focused = navigation?.isFocused?.() ?? true; } catch { /* fuori da un navigatore */ }
+    if (focused) onFocus();
+    const off = navigation?.addListener?.('focus', onFocus);
+    return () => { off?.(); if (diagTimer) clearTimeout(diagTimer); };
+  }, [navigation, title]);
   const blurEl = useRef<View | null>(null);
   const setBlurTarget = useCallback((el: View | null) => { blurEl.current = el; blurHandle.current?.set(el); }, []);
   const layer = useMemo<PageLayer>(() => ({
@@ -124,10 +134,12 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
             : undefined}
         {...props}
       >
-        <PageLayerContext.Provider value={layer}>
-          <AppHeader title={title} />
-          <Div className={cn('p-4 pt-2', className)}>{children}</Div>
-        </PageLayerContext.Provider>
+        <OwnPathProvider>
+          <PageLayerContext.Provider value={layer}>
+            <AppHeader title={title} />
+            <Div className={cn('p-4 pt-2', className)}>{children}</Div>
+          </PageLayerContext.Provider>
+        </OwnPathProvider>
       </Animated.ScrollView>
     </BlurTargetView>
   );
