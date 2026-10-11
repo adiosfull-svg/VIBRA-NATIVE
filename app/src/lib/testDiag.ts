@@ -69,3 +69,18 @@ export function TestCut({ id, children }: { id: string; children?: unknown }): a
 }
 // senza taglio attivo è trasparente per gli space-y/gap del contenitore (ui/html cssChildren)
 (TestCut as { cssTransparent?: boolean }).cssTransparent = !TEST_CUT;
+
+/**
+ * Perché un componente si ridisegna (solo build di test): nel logcat "VIBRA why <nome>" con i valori
+ * cambiati dal render precedente (per identità), o "(stato interno)" se nessuno è cambiato.
+ * Uso: useWhyRender('Pagina', { user, location, ... }) in cima al componente.
+ */
+const whyPrev = new Map<string, Record<string, unknown>>();
+export function useWhyRender(name: string, values: Record<string, unknown>) {
+  if (!TEST_DIAG) return;
+  const prev = whyPrev.get(name);
+  whyPrev.set(name, values);
+  if (!prev) { console.log(`VIBRA why ${name} primo render`); return; }
+  const changed = Object.keys(values).filter((k) => !Object.is(prev[k], values[k]));
+  console.log(`VIBRA why ${name} ${changed.length ? changed.join(',') : '(stato interno o hook non elencato)'}`);
+}

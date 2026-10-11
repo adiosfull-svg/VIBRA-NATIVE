@@ -1,4 +1,5 @@
 // Port di src/pages/IlMioVibra.jsx (convertito da scripts/port/codemod.mjs).
+import { useWhyRender } from '@/lib/testDiag';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation, useSearchParams } from '@/web/router';
 import PageTitle from '@/web/components/shared/PageTitle';
@@ -101,6 +102,8 @@ export default function IlMioVibra() {
   const activeTab = searchParams.get('tab') || 'progressi';
   const highlightAchievement = searchParams.get('achievement');
   const scrollTrigger = location.search;
+  // diagnostica (solo build di test): cosa ridisegna la pagina al ritorno sulla tab
+  useWhyRender('IlMioVibra', { canAccessIlMioVibra, user, effectivePromoterId, allSettings, showCalcoli, toggleCalcoli, stuck, setStuckHeader, scrollToTab, location, searchParams, sentinelRef });
 
   const setActiveTab = (key) => {
     const next = new URLSearchParams(searchParams);
