@@ -71,3 +71,7 @@ test('classi di dimensione relative alla finestra (dvh, env, calc) calcolate al 
   ]);
   assert.equal(n.box, 'relative w-full w-[calc(100%-1.5rem)] flex flex-row');
 });
+
+test('transizioni CSS tolte sul telefono (NativeWind le animerebbe)', () => {
+  assert.equal(normalizeClasses('relative transition-[transform,opacity] duration-200 ease-out delay-75 hover:transition-all opacity-0 scale-95').box, 'relative opacity-0 scale-95');
+});

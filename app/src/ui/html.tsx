@@ -17,7 +17,7 @@ import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestu
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount } from '../lib/testDiag';
-import { expandGridTemplate, normalizeClasses, viewportClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
+import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from './webStyle';
 import { initialWindowMetrics } from 'react-native-safe-area-context';
 
@@ -38,7 +38,7 @@ if (__DEV__ && Platform.OS !== 'web') {
 
 // vh/vw negli style del web: dimensioni della finestra
 Object.assign(cssViewport, Dimensions.get('window'));
-if (Platform.OS === 'web') viewportClasses.translate = false;
+if (Platform.OS === 'web') nativeClasses.enabled = false;
 // env(safe-area-inset-*) nei calc() delle classi
 if (initialWindowMetrics) {
   const { top, bottom, left, right } = initialWindowMetrics.insets;

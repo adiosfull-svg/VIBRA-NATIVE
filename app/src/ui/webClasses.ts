@@ -41,8 +41,15 @@ export type Gradient = { dir: string; colors: string[] };
 export type ViewportSize = { prop: string; value: string; min?: number; max?: number };
 export type Normalized = { box: string; grid?: Grid; gradient?: Gradient; lineClamp?: number; ring?: string; viewport?: ViewportSize[] };
 
-/** Sul web le classi restano al CSS (vero dvh/env()): html.tsx lo disattiva. */
-export const viewportClasses = { translate: true };
+/** Traduzioni solo per il telefono: sul web le classi restano al CSS (vero dvh/env(), transizioni). html.tsx lo disattiva sul web. */
+export const nativeClasses = { enabled: true };
+/**
+ * Transizioni CSS (transition-*, duration-*, ease-*, delay-*): sul telefono si tolgono. L'interop di
+ * NativeWind le trasforma in animazioni, e sul contenitore del dettaglio cliente
+ * (transition-[transform,opacity] con scale-95 → opacity-100) mandava in loop il thread JS: milioni di
+ * allocazioni native e app uccisa per memoria. Le animazioni vere passano da motion.tsx.
+ */
+const CSS_TRANSITION = /^(?:transition(?:-\S+)?|duration-\S+|ease-\S+|delay-\S+)$/;
 const SIZE_PROP: Record<string, string> = { h: 'height', w: 'width', 'min-h': 'minHeight', 'max-h': 'maxHeight', 'min-w': 'minWidth', 'max-w': 'maxWidth' };
 const BREAKPOINT_MIN: Record<string, number> = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 };
 /** (bp:)?(min-|max-)?(h|w)-[valore con vh/vw o env(), senza %] */
@@ -101,8 +108,9 @@ function computeNormalized(className?: string): Normalized {
   let ringOffsetColor = '#ffffff';
 
   for (const c of list) {
+    if (nativeClasses.enabled && CSS_TRANSITION.test(c.slice(c.lastIndexOf(':') + 1))) continue;
     let vm: RegExpMatchArray | null;
-    if (viewportClasses.translate && (vm = c.match(VIEWPORT_SIZE))) {
+    if (nativeClasses.enabled && (vm = c.match(VIEWPORT_SIZE))) {
       const bp = vm[2] ? BREAKPOINT_MIN[vm[2]] : undefined;
       (out.viewport ??= []).push({ prop: SIZE_PROP[vm[3]], value: vm[4].replace(/_/g, ' '), ...(bp == null ? null : vm[1] ? { max: bp } : { min: bp }) });
       continue;
