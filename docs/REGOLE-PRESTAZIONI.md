@@ -82,6 +82,14 @@ si montano solo le righe visibili più un margine (`overscan`).
   stabile) e non si ridisegna quando lo stato cambia. Esempio: `web/lib/layoutUI.tsx`
   (`useLayoutUIActions` negli header; `useLayoutUI` solo nei pannelli e nella nav bar).
 - Valore dei Provider sempre in `useMemo`; callback in `useCallback`.
+- **Hook di navigazione nelle pagine**: MAI `useNavigation`, `useFocusEffect`, `useRoutePath`, `usePathname`,
+  `useSegments`, `useGlobalSearchParams` di expo-router dentro pagine e componenti di pagina: leggono un
+  contesto che cambia a OGNI navigazione (anche di un'altra tab) e ridisegnano tutte le pagine montate
+  (Il Mio Vibra si ridisegnava per intero, ~400 elementi, a ogni cambio tab). Usare:
+  `useScreenNavigation()` (`web/screenNavigation.ts`: `isFocused`, `addListener('focus'|'blur')`),
+  `useLocation`/`useSearchParams`/`useNavigate` di `web/router.tsx` (percorso proprio dato da
+  `OwnPathProvider` in `Page`). Solo i componenti del layout possono seguire il percorso globale
+  (`useCurrentLocation`, `usePathname` nella nav bar).
 - **Mai iscriversi a stato GLOBALE di navigazione o scroll dentro una pagina**: con le tab precaricate
   sono montate 5+ pagine e si ridisegnerebbero tutte. Usare `useLocation` per pagina
   (`LocationPublisher` + `useRoutePath`), lo scroll della propria pagina (`PageLayerContext`).
@@ -95,7 +103,11 @@ si montano solo le righe visibili più un margine (`overscan`).
 - Lavoro pesante dopo un tocco (salvataggi, ricalcoli, navigazione verso pagine pesanti): far partire
   prima il feedback visivo (animazione, pressed) e poi il lavoro (`InteractionManager.runAfterInteractions`
   o `requestAnimationFrame`).
-- Strumento per trovare chi si ridisegna: build di test con `EXPO_PUBLIC_TEST_TRACE=1` (vedi STATO-LAVORI).
+- Hook che restituiscono oggetti o funzioni (`useRoleAccess`, fallback dei contesti): valore in `useMemo` /
+  costanti di modulo, altrimenti ogni render fa ripartire effect e memo di chi li usa.
+- Strumenti per trovare chi si ridisegna: build di test con `EXPO_PUBLIC_TEST_TRACE=1` (cosa si disegna) e
+  `useWhyRender(nome, {valori})` di `lib/testDiag.ts` (quale valore è cambiato; "stato interno" = un hook
+  con stato proprio o un contesto non elencato).
 
 ## §5 Animazioni, pannelli e overlay fluidi
 
@@ -159,8 +171,10 @@ Prima di dichiarare convertita una pagina:
       pagina/dettaglio successivo dove è probabile (§2).
 - [ ] Ogni lista che può superare ~30 righe è virtualizzata (`usePageWindow` / `WindowedList` / `FlatList`),
       righe in `memo` con key stabili (§3).
-- [ ] Nessun componente globale dentro la pagina; nessuna iscrizione a stato globale di navigazione/scroll;
-      contesti con stato/azioni separati (§4).
+- [ ] Nessun componente globale dentro la pagina; nessuna iscrizione a stato globale di navigazione/scroll
+      (niente hook di navigazione di expo-router nelle pagine); contesti con stato/azioni separati; hook che
+      restituiscono oggetti/funzioni con valore memoizzato (§4).
+- [ ] Verifica con `useWhyRender` (build di test): cambiando tab la pagina non si ridisegna (§8).
 - [ ] Animazioni su thread UI, solo transform/opacity; niente `Modal` per pannelli frequenti (§5).
 - [ ] Immagini con `IMAGE_CACHE`, dimensioni fisse, precaricate (§6).
 - [ ] Veli con `pointerEvents="none"`, overlay chiusi smontati o `display: none` (§7).

@@ -90,8 +90,14 @@
   (selettore "Tramite" di ClientSourceDisplay). Pull-to-refresh nativo della pagina
   (`hooks/usePullToRefresh.native.jsx` → RefreshControl di Page; Semine).
 - Textarea con `leading-*`: interlinea sulla dimensione del campo (nota delle semine a 11px).
+- **Cambio tab senza ridisegni**: `useRoutePath`/`useNavigation`/`useFocusEffect` di expo-router leggono un
+  contesto che cambia a OGNI navigazione: tutte le pagine montate si ridisegnavano (Il Mio Vibra ~400 elementi
+  a ogni ritorno). Ora `web/screenNavigation.ts` (contesto stabile dello schermo), percorso proprio da
+  `OwnPathProvider` (in Page), AppHeader in memo; `useRoleAccess` e `stickyHeaderContext` con valori stabili.
+  Verificato sull'emulatore: dopo il caricamento Il Mio Vibra non si ridisegna più cambiando tab.
 - Diagnostica: `useWhyRender(nome, valori)` (`lib/testDiag.ts`, build di test) dice perché un componente si
-  ridisegna (logcat "VIBRA why").
+  ridisegna (logcat "VIBRA why"); metterlo in cima al componente, poi toglierlo.
+- Stato vuoto di Clienti: già identico all'originale (verificato sul web svuotando i clienti del pr).
 
 ## EMULATORE ANDROID (strumento principale da ora: lavorare in autonomia)
 Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo pubblico):
@@ -145,15 +151,16 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- L'utente prova l'APK dell'11/10 sera (release "anteprima"). Dice che l'app è "piena di glitch": per ognuno
-  chiedere pagina/azione/screenshot o il testo dell'errore (schermata di crashReport), riprodurre
-  sull'emulatore (aggiungendo un test), correggere nello strato `ui/` quando possibile.
-- Aperti: Il Mio Vibra si ridisegna tutto quando ci si torna (~540 elementi; trovare chi cambia: traccia);
-  textarea della nota nelle card di Semine alto una riga e testo più grande degli 11px dell'originale;
-  stato vuoto di Clienti con pulsante "Aggiungi Cliente" squadrato e a sinistra.
-- Copia ANONIMIZZATA dei dati Base44 (MCP Base44 `query_entities` in sola lettura, app
-  `69de4f1f7f53d9f187d01392`, 500-2000 clienti; l'utente ha dato l'ok) nel seed dello stack di prova: i dati
-  veri fanno emergere crash che quelli sintetici non mostrano (piantine dei locali, note, foto...).
+- L'utente prova l'APK del 12/10 (release "anteprima": menu laterali, cambio tab, immagini, pull-to-refresh di
+  Semine, nota delle semine). Per ogni glitch chiedere pagina/azione/screenshot o il testo dell'errore
+  (schermata di crashReport), riprodurre sull'emulatore (aggiungendo un test), correggere nello strato `ui/`.
+- Controllare con `useWhyRender` anche Clienti, Weekend, Semine e Dashboard al cambio tab (stessa causa
+  rimossa, ma verificare che non restino altri hook con stato globale).
+- Copia ANONIMIZZATA dei dati Base44 nel seed dello stack di prova: il 12/10 il controllo dei permessi della
+  sessione ha bloccato la lettura dei dati reali (dati personali). Serve che l'utente consenta esplicitamente
+  la lettura (permesso) oppure fornisca lui un'esportazione; alternativa: generare dati sintetici con la
+  stessa FORMA dei veri (campi `cum_*` precalcolati, `cum_venue_counts` oggetto, `cum_badges` emoji, foto,
+  note lunghe, `tipologia_cliente` array, `stato_pagante`, valori null/"" misti).
 - Livello B (più avanti): utente di prova Base44 o token come segreto GitHub per provare il backend vero.
 
 ## Da fare
@@ -162,11 +169,10 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
    swipe in Da ricontattare), Semine (Gira e trascinamento delle card), e dalle sessioni prima: selettori
    data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
    scorrimento dei dialog e del dettaglio cliente, export PDF/CSV della Dashboard. Correggere gli errori segnalati.
-2. **Pagine ancora `ComingSoon`** (stesso metodo, DOPO le prestazioni): Promoter (lista e dettaglio `promoter/[id]`), Serate,
+2. **Pagine ancora `ComingSoon`** (stesso metodo + checklist di `docs/REGOLE-PRESTAZIONI.md` §9): Promoter (lista e dettaglio `promoter/[id]`), Serate,
    Importa serata, Locali, Messaggi, VibraGPT, Ricerca AI, Report, Clienti analytics, Notifiche,
    Impostazioni app, Formazione, Academy, Download, Admin console.
-3. Telefono: pull-to-refresh di Semine (oggi inerte: ascolta i touch del `document`; usare il RefreshControl
-   della ScrollView di `Page`); `onPaste` (incolla foto/contatto) non esiste su RN (accettato).
+3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
 4. Notifiche push (expo-notifications al posto del web push).
 5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
 
