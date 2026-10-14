@@ -134,8 +134,9 @@ export function fastLocaleCompare(a: string, b: string, opts?: CompareOpts): num
 
 // ── numeri ──────────────────────────────────────────────────────────────────
 function groupThousands(int: string): string {
-  // italiano (CLDR): minimumGroupingDigits 2 → 1000 senza punto, 12.345 col punto
-  if (int.length <= 4) return int;
+  // come Chrome (browser dell'app originale): punto già dalle 4 cifre, 6.182 (l'ICU di Node/Hermes con
+  // minimumGroupingDigits 2 scriverebbe 6182)
+  if (int.length <= 3) return int;
   let out = '';
   for (let i = int.length; i > 0; i -= 3) out = int.slice(Math.max(0, i - 3), i) + (out ? '.' + out : '');
   return out;

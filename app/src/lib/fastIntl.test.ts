@@ -39,18 +39,22 @@ test('localeCompare: ordinamento di nomi casuali come ICU', () => {
   for (let i = 0; i < icu.length; i++) assert.equal(icu[i].localeCompare(fast[i], 'it'), 0, `posizione ${i}: ${icu[i]} / ${fast[i]}`);
 });
 
-test('toLocaleString it-IT: stesso testo di Intl', () => {
+// Chrome (il browser dell'app originale) raggruppa anche le migliaia di 4 cifre (6.182); l'ICU di Node segue la
+// regola CLDR più recente (minimumGroupingDigits 2: 6182). Il riferimento è Chrome.
+const chrome = (s: string) => s.replace(/^(-?)(\d)(\d{3})(?=,|$)/, '$1$2.$3');
+
+test('toLocaleString it-IT: stesso testo di Intl in Chrome', () => {
   const values = [0, -0, 1, -1, 5, 12, 999, 1000, 1234, 12345, 123456, 1234567, 1234567.891, 0.5, 0.125, 1.005, 2.675, -1234.5, 1e15, 0.0004, -0.0004, 99.9999, 5144, 315.333333];
   for (const v of values) {
-    assert.equal(fastItNumber(v), v.toLocaleString('it-IT'), `${v}`);
-    assert.equal(fastItNumber(v, 2, 2), v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), `${v} 2/2`);
-    assert.equal(fastItNumber(v, 0, 2), v.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 }), `${v} 0/2`);
-    assert.equal(fastItNumber(v, 1, 1), v.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), `${v} 1/1`);
+    assert.equal(fastItNumber(v), chrome(v.toLocaleString('it-IT')), `${v}`);
+    assert.equal(fastItNumber(v, 2, 2), chrome(v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), `${v} 2/2`);
+    assert.equal(fastItNumber(v, 0, 2), chrome(v.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })), `${v} 0/2`);
+    assert.equal(fastItNumber(v, 1, 1), chrome(v.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })), `${v} 1/1`);
   }
   let seed = 3;
   for (let i = 0; i < 3000; i++) {
     seed = (seed * 1103515245 + 12345) % 2147483648;
     const v = ((seed / 2147483648) - 0.3) * 10 ** (i % 9);
-    assert.equal(fastItNumber(v), v.toLocaleString('it-IT'), `${v}`);
+    assert.equal(fastItNumber(v), chrome(v.toLocaleString('it-IT')), `${v}`);
   }
 });

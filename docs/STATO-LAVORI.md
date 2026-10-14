@@ -56,8 +56,9 @@
   dialog, Mappa Leaflet in iframe/WebView), Dashboard, Il Mio Vibra (tutte le 8 tab + Calcolatrice),
   Weekend/Programmazione (6 tab, Aggiungi Semina), Semine (card che si girano).
   14/10: Clienti analytics, Notifiche, Formazione, Download, VibraGPT, Ricerca AI, Admin console (confronto
-  web uguale). Convertite e collegate, confronto DA FARE: Serate, Importa serata, Locali, Report, Messaggi,
-  dettaglio Promoter. Accessi come l'originale: `web/components/RoleGate.jsx` (convertito) nelle route.
+  web uguale), Serate, Importa serata, Locali, Report, Messaggi, dettaglio Promoter (confronto web uguale salvo
+  tabella Fatturato per Locale: colonna "Media Tav." che nell'originale va a capo). Emulatore:
+  `tests/emulatore/admin/03-pagine-nuove.yaml` le apre tutte (deep link) e cerca la schermata d'errore. Accessi come l'originale: `web/components/RoleGate.jsx` (convertito) nelle route.
 - **APK**: si avvia, login ok (fix TextDecoder latin1 per Hermes, jsPDF caricato solo all'export).
 - **Strato `ui/`** (emulazione CSS/DOM, principali regole):
   - testo: ereditarietà classi/stile, Inter per peso, line-height ereditata (`textLeading.ts`), strut delle
@@ -89,6 +90,11 @@
     spazi: `{mod} ({count})` → `{mod}({count})`); da solo controlla tutti i file convertiti.
   - stack di prova: `entityCore.fromDbRow` dà created_date/updated_date senza fuso come Base44 (con '+00:00'
     il `parseUTC` dell'originale dava "Invalid time value").
+  - numeri sul telefono (`fastIntl`): punto delle migliaia già da 4 cifre come Chrome (6.182), non come l'ICU
+    di Node/Hermes (6182).
+  - DA FARE (solo telefono): Android spezza le parole lettera per lettera quando non c'è spazio, il browser
+    le fa debordare (CSS overflow-wrap normal): celle `grid-cols-6` di Locali (VenueCard), pulsante "Aggiorna"
+    di Messaggi. Serve la larghezza min-content della parola più lunga (es. misura con onTextLayout).
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 
