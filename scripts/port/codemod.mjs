@@ -204,7 +204,9 @@ export function transform(code, originalPath = '') {
       if (tag === 'br') { replaceWith(b.stringLiteral('\n')); return false; }
       if (tag === 'style') {
         todos.push(`<${tag}> rimosso`);
-        replaceWith(b.nullLiteral());
+        // dentro un blocco resta un segnaposto: per space-* in CSS conta come fratello precedente
+        if (inJsx) { usedElements.add('CssStyleTag'); p.replace(b.jsxElement(b.jsxOpeningElement(b.jsxIdentifier('CssStyleTag'), [], true), null, [])); }
+        else replaceWith(b.nullLiteral());
         return false;
       }
 

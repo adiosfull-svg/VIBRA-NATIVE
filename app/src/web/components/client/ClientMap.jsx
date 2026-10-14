@@ -7,7 +7,7 @@ import { LOCATION_BY_KEY, AREA_COLORS, AREA_CLUSTER_COLORS, CAMPANIA_LOCATIONS, 
 import MapBottomBar from '@/web/components/client/MapBottomBar';
 import { LeafletMap } from '@/ui/map/leafletMap';
 import { Btn, Div, H, P, Span } from '@/ui/html';
-import { Circle, Path, Rect, Svg } from '@/ui/elements';
+import { Circle, CssStyleTag, Path, Rect, Svg } from '@/ui/elements';
 
 // escapeHtml, buildMarkerIcon, MarkerClusterGroup, ViewportTracker, MapGestureSync, MapResizer: in @/ui/map/leafletHtml.ts
 
@@ -383,7 +383,7 @@ export default function ClientMap({ clients, onClientClick, clientStatsMap = {},
       {visibleZones.length > 0 && <ZoneLegend visibleZones={visibleZones} />}
 
       {/* Stili custom per marker cluster — cerchio nativo Leaflet invariato */}
-      {null}
+      <CssStyleTag />
     </Div>
   );
 }

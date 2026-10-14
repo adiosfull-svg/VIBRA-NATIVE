@@ -335,6 +335,7 @@ export const Hr = ({ className }: { className?: string }) => <Div className={cn(
 
 /** <label>: riquadro o testo in linea, attiva il controllo che contiene (ui/htmlLabel.tsx) */
 export { HtmlLabel } from './htmlLabel';
+export { CssStyleTag } from './cssStyleTag';
 
 export { Pressable };
 // ── <svg> ────────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import L from '@/web/shims/leaflet';
 import { NAPOLI_QUARTIERI_GEOJSON, NEIGHBORHOOD_KEYWORD_MAP } from './napoliQuartieriData';
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
-import { Img } from '@/ui/elements';
+import { CssStyleTag, Img } from '@/ui/elements';
 
 const AREA_COLORS = {
   'Napoli Centro': '#8b5cf6',
@@ -579,7 +579,7 @@ export default function NapoliCoverageMap({ promoters: allPromoters }) {
         ? 'fixed inset-0 z-50 bg-background flex flex-col p-4 gap-3'
         : 'rounded-2xl bg-card border border-border p-6 space-y-4'
       }>
-      {null}
+      <CssStyleTag />
       <Div className="flex items-center justify-between flex-wrap gap-3">
         <Div>
           <H className="text-base font-bold flex items-center gap-2">

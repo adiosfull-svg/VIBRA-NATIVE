@@ -118,6 +118,10 @@
     Academy: schede in `memo` (AcademyTileRow) montate a gruppi di 4 (`useProgressiveList`, `showAll()` prima
     di un salto). Il giro emulatore admin del 14/10 (run 38604044643) è fallito per l'emulatore scaricato
     corrotto ("Error on ZipFile unknown archive"), non per l'app.
+  - `<style>` dell'originale → `<CssStyleTag />` (ui/cssStyleTag.tsx, non disegna nulla): in CSS conta come
+    fratello per `space-*`, quindi l'elemento dopo prende il margine (+16px nella mappa di copertura,
+    ClientMap, ComitivaEditor). TabsTrigger applica `data-[state=active|inactive]:` (ui/dataState.ts):
+    tab attiva di Promoter con bg-card come nell'originale.
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 

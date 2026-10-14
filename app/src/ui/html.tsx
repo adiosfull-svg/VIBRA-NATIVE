@@ -347,8 +347,9 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
     const props = child.props as { className?: string; style?: unknown };
     const hadPrev = seen;
     const hadInFlow = seenInFlow;
-    const drawn = typeof child.type === 'string' || props.className != null || props.style != null;
-    const outOfFlow = OUT_OF_FLOW.test(props.className ?? '');
+    const styleTag = !!(child.type as { cssStyleTag?: boolean }).cssStyleTag;
+    const drawn = styleTag || typeof child.type === 'string' || props.className != null || props.style != null;
+    const outOfFlow = styleTag || OUT_OF_FLOW.test(props.className ?? '');
     if (drawn) { seen = true; if (!outOfFlow) seenInFlow = true; }
     if (!hadPrev && !drawn && child.type === Div && gaps.y != null && !CSS_FLEX.test(className) && elementAfter(nodes, index)) {
       // primo figlio = <div> senza classi: in CSS il margin-bottom del suo ultimo figlio lo attraversa

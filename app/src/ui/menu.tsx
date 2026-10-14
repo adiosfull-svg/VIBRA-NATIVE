@@ -10,6 +10,7 @@ import * as TabsPrimitive from '@rn-primitives/tabs';
 import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
+import { resolveDataState } from './dataState';
 import { useLabelControl } from './labelControl';
 import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
@@ -218,9 +219,10 @@ export function TabsList({ className, children }: WithChildren) {
     </TabsPrimitive.List>
   );
 }
-export function TabsTrigger({ className, children, value }: WithChildren & { value: string }) {
+export function TabsTrigger({ className: rawClassName, children, value }: WithChildren & { value: string }) {
   const { value: active } = TabsPrimitive.useRootContext();
   const on = active === value;
+  const className = useMemo(() => resolveDataState(rawClassName, on), [rawClassName, on]);
   return (
     <TabsPrimitive.Trigger value={value} className={cn('flex-row items-center justify-center rounded-md px-3 py-1', on && 'bg-background shadow', className)}>
       <TextClassContext.Provider value={cn('text-sm font-medium', on ? 'text-foreground' : 'text-muted-foreground', textOf(className))}>

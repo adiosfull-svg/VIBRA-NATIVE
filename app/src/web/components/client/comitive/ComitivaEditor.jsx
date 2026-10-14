@@ -21,7 +21,7 @@ import { ComitivaNode, WiresLayer, CanvasControls, CanvasMinimap } from './Comit
 
 import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
-import { HtmlInput, HtmlOption, HtmlSelect } from '@/ui/elements';
+import { CssStyleTag, HtmlInput, HtmlOption, HtmlSelect } from '@/ui/elements';
 
 const MIN_K = 0.2;
 const MAX_K = 2;
@@ -908,7 +908,7 @@ export default function ComitivaEditor({
 
   const content = (
     <Div className="fixed inset-0 z-[9000] flex flex-col text-slate-200" style={{ background: '#0A0D14', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      {null}
+      <CssStyleTag />
 
       <TopBar
         name={doc.name}
