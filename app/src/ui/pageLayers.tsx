@@ -11,7 +11,7 @@
 //    contenitore raccoglie in un BlurTargetView (StickySplit).
 // Altrove (blur dentro la pagina) resta il velo semitrasparente di prima.
 import { BlurTargetView, BlurView } from 'expo-blur';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
+import { Component, createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { Animated, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingPx } from './webClasses';
@@ -108,8 +108,26 @@ export function usePageBlurTarget(): View | null {
 // EXPO_PUBLIC_TEST_NO_BLUR=1 (solo build di test sull'emulatore): sempre velo.
 const BLUR_METHOD = process.env.EXPO_PUBLIC_TEST_NO_BLUR === '1' ? 'none' as const : 'dimezisBlurViewSdk31Plus' as const;
 
+/**
+ * Errore dentro BlurView (es. "Unable to find node on an unmounted component": il bersaglio è la pagina
+ * appena smontata, prima che il registro passi alla nuova): niente blur per quel momento (resta il velo)
+ * invece della schermata d'errore dell'app; si riprova al bersaglio successivo.
+ */
+class BlurGuard extends Component<{ target: unknown; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidUpdate(prev: { target: unknown }) {
+    if (this.state.failed && prev.target !== this.props.target) this.setState({ failed: false });
+  }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
 /** BlurView di expo-blur col bersaglio giusto (vedi in cima). */
-export function NativeBlur({ intensity, tint = 'dark', target, style }: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object }) {
+export function NativeBlur(props: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object }) {
+  return <BlurGuard target={props.target}><NativeBlurInner {...props} /></BlurGuard>;
+}
+
+function NativeBlurInner({ intensity, tint = 'dark', target, style }: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object }) {
   // expo-blur legge blurTarget.current al montaggio e quando cambia: un oggetto nuovo per bersaglio
   const blurTarget = useRef<{ current: View | null }>({ current: null });
   if (blurTarget.current.current !== target) blurTarget.current = { current: target };
