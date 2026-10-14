@@ -1,5 +1,5 @@
 // Port di src/components/report/ReportBuilder.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo, useRef, useCallback } from 'react';
 import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { Check, ChevronDown, Search, Users, Calendar, GitCompare, PartyPopper } from '@/ui/icons.generated';
 import { REPORT_TYPES, REPORT_SECTIONS, filterEventsByPeriod } from '@/legacy/utils/reportData';
@@ -105,6 +105,25 @@ function PromoterMultiSelect({ promoters, selected, onChange }) {
   );
 }
 
+const EventPickRow = memo(function EventPickRow({ e, checked, onToggle }) {
+  return (
+    <Btn
+      button
+      onClick={() => onToggle(e.id)}
+      className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-secondary/50 transition-colors text-left">
+      <Div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+        checked ? 'border-primary bg-primary' : 'border-muted-foreground'
+      }`}>
+        {checked && <Check className="w-2.5 h-2.5 text-white" />}
+      </Div>
+      <Span className="truncate flex-1">{e.name || '-'}</Span>
+      <Span className="text-[10px] text-muted-foreground shrink-0">
+        {e.date ? format(parseISO(e.date), 'd MMM yy', { locale: it }) : '-'}
+      </Span>
+    </Btn>
+  );
+});
+
 function EventMultiSelect({ events, selected, onChange }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -118,6 +137,10 @@ function EventMultiSelect({ events, selected, onChange }) {
   const toggle = (id) => {
     onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
   };
+  // PORT: callback stabile per le righe in memo (aggiungendo righe si disegnano solo quelle nuove)
+  const toggleRef = useRef(toggle);
+  toggleRef.current = toggle;
+  const stableToggle = useCallback((id) => toggleRef.current(id), []);
 
   return (
     <Div className="relative">
@@ -161,21 +184,7 @@ function EventMultiSelect({ events, selected, onChange }) {
               </Btn>
               <Div className="h-px bg-border my-1" />
               {filtered.slice(0, shown).map(e => (
-                <Btn
-                  button
-                  key={e.id}
-                  onClick={() => toggle(e.id)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-secondary/50 transition-colors text-left">
-                  <Div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                    selected.includes(e.id) ? 'border-primary bg-primary' : 'border-muted-foreground'
-                  }`}>
-                    {selected.includes(e.id) && <Check className="w-2.5 h-2.5 text-white" />}
-                  </Div>
-                  <Span className="truncate flex-1">{e.name || '-'}</Span>
-                  <Span className="text-[10px] text-muted-foreground shrink-0">
-                    {e.date ? format(parseISO(e.date), 'd MMM yy', { locale: it }) : '-'}
-                  </Span>
-                </Btn>
+                <EventPickRow key={e.id} e={e} checked={selected.includes(e.id)} onToggle={stableToggle} />
               ))}
             </Div>
           </Div>

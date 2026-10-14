@@ -1,5 +1,5 @@
 // Port di src/components/promoter/PromoterSerateTab.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { format, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -13,6 +13,35 @@ import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
 
 
+
+// PORT: riga in memo (aggiungendo righe con lo scroll si disegnano solo quelle nuove)
+const SerataStatRow = memo(function SerataStatRow({ a, ev }) {
+  const dow = getDow(ev.date);
+  const tables = calcTables(a.revenue || 0, dow);
+  return (
+    <Div
+      className="rounded-xl bg-card border border-border px-3 py-2.5 grid items-center gap-2"
+      style={ROW_GRID}
+    >
+      <Div className="min-w-0">
+        <P className="font-semibold text-xs truncate leading-tight">{ev.name}</P>
+        <P className="text-[10px] text-muted-foreground leading-tight">
+          {ev.date ? format(parseISO(ev.date), 'd MMM yy', { locale: it }) : ''}
+        </P>
+      </Div>
+      <Div className="text-right">
+        <P className="text-xs font-bold text-primary">€{(a.revenue || 0).toLocaleString('it-IT')}</P>
+      </Div>
+      <Div className="text-right">
+        <P className="text-xs font-semibold">{tables.toFixed(1).replace('.', ',')}</P>
+      </Div>
+      <Div className="text-right">
+        <P className="text-[10px] text-muted-foreground truncate">{ev.venue || '—'}</P>
+      </Div>
+    </Div>
+  );
+});
+const ROW_GRID = { gridTemplateColumns: '1fr 80px 60px 60px' };
 
 export default function PromoterSerateTab({ attendances, events }) {
   const [search, setSearch] = useState('');
@@ -110,33 +139,7 @@ export default function PromoterSerateTab({ attendances, events }) {
             <P className="text-sm text-muted-foreground">Nessuna serata trovata per "{search}".</P>
           </Div>
         )}
-        {filtered.slice(0, shown).map(({ a, ev }) => {
-          const dow = getDow(ev.date);
-          const tables = calcTables(a.revenue || 0, dow);
-          return (
-            <Div
-              key={a.id}
-              className="rounded-xl bg-card border border-border px-3 py-2.5 grid items-center gap-2"
-              style={{ gridTemplateColumns: '1fr 80px 60px 60px' }}
-            >
-              <Div className="min-w-0">
-                <P className="font-semibold text-xs truncate leading-tight">{ev.name}</P>
-                <P className="text-[10px] text-muted-foreground leading-tight">
-                  {ev.date ? format(parseISO(ev.date), 'd MMM yy', { locale: it }) : ''}
-                </P>
-              </Div>
-              <Div className="text-right">
-                <P className="text-xs font-bold text-primary">€{(a.revenue || 0).toLocaleString('it-IT')}</P>
-              </Div>
-              <Div className="text-right">
-                <P className="text-xs font-semibold">{tables.toFixed(1).replace('.', ',')}</P>
-              </Div>
-              <Div className="text-right">
-                <P className="text-[10px] text-muted-foreground truncate">{ev.venue || '—'}</P>
-              </Div>
-            </Div>
-          );
-        })}
+        {filtered.slice(0, shown).map(({ a, ev }) => <SerataStatRow key={a.id} a={a} ev={ev} />)}
         {shown < filtered.length && <Div ref={sentinelRef} />}
       </Div>
     </Div>

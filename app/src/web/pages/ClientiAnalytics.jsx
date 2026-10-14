@@ -57,6 +57,27 @@ function ClientTick({ x, y, payload, data, fontSize = 9, maxLen = 10, width = 80
   );
 }
 
+// PORT: riga del riepilogo in memo: aggiungendo righe si disegnano solo quelle nuove (prima tutta la
+// tabella a ogni gruppo: costo che cresceva col quadrato delle righe)
+const SummaryRow = React.memo(function SummaryRow({ c, venues }) {
+  return (
+    <Tr className="border-b border-border/50 hover:bg-secondary/20 transition-colors">
+      <Td className="px-2.5 py-1.5 font-medium sticky left-0 bg-card whitespace-nowrap">
+        <Div className="flex items-center gap-1.5">
+          {c.photo_url && <Img src={c.photo_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} className="w-4 h-4 rounded-full object-cover shrink-0" />}
+          {c.name}
+        </Div>
+      </Td>
+      <Td className="px-2.5 py-1.5 text-center font-semibold">{c.visits}</Td>
+      {venues.map(venue => (
+        <Td key={venue} className="px-1.5 py-1.5 text-center text-[11px]">{c.venueCounts[venue] || 0}</Td>
+      ))}
+      <Td className="px-2.5 py-1.5 text-right font-bold text-primary whitespace-nowrap">€{c.totalSpent.toLocaleString('it-IT')}</Td>
+      <Td className="px-2.5 py-1.5 text-right text-muted-foreground whitespace-nowrap">€{c.avgSpent.toLocaleString('it-IT')}</Td>
+    </Tr>
+  );
+});
+
 export default function ClientiAnalytics() {
   const { user } = useAuth();
   const [metric, setMetric] = useState('totalSpent');
@@ -429,25 +450,14 @@ export default function ClientiAnalytics() {
             </Thead>
             <Tbody>
               {clientStats.slice(0, shownRows).map((c, i) => (
-                <Tr key={i} className="border-b border-border/50 hover:bg-secondary/20 transition-colors">
-                  <Td className="px-2.5 py-1.5 font-medium sticky left-0 bg-card whitespace-nowrap">
-                    <Div className="flex items-center gap-1.5">
-                      {c.photo_url && <Img src={c.photo_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} className="w-4 h-4 rounded-full object-cover shrink-0" />}
-                      {c.name}
-                    </Div>
-                  </Td>
-                  <Td className="px-2.5 py-1.5 text-center font-semibold">{c.visits}</Td>
-                  {tableVenues.map(venue => (
-                    <Td key={venue} className="px-1.5 py-1.5 text-center text-[11px]">{c.venueCounts[venue] || 0}</Td>
-                  ))}
-                  <Td className="px-2.5 py-1.5 text-right font-bold text-primary whitespace-nowrap">€{c.totalSpent.toLocaleString('it-IT')}</Td>
-                  <Td className="px-2.5 py-1.5 text-right text-muted-foreground whitespace-nowrap">€{c.avgSpent.toLocaleString('it-IT')}</Td>
-                </Tr>
+                <SummaryRow key={i} c={c} venues={tableVenues} />
               ))}
             </Tbody>
           </HtmlTable>
-          <Div ref={rowsSentinelRef} />
         </Div>
+        {/* PORT: fuori dallo scroll orizzontale (dentro, la posizione risultava sempre "vicina" e la
+            tabella cresceva fino all'ultima riga) */}
+        <Div ref={rowsSentinelRef} />
       </Div>
     </Div>
   );

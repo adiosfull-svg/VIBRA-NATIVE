@@ -19,6 +19,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { CrashBoundary, CrashOverlay, installCrashHandler } from '../lib/crashReport';
@@ -47,13 +48,18 @@ function RootNavigator() {
   );
 }
 
+// Stessi font dell'app web (index.html: Inter + Playfair Display). Sul telefono sono dentro l'app
+// (plugin expo-font in app.json, stessi nomi di famiglia): disponibili subito, senza il caricamento
+// asincrono dei 13 file che teneva lo schermo vuoto all'avvio. Sul web si caricano come prima.
+const WEB_FONTS = {
+  Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
+  Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black,
+  PlayfairDisplay_400Regular, PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold,
+};
+const useAppFonts = Platform.OS === 'web' ? () => useFonts(WEB_FONTS)[0] : () => true;
+
 export default function RootLayout() {
-  // Stessi font dell'app web (index.html: Inter + Playfair Display)
-  const [fontsLoaded] = useFonts({
-    Inter_100Thin, Inter_200ExtraLight, Inter_300Light, Inter_400Regular, Inter_500Medium,
-    Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black,
-    PlayfairDisplay_400Regular, PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold,
-  });
+  const fontsLoaded = useAppFonts();
   if (!fontsLoaded) return null;
   return (
     // hoverRootProps: chiude il tap per l'hover emulato (ui/gestures.ts)
