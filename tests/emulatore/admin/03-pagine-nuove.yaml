@@ -1,4 +1,5 @@
 # Admin: le pagine convertite il 14/10 si aprono (deep link) senza la schermata d'errore.
+# Testi attesi come regex .*testo.* (i testi dopo un'icona hanno uno spazio davanti).
 appId: com.vibra.mobile
 ---
 - launchApp
@@ -15,7 +16,7 @@ appId: com.vibra.mobile
 - openLink: vibra://serate
 - extendedWaitUntil:
     visible:
-      text: "Rettangolare|Si è verificato un errore"
+      text: ".*Rettangolare.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-serate
@@ -23,7 +24,7 @@ appId: com.vibra.mobile
 - openLink: vibra://importa-serata
 - extendedWaitUntil:
     visible:
-      text: "Serata 1|Si è verificato un errore"
+      text: ".*Serata 1.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-importa-serata
@@ -31,7 +32,7 @@ appId: com.vibra.mobile
 - openLink: vibra://locali
 - extendedWaitUntil:
     visible:
-      text: "Ammare Frontemare|Si è verificato un errore"
+      text: ".*Ammare Frontemare.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-locali
@@ -39,7 +40,7 @@ appId: com.vibra.mobile
 - openLink: vibra://report
 - extendedWaitUntil:
     visible:
-      text: "Tipo di confronto:|Si è verificato un errore"
+      text: ".*Tipo di confronto:.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-report
@@ -55,7 +56,7 @@ appId: com.vibra.mobile
 - openLink: vibra://promoter/prom000000000000000001
 - extendedWaitUntil:
     visible:
-      text: "Tavoli Chiusi per Categoria|Si è verificato un errore"
+      text: ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-promoter
@@ -63,7 +64,7 @@ appId: com.vibra.mobile
 - openLink: vibra://clienti-analytics
 - extendedWaitUntil:
     visible:
-      text: "Confronta le performance dei tuoi clienti|Si è verificato un errore"
+      text: ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-clienti-analytics
@@ -71,7 +72,7 @@ appId: com.vibra.mobile
 - openLink: vibra://notifiche
 - extendedWaitUntil:
     visible:
-      text: ".*Segna tutte lette|Si è verificato un errore"
+      text: ".*Segna tutte lette.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-notifiche
@@ -79,7 +80,7 @@ appId: com.vibra.mobile
 - openLink: vibra://formazione
 - extendedWaitUntil:
     visible:
-      text: "Presentazione|Si è verificato un errore"
+      text: ".*Presentazione.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-formazione
@@ -87,7 +88,7 @@ appId: com.vibra.mobile
 - openLink: vibra://download
 - extendedWaitUntil:
     visible:
-      text: "Tutti.*|Si è verificato un errore"
+      text: ".*Tutti.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-download
@@ -95,7 +96,7 @@ appId: com.vibra.mobile
 - openLink: vibra://vibra-gpt
 - extendedWaitUntil:
     visible:
-      text: "Da dove iniziamo?|Si è verificato un errore"
+      text: ".*Da dove iniziamo\\?.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-vibra-gpt
@@ -103,7 +104,7 @@ appId: com.vibra.mobile
 - openLink: vibra://ricerca-ai
 - extendedWaitUntil:
     visible:
-      text: "Da dove iniziamo?|Si è verificato un errore"
+      text: ".*Da dove iniziamo\\?.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-ricerca-ai
@@ -111,7 +112,7 @@ appId: com.vibra.mobile
 - openLink: vibra://admin-console
 - extendedWaitUntil:
     visible:
-      text: "Crediti AI|Si è verificato un errore"
+      text: ".*Crediti AI.*|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-admin-console
