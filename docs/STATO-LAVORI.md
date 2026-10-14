@@ -180,8 +180,8 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   di NativeWind (es. Div senza className a NativeWind, stili già calcolati) prima di ottimizzare DivBoxImpl.
 - Ridurre il costo del montaggio delle pagine (in base alla misura div-corpo): cache per className dei calcoli
   rimasti in `DivBoxImpl`, meno hook per Div, meno elementi nelle card più usate.
-- L'utente prova l'APK (ultimo [apk]: 7b4a48b del 12/10; i miglioramenti del 14/10 non sono ancora in un APK:
-  fare un commit con `[apk]` dopo aver chiarito il crash). Per ogni glitch: pagina/azione/screenshot.
+- L'utente prova l'APK: ultimo 17a7e66 del 14/10 (run 38507316797, dopo il giro emulatore 38505058808 tutto
+  verde), con i miglioramenti di fluidità del 14/10. Per ogni glitch: pagina/azione/screenshot.
 - Dati Base44 anonimizzati per lo stack di prova: rimandato dall'utente ("più avanti le autorizzazioni Base44").
 
 ## Da fare
