@@ -329,8 +329,9 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
               ? <SvgLine key={`cl${i}`} x1={plot.left - 6} x2={plot.left} y1={p} y2={p} stroke="#666" />
               : <SvgLine key={`cl${i}`} x1={p} x2={p} y1={plot.top + plot.height} y2={plot.top + plot.height + 6} stroke="#666" />;
           })}
-          {(x && !x.hide && x.axisLine !== false) && <SvgLine x1={plot.left} x2={plot.left + plot.width} y1={plot.top + plot.height} y2={plot.top + plot.height} stroke="#666" />}
-          {(y && !y.hide && y.axisLine !== false) && <SvgLine x1={plot.left} x2={plot.left} y1={plot.top} y2={plot.top + plot.height} stroke="#666" />}
+          {/* recharts non disegna l'asse delle categorie senza dati (nessun dominio) */}
+          {(x && !x.hide && x.axisLine !== false && !(x === catAxis && !data.length)) && <SvgLine x1={plot.left} x2={plot.left + plot.width} y1={plot.top + plot.height} y2={plot.top + plot.height} stroke="#666" />}
+          {(y && !y.hide && y.axisLine !== false && !(y === catAxis && !data.length)) && <SvgLine x1={plot.left} x2={plot.left} y1={plot.top} y2={plot.top + plot.height} stroke="#666" />}
 
           {/* serie */}
           {(() => {
