@@ -48,7 +48,7 @@ if (TEST_DIAG) {
   setInterval(() => {
     const now = Date.now();
     const parts = Object.entries(diagCounts).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`).join(' ');
-    const times = Object.entries(diagTimes).filter(([, v]) => v).map(([k, v]) => `${k}:${v}ms`).join(' ');
+    const times = Object.entries(diagTimes).filter(([, v]) => v).map(([k, v]) => `${k}:${Math.round(v)}ms`).join(' ');
     // ritardo del timer: quanto il thread JS è rimasto occupato
     console.log(`VIBRA diag battito ritardo=${now - last - 2000}ms frameMax=${frameMax}ms ${parts}${times ? ` | ${times}` : ''}`);
     for (const k of Object.keys(diagCounts)) diagCounts[k] = 0;

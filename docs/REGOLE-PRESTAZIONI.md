@@ -103,6 +103,12 @@ si montano solo le righe visibili più un margine (`overscan`).
 - Lavoro pesante dopo un tocco (salvataggi, ricalcoli, navigazione verso pagine pesanti): far partire
   prima il feedback visivo (animazione, pressed) e poi il lavoro (`InteractionManager.runAfterInteractions`
   o `requestAnimationFrame`).
+- **Intl su Android**: Hermes esegue `localeCompare`, `toLocaleString`, `toLocaleDateString` passando da
+  Java (ICU) a ogni chiamata. `lib/fastIntl.ts` (installato all'avvio, solo telefono) li rende veloci
+  (confronto e numeri it-IT in JS puro, formattatori riusati). Nel codice nuovo: per ordinare date ISO usare
+  il confronto diretto delle stringhe (`a < b`), non `localeCompare`; niente `new Intl.*` dentro i render
+  (crearli una volta a livello di modulo); niente lavoro pesante al caricamento dei moduli (ordinamenti,
+  indici: farli pigri, alla prima richiesta).
 - Hook che restituiscono oggetti o funzioni (`useRoleAccess`, fallback dei contesti): valore in `useMemo` /
   costanti di modulo, altrimenti ogni render fa ripartire effect e memo di chi li usa.
 - Strumenti per trovare chi si ridisegna: build di test con `EXPO_PUBLIC_TEST_TRACE=1` (cosa si disegna) e

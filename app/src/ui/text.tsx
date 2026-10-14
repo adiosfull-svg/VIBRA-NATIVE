@@ -6,7 +6,7 @@ import { Platform, StyleSheet, Text as RNText, type TextProps } from 'react-nati
 import { cn } from './cn';
 import { ARB_SIZE, fontSizeOf, inheritedLineHeight, inlineLineBox, lineHeightOf, strutDescent, textClassesFor } from './textLeading';
 import { nextTextStyle, weightClass, withoutClassOverrides, type TextStyle } from './textStyleInherit';
-import { diagCount } from '../lib/testDiag';
+import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
 import { webStyle } from './webStyle';
 
 export { textClassesFor };
@@ -134,7 +134,13 @@ function cssDefaults(merged: string, inherited: string, own: string, style: any,
 // (word-wrap: break-word): es. "€257.818" in una colonna stretta. Sul telefono resta il comportamento di RN.
 const WEB_NO_WORD_BREAK = Platform.OS === 'web' ? ({ wordWrap: 'normal', overflowWrap: 'normal' } as object) : null;
 
-export function Text({ className, style, numberOfLines, children, ...props }: AppTextProps) {
+export function Text(p: AppTextProps) {
+  if (!TEST_DIAG) return TextImpl(p);
+  const t = performance.now();
+  try { return TextImpl(p); } finally { diagTime('text-corpo', performance.now() - t); }
+}
+
+function TextImpl({ className, style, numberOfLines, children, ...props }: AppTextProps) {
   diagCount('text', typeof children === 'string' ? children : className);
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);

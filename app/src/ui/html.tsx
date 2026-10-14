@@ -16,7 +16,7 @@ import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
-import { diagCount } from '../lib/testDiag';
+import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
 import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from './webStyle';
 import { initialWindowMetrics } from 'react-native-safe-area-context';
@@ -728,7 +728,13 @@ function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProp
   return <DivBox {...props} ref={setRef} onLayout={handleLayout} animatedStyle={[animatedStyle, pin.style]} />;
 }
 
-function DivBox({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
+function DivBox(p: DivProps) {
+  if (!TEST_DIAG) return DivBoxImpl(p);
+  const t = performance.now();
+  try { return DivBoxImpl(p); } finally { diagTime('div-corpo', performance.now() - t); }
+}
+
+function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
   diagCount('div', className);
   const [handlers, props0] = splitGestureProps(all);
   // el.style.xxx = ... del codice web sul ref: istanza nativa con `style` (ui/domStyle)
