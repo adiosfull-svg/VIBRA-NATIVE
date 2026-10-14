@@ -1,6 +1,6 @@
 // Struttura di pagina di AppLayout.jsx: intestazione in linea + contenuto "main-content p-4"
 // (pt 0.5rem) + spazio in fondo per la barra di navigazione (4.5rem + safe area).
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, startTransition, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Platform, RefreshControl, ScrollView, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '../../../ui/cn';
@@ -39,6 +39,18 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   // contesto stabile dello schermo (useNavigation/useFocusEffect di expo-router ridisegnavano la Page a
   // ogni navigazione, anche delle altre tab)
   const navigation = useScreenNavigation();
+  // Pagina precaricata (montata senza focus, lib/preloadRoutes): il contenuto si monta in una transition,
+  // che React esegue a pezzi cedendo il passo ai tocchi. Prima il montaggio di una tab (1-2 mila elementi)
+  // bloccava il JS per secondi subito dopo l'avvio: un tocco in quel momento non rispondeva.
+  // Se la pagina prende il focus prima che la transition finisca, si monta subito (aggiornamento urgente).
+  const [contentReady, setContentReady] = useState(() => {
+    try { return navigation?.isFocused?.() ?? true; } catch { return true; }
+  });
+  useEffect(() => {
+    if (contentReady) return;
+    startTransition(() => setContentReady(true));
+    return navigation?.addListener?.('focus', () => setContentReady(true));
+  }, [contentReady, navigation]);
   // pull-to-refresh chiesto dal contenuto (hooks/usePullToRefresh.native): RefreshControl nativo,
   // gesto e animazione sul thread UI (docs/REGOLE-PRESTAZIONI.md §5)
   const pageRefresh = useRef<(() => Promise<unknown> | void) | null>(null);
@@ -140,7 +152,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
         <OwnPathProvider>
           <PageLayerContext.Provider value={layer}>
             <AppHeader title={title} />
-            <Div className={cn('p-4 pt-2', className)}>{children}</Div>
+            <Div className={cn('p-4 pt-2', className)}>{contentReady ? children : null}</Div>
           </PageLayerContext.Provider>
         </OwnPathProvider>
       </Animated.ScrollView>
