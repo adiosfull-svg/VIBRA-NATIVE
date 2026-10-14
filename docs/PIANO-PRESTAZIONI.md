@@ -45,3 +45,28 @@ Risultato: tabella nativa contro originale per sezione nel branch `emulatore-ris
   Quando l'originale cambia: `tools/web-ref/setup.sh <sorgente>`, `tools/gara/build-ref.sh /tmp/ref`,
   `tar -C /tmp/ref -czf tools/gara/riferimento.tar.gz .`.
 - Lanciare la gara: commit con `[gara]` nel messaggio (o Actions → Emulatore → gara=si).
+
+## Stato al 14/10 sera (gara sull'emulatore)
+
+Fatto:
+- avvio: moduli eseguiti al primo uso (metro `inlineRequires`), font dentro l'app (plugin expo-font),
+  R8 nella build release (plugin `withReleaseShrink`, da verificare che non rompa nulla);
+- disegni: elementi di riga senza misura e secondo disegno, Provider di contesto solo se servono,
+  `TextInherit` inline, stile delle classi statiche in cache sul telefono (`ui/classStyleCache.tsx`);
+- pagine: Analitica Clienti (tabella a gruppi, righe in memo, niente ciclo), Academy (anteprime solo
+  vicino allo schermo), `/dashboard` sulla tab precaricata, liste progressive senza riempimento in
+  background, IntersectionObserver vero (shims/dom), guscio non ridisegnato a ogni navigazione;
+- crash corretti: Academy (Svg con calc), Promoter (querySelector), blur della barra su pagina smontata.
+
+Risultati (gara del commit c7462d8, prima di cache classi/R8): all'apertura la nativa vince su 7 pagine
+su 12 (pr) e 6 su 14 (admin); avvio 5,5-8,3 s contro 3,6 s dell'originale.
+
+Ancora da fare (in ordine):
+1. leggere la gara con cache classi + R8 (banco: Div/Btn dovrebbero scendere verso View/Pressable);
+2. pagine che perdono ancora: Clienti, Promoter, Locali, Dashboard, Messaggi, Analitica (grafici);
+3. avvio: ~2,5 s prima del JS (processo + bundle), 1-2 s di JS prima della prima pagina;
+4. memoria: ~600-700 MB contro ~370 di Chrome (heap nativo ~370 MB);
+5. scorrimento: sull'emulatore senza GPU non è misurabile (pochi fps anche per Chrome): va provato su un
+   telefono vero;
+6. titoli lunghi dell'header: l'originale li lascia sbordare a 11px, noi mettiamo i puntini.
+

@@ -244,6 +244,10 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   verde), con i miglioramenti di fluidità del 14/10. Per ogni glitch: pagina/azione/screenshot.
 - Dati Base44 anonimizzati per lo stack di prova: rimandato dall'utente ("più avanti le autorizzazioni Base44").
 
+## Prestazioni (14/10 sera)
+Piano, strumenti e stato in `docs/PIANO-PRESTAZIONI.md` (gara nativa contro originale sullo stesso
+emulatore: commit con `[gara]`, risultati in gara.md nel branch emulatore-risultati-<run>-<utente>).
+
 ## Da fare
 1. **Prova dell'utente sull'APK** (ultima build: 11/10 sera): Il Mio Vibra (grafici tocco/pinch,
    note trascinabili, chat AI, Calcolatrice trascinabile, tab centrata), Weekend (menu del tasto lungo,
