@@ -12,6 +12,7 @@
 //    up/end, cancel) anche verso i listener di window/document, come nel browser: il codice web li
 //    registra lì (pressione lunga, trascinamenti). Senza, es. la card record non annullava mai il
 //    timer della pressione lunga e uno scorrimento apriva la condivisione.
+import { diagTime, TEST_DIAG } from '../lib/testDiag';
 import { useRef } from 'react';
 import { Platform, type GestureResponderEvent } from 'react-native';
 
@@ -119,9 +120,11 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
   }
   if (h.onTouchMove || h.onPointerMove || starts) {
     out.onTouchMove = (e: GestureResponderEvent) => {
+      const t0 = TEST_DIAG ? Date.now() : 0;
       ref.current.onTouchMove?.(webTouchEvent(e, 'touchmove'));
       ref.current.onPointerMove?.(webTouchEvent(e, 'pointermove'));
       if (starts) toWindow(e, ['pointermove', 'touchmove']);
+      if (TEST_DIAG) diagTime('gesti-move', Date.now() - t0);
     };
   }
   if (h.onTouchEnd || h.onPointerUp || hasMouse || starts) {

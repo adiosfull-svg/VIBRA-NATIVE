@@ -2,6 +2,7 @@
 // ResponsiveContainer, BarChart/LineChart/AreaChart (layout orizzontale e verticale), Bar (+Cell,
 // radius, stackId), Line/Area (monotone), XAxis/YAxis (tick, tickFormatter, width, hide, domain,
 // tick personalizzati), CartesianGrid, Tooltip (al tocco, formatter/content), Legend, RadarChart.
+import { diagCount } from '../lib/testDiag';
 import {
   Children, cloneElement, createContext, Fragment, isValidElement, useContext, useMemo, useState,
   type ReactElement, type ReactNode,
@@ -200,6 +201,7 @@ type CartesianProps = {
 };
 
 function CartesianChart({ kind, data = [], width: w, height: h, margin, layout = 'horizontal', barGap = 4, barCategoryGap = '10%', children, onClick }: CartesianProps & { kind: 'bar' | 'line' | 'area' }) {
+  diagCount('grafico');
   const { width, height } = useSize(w, h);
   const [active, setActive] = useState<number | null>(null);
   const kids = flatChildren(children);

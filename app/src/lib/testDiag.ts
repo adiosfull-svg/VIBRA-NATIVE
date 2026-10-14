@@ -18,14 +18,42 @@ export function diagTrace(label: string) {
   if (TEST_DIAG && TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${label}`);
 }
 
+/** Tempo (ms) speso in un punto del codice nel battito corrente (solo build di test). */
+export const diagTimes: Record<string, number> = {};
+export function diagTime(name: string, ms: number) {
+  if (!TEST_DIAG) return;
+  diagTimes[name] = (diagTimes[name] ?? 0) + ms;
+}
+/** Avvolge una funzione misurandone il tempo (identità invariata fuori dalle build di test). */
+export function diagTimed<F extends (...a: any[]) => any>(name: string, fn: F): F {
+  if (!TEST_DIAG) return fn;
+  return ((...a: any[]) => {
+    const t = Date.now();
+    try { return fn(...a); } finally { diagTime(name, Date.now() - t); }
+  }) as F;
+}
+
 if (TEST_DIAG) {
   let last = Date.now();
+  // frame del thread JS: il buco più lungo tra due requestAnimationFrame (= scatto più lungo)
+  let frameMax = 0;
+  let lastFrame = Date.now();
+  const onFrame = () => {
+    const now = Date.now();
+    frameMax = Math.max(frameMax, now - lastFrame);
+    lastFrame = now;
+    requestAnimationFrame(onFrame);
+  };
+  requestAnimationFrame(onFrame);
   setInterval(() => {
     const now = Date.now();
     const parts = Object.entries(diagCounts).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`).join(' ');
+    const times = Object.entries(diagTimes).filter(([, v]) => v).map(([k, v]) => `${k}:${v}ms`).join(' ');
     // ritardo del timer: quanto il thread JS è rimasto occupato
-    console.log(`VIBRA diag battito ritardo=${now - last - 2000}ms ${parts}`);
+    console.log(`VIBRA diag battito ritardo=${now - last - 2000}ms frameMax=${frameMax}ms ${parts}${times ? ` | ${times}` : ''}`);
     for (const k of Object.keys(diagCounts)) diagCounts[k] = 0;
+    for (const k of Object.keys(diagTimes)) diagTimes[k] = 0;
+    frameMax = 0;
     last = now;
   }, 2000);
 }

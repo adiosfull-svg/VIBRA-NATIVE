@@ -9,7 +9,7 @@ import { THEME } from '../../../ui/palette.generated';
 import AppHeader from './AppHeader';
 import { pageScroll } from '../../shims/pageScroll';
 import { OwnPathProvider, useScreenNavigation } from '../../router';
-import { dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
+import { diagCount, diagTime, dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
 import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
 
@@ -95,8 +95,11 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   }), [scrollY, contentListeners, scrollListeners, own]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     own.y = e.nativeEvent.contentOffset.y;
+    const t0 = TEST_DIAG ? Date.now() : 0;
     handle.current?.report(own.y);
+    const t1 = TEST_DIAG ? Date.now() : 0;
     scrollListeners.forEach((fn) => fn());
+    if (TEST_DIAG) { diagTime('scroll-globale', t1 - t0); diagTime('scroll-pagina', Date.now() - t1); diagCount('evento-scroll'); }
     onScroll?.(e);
   }, [onScroll, own, scrollListeners]);
   const animatedScroll = useMemo(
