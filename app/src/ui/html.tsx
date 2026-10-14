@@ -124,6 +124,17 @@ function useWebStyle(style: unknown): WebStyleResult {
  */
 const GridCellContext = createContext(false);
 
+/**
+ * true da quando `need` è stato vero almeno una volta. I Provider di contesto si inseriscono solo se il
+ * valore cambia rispetto al genitore (prima: sempre, 2-5 livelli in più per ogni Div e pulsante); una
+ * volta inseriti restano, così la struttura cambia al più una volta (un solo rimontaggio dei figli).
+ */
+function useSticky(need: boolean): boolean {
+  const r = useRef(false);
+  if (need) r.current = true;
+  return r.current;
+}
+
 // Figli che in CSS non si allungano all'altezza della riga della griglia
 const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
 // h-full in una cella: in CSS è l'altezza della riga della griglia (definita dopo il calcolo delle
@@ -885,11 +896,13 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   );
   const min = { minStyle: strut.style ? [min0b.minStyle, strut.style] : min0b.minStyle, onLayout: strut.onLayout };
   const lead = useLeadMargin(rnStyle);
-  let content0 = (
-    <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
-      <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>{boxContent(children, grid, rest)}</FlexRowContext.Provider>
-    </FlexParentContext.Provider>
-  );
+  const flowValue: ParentLayout = CSS_FLEX.test(rest) ? 'flex' : 'block';
+  const rowValue = !grid && isFlexRow(rest);
+  const needFlow = useSticky(flowValue !== layout);
+  const needRow = useSticky(rowValue !== rowParent);
+  let content0 = boxContent(children, grid, rest);
+  if (needRow) content0 = <FlexRowContext.Provider value={rowValue}>{content0}</FlexRowContext.Provider>;
+  if (needFlow) content0 = <FlexParentContext.Provider value={flowValue}>{content0}</FlexParentContext.Provider>;
   if (inner) content0 = <FlipContext.Provider value={inner.flip}>{content0}</FlipContext.Provider>;
   if (rigid.probe) content0 = <WrapProbeContext.Provider value={rigid.probe}>{content0}</WrapProbeContext.Provider>;
   if (Platform.OS !== 'web' && OPAQUE_BG.test(rest)) content0 = <OpaqueBehindContext.Provider value>{content0}</OpaqueBehindContext.Provider>;
@@ -1045,6 +1058,22 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const buttonCenter = button && !CSS_FLEX.test(rest) && rnStyle?.justifyContent == null ? BUTTON_CENTER : null;
   // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
   const [pressed, setPressed] = useState(false);
+  // contesti per i figli solo se cambiano rispetto al genitore (vedi useSticky)
+  const parentLead = useContext(LeadMarginContext);
+  const parentProbe = useContext(MinContentProbeContext);
+  const flowValue: ParentLayout = CSS_FLEX.test(rest) ? 'flex' : 'block';
+  const rowValue = !grid && isFlexRow(rest);
+  const needLead = useSticky(parentLead !== null);
+  const needGrid = useSticky(gridCell);
+  const needFlow = useSticky(flowValue !== layout);
+  const needRow = useSticky(rowValue !== rowParent);
+  const needProbe = useSticky(minContent.probe !== parentProbe);
+  let content: ReactNode = textInherit(inheritedStyle, inherited, text, rnStyle, boxContent(children, grid, rest));
+  if (needProbe) content = <MinContentProbeContext.Provider value={minContent.probe}>{content}</MinContentProbeContext.Provider>;
+  if (needRow) content = <FlexRowContext.Provider value={rowValue}>{content}</FlexRowContext.Provider>;
+  if (needFlow) content = <FlexParentContext.Provider value={flowValue}>{content}</FlexParentContext.Provider>;
+  if (needGrid) content = <GridCellContext.Provider value={false}>{content}</GridCellContext.Provider>;
+  if (needLead) content = <LeadMarginContext.Provider value={null}>{content}</LeadMarginContext.Provider>;
   return (
     <Pressable
       onLayout={min.onLayout}
@@ -1059,17 +1088,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
-      <LeadMarginContext.Provider value={null}>
-      <GridCellContext.Provider value={false}>
-        <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
-          <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>
-            <MinContentProbeContext.Provider value={minContent.probe}>
-              {textInherit(inheritedStyle, inherited, text, rnStyle, boxContent(children, grid, rest))}
-            </MinContentProbeContext.Provider>
-          </FlexRowContext.Provider>
-        </FlexParentContext.Provider>
-      </GridCellContext.Provider>
-      </LeadMarginContext.Provider>
+      {content}
     </Pressable>
   );
 }
