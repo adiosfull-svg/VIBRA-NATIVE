@@ -157,7 +157,8 @@ function computeNormalized(className?: string): Normalized {
       : `0px 0px 0px ${w}px ${color}`;
   }
   if (isGrid) {
-    out.grid = { cols, gapX: gapX ?? gap ?? 0, gapY: gapY ?? gap ?? 0, ...(template ? { template } : null) };
+    // con una sola colonna il gap orizzontale in CSS non c'è (niente rientro ai lati delle celle)
+    out.grid = { cols, gapX: cols > 1 ? gapX ?? gap ?? 0 : 0, gapY: gapY ?? gap ?? 0, ...(template ? { template } : null) };
     // la griglia è resa come righe a capo: i gap li applica Div sui wrapper dei figli
     for (let i = box.length - 1; i >= 0; i--) if (/^gap(-[xy])?-/.test(box[i])) box.splice(i, 1);
     // colonne uguali: righe a capo; colonne miste (template): una riga per gruppo di celle (Div)

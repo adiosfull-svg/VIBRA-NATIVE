@@ -20,6 +20,8 @@ test('griglia: colonne e gap, varianti responsive scartate', () => {
   assert.deepEqual(n.grid, { cols: 4, gapX: 4, gapY: 4 });
   assert.equal(n.box, 'pl-12 flex-row flex-wrap');
   assert.deepEqual(normalizeClasses('grid grid-cols-2 gap-x-3 gap-y-2').grid, { cols: 2, gapX: 12, gapY: 8 });
+  // una colonna (es. DialogContent `grid gap-4`): niente gap orizzontale
+  assert.deepEqual(normalizeClasses('grid gap-4 p-6').grid, { cols: 1, gapX: 0, gapY: 16 });
 });
 
 test('gradienti con colori risolti', () => {

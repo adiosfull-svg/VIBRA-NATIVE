@@ -170,13 +170,14 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- **Crash nativo da verificare**: nel giro 38497270069 (commit 6bfd611, con fastIntl) l'app è caduta UNA volta
-  all'avvio del percorso 04-dettaglio con SIGSEGV dentro libhermesvm (rilevato da gwp_asan), mai visto nei ~16
-  giri precedenti. Lanciati due giri completi di verifica (run 38499030579 e 38499032795) e uno di misura
-  (02-clienti, tempi div-corpo/text-corpo): leggerne i risultati
-  (`git clone --depth 1 -b emulatore-risultati-<run>-pr ...`, cercare `Fatal signal` in logcat-full.txt).
-  Se il crash si ripete e sparisce togliendo `fastIntlInstall`, indagare la patch delle date (Intl.DateTimeFormat
-  riusati) o limitare la patch a localeCompare + numeri.
+- **Crash nativo (14/10): non ripetuto.** I due giri completi di verifica sul commit 6bfd611 (38499030579,
+  38499032795; pr e admin) sono passati senza crash dell'app (`Fatal signal` nel giro 38499032795 = SIGILL di
+  `googlequicksearchbox`, app di sistema, all'avvio dell'emulatore; le righe "app died" = Maestro che chiude l'app
+  tra un percorso e l'altro). fastIntl resta. Se ricapita: cercare `Fatal signal` con pid di `com.vibra.mobile`.
+- **Misura del giro 38499126870** (02-clienti): nei frame lunghi (1-3,6 s) il corpo di Div pesa 100-670 ms e Text
+  <110 ms per battito (es. 827 div/535 text/358 btn: frame 3600 ms, corpi 433 ms) → ~15-35%: il grosso è
+  React + jsx di NativeWind (react-native-css-interop) + commit di Fabric. Prossima misura: tempo nel wrapper
+  di NativeWind (es. Div senza className a NativeWind, stili già calcolati) prima di ottimizzare DivBoxImpl.
 - Ridurre il costo del montaggio delle pagine (in base alla misura div-corpo): cache per className dei calcoli
   rimasti in `DivBoxImpl`, meno hook per Div, meno elementi nelle card più usate.
 - L'utente prova l'APK (ultimo [apk]: 7b4a48b del 12/10; i miglioramenti del 14/10 non sono ancora in un APK:
