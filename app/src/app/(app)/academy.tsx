@@ -1,5 +1,14 @@
-import { ComingSoon } from '../../components/ComingSoon';
+// Route /academy → pagina portata da src/pages/VibraAcademy.jsx.
+import { memo } from 'react';
+import VibraAcademyPage from '../../web/pages/VibraAcademy';
+import Page from '../../web/components/layout/Page';
 
-export default function Academy() {
-  return <ComingSoon source="porting di /academy" />;
+const VibraAcademy = memo(VibraAcademyPage);
+
+export default function VibraAcademyRoute() {
+  return (
+    <Page>
+      <VibraAcademy />
+    </Page>
+  );
 }

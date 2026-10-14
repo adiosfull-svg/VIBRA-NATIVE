@@ -45,6 +45,10 @@ const UI_MAP = {
 
 function rewriteImport(src) {
   if (src === 'lucide-react') return '@/ui/icons.generated';
+  if (src === '@hello-pangea/dnd') return '@/web/shims/dnd';
+  if (src === 'react-markdown') return '@/ui/markdown';
+  if (src === 'react-leaflet') return '@/web/shims/react-leaflet';
+  if (src === 'leaflet') return '@/web/shims/leaflet';
   if (src === '@/api/base44Client') return '@/lib/base44';
   if (src === 'react-router-dom') return '@/web/router';
   if (src === '@/lib/AuthContext') return '@/lib/auth';
@@ -153,10 +157,7 @@ export function transform(code, originalPath = '') {
       const next = rewriteImport(src);
       if (next !== src) p.node.source = b.stringLiteral(next);
       if (src === 'uplot') todos.push('uplot: grafico da rifare con @/ui/recharts');
-      if (src === 'react-leaflet' || src === 'leaflet') todos.push('mappa: react-native-maps');
-      if (src === '@hello-pangea/dnd') todos.push('drag & drop: react-native-draggable-flatlist');
       if (src === 'html2canvas') todos.push('immagine: react-native-view-shot');
-      if (src === 'react-markdown') todos.push('markdown: react-native-markdown-display');
       if (/\.css$/.test(src)) { p.prune(); return false; }
       return false;
     },

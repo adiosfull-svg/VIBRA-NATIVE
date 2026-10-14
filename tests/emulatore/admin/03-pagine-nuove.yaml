@@ -72,7 +72,7 @@ appId: com.vibra.mobile
 - openLink: vibra://notifiche
 - extendedWaitUntil:
     visible:
-      text: ".*Segna tutte lette.*|Si è verificato un errore"
+      text: ".*Benvenuto in Vibra mobile.*|.*non lett.*|Nessuna notifica|Si è verificato un errore"
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-notifiche
@@ -116,4 +116,28 @@ appId: com.vibra.mobile
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: pagina-admin-console
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://promoter
+- extendedWaitUntil:
+    visible:
+      text: ".*Aggiungi promoter.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-promoter-lista
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://impostazioni-app
+- extendedWaitUntil:
+    visible:
+      text: ".*Branding.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-impostazioni
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://academy
+- extendedWaitUntil:
+    visible:
+      text: ".*Benvenuto in Vibra.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-academy
 - assertNotVisible: "Si è verificato un errore"

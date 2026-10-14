@@ -27,7 +27,7 @@ export type WrapProbe = { flexible: boolean; mark: () => void };
 export const WrapProbeContext = createContext<WrapProbe | null>(null);
 
 /** Testo con almeno uno spazio fra due parole (in CSS una parola sola non va a capo). */
-function hasBreakableText(children: ReactNode): boolean {
+export function hasBreakableText(children: ReactNode): boolean {
   if (typeof children === 'string') return /\S\s+\S/.test(children);
   if (Array.isArray(children)) {
     const flat = children.filter((c) => typeof c === 'string' || typeof c === 'number').join('');
@@ -138,6 +138,19 @@ const WEB_NO_WORD_BREAK = Platform.OS === 'web' ? ({ wordWrap: 'normal', overflo
  *  spezzata a metà (in CSS sborda dalla cella; Android la divide lettera per lettera). */
 export const NarrowCellContext = createContext(false);
 
+/** Pulsante che misura la sua larghezza min-content (html.tsx, useButtonMinContent): il testo riporta la
+ *  sua larghezza su una riga e quella stimata della parola più lunga. */
+export type MinContentProbe = { report: (textWidth: number, wordWidth: number) => void };
+export const MinContentProbeContext = createContext<MinContentProbe | null>(null);
+
+function plainText(children: ReactNode): string | null {
+  if (typeof children === 'string' || typeof children === 'number') return String(children);
+  if (Array.isArray(children) && children.every((c) => typeof c === 'string' || typeof c === 'number' || c == null || typeof c === 'boolean')) {
+    return children.filter((c) => typeof c === 'string' || typeof c === 'number').join('');
+  }
+  return null;
+}
+
 function longestWord(children: ReactNode): string | null {
   const flat = typeof children === 'string' || typeof children === 'number' ? String(children)
     : Array.isArray(children) && children.every((c) => typeof c === 'string' || typeof c === 'number' || c == null || typeof c === 'boolean')
@@ -179,6 +192,8 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   const probe = useContext(WrapProbeContext);
   const narrow = useContext(NarrowCellContext) && Platform.OS !== 'web';
   const word = narrow && !numberOfLines && !truncate && !clamp ? longestWord(children) : null;
+  const mcProbe = useContext(MinContentProbeContext);
+  const flatText = mcProbe ? plainText(children) : null;
   const [broken, setBroken] = useState<string | null>(null);
   const [wordWidth, setWordWidth] = useState<{ word: string; width: number } | null>(null);
   if (probe && !probe.flexible && !numberOfLines && !truncate && !clamp && !/(^|\s)whitespace-nowrap(\s|$)/.test(merged) && hasBreakableText(children)) probe.mark();
@@ -191,7 +206,17 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
       className={merged}
       // il peso è già nel file del font: fontWeight lo raddoppierebbe su Android
       style={[...textStyle, minWord]}
-      onTextLayout={word ? (e) => { props.onTextLayout?.(e); if (broken !== word && brokeWord(e.nativeEvent.lines)) setBroken(word); } : props.onTextLayout}
+      onTextLayout={word || (mcProbe && flatText) ? (e) => {
+        props.onTextLayout?.(e);
+        const lines = e.nativeEvent.lines;
+        if (word && broken !== word && brokeWord(lines)) setBroken(word);
+        // alla larghezza naturale il testo sta su una riga: parola più lunga stimata in proporzione ai caratteri
+        if (mcProbe && flatText && lines.length) {
+          const w = Math.max(...lines.map((l) => l.width));
+          const longest = flatText.split(/\s+/).reduce((a, b) => (b.length > a.length ? b : a), '');
+          mcProbe.report(w, (w * longest.length) / Math.max(1, flatText.length) + 2);
+        }
+      } : props.onTextLayout}
     >
       {/* i figli (testo annidato, icone) ereditano colore e stile come in CSS */}
       <FlexParentContext.Provider value="text">

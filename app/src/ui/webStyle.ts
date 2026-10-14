@@ -239,7 +239,8 @@ export function webStyle(input: unknown, web = false): WebStyleResult {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return { style: (input as AnyStyle) ?? {} };
   const style: AnyStyle = {};
   let gradient: WebStyleResult['gradient'];
-  for (const [k, v] of Object.entries(input as AnyStyle)) {
+  const src = input as AnyStyle;
+  for (const [k, v] of Object.entries(src)) {
     if (k === 'pointerEvents') { style.pointerEvents = v === 'none' ? 'none' : 'auto'; continue; }
     if (web && k === 'transition' && typeof v === 'string') { Object.assign(style, parseTransition(v)); continue; }
     if (v == null || DROP.has(k)) continue;
@@ -296,7 +297,19 @@ export function webStyle(input: unknown, web = false): WebStyleResult {
       && k !== 'flexWrap' && k !== 'textDecorationLine' && k !== 'borderStyle' && k !== 'objectFit' && k !== 'aspectRatio'
       && k !== 'flex' && k !== 'rotate') {
       const len = cssLength(v);
-      if (len === undefined) continue; // calc() con %, ecc.: non convertibili
+      if (len === undefined) {
+        // width/height: calc(100% ± Npx) di un elemento ancorato a sinistra/in alto → right/bottom: ∓N (stesso
+        // riquadro); sul web il calc passa così com'è
+        const pc = (k === 'width' || k === 'height') ? v.replace(/\s+/g, ' ').match(/^calc\(100% ([+-]) ?(\d+(?:\.\d+)?)px\)$/) : null;
+        if (pc && web) { style[k] = v; continue; }
+        if (pc) {
+          const n = Number(pc[2]) * (pc[1] === '+' ? 1 : -1);
+          const [a, b] = k === 'width' ? ['left', 'right'] : ['top', 'bottom'];
+          if (src[a] != null && src[b] == null) { style[b] = -n; continue; }
+          if (src[b] != null && src[a] == null) { style[a] = -n; continue; }
+        }
+        continue; // calc() con %, ecc.: non convertibili
+      }
       style[k] = len;
       continue;
     }

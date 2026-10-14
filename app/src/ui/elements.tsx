@@ -24,7 +24,7 @@ import { webStyle } from './webStyle';
 import { IMAGE_CACHE, markImageWarm } from './imageCache';
 import { inheritedLineHeight } from './textLeading';
 import { useFocusStyle } from './useFocusStyle';
-import RNSvg, { type SvgProps } from 'react-native-svg';
+import RNSvg, { Path as SvgPath, type PathProps, type SvgProps } from 'react-native-svg';
 
 // ── <img> ────────────────────────────────────────────────────────────────────
 cssInterop(Image, { className: 'style' });
@@ -346,4 +346,20 @@ export function Svg({ className, color: ownColor, ...p }: SvgProps & { className
   return <SvgBox {...p} {...(color ? { color } : null)} className={cn(color ? '' : cn('text-foreground', inheritedColor), className)} />;
 }
 
-export { Circle, Defs, ForeignObject, G, Line, LinearGradient as SvgLinearGradient, Path, Polygon, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
+export { Circle, Defs, ForeignObject, G, Line, LinearGradient as SvgLinearGradient, Polygon, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
+
+/** <path>: sul telefono il ref ha anche setAttribute('d', ...) come nel DOM (→ setNativeProps), usato dal
+ *  codice portato per ridisegnare un tracciato senza re-render (es. bordo del binario di Academy). */
+export const Path = forwardRef<any, PathProps>((props, ref) => {
+  const setRef = useCallback((node: any) => {
+    if (node && Platform.OS !== 'web' && !node.setAttribute) {
+      try {
+        node.setAttribute = (name: string, value: unknown) => { try { node.setNativeProps?.({ [name]: value }); } catch { /* non accettato */ } };
+      } catch { /* istanza non estendibile */ }
+    }
+    if (typeof ref === 'function') ref(node);
+    else if (ref) (ref as { current: unknown }).current = node;
+  }, [ref]);
+  return <SvgPath ref={setRef} {...props} />;
+});
+Path.displayName = 'Path';

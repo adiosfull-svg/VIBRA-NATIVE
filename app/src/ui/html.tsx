@@ -6,7 +6,7 @@ import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
-import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
+import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
@@ -14,7 +14,7 @@ import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
-import { FlexParentContext, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
+import { FlexParentContext, hasBreakableText, MinContentProbeContext, type MinContentProbe, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
 import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
@@ -548,6 +548,36 @@ const OUT_OF_FLOW_CLASS = /(^|\s)(absolute|fixed|hidden)(\s|$)/;
 const isFlexRow = (cls: string) => FLEX_ROW.test(cls) && !FLEX_COL.test(cls);
 
 const RIGID_BTN = { flexShrink: 0 };
+const WEB_MIN_CONTENT = { minWidth: 'min-content' } as unknown as ViewStyle;
+
+/**
+ * min-width: auto (CSS) di un pulsante in una riga flex con testo che va a capo: non si restringe sotto
+ * la sua larghezza min-content (parola più lunga). Web: la regola CSS. Telefono: un layout alla larghezza
+ * naturale, il testo dice la sua larghezza e quella della parola più lunga (MinContentProbeContext,
+ * text.tsx), minWidth = naturale − testo + parola.
+ */
+function useButtonMinContent(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
+  const web = Platform.OS === 'web';
+  const sig = enabled && !web ? textSignature(children) : '';
+  const [done, setDone] = useState<{ sig: string; min: number } | null>(null);
+  const measuring = enabled && !web && done?.sig !== sig;
+  const acc = useRef<{ w?: number; text?: number; word?: number }>({});
+  if (measuring && acc.current.w === undefined && acc.current.text === undefined) acc.current = {};
+  const finish = () => {
+    const a = acc.current;
+    if (a.w != null && a.text != null && a.word != null) setDone({ sig, min: Math.ceil(a.w - a.text + a.word) });
+  };
+  const probe = useMemo<MinContentProbe | null>(() => (measuring ? { report: (text, word) => { acc.current.text = text; acc.current.word = word; finish(); } } : null), [measuring, sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    onLayout?.(e);
+    if (measuring) { acc.current.w = e.nativeEvent.layout.width; finish(); }
+  }, [onLayout, measuring, sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!enabled) return { style: null, onLayout, probe: null };
+  if (web) return { style: WEB_MIN_CONTENT, onLayout, probe: null };
+  if (measuring) return { style: MEASURE_NATURAL, onLayout: handleLayout, probe };
+  return { style: { minWidth: done!.min }, onLayout, probe: null };
+}
+const MEASURE_NATURAL = { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const };
 const SIZED = /(^|\s)(w|h|size)-/;
 /** Contenuto che in CSS non va mai a capo: testi di una parola, icone con dimensione, Span/P con questi. */
 function unbreakableContent(children: ReactNode): boolean {
@@ -975,6 +1005,12 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const rigidBtn = rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
     && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && unbreakableContent(children)
     ? RIGID_BTN : null;
+  // testo che va a capo (es. pillola "Ordine aggiunta"): non sotto la parola più lunga (min-content)
+  const minContent = useButtonMinContent(
+    rowParent && !rigidBtn && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
+      && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && hasBreakableText(children),
+    children, min0.onLayout,
+  );
   const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
     ? { alignSelf: inlineAlign(inherited) } : null;
@@ -982,7 +1018,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const strut = useInlineBlockStrut(
     layout === 'block' && !gridCell && (inlineButton != null || INLINE_LEVEL.test(rest)) && !OUT_OF_FLOW_CLASS.test(rest) && !OWN_MARGIN_Y.test(rest)
       && rnStyle?.marginTop == null && rnStyle?.marginBottom == null && rnStyle?.marginVertical == null && rnStyle?.margin == null,
-    inherited, text, rest, min0.onLayout,
+    inherited, text, rest, minContent.onLayout,
   );
   const min = { minStyle: strut.style ? [min0.minStyle, strut.style] : min0.minStyle, onLayout: strut.onLayout };
   // il <button> del browser centra in verticale il contenuto quando è più alto (salvo flex/grid)
@@ -1000,14 +1036,16 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <LeadMarginContext.Provider value={null}>
       <GridCellContext.Provider value={false}>
         <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
           <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>
-            <TextInherit inherited={inherited} text={text} style={rnStyle}>{boxContent(children, grid, rest)}</TextInherit>
+            <MinContentProbeContext.Provider value={minContent.probe}>
+              <TextInherit inherited={inherited} text={text} style={rnStyle}>{boxContent(children, grid, rest)}</TextInherit>
+            </MinContentProbeContext.Provider>
           </FlexRowContext.Provider>
         </FlexParentContext.Provider>
       </GridCellContext.Provider>

@@ -10,6 +10,9 @@ const CSS = `
 .semina-flip-back.semina-flip-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotateY(180deg); }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+/* icone: come le View di RN-web, relative (altrimenti finivano sotto a un gradiente assoluto fratello) */
+svg:not(.absolute):not(.fixed) { position: relative; }
+.vibra-rich-editor:empty::before { content: attr(data-placeholder); color: rgba(135, 135, 146, 0.5); }
 `;
 
 if (typeof document !== 'undefined' && !document.getElementById('vibra-custom-css')) {

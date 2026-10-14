@@ -110,3 +110,10 @@ test('webStyle: max()/min() di lunghezze assolute (aree sicure)', () => {
     Object.assign(cssViewport, { insetBottom: 0 });
   }
 });
+
+test('webStyle: width calc(100% + Npx) con left → right negativo (sul web il calc resta)', () => {
+  assert.equal(webStyle({ left: 0, width: 'calc(100% + 16px)' }).style.right, -16);
+  assert.equal(webStyle({ left: 0, width: 'calc(100% + 16px)' }).style.width, undefined);
+  assert.equal(webStyle({ top: 0, height: 'calc(100% - 8px)' }).style.bottom, 8);
+  assert.equal(webStyle({ left: 0, width: 'calc(100% + 16px)' }, true).style.width, 'calc(100% + 16px)');
+});

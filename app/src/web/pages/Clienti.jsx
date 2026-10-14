@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { useViewAsPromoter } from '@/lib/viewAs';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
-import { Plus, Search, Users, Trash2, BarChart2, Upload, RotateCcw, X, Link2, Wallet, GitBranch, Filter, MapPin, AlertCircle, ChevronDown, UserPlus, CalendarPlus, Table2, Trophy } from '@/ui/icons.generated';
+import { Plus, Search, Users, Trash2, BarChart2, Upload, RotateCcw, X, Link2, Wallet, GitBranch, Filter, MapPin, AlertCircle, ChevronDown, UserPlus, CalendarPlus, Table2, Trophy, Network } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 import SortPills from '@/web/components/shared/SortPills';
 import { useStickySentinel } from '@/web/hooks/useStickySentinel';
@@ -40,6 +40,7 @@ import ClientStatsBar from '@/web/components/client/ClientStatsBar';
 import ClientFamilyTree from '@/web/components/client/ClientFamilyTree';
 import ClientScrollSearch from '@/web/components/client/ClientScrollSearch';
 const ClientiAnalytics = React.lazy(() => import('@/web/pages/ClientiAnalytics'));
+const ComitiveTab = React.lazy(() => import('@/web/components/client/comitive/ComitiveTab'));
 import ClientMap from '@/web/components/client/ClientMap';
 import ClientGroupsView from '@/web/components/client/ClientGroupsView';
 import ClientTabelleTab from '@/web/components/client/ClientTabelleTab';
@@ -76,6 +77,7 @@ const TABS = [
   { key: 'gruppi', label: 'Gruppi', icon: Link2 },
   { key: 'parco', label: 'Parco Paganti', icon: Wallet },
   { key: 'albero', label: 'Albero', icon: GitBranch },
+  { key: 'comitive', label: 'Comitive', icon: Network },
   { key: 'tabelle', label: 'Tabelle', icon: Table2 },
   { key: 'growth', label: 'Growth', icon: Trophy },
   { key: 'analitica', label: 'Analitica', icon: BarChart2 },
@@ -567,6 +569,7 @@ export default function Clienti() {
       (
         activeTab === 'clienti' ||
         activeTab === 'albero' ||
+        activeTab === 'comitive' ||
         activeTab === 'mappa' ||
         activeTab === 'tabelle'
       ) &&
@@ -1521,6 +1524,19 @@ export default function Clienti() {
               setDetailClient(c)
             }
           />
+        </Div>
+      }
+
+      {activeTab === 'comitive' &&
+        <Div className="dash-fade-up min-h-[calc(100dvh-7.5rem)]">
+          <Suspense fallback={<Div className="flex items-center justify-center h-64"><Div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></Div>}>
+            <ComitiveTab
+              clients={clients}
+              events={events}
+              promoterId={promoterId}
+              onClientClick={(c) => setDetailClient(c)}
+            />
+          </Suspense>
         </Div>
       }
 

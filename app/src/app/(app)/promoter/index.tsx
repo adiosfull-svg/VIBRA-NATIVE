@@ -1,5 +1,17 @@
-import { ComingSoon } from '../../../components/ComingSoon';
+// Route /promoter → pagina portata da src/pages/Promoter.jsx (RoleGate "promoter").
+import { memo } from 'react';
+import PromoterPage from '../../../web/pages/Promoter';
+import RoleGate from '../../../web/components/RoleGate';
+import Page from '../../../web/components/layout/Page';
 
-export default function Promoter() {
-  return <ComingSoon source="porting di /promoter" />;
+const Promoter = memo(PromoterPage);
+
+export default function PromoterRoute() {
+  return (
+    <Page>
+      <RoleGate routeName="promoter">
+        <Promoter />
+      </RoleGate>
+    </Page>
+  );
 }

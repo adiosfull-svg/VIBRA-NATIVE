@@ -92,12 +92,26 @@
     il `parseUTC` dell'originale dava "Invalid time value").
   - numeri sul telefono (`fastIntl`): punto delle migliaia già da 4 cifre come Chrome (6.182), non come l'ICU
     di Node/Hermes (6182).
-  - DA FARE (solo telefono): Android spezza le parole lettera per lettera quando non c'è spazio, il browser
-    le fa debordare (CSS overflow-wrap normal): celle `grid-cols-6` di Locali (VenueCard), pulsante "Aggiorna"
-    di Messaggi. Serve la larghezza min-content della parola più lunga (es. misura con onTextLayout).
-  - DA FARE (telefono, visto sull'emulatore 38589820760): VibraGPT/Ricerca AI aprono subito la tastiera (campo con
-    autofocus) e la barra di scrittura resta sotto la tastiera (nell'originale `kbH` da visualViewport la
-    alza): sistemare lo shim visualViewport o l'autofocus. Titolo dell'header sfocato doppio in quella pagina.
+  - min-width: auto (min-content) dei pulsanti in una riga flex: senza testo a capo → flexShrink 0 (statico);
+    con testo a capo → web `min-width: min-content`, telefono una misura (onTextLayout, MinContentProbeContext).
+    Celle di griglie 3+ colonne sul telefono: parola spezzata → misurata, diventa minWidth (NarrowCellContext).
+  - shim visualViewport sul telefono (Keyboard): barra di VibraGPT, ricerca, menu sopra la tastiera; VibraGPT
+    senza fuoco automatico sul telefono. Vetro dentro uno sfondo pieno: niente blur della pagina sotto.
+  - `calc(100% ± Npx)` di larghezza/altezza con left/top → right/bottom negativo; Path con setAttribute sul
+    telefono (bordo del binario di Academy); icone SVG relative sul web (customCss.web.ts).
+  - liste lunghe: `web/hooks/useProgressiveList` (montaggio progressivo, righe ad altezza variabile): Serate,
+    Promoter > Serate, selettore del Report, conversazioni di Messaggi, log della Console Admin.
+  - 14/10 sera: Promoter (lista), Impostazioni app, Academy convertite (58 file). Shim `react-leaflet`/`leaflet`
+    (`web/shims`, mappa vera in `ui/map/genericMap` + `leafletGeneric.ts`: GeoJSON con stile/tooltip/hover,
+    segnaposto, popup come scheda nativa): mappa di copertura di Napoli. `lib/pagePreload` = no-op.
+    Editor di testo formattato `ui/richEditor` (contentEditable vero, WebView sul telefono): notifiche manuali.
+  - L'ORIGINALE CAMBIA: confronto automatico dei file convertiti con l'originale di oggi (codemod in una
+    cartella temporanea + diff a token): trovata la tab "Comitive" di Clienti (nuova), aggiunta. Rifarlo
+    ogni tanto (vedi sessione del 14/10). Icone nuove: `node scripts/gen_icons.mjs <src> tools/web-ref/.app/node_modules`;
+    `scripts/port/check-imports.mjs` controlla anche pacchetti npm e icone mancanti.
+  - CRASH nativo all'avvio (2 su ~20 giri): SIGSEGV dentro GWP-ASan (android_unsafe_frame_pointer_chase in
+    GuardedPoolAllocator::deallocate da libhermesvm), non un errore di memoria dell'app → plugin
+    `app/plugins/withGwpAsanOff.js` (android:gwpAsanMode="never"). Verificare nei prossimi giri.
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 
