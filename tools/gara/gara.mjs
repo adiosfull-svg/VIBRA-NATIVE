@@ -18,6 +18,8 @@ const sh = (cmd) => adb('shell', cmd);
 const log = (...a) => console.log('[gara]', ...a);
 const risultati = { utente, avvio: { nativa: [], originale: [] }, pagine: {}, memoria: {}, note: [] };
 const riga = (p) => (risultati.pagine[p] ??= { nativa: {}, originale: {} });
+// pagine della barra in basso (tab): non si torna indietro (dalla tab si uscirebbe dall'app)
+const TAB = new Set(['/', '/dashboard', '/programmazione', '/clienti', '/semine', '/il-mio-vibra']);
 
 // ── logcat in streaming (orari epoch del telefono) ──
 const logLines = [];
@@ -140,13 +142,17 @@ async function nativa() {
     const start = waitLog(new RegExp(`Start proc \\d+:${PKG.replace(/\./g, '\\.')}/`), 20000);
     const jsStart = waitLog(/VIBRA gara js-inizio /, 60000);
     const ready = waitLog(/VIBRA gara pronta avvio /, 60000);
+    const preloaded = waitLog(/VIBRA gara precarica fine/, 90000);
     sh(`monkey -p ${PKG} -c android.intent.category.LAUNCHER 1`);
     const [s, j, r] = await Promise.all([start, jsStart, ready]);
     if (!s || !r) { risultati.note.push(`nativa avvio ${i + 1}: ${!s ? 'processo non visto' : 'pronta non arrivata'}`); continue; }
     const v = kv(r.msg);
     // jsInizio: processo → prima riga di JS (nativo + bundle); pronta: processo → prima pagina ferma
     risultati.avvio.nativa.push({ pronta: v.fine - s.t, jsInizio: j ? kv(j.msg).fine - s.t : null, primo: v.primo, nonSiFerma: /NONSIFERMA/.test(r.msg) });
-    await sleep(9000); // precaricamento delle tab finito prima della misura successiva
+    // precaricamento delle tab finito prima della misura successiva (altrimenti il suo lavoro finiva
+    // nei tempi della prima pagina)
+    await preloaded;
+    await sleep(1500);
   }
   for (const giro of [1, 2]) {
     for (const p of pagine) {
@@ -160,6 +166,9 @@ async function nativa() {
       await sleep(600);
       if (giro === 1) dest.scorrimento = await scorri();
       log('nativa', giro, p, JSON.stringify(dest[`giro${giro}`]));
+      // come l'uso reale (il menu sostituisce la pagina): ogni apertura parte dalla stessa pila, senza
+      // le pagine precedenti montate sotto (prima si accumulavano e la 2ª apertura le smontava)
+      if (!TAB.has(p)) { sh('input keyevent 4'); await sleep(900); }
     }
   }
   risultati.memoria.nativa = pss((n) => n.startsWith(PKG), 'nativa');
@@ -207,6 +216,7 @@ async function originale() {
         await page.waitForTimeout(600);
         if (giro === 1) dest.scorrimento = await scorri();
         log('originale', giro, p, JSON.stringify(r));
+        if (!TAB.has(p)) { await page.evaluate(() => history.back()); await page.waitForTimeout(900); }
       } catch (e) {
         dest[`giro${giro}`] = { errore: String(e).slice(0, 120) };
       }

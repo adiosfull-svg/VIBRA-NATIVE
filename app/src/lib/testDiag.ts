@@ -57,6 +57,10 @@ function garaReport(n: number, timeout: boolean, extra = '') {
 }
 /** Avvio: la misura finisce quando parte il precaricamento delle altre tab (lavoro in background,
  *  l'app è già usabile); "pronta" = ultima modifica prima di quel momento. */
+/** Precaricamento delle tab finito (il banco di prova aspetta questo prima di misurare le pagine). */
+export function garaPreloadEnd() {
+  if (TEST_GARA) console.log('VIBRA gara precarica fine');
+}
 export function garaPreloadStart() {
   if (TEST_GARA && gara.t0 >= 0 && gara.label === 'avvio') garaReport(performance.now(), false, ' precarica=1');
 }

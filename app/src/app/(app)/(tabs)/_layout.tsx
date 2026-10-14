@@ -1,5 +1,5 @@
 // Tab principali con la barra di navigazione dell'app web (MobileNavBar).
-import { diagMark, garaPreloadStart } from '../../../lib/testDiag';
+import { diagMark, garaPreloadEnd, garaPreloadStart } from '../../../lib/testDiag';
 import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
 import { Tabs, router, useNavigation } from 'expo-router';
@@ -27,6 +27,7 @@ function usePreloadTabs() {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const step = () => {
       const next = routes.find((r) => !preloaded.has(r));
+      if (!next && !cancelled) { garaPreloadEnd(); return; }
       if (cancelled || !next) return;
       InteractionManager.runAfterInteractions(() => {
         if (cancelled) return;
