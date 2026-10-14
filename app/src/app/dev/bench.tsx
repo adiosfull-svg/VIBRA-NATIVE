@@ -3,7 +3,7 @@
 // layout del contenitore. Confronta RN puro, View con classi (NativeWind) e i nostri Div/Text/Btn.
 // Righe nel logcat: "VIBRA gara bench <caso> ms=<mediana> tutti=a,b,c", in fondo "VIBRA gara bench fine".
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, Text as RNText, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, Text as RNText, View, type LayoutChangeEvent } from 'react-native';
 import { TEST_GARA } from '../../lib/testDiag';
 import { Btn, Div, P, Span } from '../../ui/html';
 import { Text } from '../../ui/text';
@@ -20,6 +20,10 @@ const CASI: Record<string, () => ReactNode> = {
   'view-puro': () => <View style={S.row} />,
   'view-classi': () => <View className="flex-row items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border" />,
   div: () => <Div className={CLASSI} />,
+  'div-senza-classi': () => <Div />,
+  'pressable-puro': () => <Pressable style={S.row} onPress={() => {}} />,
+  'pressable-classi': () => <Pressable className="flex-row items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border" onPress={() => {}} />,
+  'btn-vuoto': () => <Btn className={CLASSI} onClick={() => {}} />,
   'text-puro': () => <RNText style={S.text}>Mario Rossi</RNText>,
   text: () => <Text className="text-sm font-medium text-foreground">Mario Rossi</Text>,
   span: () => <Span className="text-sm font-medium">Mario Rossi</Span>,
