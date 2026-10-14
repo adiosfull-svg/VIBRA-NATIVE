@@ -11,7 +11,9 @@
 
 ## Ambiente da ricreare in una nuova sessione
 1. Codice originale (riferimento, NON nel repo): rileggerlo da Base44 con `read_file` a blocchi di 50 file
-   in `/home/user/vibra-reference` (475 file; elenco con `list_directory` ricorsivo, max_depth 10).
+   in `/home/user/vibra-reference` (475 file; elenco con `list_directory` ricorsivo, max_depth 10). Bastano i 387
+   fuori da `base44/` (setup.sh la toglie). Il risultato di `read_file` è JSON `{files:[{path, content, ...}]}`, troppo
+   grande per la conversazione: finisce in un file e si estrae con uno script (farlo fare a un sotto-agente).
 2. Backend locale: `scripts/local/dev_stack.sh --reset` (serve il binario PostgREST v12.2.3 in
    `scripts/local/bin/`: `mkdir -p scripts/local/bin && curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin`).
    Con admin la lista Clienti locale è vuota (i dati di prova sono di altri promoter): per provare form e dettaglio
@@ -193,16 +195,18 @@
 2. **Dashboard: collegata (route `/` e `/dashboard`), confronto web quasi identico** (admin; super4 uguale).
    Differenza nota: la tabella "Media tavoli" non va a capo nella colonna Locale (servirebbe la larghezza
    min-content delle colonne, non misurabile in RN). Export PDF/CSV: `shims/jspdf.ts`, `shims/files.ts`.
-   **DA FARE SUBITO nella prossima sessione** (modifiche dell'ultimo commit, typecheck e test OK ma confronto
-   NON rifatto): rilanciare i confronti di Clienti (tutte le tab/dialog, Cerca, Mappa) e Dashboard dopo:
-   - `button` su Btn: i `<button>` veri (codemod ora aggiunge `button`; `scripts/port/mark-buttons.mjs` li ha
-     segnati nei file già convertiti, 48 file, abbinando in ordine con l'originale) → testo centrato e
-     inline-block (larghezza del contenuto) in un blocco, come nel browser;
-   - celle di griglia allungate tramite `GridCellContext` (anche se la cella è un componente);
-   - testo vuoto/solo spazi non crea box; sul web le parole non si spezzano (CSS overflow-wrap: normal);
-   - style di testo ereditato (`ui/textStyleInherit.ts` + TextStyleContext: `<p style={{color}}><span>`),
-     anche per icone e svg (currentColor); fontWeight da style → file Inter giusto;
-   - `Link` (router) ora è un Btn; codemod tiene `id` negli elementi SVG (gradienti `url(#...)`).
+   **Confronti rifatti dopo l'ultimo giro di modifiche** (`button` su Btn, `GridCellContext`, testo vuoto senza box,
+   style di testo ereditato, `Link` = Btn): Clienti (lista pr/admin/super4, tutte le tab, dettaglio, Singolo cliente,
+   Importa, Aggiungi presenze, Cerca, Mappa) e Dashboard (admin/super4) senza regressioni. Corretti in più:
+   - `ExportReportButton.jsx` non era nel repo (la regola `export/` del .gitignore ignorava anche
+     `app/src/web/components/export/`): su un clone pulito la Dashboard non compilava. Ora `/export/`; file rigenerato.
+   - griglie a una colonna (es. DialogContent `grid gap-4`): niente gap orizzontale (`webClasses.ts`); prima ogni
+     cella aveva 8px di rientro per lato e nel form "Nuovo Cliente" la griglia Tipologia andava a capo (+12px).
+   - icone con classe `inline` dentro `<p>`/`<span>` (`<Users className="w-3 h-3 inline mr-1" />Senza zona`)
+     restano nella riga del testo (`hasBoxyChild` in `html.tsx`); prima il testo diventava un blocco e l'icona
+     andava sopra (Mappa: "Senza zona" +12px).
+   Residui noti: tabella "Media tavoli" della Dashboard (colonna Locale non va a capo), contenuto del form
+   "Nuovo Cliente" 9px più stretto (nell'originale sborda per la larghezza min-content della griglia del dialog).
 3. **Emulatore Android**: in questo container impossibile (niente /dev/kvm, dl.google.com bloccato). Proposta da
    valutare con l'utente: workflow GitHub Actions (runner con KVM) che avvia stack locale + build Android e
    l'emulatore (reactivecircus/android-emulator-runner), naviga le schermate (Maestro/adb), raccoglie

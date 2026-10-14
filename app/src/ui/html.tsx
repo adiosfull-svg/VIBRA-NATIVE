@@ -434,7 +434,8 @@ function hasBoxyChild(children: ReactNode): boolean {
     if (c.type === Fragment) { found = hasBoxyChild((c.props as { children?: ReactNode }).children); return; }
     if (c.type === Div || c.type === Btn) { found = true; return; }
     const cls = (c.props as { className?: unknown }).className;
-    if (typeof cls === 'string' && BOXY.test(cls)) found = true;
+    // `inline` (es. icona `w-3 h-3 inline mr-1`) sta nella riga del testo: non fa diventare il testo un blocco
+    if (typeof cls === 'string' && BOXY.test(cls) && !/(^|\s)inline(\s|$)/.test(cls)) found = true;
   });
   return found;
 }
