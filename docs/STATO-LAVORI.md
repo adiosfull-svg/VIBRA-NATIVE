@@ -99,6 +99,25 @@
   ridisegna (logcat "VIBRA why"); metterlo in cima al componente, poi toglierlo.
 - Stato vuoto di Clienti: già identico all'originale (verificato sul web svuotando i clienti del pr).
 
+## Fluidità (14/10) — misure sull'emulatore
+- **Intl lento su Hermes Android** (causa dei blocchi di 6-14 s dopo il login): `localeCompare`,
+  `toLocaleString`, `toLocaleDateString` passano da Java/ICU a ogni chiamata; l'ordinamento delle ~950 località
+  di `web/lib/campaniaLocations.jsx` (caricato dal precaricamento di Weekend) bloccava il JS. Ora
+  `lib/fastIntl.ts` (installato da `lib/fastIntlInstall.ts` in `app/_layout.tsx`, solo telefono): confronto e
+  numeri it-IT in JS puro, verificati contro ICU (`lib/fastIntl.test.ts`; attenzione: in italiano 1000 senza
+  punto, 12.345 col punto; arrotondamento sulle cifre decimali come Intl). Dopo: spariti i blocchi lunghi.
+- **Pagine precaricate montate in una transition** (`Page.tsx`, `startTransition`): React cede il passo ai tocchi.
+- **Blur durante lo scroll**: sull'emulatore (GPU software) senza blur i frame dello scroll costano ~1/3
+  (~240 ms contro ~700 ms). Sui telefoni veri il blur Android 12+ è su GPU: NON tolto; da verificare sul
+  telefono dell'utente se lo scroll scatta (eventuale ripiego: velo senza blur durante lo scroll).
+- Restano i montaggi delle pagine (1-4 s sull'emulatore, migliaia di Div): si sta misurando quanto pesa il
+  corpo di `Div`/`Text` (`div-corpo`/`text-corpo` nel battito) rispetto a NativeWind/React.
+- Strumenti di misura (solo build di test, `lib/testDiag.ts`): battito con `frameMax` (frame JS più lungo) e
+  tempi `| nome:ms` (`diagTime`/`diagTimed`), `VIBRA mark` (layout/route/Page), `VIBRA query` (avvio/fetch/
+  success con righe), `useWhyRender`. Script di analisi: per ogni battito con ritardo, il passo Maestro
+  precedente (confronta i timestamp di `maestro-debug/*/*/commands.json` col logcat; vedi sessione del 14/10,
+  ricrearlo: ~30 righe Python).
+
 ## EMULATORE ANDROID (strumento principale da ora: lavorare in autonomia)
 Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo pubblico):
 - APK x86_64 col backend di PROVA locale (stack Postgres+PostgREST+gateway avviato sul runner, `adb reverse
@@ -151,17 +170,18 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- L'utente prova l'APK del 12/10 (release "anteprima": menu laterali, cambio tab, immagini, pull-to-refresh di
-  Semine, nota delle semine). Per ogni glitch chiedere pagina/azione/screenshot o il testo dell'errore
-  (schermata di crashReport), riprodurre sull'emulatore (aggiungendo un test), correggere nello strato `ui/`.
-- Controllare con `useWhyRender` anche Clienti, Weekend, Semine e Dashboard al cambio tab (stessa causa
-  rimossa, ma verificare che non restino altri hook con stato globale).
-- Copia ANONIMIZZATA dei dati Base44 nel seed dello stack di prova: il 12/10 il controllo dei permessi della
-  sessione ha bloccato la lettura dei dati reali (dati personali). Serve che l'utente consenta esplicitamente
-  la lettura (permesso) oppure fornisca lui un'esportazione; alternativa: generare dati sintetici con la
-  stessa FORMA dei veri (campi `cum_*` precalcolati, `cum_venue_counts` oggetto, `cum_badges` emoji, foto,
-  note lunghe, `tipologia_cliente` array, `stato_pagante`, valori null/"" misti).
-- Livello B (più avanti): utente di prova Base44 o token come segreto GitHub per provare il backend vero.
+- **Crash nativo da verificare**: nel giro 38497xxx (commit 6bfd611, con fastIntl) l'app è caduta UNA volta
+  all'avvio del percorso 04-dettaglio con SIGSEGV dentro libhermesvm (rilevato da gwp_asan), mai visto nei ~16
+  giri precedenti. Lanciati due giri completi di verifica (run 38499030579 e 38499032795) e uno di misura
+  (02-clienti, tempi div-corpo/text-corpo): leggerne i risultati
+  (`git clone --depth 1 -b emulatore-risultati-<run>-pr ...`, cercare `Fatal signal` in logcat-full.txt).
+  Se il crash si ripete e sparisce togliendo `fastIntlInstall`, indagare la patch delle date (Intl.DateTimeFormat
+  riusati) o limitare la patch a localeCompare + numeri.
+- Ridurre il costo del montaggio delle pagine (in base alla misura div-corpo): cache per className dei calcoli
+  rimasti in `DivBoxImpl`, meno hook per Div, meno elementi nelle card più usate.
+- L'utente prova l'APK (ultimo [apk]: 7b4a48b del 12/10; i miglioramenti del 14/10 non sono ancora in un APK:
+  fare un commit con `[apk]` dopo aver chiarito il crash). Per ogni glitch: pagina/azione/screenshot.
+- Dati Base44 anonimizzati per lo stack di prova: rimandato dall'utente ("più avanti le autorizzazioni Base44").
 
 ## Da fare
 1. **Prova dell'utente sull'APK** (ultima build: 11/10 sera): Il Mio Vibra (grafici tocco/pinch,
