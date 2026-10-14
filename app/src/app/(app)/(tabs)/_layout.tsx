@@ -2,7 +2,7 @@
 import { diagMark } from '../../../lib/testDiag';
 import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
-import { Tabs, router } from 'expo-router';
+import { Tabs, router, useNavigation } from 'expo-router';
 import MobileNavBar from '../../../web/components/layout/MobileNavBar';
 import { THEME } from '../../../ui/palette.generated';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
@@ -13,25 +13,36 @@ import { PRELOAD_FIRST_DELAY_MS, PRELOAD_GAP_MS, PRELOAD_STACK, PRELOAD_TABS } f
 // precaricano una alla volta (montate in background): il tocco mostra subito la pagina pronta.
 // Elenco e tempi in lib/preloadRoutes.ts (docs/REGOLE-PRESTAZIONI.md §1).
 
+// Pagine già precaricate in questa sessione (il layout delle tab può essere montato più volte).
+const preloaded = new Set<string>();
+
 function usePreloadTabs() {
   // la Dashboard ('/') per chi non può vederla è un Redirect: precaricarla farebbe cambiare pagina
   const { canAccessRoute } = useRoleAccess();
   const withHome = canAccessRoute('dashboard');
+  const navigation = useNavigation();
   useEffect(() => {
     const routes = [...PRELOAD_TABS, ...(withHome ? ['/'] : []), ...PRELOAD_STACK];
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const step = (i: number) => {
-      if (cancelled || i >= routes.length) return;
+    const step = () => {
+      const next = routes.find((r) => !preloaded.has(r));
+      if (cancelled || !next) return;
       InteractionManager.runAfterInteractions(() => {
         if (cancelled) return;
-        try { router.prefetch(routes[i] as never); } catch { /* route non pronta: si salta */ }
-        timer = setTimeout(() => step(i + 1), PRELOAD_GAP_MS);
+        // solo con le tab a schermo: da una pagina dello stack (es. aperta da un link) il prefetch di
+        // una tab montava un altro layout delle tab, che ripartiva da capo (un giro ogni 2,6 s) e il
+        // link successivo (vibra://notifiche) non cambiava più pagina
+        if (navigation.isFocused()) {
+          preloaded.add(next);
+          try { router.prefetch(next as never); } catch { /* route non pronta: si salta */ }
+        }
+        timer = setTimeout(step, PRELOAD_GAP_MS);
       });
     };
-    timer = setTimeout(() => step(0), PRELOAD_FIRST_DELAY_MS);
+    timer = setTimeout(step, PRELOAD_FIRST_DELAY_MS);
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, [withHome]);
+  }, [withHome, navigation]);
 }
 
 export default function TabsLayout() {

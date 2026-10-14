@@ -142,6 +142,58 @@ create trigger client_group_touch before update on public.client_group
   for each row execute function public.touch_updated_date();
 comment on table public.client_group is 'Entità Base44 ClientGroup';
 
+-- ClientLink
+create table public.client_link (
+  id text primary key default public.new_id(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  created_by_id text default auth.uid()::text,
+  created_by text default public.app_email(),
+  "event_id" text,
+  "from_client_id" text,
+  "label" text,
+  "link_type" text default 'amici',
+  "notes" text,
+  "promoter_id" text,
+  "to_client_id" text
+);
+create trigger client_link_touch before update on public.client_link
+  for each row execute function public.touch_updated_date();
+comment on table public.client_link is 'Entità Base44 ClientLink';
+
+-- ClientMapLayout
+create table public.client_map_layout (
+  id text primary key default public.new_id(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  created_by_id text default auth.uid()::text,
+  created_by text default public.app_email(),
+  "positions" jsonb,
+  "promoter_id" text
+);
+create trigger client_map_layout_touch before update on public.client_map_layout
+  for each row execute function public.touch_updated_date();
+comment on table public.client_map_layout is 'Entità Base44 ClientMapLayout';
+
+-- Comitiva
+create table public.comitiva (
+  id text primary key default public.new_id(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  created_by_id text default auth.uid()::text,
+  created_by text default public.app_email(),
+  "client_ids" jsonb,
+  "color" text default '#a78bfa',
+  "group_ids" jsonb,
+  "name" text,
+  "notes" text,
+  "positions" jsonb,
+  "promoter_id" text
+);
+create trigger comitiva_touch before update on public.comitiva
+  for each row execute function public.touch_updated_date();
+comment on table public.comitiva is 'Entità Base44 Comitiva';
+
 -- ContactReminder
 create table public.contact_reminder (
   id text primary key default public.new_id(),
@@ -637,6 +689,15 @@ create index on public.client ("referred_by_client_id");
 create index on public.client (created_date desc);
 create index on public.client_group ("promoter_id");
 create index on public.client_group (created_date desc);
+create index on public.client_link ("event_id");
+create index on public.client_link ("from_client_id");
+create index on public.client_link ("promoter_id");
+create index on public.client_link ("to_client_id");
+create index on public.client_link (created_date desc);
+create index on public.client_map_layout ("promoter_id");
+create index on public.client_map_layout (created_date desc);
+create index on public.comitiva ("promoter_id");
+create index on public.comitiva (created_date desc);
 create index on public.contact_reminder ("promoter_id");
 create index on public.contact_reminder ("client_id");
 create index on public.contact_reminder (created_date desc);

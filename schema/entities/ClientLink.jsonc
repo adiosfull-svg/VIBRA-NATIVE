@@ -1,0 +1,109 @@
+{
+  "name": "ClientLink",
+  "properties": {
+    "event_id": {
+      "description": "ID della serata in cui è nata l'amicizia (solo per link_type = serata)",
+      "type": "string"
+    },
+    "from_client_id": {
+      "description": "ID del primo cliente del legame",
+      "type": "string"
+    },
+    "label": {
+      "description": "Etichetta libera opzionale (es. 'Compagni di università')",
+      "type": "string"
+    },
+    "link_type": {
+      "default": "amici",
+      "description": "Tipo di legame: amici = amici / stessa comitiva, serata = amicizia nata in serata, coppia = coppia, altro = etichetta libera. Il legame 'presentato da' NON si salva qui: viene da Client.referred_by_client_id",
+      "enum": [
+        "amici",
+        "serata",
+        "coppia",
+        "altro"
+      ],
+      "type": "string"
+    },
+    "notes": {
+      "description": "Note sul legame",
+      "type": "string"
+    },
+    "promoter_id": {
+      "description": "ID del promoter proprietario del legame (privato per promoter)",
+      "type": "string"
+    },
+    "to_client_id": {
+      "description": "ID del secondo cliente del legame",
+      "type": "string"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "from_client_id",
+    "to_client_id",
+    "link_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    }
+  },
+  "type": "object"
+}

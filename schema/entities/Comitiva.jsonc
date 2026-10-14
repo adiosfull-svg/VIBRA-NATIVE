@@ -1,0 +1,108 @@
+{
+  "name": "Comitiva",
+  "properties": {
+    "client_ids": {
+      "description": "ID dei paganti inseriti nella comitiva",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "color": {
+      "default": "#a78bfa",
+      "description": "Colore hex della comitiva",
+      "type": "string"
+    },
+    "group_ids": {
+      "description": "ID dei Gruppi (ClientGroup) importati nella comitiva",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "name": {
+      "description": "Nome della comitiva (es. 'Comitiva Vomero')",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Note sulla comitiva",
+      "type": "string"
+    },
+    "positions": {
+      "additionalProperties": true,
+      "description": "Posizioni delle card sull'editor: { [client_id]: { x, y } }",
+      "type": "object"
+    },
+    "promoter_id": {
+      "description": "ID del promoter proprietario della comitiva",
+      "type": "string"
+    }
+  },
+  "required": [
+    "promoter_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "capogruppo"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "pr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super4"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.promoter_id": "{{user.data.promoter_id}}"
+        }
+      ]
+    }
+  },
+  "type": "object"
+}

@@ -1,7 +1,8 @@
 // Port di AppHeader (src/components/layout/AppLayout.jsx): intestazione in linea che scorre con
 // la pagina. burger · [titolo sezione | logo Vibra] · campanella · impostazioni.
 import { Image } from 'expo-image';
-import { memo } from 'react';
+import { memo, useCallback, useLayoutEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
 import { Btn, Div } from '../../../ui/html';
@@ -55,6 +56,33 @@ export default memo(function AppHeader({ title: titleOverride }: { title?: strin
   const { logoDataUrl } = useVibraLogo();
   const title = titleOverride ?? routeTitleFor(pathname, user?.role);
 
+  // sul web adjustsFontSizeToFit non esiste: stesso ciclo di FitTitle (−0.5px finché il testo non entra)
+  // (Text non inoltra il ref: il nodo DOM arriva dall'evento onLayout di react-native-web)
+  const titleRef = useRef<HTMLElement | null>(null);
+  const fitWebTitle = useCallback(() => {
+    const el = titleRef.current;
+    if (Platform.OS !== 'web' || !el) return;
+    el.style.fontSize = '';
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    // scrollWidth/clientWidth sono interi: con numberOfLines anche un overflow sotto il pixel mette
+    // i puntini, quindi la larghezza vera del testo (Range) contro quella del box
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const overflows = () => range.getBoundingClientRect().width > el.getBoundingClientRect().width;
+    while (overflows() && size > 11) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  }, []);
+  const onTitleLayout = useCallback((e: { nativeEvent: { target?: unknown } }) => {
+    if (Platform.OS !== 'web') return;
+    titleRef.current = e.nativeEvent.target as HTMLElement;
+    fitWebTitle();
+    // il font (Inter) può arrivare dopo il primo layout e allargare il testo, come in FitTitle
+    (globalThis as { document?: { fonts?: { ready?: Promise<unknown> } } }).document?.fonts?.ready?.then(fitWebTitle).catch(() => {});
+  }, [fitWebTitle]);
+  useLayoutEffect(fitWebTitle, [title, fitWebTitle]);
+
   return (
     <Div className="px-3" style={{ paddingTop: insets.top + 8 }}>
       <Div className="flex items-center gap-1 min-h-[3.25rem]">
@@ -64,6 +92,7 @@ export default memo(function AppHeader({ title: titleOverride }: { title?: strin
         <Div className="flex-1 min-w-0 grid grid-cols-2 items-center gap-2">
           {/* Titolo su una riga: si rimpicciolisce (fino a 11px) invece di andare a capo, come FitTitle */}
           <Text
+            onLayout={onTitleLayout as never}
             accessibilityRole="header"
             numberOfLines={1}
             adjustsFontSizeToFit

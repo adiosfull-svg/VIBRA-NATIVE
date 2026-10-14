@@ -41,6 +41,27 @@ create policy "client_group_read" on public.client_group for select to authentic
 create policy "client_group_update" on public.client_group for update to authenticated using ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4')) with check ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4'));
 create policy "client_group_delete" on public.client_group for delete to authenticated using ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4'));
 
+-- ClientLink
+alter table public.client_link enable row level security;
+create policy "client_link_create" on public.client_link for insert to authenticated with check ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4'));
+create policy "client_link_read" on public.client_link for select to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+create policy "client_link_update" on public.client_link for update to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id())) with check ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+create policy "client_link_delete" on public.client_link for delete to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+
+-- ClientMapLayout
+alter table public.client_map_layout enable row level security;
+create policy "client_map_layout_create" on public.client_map_layout for insert to authenticated with check ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4'));
+create policy "client_map_layout_read" on public.client_map_layout for select to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+create policy "client_map_layout_update" on public.client_map_layout for update to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id())) with check ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+create policy "client_map_layout_delete" on public.client_map_layout for delete to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+
+-- Comitiva
+alter table public.comitiva enable row level security;
+create policy "comitiva_create" on public.comitiva for insert to authenticated with check ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4'));
+create policy "comitiva_read" on public.comitiva for select to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+create policy "comitiva_update" on public.comitiva for update to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id())) with check ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+create policy "comitiva_delete" on public.comitiva for delete to authenticated using ((public.app_role() = 'admin' or "promoter_id"::text = public.app_promoter_id()));
+
 -- ContactReminder
 alter table public.contact_reminder enable row level security;
 create policy "contact_reminder_create" on public.contact_reminder for insert to authenticated with check ((public.app_role() = 'admin' or public.app_role() = 'capogruppo' or public.app_role() = 'pr' or public.app_role() = 'super4'));

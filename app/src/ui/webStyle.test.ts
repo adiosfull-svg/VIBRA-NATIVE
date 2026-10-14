@@ -117,3 +117,12 @@ test('webStyle: width calc(100% + Npx) con left → right negativo (sul web il c
   assert.equal(webStyle({ top: 0, height: 'calc(100% - 8px)' }).style.bottom, 8);
   assert.equal(webStyle({ left: 0, width: 'calc(100% + 16px)' }, true).style.width, 'calc(100% + 16px)');
 });
+
+test('webStyle: radial-gradient (web: CSS; telefono: experimental_backgroundImage) con size/position', () => {
+  const css = 'radial-gradient(circle, rgba(255,255,255,0.08) 0.9px, transparent 1.3px)';
+  const input = { backgroundImage: css, backgroundSize: '24px 24px', backgroundPosition: '3px 4px' };
+  assert.deepEqual(webStyle(input, true).style, { backgroundImage: css, backgroundSize: '24px 24px', backgroundPosition: '3px 4px' });
+  assert.deepEqual(webStyle(input, false).style, { experimental_backgroundImage: css, experimental_backgroundSize: '24px 24px', experimental_backgroundPosition: '3px 4px' });
+  // senza gradiente radiale backgroundSize & co. restano fuori
+  assert.deepEqual(webStyle({ backgroundSize: 'cover' }, true).style, {});
+});

@@ -15,7 +15,7 @@ const DROP = new Set([
   'animationDuration', 'cursor', 'willChange', 'touchAction', 'userSelect', 'WebkitUserSelect', 'WebkitTapHighlightColor',
   'WebkitTouchCallout', 'overscrollBehavior', 'scrollbarWidth', 'msOverflowStyle', 'WebkitOverflowScrolling',
   'WebkitTransform', 'transformOrigin', 'contain', 'isolation', 'mixBlendMode', 'outline', 'visibility', 'clipPath',
-  'maskImage', 'WebkitMaskImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat', 'boxSizing', 'whiteSpace',
+  'maskImage', 'WebkitMaskImage', 'boxSizing', 'whiteSpace',
   'wordBreak', 'overflowWrap', 'textOverflow', 'WebkitLineClamp', 'WebkitBoxOrient', 'listStyle', 'resize', 'appearance',
   'WebkitAppearance', 'scrollBehavior', 'scrollMarginTop', 'caretColor', 'accentColor', 'fontFeatureSettings',
   'fontVariantNumeric', 'gridTemplateColumns', 'gridColumn', 'gridRow', 'animationFillMode', 'imageRendering',
@@ -246,9 +246,21 @@ export function webStyle(input: unknown, web = false): WebStyleResult {
     if (v == null || DROP.has(k)) continue;
     if (k === 'background' || k === 'backgroundImage') {
       if (typeof v === 'string' && v.includes('linear-gradient')) { gradient = parseLinearGradient(v); continue; }
-      if (typeof v === 'string' && v.includes('gradient')) continue; // radial/conic: non supportati
+      if (typeof v === 'string' && v.includes('radial-gradient')) {
+        // web: CSS così com'è; telefono: experimental_backgroundImage di RN (stessa sintassi CSS)
+        style[web ? 'backgroundImage' : 'experimental_backgroundImage'] = v;
+        continue;
+      }
+      if (typeof v === 'string' && v.includes('gradient')) continue; // conic: non supportato
       const c = cssColor(v);
       if (c) style.backgroundColor = c;
+      continue;
+    }
+    if ((k === 'backgroundSize' || k === 'backgroundPosition' || k === 'backgroundRepeat') && typeof v === 'string') {
+      // servono solo con un'immagine di sfondo radial-gradient (vedi sopra)
+      if (typeof src.background === 'string' && src.background.includes('radial-gradient') || typeof src.backgroundImage === 'string' && src.backgroundImage.includes('radial-gradient')) {
+        style[web ? k : `experimental_${k}`] = v;
+      }
       continue;
     }
     if (k === 'boxShadow') { if (typeof v === 'string') Object.assign(style, parseBoxShadow(v)); continue; }

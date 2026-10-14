@@ -122,6 +122,17 @@
     fratello per `space-*`, quindi l'elemento dopo prende il margine (+16px nella mappa di copertura,
     ClientMap, ComitivaEditor). TabsTrigger applica `data-[state=active|inactive]:` (ui/dataState.ts):
     tab attiva di Promoter con bg-card come nell'originale.
+  - Entità nuove dell'originale: Comitiva, ClientLink, ClientMapLayout (schema/entities da Base44, sola lettura;
+    `python3 scripts/gen_schema.py schema/entities supabase/migrations`). Sullo stack locale già creato si
+    aggiungono a mano le righe nuove delle migrazioni + `NOTIFY pgrst, 'reload schema'`. Ricontrollare ogni tanto
+    con list_entity_schemas: senza l'entità il pulsante «Crea comitiva» dava «reading 'create'».
+  - `radial-gradient` (12 file: griglia a puntini delle Comitive, aloni di carte e statistiche): sul web CSS,
+    sul telefono `experimental_backgroundImage` di RN (con backgroundSize/Position/Repeat).
+  - Titolo dell'header sul web: stesso ciclo di FitTitle (adjustsFontSizeToFit c'è solo sul telefono).
+  - Precaricamento delle tab: una volta per sessione e solo con le tab a schermo. Da una pagina dello stack
+    aperta da un link, il prefetch montava un altro layout delle tab che ripartiva da capo (un giro ogni 2,6 s) e
+    il link successivo (vibra://notifiche, flow 03 admin del run 38608694922) non cambiava pagina.
+    NB: il job dell'emulatore risulta verde anche con un flow fallito: guardare `esito.txt` nel branch dei risultati.
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 
@@ -239,9 +250,8 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
    swipe in Da ricontattare), Semine (Gira e trascinamento delle card), e dalle sessioni prima: selettori
    data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
    scorrimento dei dialog e del dettaglio cliente, export PDF/CSV della Dashboard. Correggere gli errori segnalati.
-2. **Pagine ancora `ComingSoon`** (stesso metodo + checklist di `docs/REGOLE-PRESTAZIONI.md` §9): Promoter (lista:
-   `tree.mjs` ne elenca 272 file perché importa mezza app, guardare cosa serve davvero), Impostazioni app (~4000
-   righe), Academy (~5700 righe).
+2. Pagine: tutte convertite (restano fuori AccessoApp, ingresso della PWA, e OAuthConsent, non collegata).
+   Da rifinire: confronti scheda per scheda di Impostazioni app e Academy, editor delle Comitive sul telefono.
 3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
 4. Notifiche push (expo-notifications al posto del web push).
 5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
