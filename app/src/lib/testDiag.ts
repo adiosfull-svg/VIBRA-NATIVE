@@ -137,5 +137,15 @@ export function diagQueries(cache: { subscribe: (fn: (e: { type: string; query: 
   if (!TEST_DIAG) return;
   cache.subscribe((e) => {
     if (e.type === 'added') console.log(`VIBRA query ${JSON.stringify(e.query.queryKey).slice(0, 120)}`);
+    const st = (e as unknown as { action?: { type?: string } }).action?.type;
+    if (e.type === 'updated' && (st === 'success' || st === 'fetch')) {
+      const data = (e.query as unknown as { state: { data?: unknown } }).state.data;
+      console.log(`VIBRA query ${st} ${JSON.stringify(e.query.queryKey).slice(0, 80)}${st === 'success' && Array.isArray(data) ? ` righe=${data.length}` : ''}`);
+    }
   });
+}
+
+/** Segnaposto temporale nel logcat (solo build di test): "VIBRA mark <etichetta>". */
+export function diagMark(label: string) {
+  if (TEST_DIAG) console.log(`VIBRA mark ${label}`);
 }

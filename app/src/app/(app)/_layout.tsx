@@ -1,5 +1,6 @@
 // Shell dell'app (AppLayout.jsx): sidebar globale + stack delle pagine. Ogni pagina disegna la
 // propria intestazione in linea (Page → AppHeader), come nell'originale.
+import { diagMark } from '../../lib/testDiag';
 import { Stack, useSegments } from 'expo-router';
 import MobileNavBar from '../../web/components/layout/MobileNavBar';
 import Sidebar from '../../web/components/layout/Sidebar';
@@ -49,6 +50,7 @@ function GlobalCalcolatrice() {
 }
 
 export default function AppLayout() {
+  diagMark('layout app');
   useShellImages();
   // le 5 tab hanno la barra come tab bar; le altre pagine la ricevono qui (nell'originale è in AppLayout)
   const inTabs = (useSegments() as string[]).includes('(tabs)');

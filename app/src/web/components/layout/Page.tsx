@@ -1,5 +1,6 @@
 // Struttura di pagina di AppLayout.jsx: intestazione in linea + contenuto "main-content p-4"
 // (pt 0.5rem) + spazio in fondo per la barra di navigazione (4.5rem + safe area).
+
 import { forwardRef, startTransition, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Platform, RefreshControl, ScrollView, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +10,7 @@ import { THEME } from '../../../ui/palette.generated';
 import AppHeader from './AppHeader';
 import { pageScroll } from '../../shims/pageScroll';
 import { OwnPathProvider, useScreenNavigation } from '../../router';
-import { diagCount, diagTime, dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
+import { diagCount, diagMark, diagTime, dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
 import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
 
@@ -27,6 +28,7 @@ type Props = Omit<ScrollViewProps, 'children'> & {
 const NATIVE_DRIVER = Platform.OS !== 'web';
 
 const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefresh, refreshing = false, onScroll, onContentSizeChange, onLayout, ...props }, ref) => {
+  diagMark('Page render');
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   useImperativeHandle(ref, () => scrollRef.current as ScrollView);
