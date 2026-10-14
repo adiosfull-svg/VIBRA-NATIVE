@@ -49,18 +49,24 @@ function GlobalCalcolatrice() {
   return <Calcolatrice onClose={close} />;
 }
 
+// le 5 tab hanno la barra come tab bar; le altre pagine la ricevono qui (nell'originale è in AppLayout).
+// In un componente a sé: useSegments cambia a ogni navigazione e, letto in AppLayout, ridisegnava
+// tutto il guscio (sidebar, ricerca, calcolatrice, pannelli) a ogni cambio di pagina.
+function StackNavBar() {
+  const inTabs = (useSegments() as string[]).includes('(tabs)');
+  return inTabs ? null : <MobileNavBar />;
+}
+
 export default function AppLayout() {
   diagMark('layout app');
   useShellImages();
-  // le 5 tab hanno la barra come tab bar; le altre pagine la ricevono qui (nell'originale è in AppLayout)
-  const inTabs = (useSegments() as string[]).includes('(tabs)');
   return (
     <LayoutUIProvider>
       <CalcolatriceProvider>
       <FixedHost>
       <LocationPublisher />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
-      {!inTabs && <MobileNavBar />}
+      <StackNavBar />
       <StatusBarGlass />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />

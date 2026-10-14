@@ -1,5 +1,5 @@
 // Tab principali con la barra di navigazione dell'app web (MobileNavBar).
-import { diagMark } from '../../../lib/testDiag';
+import { diagMark, garaPreloadStart } from '../../../lib/testDiag';
 import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
 import { Tabs, router, useNavigation } from 'expo-router';
@@ -34,6 +34,7 @@ function usePreloadTabs() {
         // una tab montava un altro layout delle tab, che ripartiva da capo (un giro ogni 2,6 s) e il
         // link successivo (vibra://notifiche) non cambiava più pagina
         if (navigation.isFocused()) {
+          if (!preloaded.size) garaPreloadStart();
           preloaded.add(next);
           try { router.prefetch(next as never); } catch { /* route non pronta: si salta */ }
         }

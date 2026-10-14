@@ -43,12 +43,22 @@ function garaCheck() {
   if (gap > 50) gara.jsBusy += gap - 16.7;
   const timeout = n - gara.t0 > LIMIT_MS;
   if (timeout || (gara.inflight === 0 && gara.first >= 0 && n - gara.last >= QUIET_MS)) {
-    const end = timeout ? n : gara.last;
-    console.log(`VIBRA gara pronta ${gara.label} primo=${Math.round((gara.first < 0 ? end : gara.first) - gara.t0)} pronta=${Math.round(end - gara.t0)} render=${gara.renders} rete=${gara.fetches} jsMax=${Math.round(gara.jsMax)} jsOccupato=${Math.round(gara.jsBusy)} fine=${Date.now() - Math.round(n - end)}${timeout ? ' NONSIFERMA' : ''} ultimo=${garaLast.replace(/\s+/g, '_').slice(0, 80)}`);
-    gara.t0 = -1;
+    garaReport(n, timeout);
     return;
   }
   requestAnimationFrame(garaCheck);
+}
+function garaReport(n: number, timeout: boolean, extra = '') {
+  {
+    const end = timeout ? n : gara.last;
+    console.log(`VIBRA gara pronta ${gara.label} primo=${Math.round((gara.first < 0 ? end : gara.first) - gara.t0)} pronta=${Math.round(end - gara.t0)} render=${gara.renders} rete=${gara.fetches} jsMax=${Math.round(gara.jsMax)} jsOccupato=${Math.round(gara.jsBusy)} fine=${Date.now() - Math.round(n - end)}${timeout ? ' NONSIFERMA' : ''}${extra} ultimo=${garaLast.replace(/\s+/g, '_').slice(0, 80)}`);
+    gara.t0 = -1;
+  }
+}
+/** Avvio: la misura finisce quando parte il precaricamento delle altre tab (lavoro in background,
+ *  l'app è già usabile); "pronta" = ultima modifica prima di quel momento. */
+export function garaPreloadStart() {
+  if (TEST_GARA && gara.t0 >= 0 && gara.label === 'avvio') garaReport(performance.now(), false, ' precarica=1');
 }
 function garaStart(label: string) {
   const wasIdle = gara.t0 < 0;

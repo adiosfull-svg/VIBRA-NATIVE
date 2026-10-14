@@ -64,7 +64,31 @@ function sfStats(layer) {
   for (let i = 1; i < present.length; i++) { const d = present[i] - present[i - 1]; if (d < 250) gaps.push(d); }
   return { layer, period, frame: present.length, gaps };
 }
+// timestats di SurfaceFlinger: per ogni livello frame totali e istogramma degli intervalli tra due
+// frame presentati (vede anche i livelli di Chrome, che --latency non vede)
+function parseTimestats(dump) {
+  const out = [];
+  for (const block of dump.split(/layerName = /).slice(1)) {
+    const name = block.split('\n')[0].trim();
+    const total = Number(block.match(/totalFrames = (\d+)/)?.[1] ?? 0);
+    const histLine = block.split('present2present histogram is as below:')[1]?.trim().split('\n')[0] ?? '';
+    const hist = [...histLine.matchAll(/(\d+)ms=(\d+)/g)].map(([, ms, n]) => [Number(ms), Number(n)]).filter(([, n]) => n > 0);
+    out.push({ name, total, hist });
+  }
+  return out.sort((a, b) => b.total - a.total);
+}
+function statsFromHist(hist) {
+  // pause tra uno scorrimento e l'altro (oltre 250 ms) escluse
+  const h = hist.filter(([ms]) => ms <= 250);
+  const n = h.reduce((s, [, c]) => s + c, 0);
+  if (n < 5) return null;
+  const q = (x) => { let acc = 0; for (const [ms, c] of h) { acc += c; if (acc >= x * n) return ms; } return h.at(-1)[0]; };
+  const persi = h.reduce((s, [ms, c]) => s + c * Math.max(0, Math.round(ms / 16.67) - 1), 0);
+  return { intervalli: n, persiPct: Math.round((persi / (persi + n)) * 1000) / 10, p50: q(0.5), p90: q(0.9), p99: q(0.99) };
+}
+
 async function scorri() {
+  sh('dumpsys SurfaceFlinger --timestats -enable -clear');
   // tutti i livelli: durante lo scorrimento disegna solo l'app in primo piano (per Chrome il contenuto
   // sta in un livello di SurfaceControl con un nome che non contiene "chrome")
   const layers = sfLayers(() => true);
@@ -73,6 +97,11 @@ async function scorri() {
   await sleep(1200);
   for (let i = 0; i < 5; i++) { sh('input swipe 540 650 540 1750 220'); await sleep(450); }
   await sleep(1200);
+  const ts = parseTimestats(sh('dumpsys SurfaceFlinger --timestats -dump'));
+  sh('dumpsys SurfaceFlinger --timestats -disable');
+  const top = ts[0];
+  const st = top ? statsFromHist(top.hist) : null;
+  if (st) return { metodo: 'timestats', frame: top.total, ...st, livello: top.name, candidati: ts.slice(0, 4).map((x) => `${x.total} ${x.name}`) };
   // il livello con più frame è quello che disegna il contenuto
   const all = layers.map((l) => { try { return sfStats(l); } catch { return { layer: l, frame: 0, gaps: [] }; } }).sort((a, b) => b.frame - a.frame);
   const best = all[0];
@@ -134,6 +163,17 @@ async function nativa() {
     }
   }
   risultati.memoria.nativa = pss((n) => n.startsWith(PKG), 'nativa');
+  risultati.memoria.dettaglioNativa = sh(`dumpsys meminfo ${PKG}`).split('App Summary')[1]?.split('Objects')[0]?.trim();
+  // costo per elemento (app/src/app/dev/bench.tsx)
+  log('nativa: banco per elemento');
+  const fine = waitLog(/VIBRA gara bench fine/, 240000);
+  const righe = [];
+  const unsub = (e) => { const m = e.msg.match(/VIBRA gara bench (\S+) ms=(\d+) tutti=(\S+)/); if (m) righe.push({ caso: m[1], ms: Number(m[2]), tutti: m[3] }); };
+  const before = logLines.length;
+  sh(`am start -a android.intent.action.VIEW -d 'vibra://dev/bench' ${PKG}`);
+  await fine;
+  for (const e of logLines.slice(before)) unsub(e);
+  risultati.bench = righe;
   sh(`am force-stop ${PKG}`);
 }
 
@@ -191,6 +231,11 @@ function tabella() {
     L.push(`| ${p} | ${ms(n.giro1)} | ${ms(o.giro1)} | ${verdetto(n.giro1, o.giro1)} | ${ms(n.giro2)} | ${ms(o.giro2)} | ${verdetto(n.giro2, o.giro2)} | ${n.scorrimento?.persiPct ?? '–'}% | ${o.scorrimento?.persiPct ?? '–'}% |`);
   }
   L.push('', `Memoria (PSS): nativa ${risultati.memoria.nativa ?? '–'} MB · originale (Chrome) ${risultati.memoria.originale ?? '–'} MB`);
+  if (risultati.bench?.length) {
+    L.push('', '## Costo per elemento (nativa, 300 elementi, ms dal montaggio al layout)', '', '| caso | ms | ripetizioni |', '|---|---|---|');
+    for (const b of risultati.bench) L.push(`| ${b.caso} | ${b.ms} | ${b.tutti} |`);
+  }
+  if (risultati.memoria.dettaglioNativa) L.push('', '```', `Memoria nativa per categoria:\n${risultati.memoria.dettaglioNativa}`, '```');
   if (risultati.note.length) L.push('', '## Note', ...risultati.note.map((n) => `- ${n}`));
   return L.join('\n') + '\n';
 }
