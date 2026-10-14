@@ -2,6 +2,8 @@
 import 'react-native-get-random-values';
 // TextDecoder('latin1') (fast-png, jsPDF) sul telefono: prima di ogni altro modulo
 import '../lib/textDecoderLatin1';
+// localeCompare/toLocaleString veloci su Hermes Android (ICU via JNI a ogni chiamata): prima di tutto
+import '../lib/fastIntlInstall';
 import '../../global.css';
 import '../ui/customCss';
 import '../lib/testDiag';
