@@ -1,0 +1,172 @@
+02:15:31.690 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-14_021531
+02:15:31.693 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+02:15:31.694 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+02:15:31.695 [ INFO] MAESTRO.logSystemInfo: CI: github
+02:15:31.695 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+02:15:31.696 [ INFO] MAESTRO.logSystemInfo: OS Version: 6.17.0-1022-azure
+02:15:31.696 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+02:15:31.697 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+02:15:31.700 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+02:15:31.702 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+02:15:31.705 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+02:15:31.705 [ INFO] MAESTRO.logSystemInfo: ---------------------
+02:15:32.413 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+02:15:35.068 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 35711 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/pr/05-tab-ritorno.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+02:15:38.347 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 05-tab-ritorno
+02:15:38.362 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+02:15:38.498 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+02:15:38.599 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+02:15:38.603 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+02:15:38.604 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+02:15:38.604 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+02:15:38.605 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+02:15:39.374 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+02:15:39.434 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+02:15:39.515 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+02:15:39.515 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+02:15:39.954 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+02:15:39.955 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+02:15:39.961 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+02:15:39.961 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+02:15:39.962 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+02:15:52.322 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+02:15:52.323 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+02:15:52.323 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+02:15:52.325 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi|Password" is visible RUNNING
+02:15:52.892 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi|Password" is visible COMPLETED
+02:15:52.892 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+02:15:52.893 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+02:15:52.893 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+02:15:52.893 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+02:15:54.446 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+02:15:54.446 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+02:15:54.447 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+02:15:54.447 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+02:15:54.447 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+02:15:54.448 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+02:15:54.448 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+02:15:55.804 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+02:15:55.804 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible SKIPPED
+02:15:55.805 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+02:15:55.805 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi" is visible RUNNING
+02:15:56.178 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi" is visible COMPLETED
+02:15:56.178 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+02:15:56.182 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+02:15:56.184 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:15:56.184 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:15:56.796 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:15:56.796 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:15:57.456 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+02:15:57.457 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that (Optional) "testo-che-non-esiste" is visible RUNNING
+02:16:10.125 [ INFO] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandWarned: Assertion is false: "testo-che-non-esiste" is visible
+02:16:10.610 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+02:16:10.612 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:10.900 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that (Optional) "testo-che-non-esiste" is visible WARNED
+02:16:10.901 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Weekend" RUNNING
+02:16:11.225 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Weekend, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[263,2279][384,2306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=263, y=2279, width=121, height=27))
+02:16:12.647 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+02:16:12.651 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (323, 2292) using hierarchy based logic for wait
+02:16:14.736 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+02:16:14.736 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Weekend" COMPLETED
+02:16:14.737 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+02:16:14.737 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+02:16:14.737 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:14.738 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:15.713 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:15.714 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:17.227 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+02:16:17.228 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot tab-weekend-1 RUNNING
+02:16:17.229 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+02:16:17.230 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:17.514 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot tab-weekend-1 COMPLETED
+02:16:17.515 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Clienti" RUNNING
+02:16:17.722 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Clienti, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[499,2279][581,2306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=499, y=2279, width=82, height=27))
+02:16:19.143 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+02:16:19.144 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 2292) using hierarchy based logic for wait
+02:16:22.709 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+02:16:22.709 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Clienti" COMPLETED
+02:16:22.709 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "LISTA CLIENTI" is visible RUNNING
+02:16:23.169 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "LISTA CLIENTI" is visible COMPLETED
+02:16:23.169 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+02:16:23.170 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+02:16:23.170 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:23.170 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:23.497 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:23.497 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:24.010 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+02:16:24.010 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot tab-clienti RUNNING
+02:16:24.011 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+02:16:24.011 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:24.251 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot tab-clienti COMPLETED
+02:16:24.251 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Weekend" RUNNING
+02:16:24.665 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Weekend, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[263,2279][384,2306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=263, y=2279, width=121, height=27))
+02:16:26.195 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+02:16:26.196 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (323, 2292) using hierarchy based logic for wait
+02:16:28.165 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+02:16:28.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Weekend" COMPLETED
+02:16:28.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+02:16:28.166 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+02:16:28.166 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:28.166 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:28.745 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:28.745 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:30.530 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+02:16:30.530 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot tab-weekend-2 RUNNING
+02:16:30.531 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+02:16:30.531 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:30.865 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot tab-weekend-2 COMPLETED
+02:16:30.866 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Il Mio" RUNNING
+02:16:31.104 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Il Mio, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[937,2284][1007,2311], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=937, y=2284, width=70, height=27))
+02:16:33.030 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+02:16:33.031 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (972, 2297) using hierarchy based logic for wait
+02:16:35.259 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+02:16:35.260 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Il Mio" COMPLETED
+02:16:35.260 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+02:16:35.260 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+02:16:35.260 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:35.261 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:36.532 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+02:16:36.532 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:37.644 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+02:16:37.644 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot tab-il-mio-vibra RUNNING
+02:16:37.645 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+02:16:37.645 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+02:16:37.954 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot tab-il-mio-vibra COMPLETED
+02:16:38.571 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
+02:16:38.691 [ INFO] maestro.drivers.AndroidDriver.close: [Start] Uninstall driver from device
