@@ -127,7 +127,7 @@ async function nativa() {
       const dest = riga(p).nativa;
       if (!r) { dest[`giro${giro}`] = { errore: 'pronta non arrivata' }; continue; }
       const v = kv(r.msg);
-      dest[`giro${giro}`] = { primo: v.primo, pronta: v.pronta, render: v.render, rete: v.rete, nonSiFerma: /NONSIFERMA/.test(r.msg) };
+      dest[`giro${giro}`] = { primo: v.primo, pronta: v.pronta, render: v.render, rete: v.rete, jsMax: v.jsMax, jsOccupato: v.jsOccupato, nonSiFerma: /NONSIFERMA/.test(r.msg), ultimo: r.msg.match(/ultimo=(\S*)/)?.[1] };
       await sleep(600);
       if (giro === 1) dest.scorrimento = await scorri();
       log('nativa', giro, p, JSON.stringify(dest[`giro${giro}`]));

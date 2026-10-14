@@ -10,7 +10,7 @@ export const diagCounts: Record<string, number> = {};
 const TEST_TRACE = process.env.EXPO_PUBLIC_TEST_TRACE === '1';
 let traceN = 0;
 export function diagCount(name: string, detail?: string) {
-  if (TEST_GARA) garaActivity(true);
+  if (TEST_GARA) { garaActivity(true); garaLast = detail ? `${name}:${detail}` : name; }
   if (!TEST_DIAG) return;
   diagCounts[name] = (diagCounts[name] ?? 0) + 1;
   if (TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${name} ${(detail ?? '').slice(0, 80)}`);
@@ -23,7 +23,9 @@ export function diagCount(name: string, detail?: string) {
 export const TEST_GARA = process.env.EXPO_PUBLIC_TEST_GARA === '1';
 const QUIET_MS = 300;
 const LIMIT_MS = 15000;
-const gara = { t0: -1, first: -1, last: 0, inflight: 0, label: '', renders: 0, fetches: 0 };
+const gara = { t0: -1, first: -1, last: 0, inflight: 0, label: '', renders: 0, fetches: 0, frame: 0, jsMax: 0, jsBusy: 0 };
+// ultimo elemento ridisegnato (chi tiene la pagina "in movimento"): nome e classi
+let garaLast = '';
 function garaActivity(render: boolean) {
   const n = performance.now();
   gara.last = n;
@@ -34,10 +36,15 @@ function garaActivity(render: boolean) {
 function garaCheck() {
   if (gara.t0 < 0) return;
   const n = performance.now();
+  // thread JS occupato: buchi tra due frame oltre il frame (16,7 ms)
+  const gap = n - gara.frame;
+  gara.frame = n;
+  if (gap > gara.jsMax) gara.jsMax = gap;
+  if (gap > 50) gara.jsBusy += gap - 16.7;
   const timeout = n - gara.t0 > LIMIT_MS;
   if (timeout || (gara.inflight === 0 && gara.first >= 0 && n - gara.last >= QUIET_MS)) {
     const end = timeout ? n : gara.last;
-    console.log(`VIBRA gara pronta ${gara.label} primo=${Math.round((gara.first < 0 ? end : gara.first) - gara.t0)} pronta=${Math.round(end - gara.t0)} render=${gara.renders} rete=${gara.fetches} fine=${Date.now() - Math.round(n - end)}${timeout ? ' NONSIFERMA' : ''}`);
+    console.log(`VIBRA gara pronta ${gara.label} primo=${Math.round((gara.first < 0 ? end : gara.first) - gara.t0)} pronta=${Math.round(end - gara.t0)} render=${gara.renders} rete=${gara.fetches} jsMax=${Math.round(gara.jsMax)} jsOccupato=${Math.round(gara.jsBusy)} fine=${Date.now() - Math.round(n - end)}${timeout ? ' NONSIFERMA' : ''} ultimo=${garaLast.replace(/\s+/g, '_').slice(0, 80)}`);
     gara.t0 = -1;
     return;
   }
@@ -45,7 +52,8 @@ function garaCheck() {
 }
 function garaStart(label: string) {
   const wasIdle = gara.t0 < 0;
-  Object.assign(gara, { t0: performance.now(), first: -1, label, renders: 0, fetches: 0 });
+  Object.assign(gara, { t0: performance.now(), first: -1, label, renders: 0, fetches: 0, jsMax: 0, jsBusy: 0 });
+  gara.frame = gara.t0;
   gara.last = gara.t0;
   if (wasIdle) requestAnimationFrame(garaCheck);
 }

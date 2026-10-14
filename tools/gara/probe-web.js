@@ -11,7 +11,7 @@
 (function () {
   var QUIET_MS = 300;
   var LIMIT_MS = 15000;
-  var g = { t0: -1, first: -1, last: 0, inflight: 0, renders: 0, fetches: 0, done: null };
+  var g = { t0: -1, first: -1, last: 0, inflight: 0, renders: 0, fetches: 0, done: null, frame: 0, jsMax: 0, jsBusy: 0 };
   function activity(render) {
     var n = performance.now();
     g.last = n;
@@ -22,6 +22,11 @@
   function check() {
     if (g.t0 < 0) return;
     var n = performance.now();
+    // thread principale occupato: buchi tra due frame oltre il frame (16,7 ms), come nella nativa
+    var gap = n - g.frame;
+    g.frame = n;
+    if (gap > g.jsMax) g.jsMax = gap;
+    if (gap > 50) g.jsBusy += gap - 16.7;
     var timeout = n - g.t0 > LIMIT_MS;
     if (timeout || (g.inflight === 0 && g.first >= 0 && n - g.last >= QUIET_MS)) {
       var end = timeout ? n : g.last;
@@ -30,6 +35,8 @@
         pronta: Math.round(end - g.t0),
         render: g.renders,
         rete: g.fetches,
+        jsMax: Math.round(g.jsMax),
+        jsOccupato: Math.round(g.jsBusy),
         nonSiFerma: timeout,
       };
       g.t0 = -1;
@@ -46,6 +53,9 @@
     g.first = -1;
     g.renders = 0;
     g.fetches = 0;
+    g.jsMax = 0;
+    g.jsBusy = 0;
+    g.frame = t0;
     g.last = t0;
     if (wasIdle) requestAnimationFrame(check);
     return new Promise(function (resolve) { g.done = resolve; });
