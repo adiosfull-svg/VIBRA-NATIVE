@@ -495,11 +495,12 @@ function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | un
 }
 
 /** Classi e style di testo del contenitore per i figli (cascata CSS). */
-function TextInherit({ inherited, text, style, children }: { inherited: string; text: string; style: Record<string, any>; children: ReactNode }) {
-  const inheritedStyle = useContext(TextStyleContext);
+/** Classi e style di testo per i figli (contesti), chiamata dentro Div/Btn: prima era un componente a
+ *  sé in ogni elemento (un livello in più da costruire per ogni Div e pulsante). */
+function textInherit(inheritedStyle: Record<string, any>, inherited: string, text: string, style: Record<string, any>, children: ReactNode): ReactNode {
   const nextStyle = nextTextStyle(inheritedStyle, text, style);
   const withStyle = nextStyle === inheritedStyle ? children : <TextStyleContext.Provider value={nextStyle}>{children}</TextStyleContext.Provider>;
-  return text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{withStyle}</TextClassContext.Provider> : <>{withStyle}</>;
+  return text ? <TextClassContext.Provider value={textClassesFor(inherited, text)}>{withStyle}</TextClassContext.Provider> : withStyle;
 }
 
 /** Testo dei figli (per rimisurare quando cambia il contenuto). */
@@ -845,6 +846,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const props = (props0 as { ref?: unknown }).ref || elementId ? { ...props0, ref: domRef } : props0;
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
+  const inheritedStyle = useContext(TextStyleContext);
   const layout = useContext(FlexParentContext);
   const [text, classRest] = splitTextClasses(className);
   const rest = withStyleGrid(classRest, style);
@@ -919,7 +921,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
     const scroll = (
       <ScrollBox {...props} {...gestures} axis={axis} box={box} style={flat} onLayout={min.onLayout}>
         {nativeBlur}
-        <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
+        {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
       </ScrollBox>
     );
     return animatedStyle ? <Animated.View style={animatedStyle}>{scroll}</Animated.View> : scroll;
@@ -930,7 +932,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
     <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style]}>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
-      <TextInherit inherited={inherited} text={text} style={rnStyle}>{content}</TextInherit>
+      {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
     </Box>
   );
 }
@@ -1001,6 +1003,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
     ? (e) => { press?.(e); form.submit(); }
     : press;
   const inherited = useContext(TextClassContext);
+  const inheritedStyle = useContext(TextStyleContext);
   const layout = useContext(FlexParentContext);
   const [ownText, classRest] = splitTextClasses(className);
   const rest = withStyleGrid(classRest, style);
@@ -1058,7 +1061,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
         <FlexParentContext.Provider value={CSS_FLEX.test(rest) ? 'flex' : 'block'}>
           <FlexRowContext.Provider value={!grid && isFlexRow(rest)}>
             <MinContentProbeContext.Provider value={minContent.probe}>
-              <TextInherit inherited={inherited} text={text} style={rnStyle}>{boxContent(children, grid, rest)}</TextInherit>
+              {textInherit(inheritedStyle, inherited, text, rnStyle, boxContent(children, grid, rest))}
             </MinContentProbeContext.Provider>
           </FlexRowContext.Provider>
         </FlexParentContext.Provider>
