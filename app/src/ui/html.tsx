@@ -6,7 +6,7 @@ import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
-import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
+import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
@@ -604,9 +604,9 @@ function unbreakableContent(children: ReactNode): boolean {
 // Elemento di una riga flex senza larghezza propria: in CSS (min-width: auto) non si stringe sotto il
 // contenuto, salvo che dentro ci sia testo che può andare a capo (o un flex-wrap): allora si stringe.
 // Parte già rigido (flexShrink 0, come il minWidth = larghezza del contenuto che si misurava prima);
-// i discendenti flessibili lo segnalano mentre si disegnano (WrapProbeContext) e un layout effect, prima
-// che lo schermo cambi, lo rende restringibile. Prima: primo disegno, misura, onLayout dal nativo e
-// secondo disegno per OGNI elemento di riga (circa metà dei disegni di una pagina).
+// i discendenti flessibili lo segnalano mentre si disegnano (WrapProbeContext) e un effect lo rende
+// restringibile subito dopo (come prima, quando arrivava la misura dal layout). Prima: primo disegno,
+// misura, onLayout dal nativo e secondo disegno per OGNI elemento di riga (circa metà dei disegni).
 const RIGID_STYLE: ViewStyle = { flexShrink: 0 };
 function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
   const parent = useContext(WrapProbeContext);
@@ -620,11 +620,14 @@ function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: 
   const lastSig = useRef<string | null>(null);
   if (enabled && probe.current && lastSig.current !== signature) probe.current.flexible = false;
   const [flexible, setFlexible] = useState(false);
-  useLayoutEffect(() => {
+  // dopo il disegno e in una transition (interrompibile): un aggiornamento sincrono qui (layout
+  // effect) costringeva a finire in un colpo solo il montaggio a pezzi delle pagine precaricate
+  // (Weekend: un blocco unico di 5,6 s sull'emulatore)
+  useEffect(() => {
     if (!enabled) return;
     lastSig.current = signature;
     const f = !!probe.current?.flexible;
-    if (f !== flexible) setFlexible(f);
+    if (f !== flexible) startTransition(() => setFlexible(f));
   });
   if (!enabled) return { minStyle: null, onLayout, probe: null };
   return { minStyle: flexible ? null : RIGID_STYLE, onLayout, probe: probe.current };
