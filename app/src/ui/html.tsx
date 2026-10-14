@@ -7,9 +7,10 @@ import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
 import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
-import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
+import { CapturePressable, CaptureView, classStyle } from './classStyleCache';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
@@ -944,12 +945,24 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
-  return (
-    <Box {...props} {...gestures} onLayout={min.onLayout} className={cn(box, nativeBlur && 'overflow-hidden')} style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style]}>
+  const boxClasses = cn(box, nativeBlur && 'overflow-hidden');
+  const ownStyle = [boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style];
+  const boxInner = (
+    <>
       {nativeBlur}
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
-    </Box>
+    </>
+  );
+  // telefono: classi statiche già viste → View semplice con lo stile in cache (ui/classStyleCache)
+  if (Platform.OS !== 'web' && Box === View) {
+    if (!boxClasses) return <View {...props} {...gestures} onLayout={min.onLayout} style={ownStyle}>{boxInner}</View>;
+    const cs = classStyle(boxClasses);
+    if (cs.cached) return <View {...props} {...gestures} onLayout={min.onLayout} style={[cs.style as ViewStyle, ...ownStyle]}>{boxInner}</View>;
+    if (cs.key) return <CaptureView {...props} {...gestures} onLayout={min.onLayout} className={boxClasses} __cacheKey={cs.key} __extraStyle={ownStyle}>{boxInner}</CaptureView>;
+  }
+  return (
+    <Box {...props} {...gestures} onLayout={min.onLayout} className={boxClasses} style={ownStyle}>{boxInner}</Box>
   );
 }
 
@@ -1008,6 +1021,19 @@ const BUTTON_CENTER: ViewStyle = { justifyContent: 'center' };
 const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+|self-\S+|absolute|fixed)(\s|$)/;
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
+const PRESSED: ViewStyle = { opacity: 0.85 };
+
+/** Pressable del pulsante: sul telefono, con classi statiche già viste, senza NativeWind (ui/classStyleCache). */
+function BtnPressable({ classes, ownStyle, children, ...p }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; children?: ReactNode }) {
+  if (Platform.OS !== 'web') {
+    if (!classes) return <Pressable {...p} style={ownStyle}>{children}</Pressable>;
+    const cs = classStyle(classes);
+    if (cs.cached) return <Pressable {...p} style={[cs.style as ViewStyle, ...ownStyle]}>{children}</Pressable>;
+    if (cs.key) return <CapturePressable {...p} className={classes} __cacheKey={cs.key} __extraStyle={ownStyle}>{children}</CapturePressable>;
+  }
+  return <Pressable {...p} className={classes} style={ownStyle}>{children}</Pressable>;
+}
+
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
   diagCount('btn', className);
   const [handlers, props] = splitGestureProps(all);
@@ -1075,20 +1101,20 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   if (needGrid) content = <GridCellContext.Provider value={false}>{content}</GridCellContext.Provider>;
   if (needLead) content = <LeadMarginContext.Provider value={null}>{content}</LeadMarginContext.Provider>;
   return (
-    <Pressable
+    <BtnPressable
       onLayout={min.onLayout}
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
       {...gestures}
       disabled={disabled}
       onPress={handlePress}
-      className={cn(box, disabled && 'opacity-50')}
-      onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
-      onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      classes={cn(box, disabled && 'opacity-50')}
+      onPressIn={(e: GestureResponderEvent) => { setPressed(true); props.onPressIn?.(e); }}
+      onPressOut={(e: GestureResponderEvent) => { setPressed(false); props.onPressOut?.(e); }}
+      ownStyle={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? PRESSED : null]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       {content}
-    </Pressable>
+    </BtnPressable>
   );
 }
