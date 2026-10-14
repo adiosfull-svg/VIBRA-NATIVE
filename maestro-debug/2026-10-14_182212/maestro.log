@@ -1,0 +1,344 @@
+18:22:12.405 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-14_182212
+18:22:12.409 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+18:22:12.411 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+18:22:12.414 [ INFO] MAESTRO.logSystemInfo: CI: github
+18:22:12.414 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+18:22:12.415 [ INFO] MAESTRO.logSystemInfo: OS Version: 6.17.0-1022-azure
+18:22:12.415 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+18:22:12.419 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+18:22:12.423 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+18:22:12.426 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+18:22:12.431 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+18:22:12.431 [ INFO] MAESTRO.logSystemInfo: ---------------------
+18:22:13.257 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+18:22:16.116 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 45087 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/admin/03-pagine-nuove.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+18:22:19.525 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 03-pagine-nuove
+18:22:19.541 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+18:22:19.733 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+18:22:19.841 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+18:22:19.845 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+18:22:19.845 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+18:22:19.846 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+18:22:19.846 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+18:22:20.423 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+18:22:20.489 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+18:22:20.576 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+18:22:20.576 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+18:22:21.438 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+18:22:21.441 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+18:22:21.443 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+18:22:21.444 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+18:22:21.445 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+18:22:30.528 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+18:22:30.528 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+18:22:30.528 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+18:22:30.529 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "FATTURATO TOTALE|Password" is visible RUNNING
+18:22:31.197 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "FATTURATO TOTALE|Password" is visible COMPLETED
+18:22:31.197 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+18:22:31.198 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+18:22:31.200 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+18:22:31.200 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+18:22:32.337 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+18:22:32.339 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+18:22:32.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+18:22:32.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+18:22:32.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+18:22:32.341 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+18:22:32.341 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+18:22:33.040 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+18:22:33.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible SKIPPED
+18:22:33.041 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+18:22:33.041 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "FATTURATO TOTALE" is visible RUNNING
+18:22:33.481 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "FATTURATO TOTALE" is visible COMPLETED
+18:22:33.482 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://serate RUNNING
+18:22:33.489 [ INFO] maestro.Maestro.openLink: Opening link vibra://serate for app: com.vibra.mobile with autoVerify config as false
+18:22:34.132 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://serate COMPLETED
+18:22:34.133 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Rettangolare.*|Si è verificato un errore" is visible RUNNING
+18:22:40.184 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Rettangolare.*|Si è verificato un errore" is visible COMPLETED
+18:22:40.185 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:22:40.188 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:22:40.190 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:40.190 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:40.728 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:40.728 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:41.404 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:22:41.404 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-serate RUNNING
+18:22:41.406 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:22:41.408 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:41.668 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-serate COMPLETED
+18:22:41.668 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:22:42.802 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:22:42.802 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://importa-serata RUNNING
+18:22:42.803 [ INFO] maestro.Maestro.openLink: Opening link vibra://importa-serata for app: com.vibra.mobile with autoVerify config as false
+18:22:44.802 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://importa-serata COMPLETED
+18:22:44.802 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Serata 1.*|Si è verificato un errore" is visible RUNNING
+18:22:45.931 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Serata 1.*|Si è verificato un errore" is visible COMPLETED
+18:22:45.931 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:22:45.932 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:22:45.932 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:45.932 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:46.329 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:46.329 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:47.186 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:22:47.186 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-importa-serata RUNNING
+18:22:47.187 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:22:47.188 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:47.996 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-importa-serata COMPLETED
+18:22:47.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:22:48.725 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:22:48.725 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://locali RUNNING
+18:22:48.726 [ INFO] maestro.Maestro.openLink: Opening link vibra://locali for app: com.vibra.mobile with autoVerify config as false
+18:22:49.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://locali COMPLETED
+18:22:49.166 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Ammare Frontemare.*|Si è verificato un errore" is visible RUNNING
+18:22:50.307 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Ammare Frontemare.*|Si è verificato un errore" is visible COMPLETED
+18:22:50.308 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:22:50.308 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:22:50.308 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:50.308 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:50.606 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:50.607 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:51.495 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:22:51.497 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-locali RUNNING
+18:22:51.499 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:22:51.499 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:52.208 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-locali COMPLETED
+18:22:52.208 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:22:53.032 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:22:53.033 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://report RUNNING
+18:22:53.033 [ INFO] maestro.Maestro.openLink: Opening link vibra://report for app: com.vibra.mobile with autoVerify config as false
+18:22:54.804 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://report COMPLETED
+18:22:54.804 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Tipo di confronto:.*|Si è verificato un errore" is visible RUNNING
+18:22:55.748 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Tipo di confronto:.*|Si è verificato un errore" is visible COMPLETED
+18:22:55.748 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:22:55.749 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:22:55.749 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:55.750 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:56.383 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:56.383 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:56.863 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:22:56.863 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-report RUNNING
+18:22:56.864 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:22:56.864 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:57.116 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-report COMPLETED
+18:22:57.117 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:22:57.912 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:22:57.912 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://messaggi RUNNING
+18:22:57.913 [ INFO] maestro.Maestro.openLink: Opening link vibra://messaggi for app: com.vibra.mobile with autoVerify config as false
+18:22:58.308 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://messaggi COMPLETED
+18:22:58.309 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Esclusi.*|Si è verificato un errore" is visible RUNNING
+18:22:59.510 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Esclusi.*|Si è verificato un errore" is visible COMPLETED
+18:22:59.510 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:22:59.511 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:22:59.511 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:59.511 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:22:59.776 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:22:59.776 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:00.659 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:00.660 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-messaggi RUNNING
+18:23:00.661 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:00.662 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:01.719 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-messaggi COMPLETED
+18:23:01.720 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:02.519 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:02.520 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://promoter/prom000000000000000001 RUNNING
+18:23:02.520 [ INFO] maestro.Maestro.openLink: Opening link vibra://promoter/prom000000000000000001 for app: com.vibra.mobile with autoVerify config as false
+18:23:02.973 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://promoter/prom000000000000000001 COMPLETED
+18:23:02.974 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore" is visible RUNNING
+18:23:06.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore" is visible COMPLETED
+18:23:06.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:06.437 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:06.437 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:06.437 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:06.727 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:06.728 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:07.236 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:07.237 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-promoter RUNNING
+18:23:07.237 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:07.238 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:07.480 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-promoter COMPLETED
+18:23:07.480 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:08.274 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:08.274 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://clienti-analytics RUNNING
+18:23:08.275 [ INFO] maestro.Maestro.openLink: Opening link vibra://clienti-analytics for app: com.vibra.mobile with autoVerify config as false
+18:23:08.955 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://clienti-analytics COMPLETED
+18:23:08.956 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore" is visible RUNNING
+18:23:14.360 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore" is visible COMPLETED
+18:23:14.360 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:14.361 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:14.361 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:14.361 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:14.748 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:14.748 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:15.365 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:15.365 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-clienti-analytics RUNNING
+18:23:15.366 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:15.368 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:15.815 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-clienti-analytics COMPLETED
+18:23:15.816 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:17.159 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:17.159 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://notifiche RUNNING
+18:23:17.159 [ INFO] maestro.Maestro.openLink: Opening link vibra://notifiche for app: com.vibra.mobile with autoVerify config as false
+18:23:17.832 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://notifiche COMPLETED
+18:23:17.833 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Benvenuto in Vibra mobile.*|.*non lett.*|Nessuna notifica|Si è verificato un errore" is visible RUNNING
+18:23:18.806 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Benvenuto in Vibra mobile.*|.*non lett.*|Nessuna notifica|Si è verificato un errore" is visible COMPLETED
+18:23:18.806 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:18.806 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:18.806 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:18.807 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:19.069 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:19.070 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:19.467 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:19.467 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-notifiche RUNNING
+18:23:19.468 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:19.468 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:19.774 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-notifiche COMPLETED
+18:23:19.774 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:20.632 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:20.633 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://formazione RUNNING
+18:23:20.633 [ INFO] maestro.Maestro.openLink: Opening link vibra://formazione for app: com.vibra.mobile with autoVerify config as false
+18:23:21.003 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://formazione COMPLETED
+18:23:21.003 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Presentazione.*|Si è verificato un errore" is visible RUNNING
+18:23:25.158 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Presentazione.*|Si è verificato un errore" is visible COMPLETED
+18:23:25.159 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:25.159 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:25.159 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:25.159 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:25.463 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:25.464 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:25.938 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:25.939 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-formazione RUNNING
+18:23:25.939 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:25.940 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:26.230 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-formazione COMPLETED
+18:23:26.230 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:26.977 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:26.978 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://download RUNNING
+18:23:26.978 [ INFO] maestro.Maestro.openLink: Opening link vibra://download for app: com.vibra.mobile with autoVerify config as false
+18:23:27.593 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://download COMPLETED
+18:23:27.593 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Tutti.*|Si è verificato un errore" is visible RUNNING
+18:23:30.845 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Tutti.*|Si è verificato un errore" is visible COMPLETED
+18:23:30.847 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:30.850 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:30.850 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:30.850 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:31.149 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:31.149 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:32.020 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:32.020 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-download RUNNING
+18:23:32.021 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:32.021 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:32.235 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-download COMPLETED
+18:23:32.235 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:33.180 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:33.180 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://vibra-gpt RUNNING
+18:23:33.180 [ INFO] maestro.Maestro.openLink: Opening link vibra://vibra-gpt for app: com.vibra.mobile with autoVerify config as false
+18:23:33.654 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://vibra-gpt COMPLETED
+18:23:33.654 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible RUNNING
+18:23:34.904 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible COMPLETED
+18:23:34.904 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:34.905 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:34.905 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:34.905 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:35.154 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:35.154 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:35.847 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:35.848 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-vibra-gpt RUNNING
+18:23:35.848 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:35.850 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:36.566 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-vibra-gpt COMPLETED
+18:23:36.566 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:37.357 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:37.358 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://ricerca-ai RUNNING
+18:23:37.358 [ INFO] maestro.Maestro.openLink: Opening link vibra://ricerca-ai for app: com.vibra.mobile with autoVerify config as false
+18:23:39.131 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://ricerca-ai COMPLETED
+18:23:39.131 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible RUNNING
+18:23:39.296 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible COMPLETED
+18:23:39.297 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:39.297 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:39.297 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:39.297 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:39.986 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:39.986 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:40.735 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:40.735 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-ricerca-ai RUNNING
+18:23:40.736 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:40.736 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:40.913 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-ricerca-ai COMPLETED
+18:23:40.913 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:41.753 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:41.754 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://admin-console RUNNING
+18:23:41.754 [ INFO] maestro.Maestro.openLink: Opening link vibra://admin-console for app: com.vibra.mobile with autoVerify config as false
+18:23:42.168 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://admin-console COMPLETED
+18:23:42.168 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Crediti AI.*|Si è verificato un errore" is visible RUNNING
+18:23:43.272 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Crediti AI.*|Si è verificato un errore" is visible COMPLETED
+18:23:43.272 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:43.273 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:43.274 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:43.274 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:43.627 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:43.627 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:44.672 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:44.672 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-admin-console RUNNING
+18:23:44.673 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:44.673 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:45.407 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-admin-console COMPLETED
+18:23:45.407 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:23:46.185 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+18:23:46.185 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://promoter RUNNING
+18:23:46.186 [ INFO] maestro.Maestro.openLink: Opening link vibra://promoter for app: com.vibra.mobile with autoVerify config as false
+18:23:46.537 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://promoter COMPLETED
+18:23:46.537 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Aggiungi promoter.*|Si è verificato un errore" is visible RUNNING
+18:23:50.317 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Aggiungi promoter.*|Si è verificato un errore" is visible COMPLETED
+18:23:50.317 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+18:23:50.318 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+18:23:50.318 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:50.318 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:50.580 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:23:50.580 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:50.949 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+18:23:50.950 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-promoter-lista RUNNING
+18:23:50.950 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:23:50.950 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:23:51.115 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-promoter-lista COMPLETED
+18:23:51.116 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+18:24:08.273 [ERROR] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandFailed: Assertion is false: "Si è verificato un errore" is not visible
+18:24:08.735 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:24:08.736 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:24:08.938 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible FAILED
+18:24:09.637 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
