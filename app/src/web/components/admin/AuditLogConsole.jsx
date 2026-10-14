@@ -1,6 +1,7 @@
 // Port di src/components/admin/AuditLogConsole.jsx (convertito da scripts/port/codemod.mjs).
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
 import React, { useMemo, useState } from 'react';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
 import { fetchAll } from '@/web/lib/safeData';
@@ -265,6 +266,8 @@ export default function AuditLogConsole() {
     }
     return list;
   }, [enriched, category, search]);
+  // PORT: log lunghi: montaggio progressivo (hooks/useProgressiveList)
+  const { count: shownLogs, sentinelRef: logsSentinelRef } = useProgressiveList(filtered.length);
 
   const counts = useMemo(() => {
     const c = { tutto: enriched.length, clienti: 0, presenze: 0, importi: 0, guadagni: 0, altro: 0 };
@@ -333,7 +336,7 @@ export default function AuditLogConsole() {
         </Div>
       ) : (
         <Div className="space-y-2">
-          {filtered.map(log => {
+          {filtered.slice(0, shownLogs).map(log => {
             const op = OP_META[log.operation_type] || OP_META.update;
             const fields = diffFields(log);
             return (
@@ -392,6 +395,7 @@ export default function AuditLogConsole() {
               </Div>
             );
           })}
+          {shownLogs < filtered.length && <Div ref={logsSentinelRef} />}
         </Div>
       )}
     </Div>

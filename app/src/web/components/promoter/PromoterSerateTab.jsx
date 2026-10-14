@@ -1,5 +1,6 @@
 // Port di src/components/promoter/PromoterSerateTab.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState } from 'react';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { format, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { CalendarDays, Search, X } from '@/ui/icons.generated';
@@ -37,6 +38,8 @@ export default function PromoterSerateTab({ attendances, events }) {
         return dateStr.includes(q) || monthStr.includes(q) || nameStr.includes(q) || venueStr.includes(q);
       })
     : enriched;
+  // PORT: tutte le presenze del promoter: montaggio progressivo (hooks/useProgressiveList)
+  const { count: shown, sentinelRef } = useProgressiveList(filtered.length);
 
   const totalRevenue = filtered.reduce((s, { a }) => s + (a.revenue || 0), 0);
   const totalTables = filtered.reduce((s, { a, ev }) => {
@@ -107,7 +110,7 @@ export default function PromoterSerateTab({ attendances, events }) {
             <P className="text-sm text-muted-foreground">Nessuna serata trovata per "{search}".</P>
           </Div>
         )}
-        {filtered.map(({ a, ev }) => {
+        {filtered.slice(0, shown).map(({ a, ev }) => {
           const dow = getDow(ev.date);
           const tables = calcTables(a.revenue || 0, dow);
           return (
@@ -134,6 +137,7 @@ export default function PromoterSerateTab({ attendances, events }) {
             </Div>
           );
         })}
+        {shown < filtered.length && <Div ref={sentinelRef} />}
       </Div>
     </Div>
   );

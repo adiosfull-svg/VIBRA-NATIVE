@@ -1,5 +1,6 @@
 // Port di src/components/report/ReportBuilder.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useMemo } from 'react';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { Check, ChevronDown, Search, Users, Calendar, GitCompare, PartyPopper } from '@/ui/icons.generated';
 import { REPORT_TYPES, REPORT_SECTIONS, filterEventsByPeriod } from '@/legacy/utils/reportData';
 import { MonthSelect, YearSelect } from '@/web/components/shared/MonthYearPicker';
@@ -111,6 +112,8 @@ function EventMultiSelect({ events, selected, onChange }) {
   const filtered = sorted.filter(e => !search ||
     (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
     (e.venue || '').toLowerCase().includes(search.toLowerCase()));
+  // PORT: centinaia di serate nel menu: prime 20 subito, le altre a blocchi (hooks/useProgressiveList)
+  const { count: shown } = useProgressiveList(filtered.length);
 
   const toggle = (id) => {
     onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
@@ -157,7 +160,7 @@ function EventMultiSelect({ events, selected, onChange }) {
                 Deseleziona tutte
               </Btn>
               <Div className="h-px bg-border my-1" />
-              {filtered.map(e => (
+              {filtered.slice(0, shown).map(e => (
                 <Btn
                   button
                   key={e.id}

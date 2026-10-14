@@ -7,8 +7,9 @@
 /** Tab della nav bar (la Dashboard '/' si aggiunge solo per chi può vederla: altrimenti è un Redirect). */
 export const PRELOAD_TABS: string[] = ['/programmazione', '/clienti', '/il-mio-vibra', '/semine'];
 
-/** Pagine dello stack da precaricare dopo le tab (oggi sono ancora ComingSoon). */
-export const PRELOAD_STACK: string[] = [];
+/** Pagine dello stack da precaricare dopo le tab: Notifiche (campanella, tutti i ruoli, leggera).
+ *  Serate/Messaggi no: pesanti o per ruolo, resterebbero in memoria per tutti. */
+export const PRELOAD_STACK: string[] = ['/notifiche'];
 
 /** Attesa dopo l'avvio e pausa tra una pagina e l'altra: una alla volta, mai durante un'interazione. */
 export const PRELOAD_FIRST_DELAY_MS = 2500;

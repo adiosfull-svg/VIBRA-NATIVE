@@ -1,5 +1,6 @@
 // Port di src/components/instagram/InstagramDMsTab.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
 import { fetchIgMessages } from '@/web/lib/igMessages';
@@ -207,6 +208,8 @@ export default function InstagramDMsTab({ semine = [], onAddToSemine, upcomingDa
   ];
   const activeConfig = tabConfigs.find(t => t.key === activeSubTab) || tabConfigs[0];
   const displayConvs = activeConfig.convs;
+  // PORT: molte conversazioni: montaggio progressivo (hooks/useProgressiveList)
+  const { count: shownConvs, sentinelRef: convsSentinelRef } = useProgressiveList(displayConvs.length);
   const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length;
 
   const handleSync = async () => {
@@ -619,7 +622,7 @@ export default function InstagramDMsTab({ semine = [], onAddToSemine, upcomingDa
         </Div>
       ) : (
         <Div className="space-y-2">
-          {displayConvs.map(conv => {
+          {displayConvs.slice(0, shownConvs).map(conv => {
             const isExpanded = expandedConvId === conv.conversationId;
             const profile = getMatchedProfile(conv);
             const isMatched = conv.matchedSeminaId || conv.matchedClientId;
@@ -810,6 +813,7 @@ export default function InstagramDMsTab({ semine = [], onAddToSemine, upcomingDa
               </Div>
             );
           })}
+          {shownConvs < displayConvs.length && <Div ref={convsSentinelRef} />}
         </Div>
       )}
 

@@ -1,0 +1,31 @@
+# Admin: Serate (lista lunga, montaggio progressivo) si apre e scorre fino in fondo; nel logcat i battiti
+# "VIBRA diag battito" dicono se il JS si blocca durante lo scroll.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://serate
+- extendedWaitUntil:
+    visible: ".*Rettangolare.*"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: serate-inizio
+- repeat:
+    times: 12
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: serate-fondo
+- assertNotVisible: "Si è verificato un errore"

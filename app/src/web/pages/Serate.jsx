@@ -1,6 +1,6 @@
 // Port di src/pages/Serate.jsx (convertito da scripts/port/codemod.mjs).
 import { attendancesAllOptions } from '@/web/lib/attendanceQueries';
-import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { useNavigate } from '@/web/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +18,30 @@ const EventFormDialog = React.lazy(() => import('@/web/components/event/EventFor
 const EventPromoterChart = React.lazy(() => import('@/web/components/event/EventPromoterChart'));
 const EventCompareDialog = React.lazy(() => import('@/web/components/serate/EventCompareDialog'));
 import EventCard from '@/web/components/serate/EventCard';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
+
+// PORT: riga della lista in memo: le closure per EventCard si rifanno solo quando cambia la sua serata
+const NO_ATTENDANCES = [];
+const SerataRow = memo(function SerataRow({ event, attendances, promoters, layout, isExpanded, onToggle, onEditEvent, onDeleteEvent }) {
+  return (
+    <Div className="serate-card-row">
+      <EventCard
+        event={event}
+        attendances={attendances}
+        promoters={promoters}
+        layout={layout}
+        isExpanded={isExpanded}
+        onToggleExpand={(expanded) => onToggle(event.id, expanded)}
+        onEdit={() => onEditEvent(event)}
+        onDelete={() => onDeleteEvent(event.id)}
+        showDivider={false}
+        dividerLabel=""
+        dividerColor=""
+        dividerControls={null}
+      />
+    </Div>
+  );
+});
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/dialog';
 import { calcTables } from '@/legacy/utils/tables';
 import { useAllVenueLogos } from '@/web/hooks/useAllVenueLogos';
@@ -448,6 +472,10 @@ export default function Serate() {
       );
     });
   }, [venueFiltered, searchQuery]);
+  // PORT: lista lunga → montaggio progressivo; callback stabili per le righe in memo
+  const { count: shownEvents, sentinelRef: eventsSentinelRef } = useProgressiveList(filteredEvents.length);
+  const toggleExpanded = useCallback((id, expanded) => setExpandedEvent(expanded ? id : null), []);
+  const openEditEvent = useCallback((ev) => { setEditingEvent(ev); setEventDialogOpen(true); }, []);
 
   const handleAddDivider = () => {
     let targetEventId = null;
@@ -725,7 +753,8 @@ export default function Serate() {
         <Div
           className={`dash-fade-up ${layout === 'mini' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2' : layout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-3'}`}
         >
-          {filteredEvents.map((event) => {
+          {/* PORT: montaggio progressivo (hooks/useProgressiveList): prime 20 serate, le altre a blocchi */}
+          {filteredEvents.slice(0, shownEvents).map((event) => {
             const isExpanded = expandedEvent === event.id;
             const eventDividers = !venueFilter ? seasonDividersDB.filter(d => d.eventId === event.id) : [];
             return (
@@ -789,27 +818,23 @@ export default function Serate() {
                     />
                   );
                 })}
-                <Div className="serate-card-row">
-                  <EventCard
-                    event={event}
-                    attendances={attendancesByEvent[event.id] || []}
-                    promoters={promoters}
-                    layout={layout}
-                    isExpanded={isExpanded}
-                    onToggleExpand={(expanded) => setExpandedEvent(expanded ? event.id : null)}
-                    onEdit={() => { setEditingEvent(event); setEventDialogOpen(true); }}
-                    onDelete={() => setDeleteId(event.id)}
-                    showDivider={false}
-                    dividerLabel=""
-                    dividerColor=""
-                    dividerControls={null}
-                  />
-                </Div>
+                {/* PORT: riga in memo con callback stabili (aprire una card non ridisegna le altre) */}
+                <SerataRow
+                  event={event}
+                  attendances={attendancesByEvent[event.id] || NO_ATTENDANCES}
+                  promoters={promoters}
+                  layout={layout}
+                  isExpanded={isExpanded}
+                  onToggle={toggleExpanded}
+                  onEditEvent={openEditEvent}
+                  onDeleteEvent={setDeleteId}
+                />
               </React.Fragment>
             );
           })}
         </Div>
       )}
+      {shownEvents < filteredEvents.length && <Div ref={eventsSentinelRef} />}
 
       <Suspense fallback={null}><EventFormDialog open={eventDialogOpen} onOpenChange={setEventDialogOpen} event={editingEvent} onSave={handleSaveEvent} /></Suspense>
       <Suspense fallback={null}><EventCompareDialog open={compareOpen} onOpenChange={setCompareOpen} events={events} attendances={attendances} promoters={promoters} /></Suspense>
