@@ -1,0 +1,274 @@
+15:22:06.947 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-14_152206
+15:22:06.949 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+15:22:06.949 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+15:22:06.950 [ INFO] MAESTRO.logSystemInfo: CI: github
+15:22:06.950 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+15:22:06.950 [ INFO] MAESTRO.logSystemInfo: OS Version: 6.17.0-1022-azure
+15:22:06.951 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+15:22:06.951 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+15:22:06.954 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+15:22:06.955 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+15:22:06.957 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+15:22:06.957 [ INFO] MAESTRO.logSystemInfo: ---------------------
+15:22:07.633 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+15:22:09.167 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 35879 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/pr/02-clienti.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+15:22:11.205 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 02-clienti
+15:22:11.214 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+15:22:11.327 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+15:22:11.410 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+15:22:11.413 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+15:22:11.414 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:22:11.414 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:22:11.414 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+15:22:11.929 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+15:22:11.974 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+15:22:12.029 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+15:22:12.029 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+15:22:12.511 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+15:22:12.512 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:22:12.513 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:22:12.514 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:22:12.514 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:22:20.870 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:22:20.873 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:22:20.873 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:22:20.873 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi|Password" is visible RUNNING
+15:22:21.228 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi|Password" is visible COMPLETED
+15:22:21.228 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:22:21.228 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:22:21.229 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:22:21.229 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:22:22.373 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:22:22.373 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:22:22.373 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:22:22.373 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+15:22:22.374 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:22:22.374 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:22:22.374 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+15:22:22.957 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:22:22.957 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible SKIPPED
+15:22:22.957 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+15:22:22.957 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi" is visible RUNNING
+15:22:23.349 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi" is visible COMPLETED
+15:22:23.349 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:22:23.352 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:22:23.354 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:23.354 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:23.790 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:23.790 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:24.335 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:22:24.336 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Clienti" RUNNING
+15:22:24.522 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Clienti, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[499,2279][581,2306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=499, y=2279, width=82, height=27))
+15:22:25.878 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+15:22:25.882 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 2292) using hierarchy based logic for wait
+15:22:27.610 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+15:22:27.610 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Clienti" COMPLETED
+15:22:27.610 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "LISTA CLIENTI" is visible RUNNING
+15:22:27.919 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "LISTA CLIENTI" is visible COMPLETED
+15:22:27.919 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:22:27.920 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:22:27.920 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:27.920 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:28.810 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:28.813 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:29.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:22:29.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-01 RUNNING
+15:22:29.372 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:22:29.373 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:29.610 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-01 COMPLETED
+15:22:29.611 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Sofia Colombo" RUNNING
+15:22:29.913 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Sofia Colombo, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[203,1169][466,1222], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=203, y=1169, width=263, height=53))
+15:22:31.325 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+15:22:31.326 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (334, 1195) using hierarchy based logic for wait
+15:22:34.605 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+15:22:34.605 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Sofia Colombo" COMPLETED
+15:22:34.605 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Skill del cliente" is visible RUNNING
+15:22:34.982 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Skill del cliente" is visible COMPLETED
+15:22:34.983 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:22:34.983 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:22:34.983 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:34.983 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:35.235 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:35.236 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:35.601 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:22:35.602 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-dettaglio RUNNING
+15:22:35.602 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:22:35.603 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:35.789 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-dettaglio COMPLETED
+15:22:35.791 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 75%) to (50%, 25%) in 600 ms RUNNING
+15:22:38.569 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 75%) to (50%, 25%) in 600 ms COMPLETED
+15:22:38.570 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-dettaglio-2 RUNNING
+15:22:38.570 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:22:38.570 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:38.735 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-dettaglio-2 COMPLETED
+15:22:38.735 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Press back RUNNING
+15:22:38.736 [ INFO] maestro.Maestro.backPress: Pressing back
+15:22:40.504 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Press back COMPLETED
+15:22:40.505 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:22:40.505 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:22:40.505 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:40.505 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:40.730 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:40.730 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:41.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:22:41.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-chiuso RUNNING
+15:22:41.047 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:22:41.047 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:41.214 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-chiuso COMPLETED
+15:22:41.214 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 15%) in 300 ms RUNNING
+15:22:44.501 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 15%) in 300 ms COMPLETED
+15:22:44.501 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:22:44.501 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:22:44.501 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:44.502 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:44.799 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:44.800 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:45.147 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:22:45.147 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:22:45.148 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:22:45.148 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:22:45.148 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:22:52.549 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:22:52.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:22:52.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:22:52.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-02 RUNNING
+15:22:52.549 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:22:52.550 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:52.803 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-02 COMPLETED
+15:22:52.804 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 15%) in 300 ms RUNNING
+15:22:55.962 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 15%) in 300 ms COMPLETED
+15:22:55.963 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:22:55.963 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:22:55.963 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:55.963 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:56.222 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:22:56.222 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:22:56.538 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:22:56.538 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:22:56.538 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:22:56.538 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:22:56.538 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:23:03.798 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:23:03.799 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:23:03.799 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:23:03.799 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-03 RUNNING
+15:23:03.800 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:23:03.800 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:04.022 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-03 COMPLETED
+15:23:04.022 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 15%) in 300 ms RUNNING
+15:23:07.923 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 15%) in 300 ms COMPLETED
+15:23:07.923 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:23:07.924 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:23:07.924 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:07.924 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:08.176 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:08.176 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:08.499 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:23:08.499 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:23:08.499 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:23:08.499 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:23:08.499 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:23:15.936 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:23:15.936 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:23:15.936 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:23:15.936 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-04 RUNNING
+15:23:15.937 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:23:15.937 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:16.274 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-04 COMPLETED
+15:23:16.274 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 15%) in 300 ms RUNNING
+15:23:19.917 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 15%) in 300 ms COMPLETED
+15:23:19.918 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:23:19.918 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:23:19.918 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:19.918 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:20.166 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:20.166 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:20.513 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:23:20.513 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:23:20.514 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:23:20.514 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:23:20.514 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:23:27.776 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:23:27.777 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:23:27.777 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:23:27.777 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-05 RUNNING
+15:23:27.777 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:23:27.778 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:28.002 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-05 COMPLETED
+15:23:28.002 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 15%) in 300 ms RUNNING
+15:23:31.570 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 15%) in 300 ms COMPLETED
+15:23:31.570 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:23:31.571 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:23:31.571 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:31.571 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:31.809 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:31.809 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:32.113 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:23:32.113 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:23:32.114 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:23:32.114 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:23:32.114 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:23:39.549 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:23:39.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:23:39.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:23:39.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-06 RUNNING
+15:23:39.550 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:23:39.550 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:39.722 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-06 COMPLETED
+15:23:39.722 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 15%) in 300 ms RUNNING
+15:23:43.577 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 15%) in 300 ms COMPLETED
+15:23:43.578 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+15:23:43.578 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+15:23:43.578 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:43.578 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:43.820 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+15:23:43.820 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:44.133 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+15:23:44.133 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+15:23:44.134 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+15:23:44.134 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+15:23:44.134 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+15:23:51.383 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+15:23:51.383 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+15:23:51.383 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+15:23:51.384 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot clienti-07 RUNNING
+15:23:51.384 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+15:23:51.384 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+15:23:51.566 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot clienti-07 COMPLETED
+15:23:52.099 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
