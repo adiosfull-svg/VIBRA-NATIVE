@@ -294,20 +294,69 @@ if (typeof g.Image === 'undefined') {
   };
 }
 if (typeof g.IntersectionObserver === 'undefined') {
-  /** Senza viewport osservabile: ogni elemento osservato risulta visibile (si carica/mostra subito). */
+  /**
+   * IntersectionObserver sullo scroll della pagina (pageScroll): come nel browser, l'elemento risulta
+   * visibile quando entra nello schermo (± rootMargin). Lo usa il codice originale per caricare solo ciò
+   * che si guarda (immagini lazy di CachedImage, sentinelle). Prima ogni elemento risultava visibile
+   * subito: sul telefono si caricava tutto all'apertura. Un elemento non misurabile (pagina in
+   * background, modale) resta "visibile subito", come prima.
+   */
+  const px = (v: string | undefined, vh: number) => {
+    if (!v) return 0;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? (v.trim().endsWith('%') ? (n / 100) * vh : n) : 0;
+  };
   g.IntersectionObserver = class {
     private cb: AnyFn;
+    private margin: string[];
+    private targets = new Map<unknown, boolean | undefined>();
     private alive = true;
-    constructor(cb: AnyFn) { this.cb = cb; }
-    observe(target: unknown) {
-      setTimeout(() => {
-        if (!this.alive) return;
-        const r = { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
-        this.cb([{ target, isIntersecting: true, intersectionRatio: 1, boundingClientRect: r, intersectionRect: r, rootBounds: null, time: Date.now() }], this);
-      }, 0);
+    private scheduled = false;
+    private listening = false;
+    constructor(cb: AnyFn, opts?: { rootMargin?: string }) {
+      this.cb = cb;
+      const m = (opts?.rootMargin ?? '0px').trim().split(/\s+/);
+      // CSS: 1-4 valori (top right bottom left)
+      this.margin = [m[0], m[1] ?? m[0], m[2] ?? m[0], m[3] ?? m[1] ?? m[0]];
     }
-    unobserve() {}
-    disconnect() { this.alive = false; }
+    private onScroll = () => this.schedule();
+    private schedule() {
+      if (this.scheduled || !this.alive) return;
+      this.scheduled = true;
+      requestAnimationFrame(() => { this.scheduled = false; this.check(); });
+    }
+    private check() {
+      if (!this.alive || !this.targets.size) return;
+      const vh = pageScroll.viewportHeight || Dimensions.get('window').height;
+      const y = pageScroll.y;
+      const rootTop = y - px(this.margin[0], vh);
+      const rootBottom = y + vh + px(this.margin[2], vh);
+      const entries: unknown[] = [];
+      for (const [target, was] of this.targets) {
+        const r = pageScroll.rectOf(target);
+        const inView = r ? r.y < rootBottom && r.y + r.h > rootTop : true;
+        if (inView === was) continue;
+        this.targets.set(target, inView);
+        const top = r ? r.y - y : 0;
+        const h = r?.h ?? 0;
+        const rect = { top, bottom: top + h, left: 0, right: 0, width: 0, height: h, x: 0, y: top };
+        entries.push({ target, isIntersecting: inView, intersectionRatio: inView ? 1 : 0, boundingClientRect: rect, intersectionRect: rect, rootBounds: null, time: Date.now() });
+      }
+      if (entries.length) this.cb(entries, this);
+    }
+    observe(target: unknown) {
+      if (!this.alive) return;
+      this.targets.set(target, undefined);
+      if (!this.listening) { this.listening = true; pageScroll.on(this.onScroll); }
+      // dopo il layout dell'elemento appena montato
+      setTimeout(() => this.schedule(), 0);
+    }
+    unobserve(target: unknown) { this.targets.delete(target); }
+    disconnect() {
+      this.alive = false;
+      this.targets.clear();
+      if (this.listening) { this.listening = false; pageScroll.off(this.onScroll); }
+    }
     takeRecords() { return []; }
   };
 }

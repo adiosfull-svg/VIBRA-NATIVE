@@ -171,7 +171,7 @@ export default function VibraAcademy() {
   // un punto qualsiasi del contenuto espanso. Doppio rAF: attende il re-render
   // di setExpandedId(null) prima di calcolare la posizione di scroll.
   // PORT: tile montate a blocchi (useProgressiveList); prima di saltare a una tile si mostrano tutte
-  const { count: shownTiles, sentinelRef: tilesSentinelRef, showAll: showAllTiles } = useProgressiveList(filteredSections.length, { initial: 4, step: 4, idleStep: 4 });
+  const { count: shownTiles, sentinelRef: tilesSentinelRef, showAll: showAllTiles } = useProgressiveList(filteredSections.length, { initial: 4, step: 4 });
   const handleRailJump = (id) => {
     setExpandedId(null);
     showAllTiles();

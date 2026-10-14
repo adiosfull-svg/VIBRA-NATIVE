@@ -6,7 +6,7 @@ import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
-import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
+import { Children, cloneElement, createContext, Fragment, Suspense, isValidElement, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
@@ -520,10 +520,13 @@ function textSignature(children: ReactNode): string {
 const NOWRAP = /(^|\s)whitespace-nowrap(\s|$)/;
 const NO_MIN_CONTENT = /(^|\s)(truncate|overflow-hidden|overflow-x-auto|overflow-auto|min-w-\S+|w-\S+|size-\S+|basis-\S+|flex-none|shrink-0|flex-shrink-0)(\s|$)/;
 
-function useMinContentWidth(className: string | undefined, style: Record<string, any> | undefined, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
+function useMinContentWidth(className: string | undefined, style: Record<string, any> | undefined, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void, inRow = false) {
   const enabled = NOWRAP.test(className ?? '') && !NO_MIN_CONTENT.test(className ?? '')
     && style?.width == null && style?.minWidth == null && style?.flexShrink !== 0;
-  const signature = enabled ? textSignature(children) : '';
+  // in una riga flex minWidth = larghezza naturale equivale a non restringersi: niente misura e
+  // niente secondo disegno (fuori dalle righe la misura serve: il genitore può essere più stretto)
+  const rowStatic = enabled && inRow;
+  const signature = enabled && !rowStatic ? textSignature(children) : '';
   const [measured, setMeasured] = useState<{ sig: string; width: number } | null>(null);
   const measuring = enabled && measured?.sig !== signature;
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
@@ -531,6 +534,7 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
     if (measuring) setMeasured({ sig: signature, width: Math.ceil(e.nativeEvent.layout.width) });
   }, [onLayout, measuring, signature]);
   if (!enabled) return { minStyle: null, onLayout, enabled };
+  if (rowStatic) return { minStyle: RIGID_BTN, onLayout, enabled };
   const minStyle = measuring
     ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const, alignSelf: 'flex-start' as const }
     : { minWidth: measured!.width };
@@ -596,6 +600,13 @@ function unbreakableContent(children: ReactNode): boolean {
   return ok;
 }
 
+// Elemento di una riga flex senza larghezza propria: in CSS (min-width: auto) non si stringe sotto il
+// contenuto, salvo che dentro ci sia testo che può andare a capo (o un flex-wrap): allora si stringe.
+// Parte già rigido (flexShrink 0, come il minWidth = larghezza del contenuto che si misurava prima);
+// i discendenti flessibili lo segnalano mentre si disegnano (WrapProbeContext) e un layout effect, prima
+// che lo schermo cambi, lo rende restringibile. Prima: primo disegno, misura, onLayout dal nativo e
+// secondo disegno per OGNI elemento di riga (circa metà dei disegni di una pagina).
+const RIGID_STYLE: ViewStyle = { flexShrink: 0 };
 function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
   const parent = useContext(WrapProbeContext);
   const probe = useRef<WrapProbe | null>(null);
@@ -604,18 +615,18 @@ function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: 
     probe.current = p;
   }
   const signature = enabled ? textSignature(children) : '';
-  const [measured, setMeasured] = useState<{ sig: string; width: number; rigid: boolean } | null>(null);
-  const measuring = enabled && measured?.sig !== signature;
-  if (measuring && probe.current) probe.current.flexible = false;
-  const handleLayout = useCallback((e: LayoutChangeEvent) => {
-    onLayout?.(e);
-    if (measuring) setMeasured({ sig: signature, width: Math.ceil(e.nativeEvent.layout.width), rigid: !probe.current?.flexible });
-  }, [onLayout, measuring, signature]);
+  // testo cambiato: i discendenti si ridisegnano e lo ridicono
+  const lastSig = useRef<string | null>(null);
+  if (enabled && probe.current && lastSig.current !== signature) probe.current.flexible = false;
+  const [flexible, setFlexible] = useState(false);
+  useLayoutEffect(() => {
+    if (!enabled) return;
+    lastSig.current = signature;
+    const f = !!probe.current?.flexible;
+    if (f !== flexible) setFlexible(f);
+  });
   if (!enabled) return { minStyle: null, onLayout, probe: null };
-  const minStyle = measuring
-    ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const }
-    : measured!.rigid ? { minWidth: measured!.width } : null;
-  return { minStyle, onLayout: handleLayout, probe: probe.current };
+  return { minStyle: flexible ? null : RIGID_STYLE, onLayout, probe: probe.current };
 }
 
 /** style={{ gridTemplateColumns: '1fr 80px 60px' }} su un `grid`: come la classe grid-cols-[1fr_80px_60px]. */
@@ -849,8 +860,8 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const gradient = styleGradient ?? classGradient;
   const gridCell = useContext(GridCellContext);
   const box = gridCell ? withoutHFull(box0) : box0;
-  const min0 = useMinContentWidth(className, rnStyle, children, onLayout);
   const rowParent = useContext(FlexRowContext);
+  const min0 = useMinContentWidth(className, rnStyle, children, onLayout, rowParent && !OUT_OF_FLOW_CLASS.test(rest));
   // flex-wrap: in CSS la sua larghezza minima è quella dell'elemento più largo, non della riga intera:
   // può restringersi (e rende restringibili gli antenati) come il testo che va a capo
   const wraps = FLEX_WRAP.test(rest);
@@ -1001,10 +1012,10 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const vpStyle = viewportSizeStyle(viewport);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
-  const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
+  const rowParent = useContext(FlexRowContext);
+  const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined, rowParent && !OUT_OF_FLOW_CLASS.test(rest));
   // min-width: auto (CSS) per un pulsante in una riga flex con contenuto che non va a capo (icone, una
   // parola): non si restringe sotto la sua larghezza; senza misure, basta non farlo restringere
-  const rowParent = useContext(FlexRowContext);
   const rigidBtn = rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
     && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && unbreakableContent(children)
     ? RIGID_BTN : null;

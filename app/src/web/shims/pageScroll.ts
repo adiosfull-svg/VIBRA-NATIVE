@@ -22,6 +22,19 @@ function offsetIn(el: any, content: any): number | null {
   return y;
 }
 
+/** Posizione verticale e altezza di un elemento nel contenuto indicato (null se non misurabile). */
+function rectIn(el: any, content: any): { y: number; h: number } | null {
+  if (!el || !content) return null;
+  if (Platform.OS === 'web') {
+    if (typeof el.getBoundingClientRect !== 'function' || typeof content.getBoundingClientRect !== 'function') return null;
+    const r = el.getBoundingClientRect();
+    return { y: r.top - content.getBoundingClientRect().top, h: r.height };
+  }
+  let out: { y: number; h: number } | null = null;
+  try { el.measureLayout?.(content, (_x: number, y: number, _w: number, h: number) => { out = { y, h }; }, () => {}); } catch { /* smontato */ }
+  return out;
+}
+
 export const pageScroll = {
   get y() { return top()?.y ?? 0; },
   get contentHeight() { return top()?.contentHeight ?? 0; },
@@ -36,6 +49,11 @@ export const pageScroll = {
    */
   offsetOf(el: any): number | null {
     return offsetIn(el, top()?.content());
+  },
+
+  /** Come offsetOf, con l'altezza dell'elemento (IntersectionObserver del telefono, shims/dom). */
+  rectOf(el: any): { y: number; h: number } | null {
+    return rectIn(el, top()?.content());
   },
 
   /** Come offsetOf, ma rispetto al contenuto indicato (la propria pagina: con le tab ne sono montate più d'una). */

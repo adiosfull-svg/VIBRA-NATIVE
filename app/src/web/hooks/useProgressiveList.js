@@ -1,6 +1,6 @@
 // Montaggio progressivo di una lista lunga con righe di altezza variabile (dove usePageWindow, che vuole
 // righe ad altezza fissa, non va bene): prima `initial` righe, poi `step` alla volta quando la fine della
-// lista si avvicina allo schermo (scroll della PROPRIA pagina) e, a app ferma, a blocchi fino alla fine.
+// lista si avvicina allo schermo (scroll della PROPRIA pagina) e, se richiesto (idleStep), a app ferma.
 // Il layout resta quello dell'originale (nessuna altezza stimata); si risparmia il montaggio iniziale.
 // Uso: const { count, sentinelRef, showAll } = useProgressiveList(items.length[, { initial, step, idleStep }]);
 //      items.slice(0, count).map(...)  e  <Div ref={sentinelRef} /> subito dopo la lista.
@@ -9,21 +9,25 @@ import { Dimensions, InteractionManager } from 'react-native';
 import { pageScroll } from '@/web/shims/pageScroll';
 import { PageLayerContext } from '@/ui/pageLayers';
 
-export function useProgressiveList(total, { initial = 20, step = 20, idleStep = 40 } = {}) {
+// idleStep (righe aggiunte a app ferma) spento di default: montare blocchi di righe che nessuno guarda
+// occupava il thread JS per secondi dopo l'apertura (la gara contava Serate "in movimento" per 2 s),
+// proprio quando arrivano i primi tocchi; le righe arrivano comunque due schermi prima della fine.
+export function useProgressiveList(total, { initial = 12, step = 15, idleStep = 0, ahead = 1.5 } = {}) {
   const [count, setCount] = useState(Math.min(total, initial));
   const sentinelRef = useRef(null);
   const layer = useContext(PageLayerContext);
   const grow = useCallback((n) => setCount((c) => (c >= total ? c : Math.min(total, c + n))), [total]);
 
-  // fine della lista entro due schermi dalla parte visibile → altre righe
+  // fine della lista entro `ahead` schermi dalla parte visibile → altre righe (prima 2 schermi e 20
+  // righe iniziali: all'apertura la lista cresceva subito a ~3 schermi di righe)
   const check = useCallback(() => {
     const el = sentinelRef.current;
     const offset = layer ? layer.offsetOf(el) : pageScroll.offsetOf(el);
     if (offset == null) return;
     const top = offset - (layer ? layer.y() : pageScroll.y);
     const vh = (layer && layer.viewportHeight()) || pageScroll.viewportHeight || Dimensions.get('window').height;
-    if (top < vh * 2) grow(step);
-  }, [layer, grow, step]);
+    if (top < vh * ahead) grow(step);
+  }, [layer, grow, step, ahead]);
 
   useEffect(() => {
     let raf = requestAnimationFrame(check);

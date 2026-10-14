@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from '@/ui/motion';
 import { ChevronDown, ChevronRight, Lightbulb } from '@/ui/icons.generated';
 import ScreenMockup from './ScreenMockups';
 import { makeTapHandlers } from '@/web/lib/tapHandlers';
+import { useNearScreen } from '@/web/hooks/useNearScreen';
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
 
@@ -14,6 +15,9 @@ import { Btn, Div, H, P, Span } from '@/ui/html';
  */
 export default function AcademyTile({ section, description, Icon, isExpanded, onToggle, lastTouchRef }) {
   const firstMockup = section.lessons[0]?.mockup;
+  // PORT: l'anteprima è una schermata finta intera (centinaia di elementi): sul telefono si monta solo
+  // quando la scheda è vicina allo schermo (prima: tutte all'apertura, ~3000 elementi e 3 s)
+  const [previewRef, previewNear] = useNearScreen();
 
   return (
     <Div
@@ -28,8 +32,8 @@ export default function AcademyTile({ section, description, Icon, isExpanded, on
         button
         {...makeTapHandlers(lastTouchRef, onToggle)}
         className="block w-full text-left">
-        <Div className="relative h-28 sm:h-32 overflow-hidden bg-gradient-to-b from-secondary/25 via-secondary/10 to-background border-b border-border">
-          {firstMockup ? (
+        <Div ref={previewRef} className="relative h-28 sm:h-32 overflow-hidden bg-gradient-to-b from-secondary/25 via-secondary/10 to-background border-b border-border">
+          {firstMockup ? (previewNear &&
             <Div className="flex justify-center items-start pt-1.5">
               <Div className="origin-top scale-[0.48] sm:scale-[0.52] pointer-events-none select-none">
                 <ScreenMockup type={firstMockup} />
