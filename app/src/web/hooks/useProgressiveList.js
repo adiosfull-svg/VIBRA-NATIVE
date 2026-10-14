@@ -2,7 +2,7 @@
 // righe ad altezza fissa, non va bene): prima `initial` righe, poi `step` alla volta quando la fine della
 // lista si avvicina allo schermo (scroll della PROPRIA pagina) e, a app ferma, a blocchi fino alla fine.
 // Il layout resta quello dell'originale (nessuna altezza stimata); si risparmia il montaggio iniziale.
-// Uso: const { count, sentinelRef, showAll } = useProgressiveList(items.length);
+// Uso: const { count, sentinelRef, showAll } = useProgressiveList(items.length[, { initial, step, idleStep }]);
 //      items.slice(0, count).map(...)  e  <Div ref={sentinelRef} /> subito dopo la lista.
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Dimensions, InteractionManager } from 'react-native';
@@ -33,9 +33,10 @@ export function useProgressiveList(total, { initial = 20, step = 20, idleStep = 
     return () => { cancelAnimationFrame(raf); pageScroll.off(onScroll); };
   }, [check, layer, count]);
 
-  // a app ferma completa la lista a blocchi (lo scroll veloce trova già le righe)
+  // a app ferma completa la lista a blocchi (lo scroll veloce trova già le righe); idleStep 0: solo
+  // avvicinandosi alla fine (liste in fondo alla pagina, che spesso non si guardano)
   useEffect(() => {
-    if (count >= total) return;
+    if (count >= total || !idleStep) return;
     const task = InteractionManager.runAfterInteractions(() => setTimeout(() => grow(idleStep), 300));
     return () => task.cancel?.();
   }, [count, total, grow, idleStep]);

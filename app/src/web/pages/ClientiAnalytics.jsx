@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import DeferredChart from '@/web/components/shared/DeferredChart';
 import { ArrowLeft, BarChart2, ChevronDown, ChevronUp, Calendar, MapPin, Table } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { Link } from '@/web/router';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
@@ -136,8 +137,14 @@ export default function ClientiAnalytics() {
       });
     }
     // Vista filtrata per periodo: calcola dalle presenze filtrate (eventsById memoizzato per O(1) lookup)
+    // PORT: presenze raggruppate per cliente una volta sola (prima: tutte le presenze per ogni cliente)
+    const byClient = new Map();
+    for (const a of filteredAttendances) {
+      const list = byClient.get(a.client_id);
+      if (list) list.push(a); else byClient.set(a.client_id, [a]);
+    }
     return clients.map(c => {
-      const ca = filteredAttendances.filter(a => a.client_id === c.id);
+      const ca = byClient.get(c.id) || [];
       const venueCounts = {};
       uniqueVenues.forEach(v => { venueCounts[v] = 0; });
       ca.forEach(a => {
@@ -151,6 +158,12 @@ export default function ClientiAnalytics() {
       return { name: c.name, photo_url: c.photo_url, visits, venueCounts, totalSpent, avgSpent };
     }).sort((a, b) => b[metric] - a[metric]);
   }, [clients, filteredAttendances, eventsById, uniqueVenues, metric, period, periodStart, periodEnd]);
+
+  // PORT: colonne dei locali del riepilogo calcolate una volta (l'originale le ricalcola in ogni riga,
+  // scorrendo tutti i clienti: centinaia di migliaia di controlli con 450 clienti); righe montate a
+  // gruppi avvicinandosi alla fine (tabella in fondo alla pagina, ~3000 celle con tutti i clienti)
+  const tableVenues = useMemo(() => uniqueVenues.filter(venue => clientStats.some(c => (c.venueCounts[venue] || 0) > 0)), [uniqueVenues, clientStats]);
+  const { count: shownRows, sentinelRef: rowsSentinelRef } = useProgressiveList(clientStats.length, { initial: 15, step: 30, idleStep: 0 });
 
   const metrics = [
     { key: 'totalSpent', label: 'Spesa Totale' },
@@ -407,7 +420,7 @@ export default function ClientiAnalytics() {
               <Tr className="border-b border-border">
                 <Th className="text-left px-2.5 py-2 font-medium text-muted-foreground sticky left-0 bg-secondary/30 whitespace-nowrap">Cliente</Th>
                 <Th className="text-center px-2.5 py-2 font-medium text-muted-foreground whitespace-nowrap">Pres.</Th>
-                {uniqueVenues.filter(venue => clientStats.some(c => (c.venueCounts[venue] || 0) > 0)).map(venue => (
+                {tableVenues.map(venue => (
                  <Th key={venue} className="text-center px-1.5 py-2 font-medium text-muted-foreground whitespace-nowrap min-w-[40px] text-[10px]">{venue}</Th>
                 ))}
                 <Th className="text-right px-2.5 py-2 font-medium text-muted-foreground whitespace-nowrap">Tot.</Th>
@@ -415,7 +428,7 @@ export default function ClientiAnalytics() {
               </Tr>
             </Thead>
             <Tbody>
-              {clientStats.map((c, i) => (
+              {clientStats.slice(0, shownRows).map((c, i) => (
                 <Tr key={i} className="border-b border-border/50 hover:bg-secondary/20 transition-colors">
                   <Td className="px-2.5 py-1.5 font-medium sticky left-0 bg-card whitespace-nowrap">
                     <Div className="flex items-center gap-1.5">
@@ -424,7 +437,7 @@ export default function ClientiAnalytics() {
                     </Div>
                   </Td>
                   <Td className="px-2.5 py-1.5 text-center font-semibold">{c.visits}</Td>
-                  {uniqueVenues.filter(venue => clientStats.some(cs => (cs.venueCounts[venue] || 0) > 0)).map(venue => (
+                  {tableVenues.map(venue => (
                     <Td key={venue} className="px-1.5 py-1.5 text-center text-[11px]">{c.venueCounts[venue] || 0}</Td>
                   ))}
                   <Td className="px-2.5 py-1.5 text-right font-bold text-primary whitespace-nowrap">€{c.totalSpent.toLocaleString('it-IT')}</Td>
@@ -433,6 +446,7 @@ export default function ClientiAnalytics() {
               ))}
             </Tbody>
           </HtmlTable>
+          <Div ref={rowsSentinelRef} />
         </Div>
       </Div>
     </Div>
