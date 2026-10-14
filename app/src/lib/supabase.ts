@@ -1,3 +1,5 @@
+// prima di supabase-js: nelle build della gara la sonda conta le richieste di rete (lib/testDiag)
+import './testDiag';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { AppState, Platform } from 'react-native';

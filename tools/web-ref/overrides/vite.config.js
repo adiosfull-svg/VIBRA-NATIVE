@@ -5,9 +5,16 @@ import path from 'node:path';
 
 const nativeLib = path.resolve(__dirname, '../../../app/src/lib');
 
+// Build della gara (tools/gara/build-ref.sh, VIBRA_GARA=1): ogni import() dinamico (pagine lazy)
+// passa da window.__garaImp, così la sonda conta anche il codice caricato a richiesta come rete in corso.
+const garaImports = {
+  name: 'gara-imports',
+  renderDynamicImport: () => ({ left: '(window.__garaImp||(p=>p))(import(', right: '))' }),
+};
+
 export default defineConfig({
   logLevel: 'error',
-  plugins: [react()],
+  plugins: [react(), ...(process.env.VIBRA_GARA ? [garaImports] : [])],
   resolve: {
     alias: {
       '@native': nativeLib,

@@ -9,10 +9,61 @@ export const diagCounts: Record<string, number> = {};
 const TEST_TRACE = process.env.EXPO_PUBLIC_TEST_TRACE === '1';
 let traceN = 0;
 export function diagCount(name: string, detail?: string) {
+  if (TEST_GARA) garaActivity(true);
   if (!TEST_DIAG) return;
   diagCounts[name] = (diagCounts[name] ?? 0) + 1;
   if (TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${name} ${(detail ?? '').slice(0, 80)}`);
 }
+// ── Gara con l'originale (docs/PIANO-PRESTAZIONI.md, EXPO_PUBLIC_TEST_GARA=1) ──
+// Stessa definizione della sonda dell'originale (tools/gara/probe-web.js): dalla navigazione (link
+// vibra://...) a quando la pagina smette di cambiare (nessuna richiesta di rete in corso e nessun
+// ridisegno per 300 ms). "primo" = primo ridisegno dopo la navigazione. Riga nel logcat:
+// "VIBRA gara pronta <percorso> primo=.. pronta=.. render=.. rete=..".
+export const TEST_GARA = process.env.EXPO_PUBLIC_TEST_GARA === '1';
+const QUIET_MS = 300;
+const LIMIT_MS = 15000;
+const gara = { t0: -1, first: -1, last: 0, inflight: 0, label: '', renders: 0, fetches: 0 };
+function garaActivity(render: boolean) {
+  const n = performance.now();
+  gara.last = n;
+  if (!render) return;
+  gara.renders++;
+  if (gara.t0 >= 0 && gara.first < 0) gara.first = n;
+}
+function garaCheck() {
+  if (gara.t0 < 0) return;
+  const n = performance.now();
+  const timeout = n - gara.t0 > LIMIT_MS;
+  if (timeout || (gara.inflight === 0 && gara.first >= 0 && n - gara.last >= QUIET_MS)) {
+    const end = timeout ? n : gara.last;
+    console.log(`VIBRA gara pronta ${gara.label} primo=${Math.round((gara.first < 0 ? end : gara.first) - gara.t0)} pronta=${Math.round(end - gara.t0)} render=${gara.renders} rete=${gara.fetches} fine=${Date.now() - Math.round(n - end)}${timeout ? ' NONSIFERMA' : ''}`);
+    gara.t0 = -1;
+    return;
+  }
+  requestAnimationFrame(garaCheck);
+}
+function garaStart(label: string) {
+  const wasIdle = gara.t0 < 0;
+  Object.assign(gara, { t0: performance.now(), first: -1, label, renders: 0, fetches: 0 });
+  gara.last = gara.t0;
+  if (wasIdle) requestAnimationFrame(garaCheck);
+}
+if (TEST_GARA) {
+  // le richieste di rete (supabase-js usa fetch: questo modulo va importato prima di lib/supabase)
+  const g = globalThis as { fetch: typeof fetch };
+  const realFetch = g.fetch;
+  g.fetch = ((...args: Parameters<typeof fetch>) => {
+    gara.inflight++;
+    gara.fetches++;
+    garaActivity(false);
+    return realFetch(...args).finally(() => { gara.inflight--; garaActivity(false); });
+  }) as typeof fetch;
+  // la navigazione: link vibra://percorso dal banco di prova (adb), come history.pushState nell'originale
+  const { Linking } = require('react-native') as typeof import('react-native');
+  Linking.addEventListener('url', ({ url }) => garaStart(url.replace(/^vibra:\/\//, '/')));
+  garaStart('avvio');
+}
+
 /** Traccia di un punto preciso del codice (solo con EXPO_PUBLIC_TEST_TRACE=1). */
 export function diagTrace(label: string) {
   if (TEST_DIAG && TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${label}`);
