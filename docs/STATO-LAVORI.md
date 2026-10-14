@@ -170,7 +170,7 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- **Crash nativo da verificare**: nel giro 38497xxx (commit 6bfd611, con fastIntl) l'app è caduta UNA volta
+- **Crash nativo da verificare**: nel giro 38497270069 (commit 6bfd611, con fastIntl) l'app è caduta UNA volta
   all'avvio del percorso 04-dettaglio con SIGSEGV dentro libhermesvm (rilevato da gwp_asan), mai visto nei ~16
   giri precedenti. Lanciati due giri completi di verifica (run 38499030579 e 38499032795) e uno di misura
   (02-clienti, tempi div-corpo/text-corpo): leggerne i risultati
