@@ -1,6 +1,7 @@
 // Port di src/components/ai/ChatStrategica.jsx (convertito da scripts/port/codemod.mjs).
 // Markdown: react-markdown → ui/markdown.tsx (stesso aspetto: preflight + varianti [&>p]:...).
 import React, { useState, useRef, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { base44 } from '@/lib/base44';
 import { Send, Mic, MicOff, Plus, ChevronLeft, Loader2, MessageSquare, Trash2, Pencil, Check, X, ImagePlus, BookOpen, XCircle, ArrowLeft, Menu, PanelLeft, Sparkles } from '@/ui/icons.generated';
 import VibraAvatar from '@/web/components/ai/VibraAvatar';
@@ -346,7 +347,9 @@ export default function ChatStrategica({ promoters, events, attendances, onExit 
 
   useEffect(() => { activeConvIdRef.current = activeConvId; }, [activeConvId]);
   useEffect(() => { initLoad(); }, []);
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 300); }, []);
+  // PORT: nel browser del telefono un focus() senza tocco non apre la tastiera; in RN sì (copriva la pagina
+  // all'apertura): sul telefono niente fuoco iniziale, restano quelli dopo un'azione dell'utente
+  useEffect(() => { if (Platform.OS === 'web') setTimeout(() => inputRef.current?.focus(), 300); }, []);
 
   // Tastiera software (mobile): tiene l'input sopra la tastiera
   useEffect(() => {

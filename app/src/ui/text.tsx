@@ -1,8 +1,8 @@
 // Testo con le regole del web: le classi di testo del contenitore (colore, dimensione, peso...)
 // si ereditano come in CSS, e il peso sceglie il file del font Inter corrispondente
 // (in React Native ogni peso di un font personalizzato è una famiglia separata).
-import { createContext, useContext, type ReactNode } from 'react';
-import { Platform, StyleSheet, Text as RNText, type TextProps } from 'react-native';
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import { Platform, StyleSheet, Text as RNText, View, type TextProps } from 'react-native';
 import { cn } from './cn';
 import { ARB_SIZE, fontSizeOf, inheritedLineHeight, inlineLineBox, lineHeightOf, strutDescent, textClassesFor } from './textLeading';
 import { nextTextStyle, weightClass, withoutClassOverrides, type TextStyle } from './textStyleInherit';
@@ -134,6 +134,26 @@ function cssDefaults(merged: string, inherited: string, own: string, style: any,
 // (word-wrap: break-word): es. "€257.818" in una colonna stretta. Sul telefono resta il comportamento di RN.
 const WEB_NO_WORD_BREAK = Platform.OS === 'web' ? ({ wordWrap: 'normal', overflowWrap: 'normal' } as object) : null;
 
+/** Dentro una cella di una griglia stretta (3+ colonne): sul telefono si controlla che una parola non venga
+ *  spezzata a metà (in CSS sborda dalla cella; Android la divide lettera per lettera). */
+export const NarrowCellContext = createContext(false);
+
+function longestWord(children: ReactNode): string | null {
+  const flat = typeof children === 'string' || typeof children === 'number' ? String(children)
+    : Array.isArray(children) && children.every((c) => typeof c === 'string' || typeof c === 'number' || c == null || typeof c === 'boolean')
+      ? children.filter((c) => typeof c === 'string' || typeof c === 'number').join('') : null;
+  if (!flat) return null;
+  let best = '';
+  for (const w of flat.split(/\s+/)) if (w.length > best.length) best = w;
+  return best.length >= 4 ? best : null;
+}
+
+/** onTextLayout: una riga (non l'ultima) che non finisce con uno spazio = parola spezzata a metà. */
+function brokeWord(lines: { text: string }[]): boolean {
+  for (let i = 0; i < lines.length - 1; i++) if (!/[\s\-]$/.test(lines[i].text)) return true;
+  return false;
+}
+
 export function Text(p: AppTextProps) {
   if (!TEST_DIAG) return TextImpl(p);
   const t = performance.now();
@@ -157,14 +177,21 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   const truncate = /(^|\s)truncate(\s|$)/.test(merged);
   const clamp = Number(merged.match(/(?:^|\s)line-clamp-(\d+)/)?.[1] ?? 0);
   const probe = useContext(WrapProbeContext);
+  const narrow = useContext(NarrowCellContext) && Platform.OS !== 'web';
+  const word = narrow && !numberOfLines && !truncate && !clamp ? longestWord(children) : null;
+  const [broken, setBroken] = useState<string | null>(null);
+  const [wordWidth, setWordWidth] = useState<{ word: string; width: number } | null>(null);
   if (probe && !probe.flexible && !numberOfLines && !truncate && !clamp && !/(^|\s)whitespace-nowrap(\s|$)/.test(merged) && hasBreakableText(children)) probe.mark();
-  return (
+  const textStyle = [cssDefaults(merged, inherited, className ?? '', { ...applied, ...converted }, inFlex), WEB_NO_WORD_BREAK, applied, converted, fontFamily ? { fontFamily, fontWeight: 'normal' as const } : null];
+  const minWord = word && wordWidth?.word === word ? { minWidth: wordWidth.width } : null;
+  const text = (
     <RNText
       {...props}
       numberOfLines={numberOfLines ?? (truncate ? 1 : clamp || undefined)}
       className={merged}
       // il peso è già nel file del font: fontWeight lo raddoppierebbe su Android
-      style={[cssDefaults(merged, inherited, className ?? '', { ...applied, ...converted }, inFlex), WEB_NO_WORD_BREAK, applied, converted, fontFamily ? { fontFamily, fontWeight: 'normal' } : null]}
+      style={[...textStyle, minWord]}
+      onTextLayout={word ? (e) => { props.onTextLayout?.(e); if (broken !== word && brokeWord(e.nativeEvent.lines)) setBroken(word); } : props.onTextLayout}
     >
       {/* i figli (testo annidato, icone) ereditano colore e stile come in CSS */}
       <FlexParentContext.Provider value="text">
@@ -174,7 +201,21 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
       </FlexParentContext.Provider>
     </RNText>
   );
+  // parola spezzata: si misura una volta (testo invisibile su una riga) e diventa la larghezza minima
+  if (!word || broken !== word || wordWidth?.word === word) return text;
+  return (
+    <>
+      {text}
+      {/* contenitore larghissimo: il testo prende la sua larghezza naturale, non quella della cella */}
+      <View pointerEvents="none" style={MEASURE}>
+        <RNText className={merged} numberOfLines={1} style={textStyle}
+          onLayout={(e) => setWordWidth({ word, width: Math.ceil(e.nativeEvent.layout.width) })}>{word}</RNText>
+      </View>
+    </>
+  );
 }
+
+const MEASURE = { position: 'absolute' as const, opacity: 0, left: 0, top: 0, width: 4000, alignItems: 'flex-start' as const };
 
 /** index.css dell'originale: `input, select, textarea { font-size: 16px !important }` (niente zoom su iOS),
  *  tranne `.semina-note-textarea` (11px). Vince su classi e style inline, quindi va messo per ultimo. */

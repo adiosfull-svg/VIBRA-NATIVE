@@ -8,7 +8,7 @@
 //  - localStorage → memoria + AsyncStorage (caricato all'avvio)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
-import { BackHandler, Dimensions, Linking, PixelRatio, Share } from 'react-native';
+import { BackHandler, Dimensions, Keyboard, Linking, PixelRatio, Platform, Share } from 'react-native';
 import { blobToBase64, saveBase64File } from './files';
 import { pageScroll } from './pageScroll';
 import { windowTouchSink } from '../../ui/gestures';
@@ -194,6 +194,23 @@ export const doc = {
 };
 
 // ── window ──────────────────────────────────────────────────────────────────
+// ── visualViewport: area visibile sopra la tastiera (eventi Keyboard di RN) ─────────────────────────
+// L'originale la usa per tenere sopra la tastiera la barra di VibraGPT, la ricerca, i menu.
+let keyboardHeight = 0;
+const vvListeners: Record<string, Set<AnyFn>> = { resize: new Set(), scroll: new Set() };
+const fireViewport = () => { for (const fn of [...vvListeners.resize, ...vvListeners.scroll]) fn({ type: 'resize' }); };
+const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+Keyboard.addListener(showEvt, (e) => { keyboardHeight = e.endCoordinates?.height ?? 0; fireViewport(); });
+Keyboard.addListener(hideEvt, () => { keyboardHeight = 0; fireViewport(); });
+const visualViewport = {
+  get width() { return Dimensions.get('window').width; },
+  get height() { return Math.max(0, Dimensions.get('window').height - keyboardHeight); },
+  offsetTop: 0, offsetLeft: 0, pageTop: 0, pageLeft: 0, scale: 1,
+  addEventListener(type: string, fn: AnyFn) { vvListeners[type]?.add(fn); },
+  removeEventListener(type: string, fn: AnyFn) { vvListeners[type]?.delete(fn); },
+};
+
 export const win = {
   addEventListener: addListener(winEvents),
   removeEventListener: removeListener(winEvents),
@@ -220,7 +237,7 @@ export const win = {
   setTimeout, clearTimeout, setInterval, clearInterval,
   matchMedia: (_q: string) => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
   get devicePixelRatio() { return PixelRatio.get(); },
-  visualViewport: undefined,
+  visualViewport,
   localStorage: storage,
   navigator: nav,
   document: doc,

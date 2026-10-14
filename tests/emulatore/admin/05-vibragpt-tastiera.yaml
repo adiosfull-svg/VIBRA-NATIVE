@@ -1,0 +1,26 @@
+# Admin: VibraGPT si apre senza tastiera (niente fuoco automatico sul telefono); toccando il campo la barra
+# di scrittura sta sopra la tastiera (visualViewport dello shim).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://vibra-gpt
+- extendedWaitUntil:
+    visible: ".*Da dove iniziamo\\?.*"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: vibragpt-aperta
+- tapOn: "Chiedi a Vibra..."
+- inputText: "ciao"
+- waitForAnimationToEnd
+- takeScreenshot: vibragpt-tastiera
+- assertNotVisible: "Si è verificato un errore"

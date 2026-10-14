@@ -14,7 +14,7 @@ import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
-import { FlexParentContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
+import { FlexParentContext, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
 import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
@@ -170,9 +170,11 @@ function gridChildren(children: ReactNode, grid: Grid, className?: string): Reac
     // ((W − (n−1)·gap)/n) e nessun gap ai bordi, anche se il contenitore ha padding o bordo
     const pad = { paddingLeft: (col * g) / n, paddingRight: ((n - col - span) * g) / n };
     col = (col + span) % n;
+    const cell = stretch ? <GridCellContext.Provider value>{child}</GridCellContext.Provider> : child;
     return (
       <View style={{ width: `${(100 * span) / n}%`, ...pad }}>
-        {stretch ? <GridCellContext.Provider value>{child}</GridCellContext.Provider> : child}
+        {/* colonne strette: il testo controlla le parole spezzate (text.tsx, solo telefono) */}
+        {n >= 3 ? <NarrowCellContext.Provider value>{cell}</NarrowCellContext.Provider> : cell}
       </View>
     );
   });
@@ -545,6 +547,24 @@ const FLEX_WRAP = /(^|\s)flex-wrap(\s|$)/;
 const OUT_OF_FLOW_CLASS = /(^|\s)(absolute|fixed|hidden)(\s|$)/;
 const isFlexRow = (cls: string) => FLEX_ROW.test(cls) && !FLEX_COL.test(cls);
 
+const RIGID_BTN = { flexShrink: 0 };
+const SIZED = /(^|\s)(w|h|size)-/;
+/** Contenuto che in CSS non va mai a capo: testi di una parola, icone con dimensione, Span/P con questi. */
+function unbreakableContent(children: ReactNode): boolean {
+  let ok = true;
+  Children.forEach(children, (c) => {
+    if (!ok || c == null || typeof c === 'boolean') return;
+    if (typeof c === 'string' || typeof c === 'number') { if (/\S\s+\S/.test(String(c).trim())) ok = false; return; }
+    if (!isValidElement(c)) { ok = false; return; }
+    const p = c.props as { children?: ReactNode; className?: string };
+    if (c.type === Fragment || c.type === Span || c.type === P) { ok = unbreakableContent(p.children); return; }
+    // icona (componente senza figli con dimensioni nelle classi)
+    if (p.children == null && SIZED.test(p.className ?? '')) return;
+    ok = false;
+  });
+  return ok;
+}
+
 function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
   const parent = useContext(WrapProbeContext);
   const probe = useRef<WrapProbe | null>(null);
@@ -721,13 +741,18 @@ function backdropBlur(className: string, style: unknown): { css?: string; px: nu
   return { px: c[2] ? Number(c[2]) : BLUR_CLASS_PX[c[1] ?? ''] };
 }
 
+/** Un antenato ha uno sfondo pieno: dietro al vetro c'è solo quello (CSS), non la pagina sotto al portale. */
+const OpaqueBehindContext = createContext(false);
+const OPAQUE_BG = /(^|\s)bg-(background|card|popover)(\s|$)/;
+
 function BlurFill({ px }: { px: number }) {
   // bersaglio (pageLayers): dentro una barra sticky ciò che le scorre sotto; fuori dalla pagina
   // (portale alla radice) la pagina; dentro la pagina nessuno (velo semitrasparente)
   const sticky = useContext(StickyBlurTargetContext);
   const inPortal = useContext(InPortalContext);
+  const opaqueBehind = useContext(OpaqueBehindContext);
   const page = usePageBlurTarget();
-  if (!px) return null;
+  if (!px || (opaqueBehind && !sticky)) return null;
   return <NativeBlur intensity={Math.min(100, px * 4)} target={sticky ?? (inPortal ? page : null)} />;
 }
 
@@ -818,6 +843,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   );
   if (inner) content0 = <FlipContext.Provider value={inner.flip}>{content0}</FlipContext.Provider>;
   if (rigid.probe) content0 = <WrapProbeContext.Provider value={rigid.probe}>{content0}</WrapProbeContext.Provider>;
+  if (Platform.OS !== 'web' && OPAQUE_BG.test(rest)) content0 = <OpaqueBehindContext.Provider value>{content0}</OpaqueBehindContext.Provider>;
   if (lead) content0 = <LeadMarginContext.Provider value={null}>{content0}</LeadMarginContext.Provider>;
   // la cella della griglia la "consuma" questo elemento, non i suoi discendenti
   const content = gridCell ? <GridCellContext.Provider value={false}>{content0}</GridCellContext.Provider> : content0;
@@ -943,6 +969,12 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
   const gradient = styleGradient ?? classGradient;
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined);
+  // min-width: auto (CSS) per un pulsante in una riga flex con contenuto che non va a capo (icone, una
+  // parola): non si restringe sotto la sua larghezza; senza misure, basta non farlo restringere
+  const rowParent = useContext(FlexRowContext);
+  const rigidBtn = rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
+    && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && unbreakableContent(children)
+    ? RIGID_BTN : null;
   const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
     ? { alignSelf: inlineAlign(inherited) } : null;
@@ -968,7 +1000,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       className={cn(box, disabled && 'opacity-50')}
       onPressIn={(e) => { setPressed(true); props.onPressIn?.(e); }}
       onPressOut={(e) => { setPressed(false); props.onPressOut?.(e); }}
-      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
+      style={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? { opacity: 0.85 } : null]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       <LeadMarginContext.Provider value={null}>
