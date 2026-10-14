@@ -95,6 +95,9 @@
   - DA FARE (solo telefono): Android spezza le parole lettera per lettera quando non c'è spazio, il browser
     le fa debordare (CSS overflow-wrap normal): celle `grid-cols-6` di Locali (VenueCard), pulsante "Aggiorna"
     di Messaggi. Serve la larghezza min-content della parola più lunga (es. misura con onTextLayout).
+  - DA FARE (telefono, visto sull'emulatore 38589820760): VibraGPT/Ricerca AI aprono subito la tastiera (campo con
+    autofocus) e la barra di scrittura resta sotto la tastiera (nell'originale `kbH` da visualViewport la
+    alza): sistemare lo shim visualViewport o l'autofocus. Titolo dell'header sfocato doppio in quella pagina.
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 
