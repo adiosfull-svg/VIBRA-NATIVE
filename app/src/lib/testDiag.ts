@@ -2,6 +2,7 @@
 // nel logcat (tag ReactNativeJS) un battito ogni 2 s col numero di render di Div/Btn/Text nel
 // frattempo. Se il battito si ferma il JS è bloccato; se i render non scendono a zero a pagina
 // ferma c'è un ciclo di aggiornamenti. Spenta (nessun costo) nelle build normali.
+import './garaStartMark';
 export const TEST_DIAG = process.env.EXPO_PUBLIC_TEST_DIAG === '1';
 
 export const diagCounts: Record<string, number> = {};

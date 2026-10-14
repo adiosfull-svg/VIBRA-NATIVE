@@ -60,6 +60,15 @@ export function withDomStyle<T>(node: T): T {
   if (!n.scrollIntoView) {
     try { Object.defineProperty(n, 'scrollIntoView', { value: (o?: ScrollOpts) => scrollIntoViewImpl?.(n, o), configurable: true }); } catch { /* non estendibile */ }
   }
+  // el.querySelector(...) del codice web: sul telefono non ci sono selettori CSS (nessun elemento
+  // trovato, il codice web lo gestisce già), prima era un TypeError che fermava la pagina (Promoter)
+  const q = n as { querySelector?: unknown; querySelectorAll?: unknown };
+  if (!q.querySelector) {
+    try {
+      Object.defineProperty(n, 'querySelector', { value: () => null, configurable: true });
+      Object.defineProperty(n, 'querySelectorAll', { value: () => [], configurable: true });
+    } catch { /* non estendibile */ }
+  }
   return node;
 }
 

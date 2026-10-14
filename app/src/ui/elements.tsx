@@ -341,8 +341,21 @@ export { Pressable };
 // ── <svg> ────────────────────────────────────────────────────────────────────
 // Come le icone (icon.tsx): className → dimensioni e colore anche sul telefono, e senza un colore
 // proprio prende quello del testo che la contiene (fill/stroke="currentColor").
-function SvgBox({ color, ...p }: SvgProps & { color?: string }) {
-  return <RNSvg color={color} {...p} />;
+const CSS_LENGTH = (v: unknown) => typeof v === 'string' && /calc\(|max\(|min\(|vh|vw/.test(v);
+
+function SvgBox({ color, style, width, height, ...p }: SvgProps & { color?: string }) {
+  // style in forma CSS (es. width: 'calc(100% + 16px)' nel binario di Academy, che cssInterop
+  // sposta anche nella prop width): convertito come per Div. Passato così com'era, react-native-svg
+  // chiudeva l'app sul telefono (NumberFormatException: "calc(100% + 16px)").
+  const native = Platform.OS !== 'web';
+  const cssW = native && CSS_LENGTH(width);
+  const cssH = native && CSS_LENGTH(height);
+  const rnStyle = useMemo(() => {
+    if (!native || (!style && !cssW && !cssH)) return style;
+    const flat = { ...(StyleSheet.flatten(style as never) as object), ...(cssW ? { width } : null), ...(cssH ? { height } : null) };
+    return webStyle(flat).style;
+  }, [native, style, cssW, cssH, width, height]);
+  return <RNSvg color={color} style={rnStyle as SvgProps['style']} width={cssW ? undefined : width} height={cssH ? undefined : height} {...p} />;
 }
 cssInterop(SvgBox, { className: { target: 'style', nativeStyleToProp: { width: true, height: true, color: true } } });
 
