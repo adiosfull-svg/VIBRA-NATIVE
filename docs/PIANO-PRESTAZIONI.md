@@ -61,8 +61,16 @@ Fatto:
 Risultati (gara del commit c7462d8, prima di cache classi/R8): all'apertura la nativa vince su 7 pagine
 su 12 (pr) e 6 su 14 (admin); avvio 5,5-8,3 s contro 3,6 s dell'originale.
 
+Gara finale del 14/10 (run 38632126129, commit 8725082, con cache classi + R8):
+- pr: la nativa vince 8/12 pagine alla prima apertura e 11/12 alla seconda; avvio 6,2 s contro 3,8 s
+  (prima del JS 1,2 s, era 2,5-3 s prima di R8);
+- admin: 8/14 alla prima apertura, 7/14 alla seconda; avvio 8,8 s contro 5,4 s;
+- banco (rapporto con una View pura): Div 2,7× → 2,0×, Btn vuoto 4,0× → 2,3×, riga tipica 731 → 406 ms;
+- R8: percorsi Maestro admin e pr tutti verdi (run 38630947065); cache classi: screenshot del telefono
+  uguali a prima (differenze solo di scorrimento/ordine dei dati di prova), confronto web invariato.
+
 Ancora da fare (in ordine):
-1. leggere la gara con cache classi + R8 (banco: Div/Btn dovrebbero scendere verso View/Pressable);
+1. Serate per admin (4,5 s contro 1 s alla prima apertura): la pagina che perde di più;
 2. pagine che perdono ancora: Clienti, Promoter, Locali, Dashboard, Messaggi, Analitica (grafici);
 3. avvio: ~2,5 s prima del JS (processo + bundle), 1-2 s di JS prima della prima pagina;
 4. memoria: ~600-700 MB contro ~370 di Chrome (heap nativo ~370 MB);
