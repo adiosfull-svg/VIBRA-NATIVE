@@ -112,3 +112,30 @@ export function useWhyRender(name: string, values: Record<string, unknown>) {
   const changed = Object.keys(values).filter((k) => !Object.is(prev[k], values[k]));
   console.log(`VIBRA why ${name} ${changed.length ? changed.join(',') : '(stato interno o hook non elencato)'}`);
 }
+
+// Risposte di rete: tempo del parse JSON (sul thread JS) e richieste grosse (solo build di test)
+if (TEST_DIAG && typeof Response !== 'undefined') {
+  const proto = Response.prototype as unknown as { json: () => Promise<unknown>; text: () => Promise<string> };
+  const origText = proto.text;
+  proto.json = async function json(this: Response) {
+    const body = await origText.call(this);
+    const t = Date.now();
+    const out = JSON.parse(body);
+    const ms = Date.now() - t;
+    diagTime('json', ms);
+    diagCount('richieste');
+    if (ms > 40 || body.length > 300000) {
+      const u = (this.url || '').replace(/^https?:\/\/[^/]+/, '').slice(0, 90);
+      console.log(`VIBRA rete ${u} ${Math.round(body.length / 1024)}KB parse=${ms}ms`);
+    }
+    return out;
+  };
+}
+
+/** Query avviate (solo build di test): una riga per chiave, per trovare caricamenti doppi. */
+export function diagQueries(cache: { subscribe: (fn: (e: { type: string; query: { queryKey: unknown } }) => void) => () => void }) {
+  if (!TEST_DIAG) return;
+  cache.subscribe((e) => {
+    if (e.type === 'added') console.log(`VIBRA query ${JSON.stringify(e.query.queryKey).slice(0, 120)}`);
+  });
+}

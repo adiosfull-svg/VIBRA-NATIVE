@@ -1,4 +1,5 @@
 // Port di src/pages/Clienti.jsx (convertito da scripts/port/codemod.mjs).
+import { diagTimed } from '@/lib/testDiag';
 import { invalidateFullTables } from '@/web/lib/query-client';
 import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
@@ -733,7 +734,7 @@ export default function Clienti() {
   // ── Statistiche pre-calcolate dal backend (campi cum_* sui record Client) ──
   // I calcoli pesanti (raggruppamento presenze, conteggi giorno per giorno)
   // sono già fatti dal backend. Le presenze restano solo per il detail dialog.
-  const clientStatsMap = useMemo(() => {
+  const clientStatsMap = useMemo(diagTimed('clienti-statistiche', () => {
     const map = buildClientStatsMap(clients);
 
     const eventsById = Object.fromEntries(
@@ -817,7 +818,7 @@ export default function Clienti() {
     }
 
     return map;
-  }, [clients, attendances, events]);
+  }), [clients, attendances, events]);
 
   const enriched = useMemo(() => {
     if (activeTab !== 'growth') return [];
@@ -1012,11 +1013,11 @@ export default function Clienti() {
   // Memoizzati: ricalcolati solo quando cambiano clienti/statistiche,
   // non ad ogni render
   const clientBadges = useMemo(
-    () => buildClientBadgesMap(clients),
+    diagTimed('clienti-badge', () => buildClientBadgesMap(clients)),
     [clients]
   );
 
-  const filtered = useMemo(() => {
+  const filtered = useMemo(diagTimed('clienti-filtro', () => {
     const activeMissingCheck =
       MISSING_FILTERS.find(
         (f) => f.key === missingFilter
@@ -1072,7 +1073,7 @@ export default function Clienti() {
 
         return 0;
       });
-  }, [
+  }), [
     clients,
     debouncedSearch,
     sortBy,

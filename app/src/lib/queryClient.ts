@@ -1,5 +1,6 @@
 // Stesse opzioni di src/lib/query-client.js dell'app web.
 import { QueryClient } from '@tanstack/react-query';
+import { diagQueries } from './testDiag';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,3 +16,6 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// diagnostica dell'emulatore: chiavi delle query avviate
+diagQueries(queryClient.getQueryCache());
