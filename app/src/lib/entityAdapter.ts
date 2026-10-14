@@ -3,7 +3,7 @@
 // Nessuna dipendenza da React Native: lo usa anche l'app web di riferimento (tools/web-ref).
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SCHEMA, type EntityName } from './schema.generated.ts';
-import { aggregateByMonth, filterEntries, parseSort, toDbRow, type Query, type Row } from './entityCore.ts';
+import { aggregateByMonth, filterEntries, fromDbRow, parseSort, toDbRow, type Query, type Row } from './entityCore.ts';
 
 const PAGE = 1000; // limite di righe per richiesta di PostgREST/Supabase
 
@@ -39,7 +39,7 @@ function makeEntity(supabase: SupabaseClient, entity: EntityName) {
       if (want <= 0) break;
       const { data, error } = await select(query, sort, fields).range(from, from + want - 1);
       if (error) fail(entity, 'list', error);
-      out.push(...((data ?? []) as unknown as Row[]));
+      out.push(...((data ?? []) as unknown as Row[]).map(fromDbRow));
       if (!data || data.length < want) break;
     }
     return out;
@@ -74,26 +74,26 @@ function makeEntity(supabase: SupabaseClient, entity: EntityName) {
     async get(id: string) {
       const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
       if (error) fail(entity, 'get', error);
-      return data as Row;
+      return fromDbRow(data as Row);
     },
 
     async create(values: Record<string, unknown>) {
       const { data, error } = await supabase.from(table).insert(toDbRow(entity, values)).select().single();
       if (error) fail(entity, 'create', error);
-      return data as Row;
+      return fromDbRow(data as Row);
     },
 
     async bulkCreate(list: Record<string, unknown>[]) {
       if (!list.length) return [];
       const { data, error } = await supabase.from(table).insert(list.map((v) => toDbRow(entity, v))).select();
       if (error) fail(entity, 'bulkCreate', error);
-      return data as Row[];
+      return (data as Row[]).map(fromDbRow);
     },
 
     async update(id: string, values: Record<string, unknown>) {
       const { data, error } = await supabase.from(table).update(toDbRow(entity, values)).eq('id', id).select().single();
       if (error) fail(entity, 'update', error);
-      return data as Row;
+      return fromDbRow(data as Row);
     },
 
     /** bulkUpdate([{ id, ...campi }]) — un update per riga, in parallelo. */
@@ -128,7 +128,7 @@ function makeEntity(supabase: SupabaseClient, entity: EntityName) {
         .channel(`rt-${table}-${Math.random().toString(36).slice(2)}`)
         .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
           const type = payload.eventType === 'INSERT' ? 'create' : payload.eventType === 'UPDATE' ? 'update' : 'delete';
-          const data = (type === 'delete' ? payload.old : payload.new) as Row;
+          const data = fromDbRow((type === 'delete' ? payload.old : payload.new) as Row);
           callback({ type, id: data?.id, data });
         })
         .subscribe();

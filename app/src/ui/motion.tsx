@@ -6,6 +6,7 @@
 import { Children, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Animated, Easing } from 'react-native';
 import { Btn, Div, Span } from './html';
+import { Img } from './elements';
 
 type Target = Record<string, any> | boolean | undefined | string;
 type Transition = { duration?: number; delay?: number; ease?: string | number[]; repeat?: number; repeatType?: string };
@@ -123,7 +124,7 @@ function make(Comp: React.ComponentType<any>, direct = false) {
 
 export const motion = {
   div: make(Div, true), section: make(Div, true), li: make(Div, true), ul: make(Div, true), header: make(Div, true),
-  span: make(Span), p: make(Span), button: make(Btn),
+  span: make(Span), p: make(Span), button: make(Btn), img: make(Img),
 };
 
 export function AnimatePresence({ children }: { children?: ReactNode; mode?: string; initial?: boolean }) {

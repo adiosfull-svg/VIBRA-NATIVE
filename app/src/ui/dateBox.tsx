@@ -21,6 +21,8 @@ export type DateFieldProps = {
   accessibilityLabel?: string;
 };
 
+const DATE_TEXT_PAD = { paddingVertical: 2 };
+
 export function DateBox({ type, value, className, style, disabled, onPress, children, accessibilityLabel }: DateFieldProps & {
   onPress?: () => void; children?: ReactNode;
 }) {
@@ -34,7 +36,8 @@ export function DateBox({ type, value, className, style, disabled, onPress, chil
       onClick={onPress}
       accessibilityLabel={accessibilityLabel ?? text}
     >
-      <Text className={cn('flex-shrink', empty && 'opacity-70')} style={inputFontSize(className)} numberOfLines={1}>{text}</Text>
+      {/* Chrome: i campi della data hanno 2px sopra e sotto l'interlinea (input senza padding né bordo: 16 → 20px) */}
+      <Text className={cn('flex-shrink', empty && 'opacity-70')} style={[inputFontSize(className), DATE_TEXT_PAD]} numberOfLines={1}>{text}</Text>
       <Icon className="w-4 h-4 ml-2 opacity-70" />
       {children}
     </Btn>

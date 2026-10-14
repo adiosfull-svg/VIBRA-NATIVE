@@ -315,6 +315,13 @@ function useLeadMargin(rnStyle: Record<string, any> | undefined): ViewStyle | nu
  * un elemento che disegna qualcosa (tag o con className/style): i componenti come PageTitle,
  * che rendono null, non hanno spazio prima del successivo né in CSS né col gap.
  */
+/** C'è almeno un elemento dopo la posizione `index` tra i figli `nodes` (null e false non contano)? */
+function elementAfter(nodes: ReactNode, index: number): boolean {
+  let found = false;
+  Children.forEach(nodes, (c, i) => { if (i > index && isValidElement(c)) found = true; });
+  return found;
+}
+
 function spaceOverrides(children: ReactNode, className?: string): ReactNode {
   if (!className || !className.includes('space-')) return children;
   const gaps: { x?: number; y?: number } = {};
@@ -322,7 +329,7 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
   if (gaps.x == null && gaps.y == null) return children;
   let seen = false;
   let seenInFlow = false;
-  const visit = (nodes: ReactNode): ReactNode => Children.map(nodes, (child) => {
+  const visit = (nodes: ReactNode): ReactNode => Children.map(nodes, (child, index) => {
     if (!isValidElement(child)) return child;
     // i figli di un Fragment (e di <Suspense>, che non crea elementi) in CSS sono fratelli diretti
     if (child.type === Fragment) {
@@ -341,6 +348,19 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
     const drawn = typeof child.type === 'string' || props.className != null || props.style != null;
     const outOfFlow = OUT_OF_FLOW.test(props.className ?? '');
     if (drawn) { seen = true; if (!outOfFlow) seenInFlow = true; }
+    if (!hadPrev && !drawn && child.type === Div && gaps.y != null && !CSS_FLEX.test(className) && elementAfter(nodes, index)) {
+      // primo figlio = <div> senza classi: in CSS il margin-bottom del suo ultimo figlio lo attraversa
+      // (niente padding/bordo) e collassa col margine di space-y del fratello successivo
+      let lastIdx = -1;
+      let last: ReactElement<{ className?: string }> | null = null;
+      Children.forEach((props as { children?: ReactNode }).children, (k, i) => { if (isValidElement(k)) { lastIdx = i; last = k as ReactElement<{ className?: string }>; } });
+      const lastEl = last as ReactElement<{ className?: string }> | null;
+      const c = lastEl && typeof lastEl.props.className === 'string' ? collapseFirstMargin(lastEl.props.className, gaps.y) : null;
+      seen = true; seenInFlow = true;
+      if (!c || !lastEl) return child;
+      const kids = Children.map((props as { children?: ReactNode }).children, (k, i) => (i === lastIdx ? cloneElement(lastEl, { className: c.className }) : k));
+      return cloneElement(child as ReactElement<{ children?: ReactNode; style?: unknown }>, { style: c.marginBottom != null ? { marginBottom: c.marginBottom } : undefined }, kids);
+    }
     if (!drawn && hadPrev && !hadInFlow) {
       // componente senza className/style (es. <SectionHeader/>) primo nel flusso dopo elementi
       // assoluti: il margine lo prende il primo Div/Btn che disegna (se rende null, nessuno)
@@ -369,6 +389,11 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
       // scheda): il gap non c'è, ma in CSS il margine sì (lo style inline lo sostituisce)
       if (gaps.y != null && mt == null) fix.marginTop = gaps.y;
       if (gaps.x != null && ml == null) fix.marginLeft = gaps.x;
+    } else if (gaps.y != null && !CSS_FLEX.test(className) && child.type === Span && !BOXY.test(String(cls ?? '')) && !hasBoxyChild((props as { children?: ReactNode }).children)) {
+      // <span> in linea in un blocco space-y: in CSS il margin-top non vale sugli elementi in linea
+      // (la riga parte subito sotto al fratello); col gap di RN ci sarebbe
+      fix.marginTop = -gaps.y;
+      if (gaps.x != null && ml != null) fix.marginLeft = ml - gaps.x;
     } else {
       if (gaps.y != null && mt != null) fix.marginTop = mt - gaps.y;
       if (gaps.x != null && ml != null) fix.marginLeft = ml - gaps.x;
@@ -441,16 +466,25 @@ function ringShadow(ring: string): ViewStyle {
   return v;
 }
 
+const MX_AUTO = /(^|\s)mx-auto(\s|$)/;
+const OWN_WIDTH = /(^|\s)(w-|size-|absolute(\s|$)|fixed(\s|$))/;
 const POSITIONED = /(^|\s)(relative|absolute|sticky)(\s|$)/;
 const Z_CLASS = /(^|\s)(?:[a-z0-9-]+:)*-?z-/;
+// anche transform crea un contesto di sovrapposizione: si disegna con i posizionati, nell'ordine del codice
+const TRANSFORMED = /(^|\s)-?(translate-[xy]|scale|rotate|skew)-/;
+const hasTransform = (rawClass: string, style?: Record<string, any>) =>
+  TRANSFORMED.test(rawClass) || (Array.isArray(style?.transform) ? style.transform.length > 0 : style?.transform != null && style.transform !== 'none');
 
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
   const base: Record<string, any> = grid ? { rowGap: grid.gapY } : {};
   if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
   if (gridCell && !NO_STRETCH.test(withoutHFull(rawClass ?? '')) && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
-  // ordine di disegno CSS: gli elementi posizionati stanno sopra ai fratelli non posizionati
+  // ordine di disegno CSS: gli elementi posizionati (o trasformati) stanno sopra ai fratelli non posizionati
   // (in RN-web tutte le View sono relative e conta solo l'ordine nel codice)
-  if (POSITIONED.test(rawClass ?? '') && !Z_CLASS.test(rawClass ?? '') && style?.zIndex == null) base.zIndex = 1;
+  if ((POSITIONED.test(rawClass ?? '') || hasTransform(rawClass ?? '', style)) && !Z_CLASS.test(rawClass ?? '') && style?.zIndex == null) base.zIndex = 1;
+  // blocco con mx-auto: in CSS largo quanto il contenitore (fino a max-w) e centrato; in Yoga i margini auto
+  // lo stringerebbero al contenuto
+  if (layout === 'block' && MX_AUTO.test(rawClass ?? '') && !OWN_WIDTH.test(rawClass ?? '') && !INLINE_LEVEL.test(rawClass ?? '') && style?.width == null) base.width = '100%';
   if (layout === 'block' && INLINE_LEVEL.test(rawClass ?? '') && !SELF.test(rawClass ?? '') && style?.alignSelf == null) {
     base.alignSelf = inlineAlign(inherited);
   }

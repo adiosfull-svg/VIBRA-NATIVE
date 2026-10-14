@@ -619,7 +619,7 @@ export default function EditAttendanceDialog({
                         key={e.id}
                         onClick={() => toggleEventSelect(e.id)}
                         className={`text-[10px] px-2 py-1 rounded-full border transition-all ${sel ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'}`}>
-                        {e.name}· {e.date ? format(parseISO(e.date), 'dd MMM', { locale: it }) : ''}
+                        {e.name} · {e.date ? format(parseISO(e.date), 'dd MMM', { locale: it }) : ''}
                       </Btn>
                     );
                   })}

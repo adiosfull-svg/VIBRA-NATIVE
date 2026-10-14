@@ -1,16 +1,14 @@
 // Port di label.jsx, skeleton.jsx, progress.jsx, separator.
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated } from 'react-native';
 import { cn } from './cn';
 import { Div } from './html';
-import { Text, useInlineBox } from './text';
+import { HtmlLabel } from './htmlLabel';
 
+/** Label di shadcn: un <label> con `text-sm font-medium leading-none` (HtmlLabel: riquadro o testo in linea,
+ *  attiva il controllo che contiene). */
 export function Label({ className, children, nativeID }: { className?: string; children?: ReactNode; nativeID?: string; htmlFor?: string }) {
-  const cls = cn('text-sm font-medium leading-none', className);
-  // <label> è in linea: in un blocco la sua riga è alta quanto l'interlinea del blocco
-  const inlineBox = useInlineBox(cls);
-  const text = <Text nativeID={nativeID} className={cls}>{children}</Text>;
-  return inlineBox ? <View style={inlineBox}>{text}</View> : text;
+  return <HtmlLabel className={cn('text-sm font-medium leading-none', className)} nativeID={nativeID}>{children}</HtmlLabel>;
 }
 
 /** animate-pulse rounded-md bg-primary/10 */

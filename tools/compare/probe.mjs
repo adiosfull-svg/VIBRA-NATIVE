@@ -29,6 +29,7 @@ await nat.goto('http://127.0.0.1:8081', { waitUntil: 'networkidle', timeout: 180
 await nat.getByLabel('Email').fill(`${role}@vibra.local`);
 await nat.getByLabel('Password').fill('vibra');
 await nat.getByRole('button', { name: 'Accedi' }).click();
+  await nat.mouse.move(0, 0); // il clic su Accedi lascerebbe il mouse sopra la pagina (:hover)
 await nat.waitForTimeout(3000);
 await nat.goto(`http://127.0.0.1:8081${route}`, { waitUntil: 'networkidle' });
 await nat.waitForTimeout(3500);

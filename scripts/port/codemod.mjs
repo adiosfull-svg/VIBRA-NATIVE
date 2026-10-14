@@ -5,6 +5,7 @@
 //  - attributi/eventi solo-web → rimossi o tradotti; le API del browser segnalate con PORT-TODO
 // Uso: node scripts/port/codemod.mjs <file-originale> <file-destinazione> [--src <radice-src-originale>]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { restoreJsxText } from './jsx-text-check.mjs';
 import path from 'node:path';
 import * as babel from '@babel/parser';
 import * as recast from 'recast';
@@ -28,7 +29,7 @@ const TEXT = { span: 'Span', p: 'P', small: 'Span', code: 'Span', pre: 'Span', b
 const TEXT_EXTRA = { b: 'font-bold', strong: 'font-bold', em: 'italic', i: 'italic', code: 'font-mono', pre: 'font-mono' };
 const ELEMENTS = {
   img: 'Img', a: 'A', table: 'Table', thead: 'Thead', tbody: 'Tbody', tfoot: 'Tfoot', tr: 'Tr', td: 'Td', th: 'Th',
-  form: 'Form', input: 'HtmlInput', textarea: 'HtmlTextarea', select: 'HtmlSelect', option: 'HtmlOption', hr: 'Hr', label: 'Label',
+  form: 'Form', input: 'HtmlInput', textarea: 'HtmlTextarea', select: 'HtmlSelect', option: 'HtmlOption', hr: 'Hr', label: 'HtmlLabel', datalist: 'HtmlDatalist',
   svg: 'Svg', path: 'Path', circle: 'Circle', rect: 'Rect', line: 'Line', g: 'G', defs: 'Defs', stop: 'Stop',
   linearGradient: 'SvgLinearGradient', text: 'SvgText', polygon: 'Polygon', polyline: 'Polyline', foreignObject: 'ForeignObject',
 };
@@ -200,7 +201,7 @@ export function transform(code, originalPath = '') {
       const replaceWith = (expr) => p.replace(inJsx ? b.jsxExpressionContainer(expr) : expr);
       // <br/> → "\n"
       if (tag === 'br') { replaceWith(b.stringLiteral('\n')); return false; }
-      if (tag === 'style' || tag === 'datalist') {
+      if (tag === 'style') {
         todos.push(`<${tag}> rimosso`);
         replaceWith(b.nullLiteral());
         return false;
@@ -235,7 +236,7 @@ export function transform(code, originalPath = '') {
         if (a.type !== 'JSXAttribute') { attrs.push(a); continue; }
         const n = attrName(a);
         // id negli SVG serve (fill="url(#grad)", clipPath...): si tiene; altrove non ha equivalente
-        if (DROP_ATTR.test(n) && !(n === 'id' && SVG_ID_TAGS.has(tag))) continue;
+        if (DROP_ATTR.test(n) && !(n === 'id' && (SVG_ID_TAGS.has(tag) || tag === 'datalist'))) continue;
         // touch/pointer/mouse/wheel: supportati da Div e Btn (ui/gestures.ts), rimossi altrove
         if (GESTURE_ATTR.test(n) && !['Div', 'Btn'].includes(name)) { removedGestures.push(n); continue; }
         // onKeyDown dei campi di testo è supportato (ui/keyEvents.ts: Invio/Esc anche sul telefono)
@@ -249,9 +250,8 @@ export function transform(code, originalPath = '') {
         if (n === 'type' && name === 'Btn' && a.value?.value !== 'submit') continue;
         if (n === 'loading' && name === 'Img') continue;
         if (n === 'onClick' && ['Span', 'P', 'H'].includes(name)) { a.name = b.jsxIdentifier('onPress'); attrs.push(a); continue; }
-        if (n === 'checked' || (n === 'type' && name === 'HtmlInput' && a.value?.value && ['checkbox', 'radio', 'color', 'range'].includes(a.value.value))) {
-          todos.push(`<input ${n === 'checked' ? 'checked' : `type="${a.value.value}"`}> da sostituire con il controllo nativo`);
-        }
+        // checkbox/radio: HtmlInput (ui/checkField); color: ui/colorField; range resta da fare a mano
+        if (n === 'type' && name === 'HtmlInput' && a.value?.value === 'range') todos.push('<input type="range"> da sostituire con il controllo nativo');
         // class → className (non dovrebbe esserci, per sicurezza)
         if (n === 'class') a.name = b.jsxIdentifier('className');
         attrs.push(a);
@@ -331,7 +331,11 @@ if (import.meta.url === `file://${process.argv[1]}` && process.argv[2] === '--sh
   const [input, output] = process.argv.slice(2);
   const srcIdx = process.argv.indexOf('--src');
   const root = srcIdx > 0 ? process.argv[srcIdx + 1] : path.dirname(input);
-  const { code, todos } = transform(readFileSync(input, 'utf8'), `src/${path.relative(root, input)}`);
+  const source = readFileSync(input, 'utf8');
+  let { code, todos } = transform(source, `src/${path.relative(root, input)}`);
+  // il reprint di recast a volte perde spazi nei testi JSX ({mod} ({count}) → {mod}({count})): si rimettono
+  const restored = restoreJsxText(source, code);
+  if (restored) { code = restored.code; console.log(`${output}: ${restored.fixed} testi JSX ripristinati`); }
   mkdirSync(path.dirname(output), { recursive: true });
   writeFileSync(output, code);
   console.log(`${output}: ${todos.length} PORT-TODO`);

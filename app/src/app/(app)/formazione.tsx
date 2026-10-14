@@ -1,5 +1,14 @@
-import { ComingSoon } from '../../components/ComingSoon';
+// Route /formazione → pagina portata da src/pages/Formazione.jsx.
+import { memo } from 'react';
+import FormazionePage from '../../web/pages/Formazione';
+import Page from '../../web/components/layout/Page';
 
-export default function Formazione() {
-  return <ComingSoon source="porting di /formazione" />;
+const Formazione = memo(FormazionePage);
+
+export default function FormazioneRoute() {
+  return (
+    <Page>
+      <Formazione />
+    </Page>
+  );
 }

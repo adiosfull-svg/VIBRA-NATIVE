@@ -10,9 +10,12 @@ import { cn } from './cn';
 import { DateField } from './dateField';
 import { isDateInputType } from './dateValue';
 import { FileField } from './fileField';
+import { ColorField } from './colorField';
+import { CheckField } from './checkField';
+import { datalistMatches, useDatalist } from './datalist';
 import { useTextFormField } from './formContext';
 import { keyDownProps, type WebKeyEvent } from './keyEvents';
-import { Btn, Div } from './html';
+import { Btn, Div, Span } from './html';
 import { BrowserSelectTrigger, Select, SelectContent, SelectItem } from './menu';
 import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
@@ -249,17 +252,48 @@ const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean
 });
 RawTextInput.displayName = 'RawTextInput';
 
-/** <input>: testo, ma anche date/ora (DateField) e file (FileField) come nel browser. */
+/** <input>: testo, ma anche date/ora (DateField), file (FileField) e colore (ColorField) come nel browser. */
 export const HtmlInput = forwardRef<any, RawInputProps>((p, ref) => {
   const { type, className, value, onChange, min, max, disabled, required, accept, multiple, capture, style } = p;
   if (isDateInputType(type)) {
     return <DateField ref={ref} type={type} value={value} onChange={onChange} onBlur={p.onBlur as () => void} min={min} max={max}
       disabled={disabled} required={required} style={style as object} className={cn('text-foreground text-base', className)} />;
   }
+  if (type === 'checkbox' || type === 'radio') {
+    const q = p as RawInputProps & { checked?: boolean; name?: string };
+    return <CheckField type={type} checked={q.checked} value={value} name={q.name} disabled={disabled} className={className} onChange={onChange as never} />;
+  }
+  if (p.list) return <DatalistInput ref={ref} {...p} />;
+  if (type === 'color') return <ColorField value={value as string} onChange={onChange as never} disabled={disabled} className={className} />;
   if (type === 'file') return <FileField ref={ref} accept={accept} multiple={multiple} capture={capture} disabled={disabled} className={className} onChange={onChange} />;
   return <RawTextInput ref={ref} {...p} />;
 });
 HtmlInput.displayName = 'HtmlInput';
+
+/** <input list="id">: sotto il campo i suggerimenti del <datalist> (HtmlDatalist) mentre ha il fuoco. */
+const DatalistInput = forwardRef<any, RawInputProps>((p, ref) => {
+  const options = useDatalist(p.list as string | undefined);
+  const [focused, setFocused] = useState(false);
+  const shown = focused ? datalistMatches(options, p.value) : [];
+  return (
+    <View>
+      <RawTextInput ref={ref} {...p}
+        onFocus={(e: any) => { setFocused(true); (p.onFocus as any)?.(e); }}
+        onBlur={(e: any) => { setTimeout(() => setFocused(false), 150); (p.onBlur as any)?.(e); }} />
+      {shown.length ? (
+        <Div className="mt-1 rounded-md border border-border bg-popover overflow-hidden">
+          {shown.map((o) => (
+            <Btn key={o} className="px-3 py-2 active:bg-secondary/50" onClick={() => { (p.onChange as any)?.({ target: { value: o } }); setFocused(false); }}>
+              <Span className="text-sm text-foreground">{o}</Span>
+            </Btn>
+          ))}
+        </Div>
+      ) : null}
+    </View>
+  );
+});
+DatalistInput.displayName = 'DatalistInput';
+export { HtmlDatalist } from './datalist';
 export const HtmlTextarea = forwardRef<TextInput, RawInputProps>((p, ref) => <RawTextInput ref={ref} multiline {...p} />);
 HtmlTextarea.displayName = 'HtmlTextarea';
 
@@ -291,10 +325,8 @@ export function HtmlSelect({ value, onChange, children, className, disabled }: {
 // ── varie ────────────────────────────────────────────────────────────────────
 export const Hr = ({ className }: { className?: string }) => <Div className={cn('h-px w-full bg-border', className)} />;
 
-/** <label onClick> o <label htmlFor> → area premibile senza semantica HTML */
-export function Label({ children, className, onClick }: { children?: ReactNode; className?: string; onClick?: () => void; htmlFor?: string }) {
-  return onClick ? <Btn className={className} onClick={onClick}>{children}</Btn> : <Div className={className}>{children}</Div>;
-}
+/** <label>: riquadro o testo in linea, attiva il controllo che contiene (ui/htmlLabel.tsx) */
+export { HtmlLabel } from './htmlLabel';
 
 export { Pressable };
 // ── <svg> ────────────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import * as TabsPrimitive from '@rn-primitives/tabs';
 import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
+import { useLabelControl } from './labelControl';
 import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
 import { IconClassContext } from './icon';
@@ -234,6 +235,8 @@ export function TabsContent({ className, children, value }: WithChildren & { val
 
 // ── Switch ───────────────────────────────────────────────────────────────────
 export function Switch({ checked, onCheckedChange, disabled, className }: { checked: boolean; onCheckedChange: (v: boolean) => void; disabled?: boolean; className?: string }) {
+  // <label> che contiene lo switch: toccarlo lo cambia, come nel browser
+  useLabelControl(() => { if (!disabled) onCheckedChange(!checked); });
   return (
     <SwitchPrimitive.Root checked={checked} onCheckedChange={onCheckedChange} disabled={disabled}
       className={cn('h-5 w-9 shrink-0 flex-row items-center rounded-full border-2 border-transparent shadow-sm', checked ? 'bg-primary' : 'bg-input', disabled && 'opacity-50', className)}>

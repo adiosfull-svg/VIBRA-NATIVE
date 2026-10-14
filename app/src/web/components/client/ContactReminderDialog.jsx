@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 
 import { Div, P, Span } from '@/ui/html';
-import { Label } from '@/ui/elements';
+import { HtmlLabel } from '@/ui/elements';
 
 /**
  * Dialog per impostare un promemoria di ricontatto per un cliente.
@@ -74,11 +74,11 @@ export default function ContactReminderDialog({ client, promoterId, open, onOpen
           </P>
           <Div className="grid grid-cols-2 gap-3">
             <Div>
-              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Data</Label>
+              <HtmlLabel className="text-xs font-medium text-muted-foreground mb-1 block">Data</HtmlLabel>
               <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
             </Div>
             <Div>
-              <Label className="text-xs font-medium text-muted-foreground mb-1 block">Ora</Label>
+              <HtmlLabel className="text-xs font-medium text-muted-foreground mb-1 block">Ora</HtmlLabel>
               <Input type="time" value={time} onChange={e => setTime(e.target.value)} />
             </Div>
           </Div>

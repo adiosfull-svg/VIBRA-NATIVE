@@ -48,6 +48,7 @@ for (const role of roles.split(',')) {
   await nat.getByLabel('Email').fill(`${role}@vibra.local`);
   await nat.getByLabel('Password').fill('vibra');
   await nat.getByRole('button', { name: 'Accedi' }).click();
+  await nat.mouse.move(0, 0); // il clic su Accedi lascerebbe il mouse sopra la pagina (:hover)
   await nat.waitForTimeout(3000);
   await nat.goto(`${NAT}${route}`, { waitUntil: 'networkidle', timeout: 120000 });
   await nat.waitForTimeout(3500);

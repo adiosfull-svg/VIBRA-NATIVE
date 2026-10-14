@@ -9,8 +9,8 @@ import { buildClientStatsMap } from './utils/clientPrecomputed';
 import { computePromoterStats, computeAutoUnlocked } from './utils/achievementLogic';
 
 test('tutti i moduli legacy si caricano', async () => {
-  // goalTypes, imageCache, publicImageCache e downloadMaterials (shim del browser) dipendono da moduli React Native: non eseguibili in Node.
-  const NATIVE = ['goalTypes.js', 'imageCache.js', 'publicImageCache.js', 'downloadMaterials.js'];
+  // goalTypes, imageCache, publicImageCache, downloadMaterials e reportPDF (shim del browser) dipendono da moduli React Native: non eseguibili in Node.
+  const NATIVE = ['goalTypes.js', 'imageCache.js', 'publicImageCache.js', 'downloadMaterials.js', 'reportPDF.js'];
   const files = readdirSync(new URL('./utils', import.meta.url)).filter((f) => f.endsWith('.js') && !NATIVE.includes(f));
   for (const f of files) await import(`./utils/${f}`);
   assert.ok(files.length >= 20);

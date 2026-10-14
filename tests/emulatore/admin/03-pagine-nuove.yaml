@@ -1,0 +1,118 @@
+# Admin: le pagine convertite il 14/10 si aprono (deep link) senza la schermata d'errore.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://serate
+- extendedWaitUntil:
+    visible:
+      text: "Rettangolare|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-serate
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://importa-serata
+- extendedWaitUntil:
+    visible:
+      text: "Serata 1|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-importa-serata
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://locali
+- extendedWaitUntil:
+    visible:
+      text: "Ammare Frontemare|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-locali
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://report
+- extendedWaitUntil:
+    visible:
+      text: "Tipo di confronto:|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-report
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://messaggi
+- extendedWaitUntil:
+    visible:
+      text: "I DM sono privati|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-messaggi
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://promoter/prom000000000000000001
+- extendedWaitUntil:
+    visible:
+      text: "Tavoli Chiusi per Categoria|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-promoter
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible:
+      text: "Confronta le performance dei tuoi clienti|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-clienti-analytics
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://notifiche
+- extendedWaitUntil:
+    visible:
+      text: "Segna tutte lette|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-notifiche
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://formazione
+- extendedWaitUntil:
+    visible:
+      text: "Presentazione|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-formazione
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://download
+- extendedWaitUntil:
+    visible:
+      text: "Tutti.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-download
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://vibra-gpt
+- extendedWaitUntil:
+    visible:
+      text: "Da dove iniziamo?|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-vibra-gpt
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://ricerca-ai
+- extendedWaitUntil:
+    visible:
+      text: "Da dove iniziamo?|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-ricerca-ai
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://admin-console
+- extendedWaitUntil:
+    visible:
+      text: "Crediti AI|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: pagina-admin-console
+- assertNotVisible: "Si è verificato un errore"

@@ -10,7 +10,7 @@ import { useOverlay } from '@/web/lib/overlayStackContext';
 import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, P, Span } from '@/ui/html';
-import { HtmlInput, Img, Label } from '@/ui/elements';
+import { HtmlInput, Img, HtmlLabel } from '@/ui/elements';
 
 import { doc as webDocument } from '@/web/shims/dom';
 
@@ -127,7 +127,7 @@ function ReminderDialog({ count, onClose, onConfirm }) {
       <Div className="space-y-3">
         <P className="text-sm text-muted-foreground">Imposta un promemoria di ricontatto per tutti i clienti selezionati.</P>
         <Div>
-          <Label className="block text-xs font-medium text-muted-foreground mb-1">Quando ricordartelo</Label>
+          <HtmlLabel className="block text-xs font-medium text-muted-foreground mb-1">Quando ricordartelo</HtmlLabel>
           <HtmlInput type="datetime-local" value={dt} onChange={e => setDt(e.target.value)}
             className="w-full px-3 py-2 rounded-lg bg-secondary/40 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
         </Div>

@@ -55,6 +55,9 @@
 - **Pagine convertite e identiche all'originale (web, pr/admin/super4)**: Clienti (tutte le tab, dettaglio,
   dialog, Mappa Leaflet in iframe/WebView), Dashboard, Il Mio Vibra (tutte le 8 tab + Calcolatrice),
   Weekend/Programmazione (6 tab, Aggiungi Semina), Semine (card che si girano).
+  14/10: Clienti analytics, Notifiche, Formazione, Download, VibraGPT, Ricerca AI, Admin console (confronto
+  web uguale). Convertite e collegate, confronto DA FARE: Serate, Importa serata, Locali, Report, Messaggi,
+  dettaglio Promoter. Accessi come l'originale: `web/components/RoleGate.jsx` (convertito) nelle route.
 - **APK**: si avvia, login ok (fix TextDecoder latin1 per Hermes, jsPDF caricato solo all'export).
 - **Strato `ui/`** (emulazione CSS/DOM, principali regole):
   - testo: ereditarietà classi/stile, Inter per peso, line-height ereditata (`textLeading.ts`), strut delle
@@ -75,6 +78,19 @@
     pagina/eventi), ref delle ScrollView con `scrollTo({left})`/`scrollLeft`, gesture web sui Div
     (`gestures.ts`), form/data/file nativi; sul web classi proprie dell'index.css in `customCss.web.ts`.
   - card che si gira sul telefono: `ui/flip.tsx` + `web/hooks/useFlipGesture.native.jsx`.
+  - 14/10: griglie a una colonna senza gap orizzontale; icone `inline` nel testo; blocco con `mx-auto` largo
+    quanto il contenitore (fino a max-w); elementi con transform disegnati con i posizionati (zIndex 1); style
+    con `max()/min()` di lunghezze; recharts senza asse delle categorie se non ci sono dati; `motion.img`.
+  - controlli: `<input type=color>` (`colorField`), checkbox/radio (`checkField`: input vero sul web, riquadro
+    sul telefono), `<datalist>` (`datalist.tsx`: suggerimenti sotto il campo), `<label>` → `HtmlLabel`
+    (riquadro o testo in linea; toccarlo attiva checkbox/radio/Switch dentro, `labelControl.ts`); il Label di
+    shadcn passa da HtmlLabel.
+  - codemod: dopo il reprint di recast rimette i testi JSX originali (`scripts/port/jsx-text-check.mjs`, perdeva
+    spazi: `{mod} ({count})` → `{mod}({count})`); da solo controlla tutti i file convertiti.
+  - stack di prova: `entityCore.fromDbRow` dà created_date/updated_date senza fuso come Base44 (con '+00:00'
+    il `parseUTC` dell'originale dava "Invalid time value").
+  - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
+    Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 
 ## Fluidità (12/10) — regole in `docs/REGOLE-PRESTAZIONI.md`
 - Menu laterali (burger e ingranaggio): erano `<Modal>` montati all'apertura e il menu account era nell'header
@@ -190,9 +206,9 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
    swipe in Da ricontattare), Semine (Gira e trascinamento delle card), e dalle sessioni prima: selettori
    data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
    scorrimento dei dialog e del dettaglio cliente, export PDF/CSV della Dashboard. Correggere gli errori segnalati.
-2. **Pagine ancora `ComingSoon`** (stesso metodo + checklist di `docs/REGOLE-PRESTAZIONI.md` §9): Promoter (lista e dettaglio `promoter/[id]`), Serate,
-   Importa serata, Locali, Messaggi, VibraGPT, Ricerca AI, Report, Clienti analytics, Notifiche,
-   Impostazioni app, Formazione, Academy, Download, Admin console.
+2. **Pagine ancora `ComingSoon`** (stesso metodo + checklist di `docs/REGOLE-PRESTAZIONI.md` §9): Promoter (lista:
+   `tree.mjs` ne elenca 272 file perché importa mezza app, guardare cosa serve davvero), Impostazioni app (~4000
+   righe), Academy (~5700 righe).
 3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
 4. Notifiche push (expo-notifications al posto del web push).
 5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.

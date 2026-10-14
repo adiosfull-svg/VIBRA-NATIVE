@@ -70,6 +70,22 @@ export function filterEntries(entity: EntityName, query: Query): [string, unknow
   });
 }
 
+/**
+ * Righe dal DB nella forma di Base44: created_date/updated_date in UTC senza fuso
+ * ('2026-10-14T02:10:49.748735'), come le restituisce Base44 (il codice originale ci aggiunge 'Z').
+ * PostgREST li dà con l'offset ('...+00:00'): con la 'Z' aggiunta la data non è valida.
+ */
+export function fromDbRow<T extends Row | null | undefined>(row: T): T {
+  if (!row) return row;
+  for (const k of ['created_date', 'updated_date']) {
+    const v = (row as Row)[k];
+    if (typeof v !== 'string' || !/[+-]\d\d:\d\d$|Z$/.test(v)) continue;
+    const d = new Date(v);
+    if (!Number.isNaN(d.getTime())) (row as Row)[k] = d.toISOString().replace(/Z$/, '');
+  }
+  return row;
+}
+
 /** Raggruppa per mese e somma un campo: sostituisce Event.aggregate({dateBucket, sum}). */
 export function aggregateByMonth(rows: Row[], dateField: string, sumField: string) {
   const buckets = new Map<string, { sum: number; count: number }>();

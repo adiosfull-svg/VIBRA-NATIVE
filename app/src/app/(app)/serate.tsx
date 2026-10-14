@@ -1,5 +1,17 @@
-import { ComingSoon } from '../../components/ComingSoon';
+// Route /serate → pagina portata da src/pages/Serate.jsx (RoleGate "serate").
+import { memo } from 'react';
+import SeratePage from '../../web/pages/Serate';
+import RoleGate from '../../web/components/RoleGate';
+import Page from '../../web/components/layout/Page';
 
-export default function Serate() {
-  return <ComingSoon source="porting di /serate" />;
+const Serate = memo(SeratePage);
+
+export default function SerateRoute() {
+  return (
+    <Page>
+      <RoleGate routeName="serate">
+        <Serate />
+      </RoleGate>
+    </Page>
+  );
 }

@@ -95,13 +95,22 @@ function calcLength(t: string): number | undefined {
   return total;
 }
 
+/** max()/min() di lunghezze assolute: max(env(safe-area-inset-bottom), 12px) */
+function minMaxLength(t: string): number | undefined {
+  const m = t.match(/^(max|min)\((.*)\)$/);
+  if (!m) return undefined;
+  const vals = splitTop(m[2]).map((p) => { const x = p.trim(); return absoluteLength(x) ?? calcLength(x); });
+  if (!vals.length || vals.some((v) => v === undefined)) return undefined;
+  return m[1] === 'max' ? Math.max(...(vals as number[])) : Math.min(...(vals as number[]));
+}
+
 /** '12px' → 12, '1.5rem' → 24, '50%' → '50%', '100dvh' → altezza finestra, calc semplici; altro → undefined */
 export function cssLength(v: unknown): number | string | undefined {
   if (typeof v === 'number') return v;
   if (typeof v !== 'string') return undefined;
   const t = v.trim();
   let m: RegExpMatchArray | null;
-  const abs = absoluteLength(t) ?? calcLength(t);
+  const abs = absoluteLength(t) ?? calcLength(t) ?? minMaxLength(t);
   if (abs !== undefined) return abs;
   if ((m = t.match(/^(-?[\d.]+)%$/))) return t;
   if ((m = t.match(/^-?[\d.]+$/))) return Number(t);

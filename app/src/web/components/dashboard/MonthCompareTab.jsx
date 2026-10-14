@@ -127,8 +127,8 @@ function DeltaPct({ current, previous, invert = false, money = false }) {
   const isDown = pct < -0.5;
   if (!isUp && !isDown) return (
     <Span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
-      <Minus className="w-3 h-3" />0%
-          </Span>
+      <Minus className="w-3 h-3" /> 0%
+    </Span>
   );
   const positive = invert ? isDown : isUp;
   return (

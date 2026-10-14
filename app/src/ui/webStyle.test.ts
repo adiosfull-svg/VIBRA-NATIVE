@@ -98,3 +98,15 @@ test('dimensioni delle classi relative alla finestra (calc senza spazi, aree sic
     Object.assign(cssViewport, { width: 0, height: 0, insetTop: 0, insetBottom: 0 });
   }
 });
+
+test('webStyle: max()/min() di lunghezze assolute (aree sicure)', () => {
+  Object.assign(cssViewport, { insetBottom: 24 });
+  try {
+    assert.equal(webStyle({ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }).style.paddingBottom, 24);
+    assert.equal(webStyle({ paddingBottom: 'max(env(safe-area-inset-bottom), 300px)' }).style.paddingBottom, 300);
+    assert.equal(webStyle({ paddingBottom: 'min(2rem, calc(10px + 4px))' }).style.paddingBottom, 14);
+    assert.equal(webStyle({ paddingBottom: 'max(10%, 4px)' }).style.paddingBottom, undefined);
+  } finally {
+    Object.assign(cssViewport, { insetBottom: 0 });
+  }
+});

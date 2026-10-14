@@ -1,5 +1,14 @@
-import { ComingSoon } from '../../components/ComingSoon';
+// Route /download → pagina portata da src/pages/Download.jsx.
+import { memo } from 'react';
+import DownloadPage from '../../web/pages/Download';
+import Page from '../../web/components/layout/Page';
 
-export default function Download() {
-  return <ComingSoon source="porting di /download" />;
+const Download = memo(DownloadPage);
+
+export default function DownloadRoute() {
+  return (
+    <Page>
+      <Download />
+    </Page>
+  );
 }

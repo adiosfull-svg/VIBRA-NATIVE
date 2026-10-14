@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { aggregateByMonth, coerce, filterEntries, parseSort, toDbRow } from './entityCore.ts';
+import { aggregateByMonth, coerce, filterEntries, fromDbRow, parseSort, toDbRow } from './entityCore.ts';
 
 test('parseSort interpreta le stringhe Base44', () => {
   assert.deepEqual(parseSort('-date'), { column: 'date', ascending: false });
@@ -49,4 +49,12 @@ test('aggregateByMonth replica Event.aggregate per mese', () => {
     { date: '2025-12', sum_total_revenue: 10, count: 1 },
     { date: '2026-01', sum_total_revenue: 150, count: 2 },
   ]);
+});
+
+test('fromDbRow: created_date/updated_date senza fuso come Base44', () => {
+  const r = fromDbRow({ id: 'a', created_date: '2026-10-14T02:10:49.748735+00:00', updated_date: '2026-10-14T04:10:49+02:00', date: '2026-10-14' });
+  assert.equal(r.created_date, '2026-10-14T02:10:49.748');
+  assert.equal(r.updated_date, '2026-10-14T02:10:49.000');
+  assert.equal(r.date, '2026-10-14');
+  assert.equal(new Date(r.created_date + 'Z').toISOString(), '2026-10-14T02:10:49.748Z');
 });

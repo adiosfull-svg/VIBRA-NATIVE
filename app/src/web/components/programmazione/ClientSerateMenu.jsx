@@ -19,7 +19,7 @@ import { wasRecentScroll } from '@/web/lib/scrollGuard';
 import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, P, Span } from '@/ui/html';
-import { HtmlInput, Label } from '@/ui/elements';
+import { HtmlInput, HtmlLabel } from '@/ui/elements';
 
 import { doc as webDocument, nav as webNavigator, win as webWindow, url as webURL } from '@/web/shims/dom';
 
@@ -248,10 +248,10 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
               )}
             </Div>
 
-            <Label className="flex items-center justify-between gap-3 px-2.5 py-2 rounded-lg bg-secondary/30">
+            <HtmlLabel className="flex items-center justify-between gap-3 px-2.5 py-2 rounded-lg bg-secondary/30">
               <Span className="text-xs font-medium">Copia anche il fatturato</Span>
               <Switch checked={copyRevenue} onCheckedChange={setCopyRevenue} disabled={saving} />
-            </Label>
+            </HtmlLabel>
 
             <Div className="max-h-[min(45vh,calc(var(--vv-h,100vh)_-_19rem))] overflow-y-auto space-y-1.5 pr-0.5">
               {(loadingSource || loadingTarget) ? (
