@@ -598,6 +598,7 @@ export default function AchievementsTab({ promoter, isActive, isVisible, promote
               {items.map((a, aIdx) => (
                 <Div
                   key={a.id}
+                  id={`achievement-${a.id}`}
                   className={a.id === highlightId ? 'ring-2 ring-primary rounded-2xl' : ''}>
                   <AchievementCard
                     achievement={a}

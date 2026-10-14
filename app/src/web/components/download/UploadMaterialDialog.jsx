@@ -121,6 +121,7 @@ export default function UploadMaterialDialog({ open, onOpenChange, customSection
                 </>
               )}
               <HtmlInput
+                id="upload-file-input"
                 type="file"
                 className="hidden"
                 accept="image/*,.pdf,.zip,.psd,.ai,.doc,.docx"
@@ -130,7 +131,8 @@ export default function UploadMaterialDialog({ open, onOpenChange, customSection
                     setFile(f);
                     if (!name) setName(f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '));
                   }
-                }} />
+                }}
+              />
             </Btn>
           </Div>
 

@@ -827,8 +827,10 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   diagCount('div', className);
   const [handlers, props0] = splitGestureProps(all);
   // el.style.xxx = ... del codice web sul ref: istanza nativa con `style` (ui/domStyle)
-  const domRef = useDomStyleRef((props0 as { ref?: never }).ref);
-  const props = (props0 as { ref?: unknown }).ref ? { ...props0, ref: domRef } : props0;
+  // id: sul web attributo del DOM (getElementById vero), sul telefono registrato (ui/domStyle)
+  const elementId = (props0 as { id?: string }).id;
+  const domRef = useDomStyleRef((props0 as { ref?: never }).ref, elementId);
+  const props = (props0 as { ref?: unknown }).ref || elementId ? { ...props0, ref: domRef } : props0;
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
   const layout = useContext(FlexParentContext);

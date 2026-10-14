@@ -112,6 +112,12 @@
   - CRASH nativo all'avvio (2 su ~20 giri): SIGSEGV dentro GWP-ASan (android_unsafe_frame_pointer_chase in
     GuardedPoolAllocator::deallocate da libhermesvm), non un errore di memoria dell'app → plugin
     `app/plugins/withGwpAsanOff.js` (android:gwpAsanMode="never"). Verificare nei prossimi giri.
+  - `document.getElementById` emulato: registro degli `id` (`ui/domStyle.ts`, Div e input file li registrano;
+    il codemod non toglie più `id`), `el.scrollIntoView({block})` scorre la pagina (`pageScroll`). Serve a
+    Academy (rotella laterale, salti a una scheda), agli achievement e al click sugli input file nascosti.
+    Academy: schede in `memo` (AcademyTileRow) montate a gruppi di 4 (`useProgressiveList`, `showAll()` prima
+    di un salto). Il giro emulatore admin del 14/10 (run 38604044643) è fallito per l'emulatore scaricato
+    corrotto ("Error on ZipFile unknown archive"), non per l'app.
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
 

@@ -21,6 +21,7 @@ import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
 import { webStyle } from './webStyle';
+import { useDomStyleRef } from './domStyle';
 import { IMAGE_CACHE, markImageWarm } from './imageCache';
 import { inheritedLineHeight } from './textLeading';
 import { useFocusStyle } from './useFocusStyle';
@@ -265,10 +266,17 @@ export const HtmlInput = forwardRef<any, RawInputProps>((p, ref) => {
   }
   if (p.list) return <DatalistInput ref={ref} {...p} />;
   if (type === 'color') return <ColorField value={value as string} onChange={onChange as never} disabled={disabled} className={className} />;
-  if (type === 'file') return <FileField ref={ref} accept={accept} multiple={multiple} capture={capture} disabled={disabled} className={className} onChange={onChange} />;
+  if (type === 'file') return <FileFieldWithId id={(p as { id?: string }).id} ref={ref} accept={accept} multiple={multiple} capture={capture} disabled={disabled} className={className} onChange={onChange} />;
   return <RawTextInput ref={ref} {...p} />;
 });
 HtmlInput.displayName = 'HtmlInput';
+
+/** <input type="file" id="..."> : document.getElementById(id).click() apre la scelta anche sul telefono. */
+const FileFieldWithId = forwardRef<any, Parameters<typeof FileField>[0] & { id?: string }>(({ id, ...p }, ref) => {
+  const setRef = useDomStyleRef(ref as never, id);
+  return <FileField ref={setRef} {...p} />;
+});
+FileFieldWithId.displayName = 'FileFieldWithId';
 
 /** <input list="id">: sotto il campo i suggerimenti del <datalist> (HtmlDatalist) mentre ha il fuoco. */
 const DatalistInput = forwardRef<any, RawInputProps>((p, ref) => {

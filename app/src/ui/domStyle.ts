@@ -3,7 +3,7 @@
 // tastiera...): sul telefono l'istanza nativa non ha `style` e l'app cadeva ("Cannot set property
 // 'height' of undefined"). Qui `style` è un oggetto che traduce le scritte in setNativeProps quando la
 // proprietà ha un equivalente RN, e altrimenti le ricorda soltanto (lettura come nel DOM).
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
 import { webStyle } from './webStyle';
 
@@ -37,23 +37,43 @@ function makeStyle(node: NativeNode): Record<string, unknown> {
   });
 }
 
-/** Aggiunge `style` (alla DOM) all'istanza nativa, una volta. Sul web l'elemento è già un nodo DOM. */
+// ── document.getElementById / el.scrollIntoView sul telefono ─────────────────────────────────────
+// Gli elementi con `id` (Div, campi file) si registrano qui; lo scroll lo fornisce lo shim del DOM
+// (web/shims/dom.ts: scroll della pagina in primo piano). Sul web c'è il DOM vero.
+type ScrollOpts = { behavior?: string; block?: string } | boolean | undefined;
+const byId = new Map<string, unknown>();
+let scrollIntoViewImpl: ((node: unknown, opts: ScrollOpts) => void) | null = null;
+export function setScrollIntoViewImpl(fn: (node: unknown, opts: ScrollOpts) => void) { scrollIntoViewImpl = fn; }
+export function getRegisteredById(id: string): unknown { return byId.get(id) ?? null; }
+export function registerId(id: string, node: unknown | null, prev?: unknown) {
+  if (node) byId.set(id, node);
+  else if (byId.get(id) === prev) byId.delete(id);
+}
+
+/** Aggiunge `style` e `scrollIntoView` (alla DOM) all'istanza nativa, una volta. Sul web è già un nodo DOM. */
 export function withDomStyle<T>(node: T): T {
   if (Platform.OS === 'web' || !node || typeof node !== 'object') return node;
-  const n = node as unknown as NativeNode;
+  const n = node as unknown as NativeNode & { scrollIntoView?: (o?: ScrollOpts) => void };
   if (n.style === undefined) {
     try { Object.defineProperty(n, 'style', { value: makeStyle(n), configurable: true }); } catch { /* istanza non estendibile */ }
+  }
+  if (!n.scrollIntoView) {
+    try { Object.defineProperty(n, 'scrollIntoView', { value: (o?: ScrollOpts) => scrollIntoViewImpl?.(n, o), configurable: true }); } catch { /* non estendibile */ }
   }
   return node;
 }
 
 type AnyRef<T> = ((node: T | null) => void) | { current: T | null } | null | undefined;
 
-/** ref che aggiunge `style` all'istanza e la passa al ref originale (stabile finché questo non cambia). */
-export function useDomStyleRef<T>(outer: AnyRef<T>) {
+/** ref che aggiunge `style` all'istanza e la passa al ref originale (stabile finché questo non cambia);
+ *  con `id` registra l'elemento per document.getElementById (telefono). */
+export function useDomStyleRef<T>(outer: AnyRef<T>, id?: string) {
+  const last = useRef<T | null>(null);
   return useCallback((node: T | null) => {
     withDomStyle(node);
+    if (id && Platform.OS !== 'web') registerId(id, node, last.current);
+    last.current = node;
     if (typeof outer === 'function') outer(node);
     else if (outer) outer.current = node;
-  }, [outer]);
+  }, [outer, id]);
 }

@@ -12,6 +12,7 @@ import { BackHandler, Dimensions, Keyboard, Linking, PixelRatio, Platform, Share
 import { blobToBase64, saveBase64File } from './files';
 import { pageScroll } from './pageScroll';
 import { windowTouchSink } from '../../ui/gestures';
+import { getRegisteredById, setScrollIntoViewImpl } from '../../ui/domStyle';
 
 type AnyFn = (...a: any[]) => any;
 
@@ -187,13 +188,25 @@ export const doc = {
   removeEventListener: removeListener(docEvents),
   querySelector: () => null,
   querySelectorAll: () => [],
-  getElementById: () => null,
+  getElementById: (id: string) => getRegisteredById(id),
   getElementsByClassName: () => [],
   createElement: (tag: string) => (tag === 'a' ? anchor() : fakeElement()),
   createTextNode: () => fakeElement(),
 };
 
 // ── window ──────────────────────────────────────────────────────────────────
+// ── el.scrollIntoView sul telefono: scroll della pagina in primo piano fino all'elemento ───────────────
+setScrollIntoViewImpl((node, opts) => {
+  const top = pageScroll.offsetOf(node);
+  if (top == null) return;
+  const o = typeof opts === 'object' && opts ? opts : {};
+  const block = typeof opts === 'boolean' ? (opts ? 'start' : 'end') : o.block ?? 'start';
+  const vh = pageScroll.viewportHeight || Dimensions.get('window').height;
+  const h = (node as { getBoundingClientRect?: () => { height: number } }).getBoundingClientRect?.().height ?? 0;
+  const y = block === 'center' ? top - (vh - h) / 2 : block === 'end' ? top - vh + h : top;
+  pageScroll.scrollTo(Math.max(0, y), o.behavior === 'smooth');
+});
+
 // ── visualViewport: area visibile sopra la tastiera (eventi Keyboard di RN) ─────────────────────────
 // L'originale la usa per tenere sopra la tastiera la barra di VibraGPT, la ricerca, i menu.
 let keyboardHeight = 0;

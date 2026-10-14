@@ -1,5 +1,5 @@
 // Port di src/pages/VibraAcademy.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback, memo } from 'react';
 import {
   Search, BookOpen, ChevronRight, Lightbulb, X, Menu,
   LayoutGrid, UsersRound, ContactRound, Send, CalendarRange, Building2,
@@ -17,6 +17,29 @@ import { useAuth } from '@/lib/auth';
 import PageTitle from '@/web/components/shared/PageTitle';
 import { ACADEMY_SECTIONS } from '@/legacy/utils/academyContent';
 import AcademyTile from '@/web/components/academy/AcademyTile';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
+
+// PORT: tile in memo (ognuna ha l'anteprima di una schermata, decine di elementi): aprirne una non
+// ridisegna le altre; onToggle stabile riceve l'id
+const AcademyTileRow = memo(function AcademyTileRow({ section, description, Icon, isExpanded, onToggleId, lastTouchRef }) {
+  return (
+    <AcademyTile
+      section={section}
+      description={description}
+      Icon={Icon}
+      isExpanded={isExpanded}
+      onToggle={() => onToggleId(section.id)}
+      lastTouchRef={lastTouchRef}
+    />
+  );
+});
+
+/** PORT: scrollIntoView di un elemento che il montaggio progressivo potrebbe non avere ancora creato. */
+function scrollToTile(id, tries = 8) {
+  const el = webDocument.getElementById(`academy-tile-${id}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  else if (tries > 0) requestAnimationFrame(() => scrollToTile(id, tries - 1));
+}
 import AcademySideRail from '@/web/components/academy/AcademySideRail';
 import { useIsMobile } from '@/web/hooks/use-mobile';
 import { makeTapHandlers } from '@/web/lib/tapHandlers';
@@ -130,9 +153,9 @@ export default function VibraAcademy() {
     ragazza_immagine: 'Ragazza Immagine'
   };
 
-  const handleToggle = (id) => {
+  const handleToggle = useCallback((id) => {
     setExpandedId(prev => prev === id ? null : id);
-  };
+  }, []);
 
   // Rotella laterale: icone per jump rapido (mobile only)
   const railItems = useMemo(
@@ -147,11 +170,14 @@ export default function VibraAcademy() {
   // (tile chiusa) così scrollIntoView allinea sempre l'header in alto, non
   // un punto qualsiasi del contenuto espanso. Doppio rAF: attende il re-render
   // di setExpandedId(null) prima di calcolare la posizione di scroll.
+  // PORT: tile montate a blocchi (useProgressiveList); prima di saltare a una tile si mostrano tutte
+  const { count: shownTiles, sentinelRef: tilesSentinelRef, showAll: showAllTiles } = useProgressiveList(filteredSections.length, { initial: 4, step: 4, idleStep: 4 });
   const handleRailJump = (id) => {
     setExpandedId(null);
+    showAllTiles();
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        webDocument.getElementById(`academy-tile-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToTile(id);
       });
     });
   };
@@ -216,7 +242,8 @@ export default function VibraAcademy() {
                     key={s.id}
                     {...makeTapHandlers(lastTouchRef, () => {
                       setExpandedId(s.id);
-                      webDocument.getElementById(`academy-tile-${s.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      showAllTiles();
+                      scrollToTile(s.id);
                     })}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                       isActive
@@ -240,16 +267,20 @@ export default function VibraAcademy() {
         </Div>
       ) : (
         <Div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {filteredSections.map((section, sIdx) => {
+          {filteredSections.slice(0, shownTiles).map((section, sIdx) => {
             const ResolvedIcon = ICON_MAP[section.icon] || BookOpen;
             return (
-              <Div key={section.id} className="dash-fade-up scroll-mt-24">
-                <AcademyTile
+              <Div
+                key={section.id}
+                id={`academy-tile-${section.id}`}
+                className="dash-fade-up scroll-mt-24"
+              >
+                <AcademyTileRow
                   section={section}
                   description={SECTION_DESCRIPTIONS[section.id] || section.intro}
                   Icon={ResolvedIcon}
                   isExpanded={expandedId === section.id}
-                  onToggle={() => handleToggle(section.id)}
+                  onToggleId={handleToggle}
                   lastTouchRef={lastTouchRef}
                 />
               </Div>
@@ -257,6 +288,7 @@ export default function VibraAcademy() {
           })}
         </Div>
       )}
+      {shownTiles < filteredSections.length && <Div ref={tilesSentinelRef} />}
 
       {/* Rotella laterale per navigazione rapida (mobile) */}
       <AcademySideRail items={railItems} onJump={handleRailJump} />

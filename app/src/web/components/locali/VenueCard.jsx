@@ -279,9 +279,11 @@ export default function VenueCard({ venue, events, attendances, promoters, defau
 
   return (
     <Btn
+      id={`venue-card-${venue.name}`}
       className="rounded-2xl bg-card border overflow-hidden transition-all duration-200 cursor-pointer scroll-mt-24"
       style={{ borderColor: `${venue.hex}30` }}
-      onClick={() => setExpanded(e => !e)}>
+      onClick={() => setExpanded(e => !e)}
+    >
       {/* Header — sempre visibile */}
       <Div className="p-6">
         <Div className="flex items-center gap-5">

@@ -33,7 +33,7 @@ const ELEMENTS = {
   svg: 'Svg', path: 'Path', circle: 'Circle', rect: 'Rect', line: 'Line', g: 'G', defs: 'Defs', stop: 'Stop',
   linearGradient: 'SvgLinearGradient', text: 'SvgText', polygon: 'Polygon', polyline: 'Polyline', foreignObject: 'ForeignObject',
 };
-const DROP_ATTR = /^(data-.*|aria-hidden|aria-expanded|aria-busy|aria-describedby|role|tabIndex|id|draggable|htmlFor|crossOrigin|decoding|xmlns|suppressContentEditableWarning|contentEditable|onContextMenu|onDragStart|onLostPointerCapture|onPointerDownCapture|toast-close)$/;
+const DROP_ATTR = /^(data-.*|aria-hidden|aria-expanded|aria-busy|aria-describedby|role|tabIndex|draggable|htmlFor|crossOrigin|decoding|xmlns|suppressContentEditableWarning|contentEditable|onContextMenu|onDragStart|onLostPointerCapture|onPointerDownCapture|toast-close)$/;
 const SVG_ID_TAGS = new Set(['linearGradient', 'radialGradient', 'clipPath', 'pattern', 'mask', 'filter', 'symbol', 'path', 'g']);
 const GESTURE_ATTR = /^on(Mouse|Pointer|Touch)\w*$|^onWheel$/;
 
@@ -237,7 +237,8 @@ export function transform(code, originalPath = '') {
         if (a.type !== 'JSXAttribute') { attrs.push(a); continue; }
         const n = attrName(a);
         // id negli SVG serve (fill="url(#grad)", clipPath...): si tiene; altrove non ha equivalente
-        if (DROP_ATTR.test(n) && !(n === 'id' && (SVG_ID_TAGS.has(tag) || tag === 'datalist'))) continue;
+        // id: tenuto (document.getElementById / scrollIntoView, ui/domStyle); data-*, aria-* ecc. no
+        if (DROP_ATTR.test(n)) continue;
         // touch/pointer/mouse/wheel: supportati da Div e Btn (ui/gestures.ts), rimossi altrove
         if (GESTURE_ATTR.test(n) && !['Div', 'Btn'].includes(name)) { removedGestures.push(n); continue; }
         // onKeyDown dei campi di testo è supportato (ui/keyEvents.ts: Invio/Esc anche sul telefono)
