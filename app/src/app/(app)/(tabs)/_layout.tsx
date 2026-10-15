@@ -21,13 +21,11 @@ function usePreloadTabs() {
   // la Dashboard ('/') per chi non può vederla è un Redirect: precaricarla farebbe cambiare pagina
   const { canAccessRoute, user } = useRoleAccess();
   const withHome = canAccessRoute('dashboard');
-  // Locali (admin/super4): pagina dello stack aperta spesso; i calcoli delle card sono in memo (VenueCard)
-  const withLocali = canAccessRoute('locali');
   const role = user?.role;
   const promoterId = user?.promoter_id ?? null;
   const navigation = useNavigation();
   useEffect(() => {
-    const routes = [...PRELOAD_TABS, ...(withHome ? ['/'] : []), ...PRELOAD_STACK, ...(withLocali ? ['/locali'] : [])];
+    const routes = [...PRELOAD_TABS, ...(withHome ? ['/'] : []), ...PRELOAD_STACK];
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const step = () => {
@@ -55,7 +53,7 @@ function usePreloadTabs() {
     };
     timer = setTimeout(step, PRELOAD_FIRST_DELAY_MS);
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, [withHome, withLocali, navigation, role, promoterId]);
+  }, [withHome, navigation, role, promoterId]);
 }
 
 export default function TabsLayout() {
