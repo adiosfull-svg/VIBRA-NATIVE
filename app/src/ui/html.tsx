@@ -860,8 +860,12 @@ function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProp
     else if (outerRef) (outerRef as { current: View | null }).current = node;
   }, [pin.ref, outerRef]);
   const handleLayout = useCallback((e: LayoutChangeEvent) => { pin.onLayout(e); onLayout?.(e); }, [pin, onLayout]);
-  return <DivBox {...props} ref={setRef} onLayout={handleLayout} animatedStyle={[animatedStyle, pin.style]} />;
+  return <DivBox {...props} ref={setRef} onLayout={handleLayout} animatedStyle={[animatedStyle, pin.style, STICKY_NO_TOP]} />;
 }
+// In CSS `top` di uno sticky vale solo da incollato; in RN l'elemento resta relative e `top` lo spostava
+// SEMPRE in giù (top-[env(safe-area-inset-top)]: buco sopra la barra e contenuto sotto coperto, da non
+// incollata). La distanza da incollato la usa già useStickyPin (stickyTop).
+const STICKY_NO_TOP = { top: 0 } as const;
 
 function DivBox(p: DivProps) {
   if (!TEST_DIAG) return DivBoxImpl(p);
