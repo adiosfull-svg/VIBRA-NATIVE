@@ -7,6 +7,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pageScroll } from '../shims/pageScroll';
 import { PageLayerContext } from '../../ui/pageLayers';
+import { useScreenNavigation } from '../screenNavigation';
 
 export function useStickySentinel(): [(node: unknown) => void, boolean] {
   const [stuck, setStuck] = useState(false);
@@ -14,8 +15,10 @@ export function useStickySentinel(): [(node: unknown) => void, boolean] {
   // scroll della PROPRIA pagina: con quello globale (della pagina visibile) le tab nascoste ricalcolavano
   // lo stato con misure sbagliate, lo vedevano cambiare e si ridisegnavano per intero a ogni cambio tab
   const layer = useContext(PageLayerContext);
-  const env = useRef({ layer, insetTop });
-  env.current = { layer, insetTop };
+  const nav = useScreenNavigation();
+  const env = useRef({ layer, insetTop, nav });
+  env.current = { layer, insetTop, nav };
+  const recheck = useRef<(() => void) | null>(null);
   const node = useRef<unknown>(null);
   const off = useRef<(() => void) | null>(null);
   const first = useRef(true);
@@ -27,18 +30,22 @@ export function useStickySentinel(): [(node: unknown) => void, boolean] {
     if (el && el === node.current) return;
     off.current?.();
     off.current = null;
+    recheck.current = null;
     node.current = el;
     if (!el) return;
     let offset: number | null = null;
     const check = () => {
       // la posizione nel contenuto cambia solo se cambia ciò che sta sopra: rimisura a ogni controllo
       // (measureLayout è sincrono e costa poco), ma setStuck solo quando cambia lo stato
-      const { layer: l, insetTop: t } = env.current;
+      const { layer: l, insetTop: t, nav: n } = env.current;
+      // da pagina nascosta (tab precaricata) la misura è sbagliata (0): risultava "incollata" in cima
+      try { if (n?.isFocused && !n.isFocused()) return; } catch { /* fuori da un navigatore */ }
       const o = l ? l.offsetOf(el) : pageScroll.offsetOf(el);
       if (o != null) offset = o;
       if (offset != null) setStuck((l ? l.y() : pageScroll.y) + t > offset);
     };
     check();
+    recheck.current = check;
     const l = env.current.layer;
     if (l) off.current = l.onScroll(check);
     else { pageScroll.on(check); off.current = () => pageScroll.off(check); }
@@ -50,6 +57,8 @@ export function useStickySentinel(): [(node: unknown) => void, boolean] {
     first.current = false;
   }, [layer, insetTop, attach]);
   useEffect(() => () => off.current?.(), []);
+  // al focus (anche la prima volta di una tab precaricata) si rimisura
+  useEffect(() => nav?.addListener?.('focus', () => recheck.current?.()), [nav]);
 
   return [attach, stuck];
 }

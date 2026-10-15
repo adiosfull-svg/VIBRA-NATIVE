@@ -15,6 +15,7 @@ import { Component, createContext, useCallback, useContext, useEffect, useRef, u
 import { Animated, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingPx } from './webClasses';
+import { useScreenNavigation } from '../web/screenNavigation';
 
 // ── scroll della pagina per gli sticky ───────────────────────────────────────
 export type PageLayer = {
@@ -57,11 +58,27 @@ export function useStickyPin(className: string) {
   const top = stickyTop(className, insets.top);
   const ref = useRef<View>(null);
   const [offset, setOffset] = useState<number | null>(null);
+  const nav = useScreenNavigation();
+  // Da pagina nascosta (tab precaricata) measureLayout dà una posizione sbagliata (0): la barra partiva già
+  // traslata dell'altezza della barra di stato, con un buco sopra e il contenuto sotto coperto, e nessuno
+  // la rimisurava (il suo layout non cambia più). Da nascosta non si misura; si misura al focus.
   const measure = useCallback(() => {
+    try { if (nav?.isFocused && !nav.isFocused()) return; } catch { /* fuori da un navigatore */ }
     const y = layer?.offsetOf(ref.current);
     if (y != null) setOffset((o) => (o != null && Math.abs(o - y) < 0.5 ? o : y));
-  }, [layer]);
+  }, [layer, nav]);
   useEffect(() => layer?.onContentChange(measure), [layer, measure]);
+  useEffect(() => {
+    if (!nav?.addListener) return;
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const off = nav.addListener('focus', () => {
+      measure();
+      // il primo disegno dopo il focus può cambiare ancora l'altezza di ciò che sta sopra
+      if (t) clearTimeout(t);
+      t = setTimeout(measure, 300);
+    });
+    return () => { off(); if (t) clearTimeout(t); };
+  }, [nav, measure]);
   const onLayout = useCallback((_e: LayoutChangeEvent) => measure(), [measure]);
   if (!layer || offset == null) return { ref, onLayout, style: null };
   const start = offset - top;
