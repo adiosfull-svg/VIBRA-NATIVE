@@ -12,6 +12,8 @@ import { storage as webStorage } from '@/web/shims/dom';
  * flash "Prospetto vuoto" → contenuto reale.
  * Shape del record: { id, promoter_id, plan: { [dateStr]: { title, subtitle, clients: [...] } } }
  */
+const EMPTY_PLAN = {};
+
 export async function fetchProgrammazionePlan(promoterId) {
   const records = await base44.entities.ProgrammazionePlan.filter({ promoter_id: promoterId });
   if (records && records.length > 0) return records[0];
@@ -51,7 +53,9 @@ export function useProgrammazionePlan(promoterId) {
     retry: 1,
   });
 
-  const plan = record?.plan || {};
+  // PORT: vuoto stabile (non congelato: chi lo usa può leggerlo come un oggetto normale); un `{}` nuovo a
+  // ogni render rompeva memo e useMemo di Weekend, Clienti e Semine finché il prospetto non c'è
+  const plan = record?.plan || EMPTY_PLAN;
 
   // Subscription realtime: applica immediatamente ogni cambio remoto del
   // prospetto di questo promoter (salvo eco dei nostri stessi change).

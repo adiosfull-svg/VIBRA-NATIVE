@@ -27,7 +27,7 @@ export function FixedHost({ children }: { children?: ReactNode }) {
 
 
 /** Lo schermo che contiene l'elemento è in primo piano (fuori da un navigatore: sempre). */
-function useScreenFocused(): boolean {
+export function useScreenFocused(): boolean {
   const nav = useScreenNavigation();
   const read = () => { try { return nav?.isFocused?.() ?? true; } catch { return true; } };
   const [focused, setFocused] = useState(read);

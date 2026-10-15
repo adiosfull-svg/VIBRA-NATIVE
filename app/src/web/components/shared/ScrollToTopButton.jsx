@@ -1,5 +1,6 @@
 // Port di src/components/shared/ScrollToTopButton.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { PageLayerContext } from '@/ui/pageLayers';
 import { createPortal } from '@/web/shims/react-dom';
 import { ArrowUp } from '@/ui/icons.generated';
 import { useBulkSelection } from '@/web/lib/bulkSelectionContext';
@@ -17,19 +18,28 @@ export default function ScrollToTopButton({ threshold = 500 }) {
   const bulk = useBulkSelection();
   const bulkActive = !!(bulk?.selectedIds?.size > 0);
 
+  // PORT: lo scroll della PROPRIA pagina (PageLayerContext), non quello della pagina in primo piano: da tab
+  // precaricata o nascosta il pulsante seguiva lo scroll di un'altra pagina e al ritorno era sbagliato.
+  const layer = useContext(PageLayerContext);
   useEffect(() => {
     let raf = 0;
+    const y = () => (layer ? layer.y() : webWindow.scrollY);
     const onScroll = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => setVisible(webWindow.scrollY > threshold));
+      raf = requestAnimationFrame(() => setVisible(y() > threshold));
     };
-    webWindow.addEventListener('scroll', onScroll, { passive: true });
+    let off;
+    if (layer) off = layer.onScroll(onScroll);
+    else {
+      webWindow.addEventListener('scroll', onScroll, { passive: true });
+      off = () => webWindow.removeEventListener('scroll', onScroll);
+    }
     onScroll();
     return () => {
       cancelAnimationFrame(raf);
-      webWindow.removeEventListener('scroll', onScroll);
+      off();
     };
-  }, [threshold]);
+  }, [threshold, layer]);
 
   if (!visible) return null;
 

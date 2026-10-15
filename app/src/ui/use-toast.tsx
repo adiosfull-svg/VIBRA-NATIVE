@@ -35,10 +35,18 @@ export function toast(props: ToastProps) {
   };
 }
 
+// PORT: chi chiama useToast usa solo toast/dismiss (verificato in tutto il codice): un oggetto costante e
+// nessuna iscrizione. Prima ogni componente con useToast (decine, anche nelle pagine precaricate) si
+// ridisegnava a ogni toast dell'app. L'elenco lo segue solo Toaster (useToastList).
+const TOAST_API = { toast, dismiss };
 export function useToast() {
+  return TOAST_API;
+}
+
+function useToastList() {
   const [state, setState] = useState(toasts);
-  useEffect(() => { listeners.add(setState); return () => { listeners.delete(setState); }; }, []);
-  return { toasts: state, toast, dismiss };
+  useEffect(() => { listeners.add(setState); setState(toasts); return () => { listeners.delete(setState); }; }, []);
+  return state;
 }
 
 function ToastView({ id, title, description, action, variant, duration, className }: ToastItem) {
@@ -71,7 +79,7 @@ function ToastView({ id, title, description, action, variant, duration, classNam
 
 /** Da montare una volta sola, sopra a tutto (app/_layout.tsx). */
 export function Toaster() {
-  const { toasts: list } = useToast();
+  const list = useToastList();
   const insets = useSafeAreaInsets();
   if (!list.length) return null;
   return (

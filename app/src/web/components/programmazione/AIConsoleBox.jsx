@@ -1,5 +1,6 @@
 // Port di src/components/programmazione/AIConsoleBox.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { motion } from '@/ui/motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Brain, Instagram, Star, RefreshCw, Gem, TrendingUp, TrendingDown, Minus, Search, X, Check, Sparkles, Clock, Crown } from '@/ui/icons.generated';
@@ -45,7 +46,8 @@ function TrendCell({ trend }) {
   );
 }
 
-function RecPill({ r, contactedAt, onCardClick, onContacted, markContacted, selectMode, isSel }) {
+// PORT: in memo (fino a 50 pillole da ~20 elementi; la pagina passa callback stabili)
+const RecPill = memo(function RecPill({ r, contactedAt, onCardClick, onContacted, markContacted, selectMode, isSel }) {
   const meta = CAT_META[r.categoria] || CAT_META.stabile;
   return (
     <Btn
@@ -119,9 +121,9 @@ function RecPill({ r, contactedAt, onCardClick, onContacted, markContacted, sele
       </Div>
     </Btn>
   );
-}
+});
 
-export default function AIConsoleBox({ clients, onContact, onDetail, promoterId: promoterIdProp }) {
+function AIConsoleBox({ clients, onContact, onDetail, promoterId: promoterIdProp }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -265,6 +267,8 @@ export default function AIConsoleBox({ clients, onContact, onDetail, promoterId:
   }, [recommendations, catFilter, search]);
 
   const visible = expanded ? filtered : filtered.slice(0, 50);
+  // PORT: pillole montate a blocchi (prime 6, poi 10 alla volta avvicinandosi alla fine)
+  const { count: shownRecs, sentinelRef: recsSentinelRef } = useProgressiveList(visible.length, { initial: 6, step: 10 });
 
   const handleRefresh = async () => {
     if (!promoterId || recalculating) return;
@@ -331,12 +335,17 @@ export default function AIConsoleBox({ clients, onContact, onDetail, promoterId:
     setTimeout(tick, 3000);
   };
 
-  const onCardClick = (e, r) => {
+  const onCardClickLatest = (e, r) => {
     const clientObj = { id: r.client_id, name: r.name };
     if (selectMode) { toggleSelect?.(clientObj); return; }
     if (e?.ctrlKey || e?.metaKey) { e.preventDefault(); toggleSelect?.(clientObj); return; }
     onDetail?.(clientObj);
   };
+  // PORT: identità stabili per le RecPill in memo (chiamano sempre l'ultima versione)
+  const latestRef = useRef({ onCardClickLatest, markContacted });
+  latestRef.current = { onCardClickLatest, markContacted };
+  const onCardClick = useCallback((e, r) => latestRef.current.onCardClickLatest(e, r), []);
+  const markContactedStable = useCallback((...a) => latestRef.current.markContacted(...a), []);
 
   if (isLoading) {
     return (
@@ -472,18 +481,19 @@ export default function AIConsoleBox({ clients, onContact, onDetail, promoterId:
 
             {/* Lista mobile — pillole verticali */}
             <Div className="sm:hidden space-y-2">
-              {visible.map(r => (
+              {visible.slice(0, shownRecs).map(r => (
                 <RecPill
                   key={r.client_id}
                   r={r}
                   contactedAt={justContacted[r.client_id]}
                   onCardClick={onCardClick}
                   onContacted={setJustContacted}
-                  markContacted={markContacted}
+                  markContacted={markContactedStable}
                   selectMode={selectMode}
                   isSel={isSel(r.client_id)}
                 />
               ))}
+              {shownRecs < visible.length && <Div ref={recsSentinelRef} />}
               {visible.length === 0 && (
                 <P className="text-center text-xs text-muted-foreground py-6">Nessun cliente per questi filtri.</P>
               )}
@@ -625,3 +635,6 @@ export default function AIConsoleBox({ clients, onContact, onDetail, promoterId:
     </motion.div>
   );
 }
+
+// PORT: in memo (la pagina, Weekend, gli passa props stabili)
+export default memo(AIConsoleBox);

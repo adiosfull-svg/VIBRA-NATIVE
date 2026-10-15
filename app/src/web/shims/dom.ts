@@ -334,6 +334,10 @@ if (typeof g.IntersectionObserver === 'undefined') {
       const entries: unknown[] = [];
       for (const [target, was] of this.targets) {
         const r = pageScroll.rectOf(target);
+        // non misurabile (pagina in background) dopo il primo esito: resta com'era. Prima risultava di
+        // nuovo "visibile" e lo scroll di un'altra pagina cambiava lo stato (e ridisegnava) quella nascosta.
+        // Al primo esito resta "visibile subito" (immagini lazy dentro i dialog).
+        if (!r && was !== undefined) continue;
         const inView = r ? r.y < rootBottom && r.y + r.h > rootTop : true;
         if (inView === was) continue;
         this.targets.set(target, inView);

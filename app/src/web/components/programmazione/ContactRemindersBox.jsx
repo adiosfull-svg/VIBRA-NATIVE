@@ -1,5 +1,6 @@
 // Port di src/components/programmazione/ContactRemindersBox.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
+import { useScreenFocused } from '@/ui/fixedPortal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
 import { Bell, Trash2, Pencil, X, Check } from '@/ui/icons.generated';
@@ -10,28 +11,42 @@ import { Button } from '@/ui/button';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 
+const EMPTY = [];
+
 /**
  * Box che mostra tutti i promemoria contatto pendenti del promoter.
  * Permette di modificare data/ora o eliminare ogni promemoria.
  * Posizionato nella sezione Weekend (Programmazione).
  */
-export default function ContactRemindersBox({ promoterId }) {
+function ContactRemindersBox({ promoterId }) {
   const qc = useQueryClient();
   const [editingId, setEditingId] = useState(null);
   const [editDate, setEditDate] = useState('');
   const [editTime, setEditTime] = useState('');
 
-  const { data: reminders = [] } = useQuery({
+  // PORT: polling solo con la pagina in primo piano. Nell'originale la pagina si smonta lasciandola e il
+  // polling si ferma; qui Weekend è una tab precaricata e restava una richiesta al minuto in background.
+  // Tornando sulla pagina: refetch se i dati sono vecchi (staleTime 30 s) o invalidati, come il refetch al
+  // montaggio dell'originale.
+  const focused = useScreenFocused();
+  const { data: reminders = EMPTY, isStale, refetch } = useQuery({
     queryKey: ['contact-reminders', promoterId],
     queryFn: () => base44.entities.ContactReminder.filter({ promoter_id: promoterId, status: 'pending' }),
     enabled: !!promoterId,
     staleTime: 30000,
-    refetchInterval: 60000,
+    refetchInterval: focused ? 60000 : false,
   });
+  const firstFocus = React.useRef(true);
+  useEffect(() => {
+    // al montaggio carica già useQuery: solo i ritorni sulla pagina
+    if (firstFocus.current) { firstFocus.current = false; return; }
+    if (focused && promoterId && isStale) refetch({ cancelRefetch: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused]);
 
-  const sortedReminders = [...reminders].sort(
+  const sortedReminders = useMemo(() => [...reminders].sort(
     (a, b) => new Date(a.reminder_datetime) - new Date(b.reminder_datetime)
-  );
+  ), [reminders]);
 
   const handleDelete = async (id) => {
     try {
@@ -127,3 +142,6 @@ export default function ContactRemindersBox({ promoterId }) {
     </Div>
   );
 }
+
+// PORT: in memo (la pagina, Weekend, gli passa props stabili)
+export default memo(ContactRemindersBox);

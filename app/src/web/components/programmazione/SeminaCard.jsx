@@ -1,5 +1,5 @@
 // Port di src/components/programmazione/SeminaCard.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { useNavigate } from '@/web/router';
 import { Instagram, Trash2, CalendarDays, Pencil, MapPin, Music2, StickyNote, Check, Loader2, Power, ArrowRight, MessageCircle, User, Briefcase, GraduationCap, Sparkles, Car } from '@/ui/icons.generated';
 import SeminaCardBack from './SeminaCardBack';
@@ -38,9 +38,13 @@ const initials = (name) => {
  * Full card: foto profilo grande, chip, nota modificabile inline con
  * auto-espansione, slider recettività, banner cliccabile per aprire il profilo.
  */
-export default function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps, isDragging, planInfo, chatConvId, highlightFlash = false }) {
+function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps, isDragging, planInfo, chatConvId, highlightFlash = false }) {
   const [flipped, setFlipped] = useState(false);
   const flip = useFlipGesture(flipped, setFlipped);
+  // PORT: retro (~34 elementi) montato dalla prima inclinazione (prima dei 90° c'è margine) e poi tenuto;
+  // prima era montato in ogni card anche se non si girava mai
+  const backOn = useRef(false);
+  if (flipped || flip.rotation !== 0) backOn.current = true;
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { getVenueLogo } = useAllVenueLogos();
@@ -414,9 +418,12 @@ export default function SeminaCard({ semina, onDelete, onEdit, compact = false, 
             suo contenitore overflow-y-auto "ruba" lo scroll al tocco: la pagina non parte, lo scroll
             avviene dentro la faccia nascosta, e riparte solo al tocco successivo. */}
         <Div className="semina-flip-back rounded-xl border border-violet-500/20 bg-card overflow-hidden relative" style={{ boxShadow: '0 4px 18px -6px rgba(139,92,246,0.15)', pointerEvents: flipped ? 'auto' : 'none' }}>
-          <SeminaCardBack semina={semina} onClose={() => setFlipped(false)} />
+          {backOn.current && <SeminaCardBack semina={semina} onClose={() => setFlipped(false)} />}
         </Div>
       </Div>
     </Div>
   );
 }
+
+// PORT: in memo (le pagine passano onDelete/onEdit stabili: setter e handler in useCallback)
+export default memo(SeminaCard);

@@ -25,7 +25,7 @@ import ContactReminderDialog from '@/web/components/client/ContactReminderDialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/menu';
 
-import { useNavigate, useLocation } from '@/web/router';
+import { useNavigate, useLocation, useScreenNavigation } from '@/web/router';
 import EmptyState from '@/web/components/shared/EmptyState';
 import ClientFormDialog from '@/web/components/client/ClientFormDialog';
 import ImportaClientiDialog from '@/web/components/client/ImportaClientiDialog';
@@ -84,6 +84,30 @@ const TABS = [
   { key: 'mappa', label: 'Mappa', icon: MapPin }
 ];
 
+// PORT: default stabile dei gruppi (ClientSerateMenu è in memo)
+const EMPTY_GROUPS = [];
+// PORT: vuoti stabili. `|| []` nuovo a ogni render faceva ripartire l'effect [attendances, open] delle due
+// EditAttendanceDialog anche da chiuse (2 ridisegni in più per ogni render di Clienti); le statistiche
+// vuote nuove rompevano il memo delle righe (VirtualizedClientList). Non congelati: si leggono soltanto.
+const EMPTY_ATTS = [];
+const EMPTY_STATS = { visits: 0, fri: 0, sat: 0, sun: 0, extra: 0, totalSpent: 0, avgSpent: 0, attendances: EMPTY_ATTS, rating: null };
+
+// Funzione con identità stabile che chiama sempre l'ultima versione (gestori passati nel contesto della
+// selezione multipla: senza, il valore del contesto era nuovo a ogni render e ridisegnava i ~10 consumatori).
+// Vero dalla prima volta che `open` è vero, poi resta: dialog montati alla prima apertura (si inizializzano
+// negli effect, che girano anche al montaggio con open=true) e tenuti per le aperture successive.
+function useMountedOnce(open) {
+  const mounted = useRef(false);
+  if (open) mounted.current = true;
+  return mounted.current;
+}
+
+function useStableHandler(fn) {
+  const ref = useRef(fn);
+  ref.current = fn;
+  return useCallback((...args) => ref.current(...args), []);
+}
+
 export default function Clienti() {
   const { user } = useAuth();
   const { effectivePromoterId: promoterId } = useViewAsPromoter();
@@ -115,9 +139,14 @@ export default function Clienti() {
   // PORT: Box Presenze (~900 righe, memo ed effect sui clienti) montato alla prima apertura e poi tenuto
   // montato (la sessione di inserimento resta tra chiusura e riapertura, come prima): da chiuso
   // costava montaggio e ridisegni alla pagina precaricata.
-  const hubMounted = useRef(false);
-  if (attendanceHubOpen) hubMounted.current = true;
+  const hubMounted = useMountedOnce(attendanceHubOpen);
   const [reminderClient, setReminderClient] = useState(null);
+  // PORT: dialog montati alla prima apertura (prima tutti montati da chiusi nella tab precaricata)
+  const reminderMounted = useMountedOnce(!!reminderClient);
+  const formMounted = useMountedOnce(dialogOpen);
+  const importMounted = useMountedOnce(importOpen);
+  const editAttMounted = useMountedOnce(!!editAttendance);
+  const addPresMounted = useMountedOnce(!!addPresenceClient);
   const qc = useQueryClient();
   const [glSearch, setGlSearch] = useState('');
   const [glSearchOpen, setGlSearchOpen] = useState(false);
@@ -408,6 +437,7 @@ export default function Clienti() {
   const [clientiSearchOpen, setClientiSearchOpen] = useState(false);
   const clientiSearchSentinelRef = useRef(null);
   const [clientiSearchStuck, setClientiSearchStuck] = useState(false);
+  const screenNav = useScreenNavigation();
 
   useEffect(() => {
     const s = clientiSearchSentinelRef.current;
@@ -434,15 +464,18 @@ export default function Clienti() {
       io.observe(s);
     };
     webWindow.addEventListener('resize', onResize);
+    // PORT: offset misurato da tab precaricata (fuori schermo): si rimisura quando la pagina prende il focus
+    const offFocus = screenNav?.addListener?.('focus', onResize);
 
     const t = setTimeout(onResize, 300);
 
     return () => {
       io.disconnect();
       webWindow.removeEventListener('resize', onResize);
+      offFocus?.();
       clearTimeout(t);
     };
-  }, [activeTab]);
+  }, [activeTab, screenNav]);
 
   // Soglia sticky: calcolata al volo in handleTabClick dal sentinella
   // (posizione fissa nel documento), così non dipende da un ref catturato
@@ -466,6 +499,8 @@ export default function Clienti() {
     refetchOnWindowFocus: false,
     retry: 1
   });
+  // identità stabile per ClientSerateMenu (in memo): cambia solo con i clienti
+  const getClientById = useCallback((id) => clients.find((c) => c.id === id), [clients]);
 
   // Preload immediato delle foto clienti: avvia la decodifica non appena i
   // dati sono disponibili (senza attendere l'idle callback del preloader globale),
@@ -585,7 +620,7 @@ export default function Clienti() {
     retry: 1
   });
 
-  const { data: groups = [] } = useQuery({
+  const { data: groups = EMPTY_GROUPS } = useQuery({
     queryKey: ['client-groups', promoterId],
     queryFn: () => base44.entities.ClientGroup.filter({ promoter_id: promoterId }),
     enabled: !!user,
@@ -833,18 +868,7 @@ export default function Clienti() {
     return buildEnrichedClients(clients);
   }, [clients, activeTab]);
 
-  const getClientStats = (id) =>
-    clientStatsMap[id] ?? {
-      visits: 0,
-      fri: 0,
-      sat: 0,
-      sun: 0,
-      extra: 0,
-      totalSpent: 0,
-      avgSpent: 0,
-      attendances: [],
-      rating: null
-    };
+  const getClientStats = useCallback((id) => clientStatsMap[id] ?? EMPTY_STATS, [clientStatsMap]);
 
   // Radici dell'albero per il selettore
   const treeRoots = useMemo(() => {
@@ -1143,24 +1167,29 @@ export default function Clienti() {
 
   // Context value per la selezione multipla
   // (letto da BulkActions e liste)
-  const bulkValue = {
+  const onBulkAddToGroup = useStableHandler(handleBulkAddToGroup);
+  const onBulkCreateGroup = useStableHandler(handleBulkCreateGroup);
+  const onBulkSetReminders = useStableHandler(handleBulkSetReminders);
+  const onBulkAddToSerata = useStableHandler(handleBulkAddToSerata);
+  const totalFiltered = filtered.length;
+  const bulkValue = useMemo(() => ({
     selectedIds,
     selectMode,
     toggleSelect,
     clearSelection,
     selectAll,
     selectedClients,
-    totalFiltered: filtered.length,
+    totalFiltered,
     allClients: clients,
     groups,
     upcomingDates: mergedUpcomingDates,
-    onBulkAddToGroup: handleBulkAddToGroup,
-    onBulkCreateGroup: handleBulkCreateGroup,
-    onBulkSetReminders: handleBulkSetReminders,
-    onBulkAddToSerata: handleBulkAddToSerata,
+    onBulkAddToGroup,
+    onBulkCreateGroup,
+    onBulkSetReminders,
+    onBulkAddToSerata,
     clientStatsMap,
     clientBadges
-  };
+  }), [selectedIds, selectMode, toggleSelect, clearSelection, selectAll, selectedClients, totalFiltered, clients, groups, mergedUpcomingDates, onBulkAddToGroup, onBulkCreateGroup, onBulkSetReminders, onBulkAddToSerata, clientStatsMap, clientBadges]);
 
   // Scrolla per portare la barra di ricerca in vista su iOS
   // (la tastiera la coprirebbe)
@@ -1926,16 +1955,16 @@ export default function Clienti() {
         </>
       }
 
-      <ContactReminderDialog
+      {reminderMounted && <ContactReminderDialog
         client={reminderClient}
         promoterId={promoterId}
         open={!!reminderClient}
         onOpenChange={(v) => {
           if (!v) setReminderClient(null);
         }}
-      />
+      />}
 
-      {hubMounted.current && <AttendanceHubDialog
+      {hubMounted && <AttendanceHubDialog
         open={attendanceHubOpen}
         onOpenChange={setAttendanceHubOpen}
         events={events}
@@ -1958,7 +1987,7 @@ export default function Clienti() {
         }}
       />}
 
-      <ClientFormDialog
+      {formMounted && <ClientFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         client={editing}
@@ -1968,21 +1997,21 @@ export default function Clienti() {
           updateMut.isPending
         }
         clients={clients}
-      />
+      />}
 
-      <ImportaClientiDialog
+      {importMounted && <ImportaClientiDialog
         open={importOpen}
         onOpenChange={setImportOpen}
-      />
+      />}
 
-      <EditAttendanceDialog
+      {editAttMounted && <EditAttendanceDialog
         open={!!editAttendance}
         onOpenChange={(v) => {
           if (!v) setEditAttendance(null);
         }}
         client={editAttendance?.client}
         attendances={
-          editAttendance?.attendances || []
+          editAttendance?.attendances || EMPTY_ATTS
         }
         events={events}
         promoters={promoters}
@@ -1999,16 +2028,16 @@ export default function Clienti() {
           // Tabelle complete (Achievement/rank, Vibra VS...): stale al prossimo mount
           invalidateFullTables(qc);
         }}
-      />
+      />}
 
-      <EditAttendanceDialog
+      {addPresMounted && <EditAttendanceDialog
         open={!!addPresenceClient}
         onOpenChange={(v) => {
           if (!v) setAddPresenceClient(null);
         }}
         client={addPresenceClient?.client}
         attendances={
-          addPresenceClient?.attendances || []
+          addPresenceClient?.attendances || EMPTY_ATTS
         }
         events={events}
         promoters={promoters}
@@ -2026,7 +2055,7 @@ export default function Clienti() {
           // Tabelle complete (Achievement/rank, Vibra VS...): stale al prossimo mount
           invalidateFullTables(qc);
         }}
-      />
+      />}
 
       {!!detailClient &&
         <ClientDetailDialog
@@ -2106,9 +2135,7 @@ export default function Clienti() {
             ? handleDeleteFittizia
             : undefined
         }
-        getClient={(id) =>
-          clients.find((c) => c.id === id)
-        }
+        getClient={getClientById}
         onToggleLeader={(c) =>
           handleToggleClientField(c, {
             is_leader: !c.is_leader,

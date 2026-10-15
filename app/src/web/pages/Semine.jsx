@@ -1,5 +1,5 @@
 // Port di src/pages/Semine.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -50,6 +50,13 @@ const matchResidenzaKey = (zona) => {
   return match?.key || null;
 };
 
+// Funzione con identità stabile che chiama sempre l'ultima versione
+function useStableHandler(fn) {
+  const ref = useRef(fn);
+  ref.current = fn;
+  return useCallback((...args) => ref.current(...args), []);
+}
+
 export default function Semine() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -77,6 +84,8 @@ export default function Semine() {
     refetchOnWindowFocus: false,
     retry: 1,
   });
+  // identità stabile per ClientSerateMenu (in memo): cambia solo con le semine
+  const getSeminaById = useCallback((id) => semine.find((s) => s.id === id), [semine]);
 
   // Fetch Instagram messages to build semina_id → conversation_id map for "Vai alla chat"
   const { data: igMessages = [] } = useQuery({
@@ -245,7 +254,8 @@ export default function Semine() {
     }
   }, []);
 
-  const handleDeleteSemina = async (seminaId) => {
+  // PORT: identità stabile (SeminaCard è in memo)
+  const handleDeleteSemina = useStableHandler(async (seminaId) => {
     // Optimistic: rimuovi dalla cache subito, rollback su errore
     const prev = qc.getQueryData(['semine', promoterId]);
     qc.setQueryData(['semine', promoterId], (old = []) => old.filter(s => s.id !== seminaId));
@@ -256,7 +266,7 @@ export default function Semine() {
       return;
     }
     qc.invalidateQueries({ queryKey: ['semine', promoterId] });
-  };
+  });
 
   const handlePasteSeminaPhoto = async (seminaId, url) => {
     qc.setQueriesData({ queryKey: ['semine', promoterId] }, (old) => {
@@ -437,7 +447,7 @@ export default function Semine() {
         onToggleSeminaOff={handleToggleSeminaOff}
         onPasteSeminaPhoto={handlePasteSeminaPhoto}
         onConvertSemina={handleConvertSemina}
-        getSemina={(id) => semine.find(s => s.id === id)}
+        getSemina={getSeminaById}
       />
     </Div>
   );

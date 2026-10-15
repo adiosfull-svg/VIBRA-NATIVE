@@ -1,0 +1,26 @@
+diff --git a/node_modules/@rn-primitives/portal/dist/index.js b/node_modules/@rn-primitives/portal/dist/index.js
+index f34a15e..1dcb503 100644
+--- a/node_modules/@rn-primitives/portal/dist/index.js
++++ b/node_modules/@rn-primitives/portal/dist/index.js
+@@ -66,7 +66,7 @@ var removePortal = (hostName, name) => {
+ function PortalHost({ name = DEFAULT_PORTAL_HOST }) {
+   const portalMap = usePortal((state) => state.map).get(name) ?? /* @__PURE__ */ new Map();
+   if (portalMap.size === 0) return null;
+-  return <>{Array.from(portalMap.values())}</>;
++  return <>{Array.from(portalMap.entries()).map(([key, node]) => <React.Fragment key={key}>{node}</React.Fragment>)}</>;
+ }
+ function Portal({
+   name,
+diff --git a/node_modules/@rn-primitives/portal/dist/index.mjs b/node_modules/@rn-primitives/portal/dist/index.mjs
+index 952d829..801ca6c 100644
+--- a/node_modules/@rn-primitives/portal/dist/index.mjs
++++ b/node_modules/@rn-primitives/portal/dist/index.mjs
+@@ -29,7 +29,7 @@ var removePortal = (hostName, name) => {
+ function PortalHost({ name = DEFAULT_PORTAL_HOST }) {
+   const portalMap = usePortal((state) => state.map).get(name) ?? /* @__PURE__ */ new Map();
+   if (portalMap.size === 0) return null;
+-  return <>{Array.from(portalMap.values())}</>;
++  return <>{Array.from(portalMap.entries()).map(([key, node]) => <React.Fragment key={key}>{node}</React.Fragment>)}</>;
+ }
+ function Portal({
+   name,

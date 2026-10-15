@@ -1,6 +1,7 @@
 // Port di src/pages/Programmazione.jsx (convertito da scripts/port/codemod.mjs).
 import { invalidateFullTables } from '@/web/lib/query-client';
-import React, { useMemo, useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback, useContext, Suspense } from 'react';
+import { PageLayerContext } from '@/ui/pageLayers';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInDays, format } from 'date-fns';
@@ -77,6 +78,16 @@ const TABS = [
 
 const FALLBACK = { visits: 0, fri: 0, sat: 0, sun: 0, extra: 0, totalSpent: 0, avgSpent: 0, attendances: [] };
 
+// PORT: default stabile dei gruppi (ClientSerateMenu è in memo)
+const EMPTY_GROUPS = [];
+
+// Funzione con identità stabile che chiama sempre l'ultima versione
+function useStableHandler(fn) {
+  const ref = useRef(fn);
+  ref.current = fn;
+  return useCallback((...args) => ref.current(...args), []);
+}
+
 export default function Programmazione() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -115,6 +126,7 @@ export default function Programmazione() {
   const [recontactSearch, setRecontactSearch] = useState('');
   const [recontactSearchOpen, setRecontactSearchOpen] = useState(false);
   const recontactSentinelRef = useRef(null);
+  const pageLayer = useContext(PageLayerContext);
   const [recontactStuck, setRecontactStuck] = useState(false);
   useEffect(() => {
     // rAF-throttle: 3 letture di layout (gl/tabelle/recontact) per scroll
@@ -133,18 +145,22 @@ export default function Programmazione() {
       });
     };
     check();
-    webWindow.addEventListener('scroll', check, { passive: true });
+    // PORT: scroll della PROPRIA pagina (PageLayerContext): da tab precaricata/nascosta quello globale è della
+    // pagina in primo piano, e ogni suo scroll ricalcolava (e ridisegnava) questa
+    const offScroll = pageLayer
+      ? pageLayer.onScroll(check)
+      : (webWindow.addEventListener('scroll', check, { passive: true }), () => webWindow.removeEventListener('scroll', check));
     webWindow.addEventListener('resize', check);
     const t1 = setTimeout(check, 300);
     const t2 = setTimeout(check, 800);
     return () => {
       cancelAnimationFrame(raf);
-      webWindow.removeEventListener('scroll', check);
+      offScroll();
       webWindow.removeEventListener('resize', check);
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [activeTab]);
+  }, [activeTab, pageLayer]);
   const setStuckHeader = useSetStickyHeader();
   useEffect(() => { setStuckHeader(stuck); }, [stuck, setStuckHeader]);
   useEffect(() => () => setStuckHeader(false), [setStuckHeader]);
@@ -178,6 +194,8 @@ export default function Programmazione() {
     refetchOnWindowFocus: false,
     retry: 1,
   });
+  // identità stabile per ClientSerateMenu (in memo): cambia solo con i clienti
+  const getClientById = useCallback((id) => clients.find((c) => c.id === id), [clients]);
 
   // attendances: caricato solo quando serve (tab Target o detail dialog aperto).
   // Evita il download di migliaia di record di presenze al primo caricamento.
@@ -215,7 +233,7 @@ export default function Programmazione() {
     retry: 1,
   });
 
-  const { data: groups = [] } = useQuery({
+  const { data: groups = EMPTY_GROUPS } = useQuery({
     queryKey: ['client-groups', promoterId],
     queryFn: () => isAdmin && !promoterId
       ? base44.entities.ClientGroup.list()
@@ -276,20 +294,21 @@ export default function Programmazione() {
     return { nuovi: f(boards.nuovi), topPaganti: f(boards.topPaganti), leaders: f(boards.leaders), inCalo: f(boards.inCalo) };
   }, [boards, tabelleQ]);
 
-  const handleContact = async (clientId) => {
+  // PORT: identità stabile (useStableHandler): passata ad AIConsoleBox e ai box in memo
+  const handleContact = useStableHandler(async (clientId) => {
     await base44.entities.Client.update(clientId, { last_contacted_at: new Date().toISOString() });
     qc.invalidateQueries({ queryKey: ['clients', promoterId] });
-  };
+  });
 
   const handleClientToggle = async (client, patch) => {
     await base44.entities.Client.update(client.id, patch);
     qc.invalidateQueries({ queryKey: ['clients', promoterId] });
   };
 
-  const handleDeleteSemina = async (seminaId) => {
+  const handleDeleteSemina = useStableHandler(async (seminaId) => {
     await base44.entities.Semina.delete(seminaId);
     qc.invalidateQueries({ queryKey: ['semine', promoterId] });
-  };
+  });
 
   const handlePasteSeminaPhoto = async (seminaId, url) => {
     // Ottimistico: aggiorna la cache immediatamente (foto visibile al volo)
@@ -389,14 +408,14 @@ export default function Programmazione() {
   // passano un oggetto minimale (es. AIConsoleBox con solo {id, name}) ottengono
   // così il record con tutti i campi (residenza, guidatore, leader, contatti,
   // fonte) così il detail dialog mostra la sezione superiore correttamente.
-  const onDetail = (client) => {
+  const onDetail = useStableHandler((client) => {
     if (client?.id) {
       const full = clients.find(c => c.id === client.id);
       setDetailClient(full || client);
     } else {
       setDetailClient(client);
     }
-  };
+  });
 
   const { plan, addToPlan, removeFromPlan, updateNote } = useProgrammazionePlan(promoterId);
 
@@ -518,15 +537,18 @@ export default function Programmazione() {
     clearSelection();
   };
 
-  const bulkValue = {
+  // PORT: valore del contesto in useMemo, gestori con identità stabile (ridisegnava tutti i consumatori)
+  const onBulkAddToGroup = useStableHandler(handleBulkAddToGroup);
+  const onBulkCreateGroup = useStableHandler(handleBulkCreateGroup);
+  const onBulkSetReminders = useStableHandler(handleBulkSetReminders);
+  const onBulkAddToSerata = useStableHandler(handleBulkAddToSerata);
+  const bulkValue = useMemo(() => ({
     selectedIds, selectMode, toggleSelect, clearSelection, selectAll, selectedClients,
     totalFiltered: clients.length, allClients: clients,
     groups, upcomingDates: mergedUpcomingDates,
-    onBulkAddToGroup: handleBulkAddToGroup,
-    onBulkCreateGroup: handleBulkCreateGroup,
-    onBulkSetReminders: handleBulkSetReminders,
-    onBulkAddToSerata: handleBulkAddToSerata,
-  };
+    onBulkAddToGroup, onBulkCreateGroup, onBulkSetReminders, onBulkAddToSerata,
+  }), [selectedIds, selectMode, toggleSelect, clearSelection, selectAll, selectedClients, clients, groups, mergedUpcomingDates, onBulkAddToGroup, onBulkCreateGroup, onBulkSetReminders, onBulkAddToSerata]);
+  const activeSemine = useMemo(() => semine.filter(s => !s.is_off), [semine]);
 
   // Logica standardizzata di scroll al cambio tab (vedi useStickyTabScroll).
   const { scrollToTab } = useStickyTabScroll(stuck, tabsScrollRef);
@@ -689,7 +711,7 @@ export default function Programmazione() {
             <Div className="flex items-center justify-between mb-4">
               <SectionHeader icon={Instagram} title="Semine" color="#ec4899" />
               <Div className="flex items-center gap-2">
-                <Span className="text-[11px] font-semibold text-muted-foreground px-2 py-0.5 rounded-full bg-secondary/40">{semine.filter(s => !s.is_off).length}</Span>
+                <Span className="text-[11px] font-semibold text-muted-foreground px-2 py-0.5 rounded-full bg-secondary/40">{activeSemine.length}</Span>
                 <Btn
                   button
                   onClick={() => handleTabClick('semina')}
@@ -702,7 +724,7 @@ export default function Programmazione() {
               <P className="text-xs text-muted-foreground text-center py-4">Tieni premuto (mobile) o tasto destro (desktop) per incollare un contatto IG/TikTok.</P>
             ) : (
               <Div ref={semineDrag.ref} {...semineDrag.handlers} className="flex gap-2 overflow-x-auto pb-3 no-scrollbar cursor-grab active:cursor-grabbing select-none">
-                {semine.filter(s => !s.is_off).map((s) => (
+                {activeSemine.map((s) => (
                   <SeminaCard key={s.id} semina={s} compact onDelete={handleDeleteSemina} onEdit={setEditSemina} />
                 ))}
               </Div>
@@ -834,7 +856,7 @@ export default function Programmazione() {
         plan={plan}
         onAddCustom={handleAddCustom}
         onDeleteFittizia={user?.role === 'admin' ? handleDeleteFittizia : undefined}
-        getClient={(id) => clients.find(c => c.id === id)}
+        getClient={getClientById}
         onToggleLeader={(c) => handleClientToggle(c, { is_leader: !c.is_leader, leader_since: !c.is_leader ? new Date().toISOString() : null })}
         onToggleDriver={(c) => handleClientToggle(c, { is_driver: !c.is_driver })}
         onMarkContacted={(c) => handleContact(c.id)}

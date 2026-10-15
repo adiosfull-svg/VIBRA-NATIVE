@@ -56,18 +56,27 @@ type Nav = ScreenNav;
 export { useScreenNavigation };
 const useNavigationSafe = useScreenNavigation;
 
-function toLocation({ pathname, params }: Loc) {
+// Chiavi del navigatore che expo-router lascia nei parametri aprendo un link esterno (vibra://…, notifiche):
+// initial/pop/path (getRouteInfoFromState toglie solo screen e params). Non sono della pagina: dentro
+// location.search la tab precaricata (params {}) risultava "cambiata" al primo focus e si ridisegnava per
+// intero (Clienti, Il Mio Vibra) e ripartivano gli effect su location.search.
+const NAV_KEYS = new Set(['initial', 'pop', 'path', 'screen', 'params']);
+const isNavKey = (k: string) => NAV_KEYS.has(k) || k.startsWith('__internal');
+
+function searchOf(params: Loc['params']): string {
   const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (typeof v === 'string') sp.set(k, v);
-  const s = sp.toString();
+  for (const [k, v] of Object.entries(params)) if (typeof v === 'string' && !isNavKey(k)) sp.set(k, v);
+  return sp.toString();
+}
+
+function toLocation({ pathname, params }: Loc) {
+  const s = searchOf(params);
   return { pathname, search: s ? `?${s}` : '', hash: '', state: null as unknown };
 }
 
 /** Stesso percorso e stessi parametri: tornando su una pagina non la si ridisegna per un oggetto nuovo. */
 function sameLoc(a: Loc | null, b: Loc): boolean {
-  if (!a || a.pathname !== b.pathname) return false;
-  const ka = Object.keys(a.params), kb = Object.keys(b.params);
-  return ka.length === kb.length && ka.every((k) => String(a.params[k]) === String(b.params[k]));
+  return !!a && a.pathname === b.pathname && searchOf(a.params) === searchOf(b.params);
 }
 
 const subscribeAll = (fn: () => void) => { locListeners.add(fn); return () => { locListeners.delete(fn); }; };

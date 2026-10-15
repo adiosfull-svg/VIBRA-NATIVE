@@ -1,5 +1,5 @@
 // Port di src/components/programmazione/ClientSerateMenu.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
 import { format, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -307,7 +307,7 @@ function CopyAttendancesDialog({ target, onClose, allClients = [], getClient }) 
  * Il menu NON si chiude allo scroll (richiesto su desktop), solo su click
  * esterno / ESC. Include la creazione rapida di una serata extra.
  */
-export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDeleteFittizia, getClient, onToggleLeader, onToggleDriver, onMarkContacted, onMarkSeminaContacted, onSetReminder, onToggleSeminaOff, plan, groups = [], onAddToGroup, onRemoveFromGroup, onCreateGroup, selectMode, onLongPressSelect, onPasteSeminaPhoto, onPasteClientPhoto, allClients = [], onConvertSemina, getSemina }) {
+function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDeleteFittizia, getClient, onToggleLeader, onToggleDriver, onMarkContacted, onMarkSeminaContacted, onSetReminder, onToggleSeminaOff, plan, groups = [], onAddToGroup, onRemoveFromGroup, onCreateGroup, selectMode, onLongPressSelect, onPasteSeminaPhoto, onPasteClientPhoto, allClients = [], onConvertSemina, getSemina }) {
   const [menu, setMenu] = useState(null); // { client, x, y }
   const [customOpen, setCustomOpen] = useState(false);
   const [customName, setCustomName] = useState('');
@@ -321,6 +321,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
   const [pastePhotoMsg, setPastePhotoMsg] = useState(null);
   const [sharing, setSharing] = useState(false);
   const [copyTarget, setCopyTarget] = useState(null); // { id, name } → dialog "Copia presenze da…"
+  const copyMounted = useRef(false);
+  if (copyTarget) copyMounted.current = true;
   // Dopo "Incolla foto profilo": { id, isSemina, prev } per poter annullare e ripristinare la foto precedente
   const [photoUndo, setPhotoUndo] = useState(null);
   const photoCloseTimer = useRef(null);
@@ -967,7 +969,8 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
 
   return createPortal(
     <>
-      <CopyAttendancesDialog target={copyTarget} onClose={() => setCopyTarget(null)} allClients={allClients} getClient={getClient} />
+      {/* PORT: montato alla prima copia e poi tenuto (chiusura animata come prima) */}
+      {copyMounted.current && <CopyAttendancesDialog target={copyTarget} onClose={() => setCopyTarget(null)} allClients={allClients} getClient={getClient} />}
       {/* Preload persistente: loghi locali sempre nel DOM così non flashano
           ad ogni apertura del menu (l'immagine decodificata resta in cache). */}
       <Div className="fixed pointer-events-none opacity-0 size-0 overflow-hidden">
@@ -1379,4 +1382,29 @@ export default function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAdd
     </>,
     webDocument.body
   );
+}
+
+// PORT: in memo con callback stabili. Le pagine (Clienti, Weekend, Semine) passano lambda nuove a ogni
+// render: il menu (1400 righe, sempre montato) si ridisegnava con la pagina e rinnovava i figli del suo
+// Portal, che il PortalHost ridisegnava in un secondo commit. Le callback definite passano da un proxy
+// stabile che chiama la versione più recente; quelle assenti restano undefined (il menu ne legge la
+// presenza disegnando). getClient/getSemina invece contano per identità: le pagine le danno in useCallback
+// sui dati, così il menu aperto si aggiorna quando cambiano clienti o semine.
+const BY_IDENTITY = new Set(['getClient', 'getSemina']);
+const MemoMenu = memo(ClientSerateMenu);
+
+export default function ClientSerateMenuStable(props) {
+  const latest = useRef(props);
+  latest.current = props;
+  const proxies = useRef({});
+  const stable = {};
+  for (const k in props) {
+    const v = props[k];
+    if (typeof v === 'function' && !BY_IDENTITY.has(k)) {
+      stable[k] = proxies.current[k] ??= (...args) => latest.current[k]?.(...args);
+    } else {
+      stable[k] = v;
+    }
+  }
+  return <MemoMenu {...stable} />;
 }
