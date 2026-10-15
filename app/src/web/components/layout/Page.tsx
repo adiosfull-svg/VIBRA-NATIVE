@@ -26,6 +26,7 @@ type Props = Omit<ScrollViewProps, 'children'> & {
 // Sul telefono dà anche lo scroll animato agli elementi sticky e il bersaglio del blur della nav
 // bar (ui/pageLayers): la pagina è avvolta in un BlurTargetView.
 const NATIVE_DRIVER = Platform.OS !== 'web';
+let pageSeq = 0;
 
 const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefresh, refreshing = false, onScroll, onContentSizeChange, onLayout, ...props }, ref) => {
   diagMark('Page render');
@@ -94,6 +95,13 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     const off = navigation?.addListener?.('focus', onFocus);
     return () => { off?.(); if (diagTimer) clearTimeout(diagTimer); };
   }, [navigation, title]);
+  // diagnostica: montaggi e smontaggi delle pagine (un rimontaggio ridisegna tutto il contenuto)
+  useEffect(() => {
+    if (!TEST_DIAG) return;
+    const id = ++pageSeq;
+    diagMark(`Page monta ${id} ${title ?? ''}`);
+    return () => diagMark(`Page smonta ${id} ${title ?? ''}`);
+  }, [title]);
   const blurEl = useRef<View | null>(null);
   const setBlurTarget = useCallback((el: View | null) => { blurEl.current = el; blurHandle.current?.set(el); }, []);
   const layer = useMemo<PageLayer>(() => ({

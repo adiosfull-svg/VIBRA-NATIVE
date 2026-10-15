@@ -17,7 +17,9 @@ import {
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useNavigationContainerRef } from 'expo-router';
+import { useEffect } from 'react';
+import { TEST_DIAG, diagMark } from '../lib/testDiag';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -32,7 +34,24 @@ import { colors } from '../theme';
 
 installCrashHandler();
 
+// diagnostica: azioni di navigazione e pila dello stack dell'app dopo ognuna (doppi montaggi da link)
+function useNavDiag() {
+  const nav = useNavigationContainerRef();
+  useEffect(() => {
+    if (!TEST_DIAG) return;
+    const offA = nav.addListener('__unsafe_action__', (e: { data: { action: { type: string; payload?: unknown } } }) =>
+      diagMark(`nav azione ${e.data.action.type} ${JSON.stringify(e.data.action.payload ?? {}).slice(0, 160)}`));
+    const offS = nav.addListener('state', () => {
+      const keys = (s: { routes: { name: string; key: string; state?: unknown }[] } | undefined): string =>
+        s ? s.routes.map((r) => `${r.name}:${r.key.slice(-6)}${r.state ? `[${keys(r.state as never)}]` : ''}`).join(',') : '';
+      diagMark(`nav stato ${keys(nav.getRootState() as never).slice(0, 300)}`);
+    });
+    return () => { offA(); offS(); };
+  }, [nav]);
+}
+
 function RootNavigator() {
+  useNavDiag();
   const { user, isLoadingAuth } = useAuth();
   if (isLoadingAuth) return <Loading />;
   return (
