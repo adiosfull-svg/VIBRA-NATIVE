@@ -20,6 +20,8 @@ import { useEffect } from 'react';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
 import { useNotificationsPolling } from '../../web/hooks/useNotifications';
+import { useAuth } from '../../lib/auth';
+import { prefetchCriticalData } from '../../web/lib/prefetchCoreData';
 
 // Immagini del guscio (header, nav bar, sidebar): in memoria prima del primo disegno, mai un flash
 // (docs/REGOLE-PRESTAZIONI.md §6). Le immagini delle pagine le precarica ogni pagina.
@@ -65,9 +67,24 @@ function StackNavBar() {
   return inTabs ? null : <MobileNavBar />;
 }
 
+// Dati della prima schermata (Dashboard / Il Mio Vibra) chiesti appena l'utente è noto, come
+// prefetchCriticalData in AppLayout dell'originale: prima partivano solo dagli effect della pagina, dopo il
+// suo primo disegno (~1,5 s di rete in più sull'avvio). Stesse queryKey e queryFn delle pagine: le query
+// della pagina si agganciano alle richieste già in volo. Nel render (una volta per sessione) e non in un
+// effect, che partirebbe dopo il montaggio di tutta la prima pagina.
+let criticalPrefetched = false;
+function useCriticalDataPrefetch() {
+  const { user } = useAuth();
+  if (user && !criticalPrefetched) {
+    criticalPrefetched = true;
+    prefetchCriticalData(user, user.promoter_id, '/');
+  }
+}
+
 export default function AppLayout() {
   diagMark('layout app');
   useShellImages();
+  useCriticalDataPrefetch();
   return (
     <LayoutUIProvider>
       <CalcolatriceProvider>
