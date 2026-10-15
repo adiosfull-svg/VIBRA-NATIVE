@@ -10,26 +10,16 @@ type NavigateOpts = { replace?: boolean; state?: unknown };
 // Tab della barra in basso. Da una pagina dello stack `push`/`replace` e anche `navigate` verso una tab
 // accodano un SECONDO navigatore delle tab sulla pila (StackClient riusa la route solo se è la corrente o
 // con pop): Dashboard e Clienti rimontate da zero (1,2-1,4 s), tab precaricate due volte in memoria.
-// goToTab (dismissAll + navigate) torna al navigatore esistente, ma toglie le pagine sopra: si usa quando
-// si chiede `replace` (sidebar, come il Link replace dell'originale). Il tocco semplice sulla barra resta
-// `navigate`, per avere Indietro come nell'originale (push nella cronologia).
+// Qui resta `navigate` (anche per il replace della sidebar): Indietro come nell'originale. Con dismissAll +
+// navigate la cronologia delle tab cambiava e il successivo Indietro poteva chiudere l'app (gara diagnostica
+// 38756767101); dismissTo con le tab in primo piano non cambiava tab. I link esterni verso una tab passano
+// da +native-intent (dismissAll da una pagina dello stack, poi il linking normale).
 const TAB_PATHS = new Set(['/', '/dashboard', '/clienti', '/programmazione', '/semine', '/il-mio-vibra']);
 const pathOf = (href: string) => (href.split(/[?#]/)[0].replace(/\/+$/, '') || '/');
 
-/**
- * Va a una tab senza accodare un secondo navigatore delle tab. Da una tab: navigate (cambia tab nello stesso
- * navigatore, come la barra in basso). Da una pagina dello stack: prima dismissAll (si torna al navigatore
- * delle tab, che diventa la route corrente) poi navigate, che StackClient risolve riusando la route corrente.
- * (dismissTo verso le tab con le tab già in primo piano non cambiava tab: gara di 38dc645, 15 s su ogni tab.)
- */
-/** Siamo su una pagina dello stack sopra le tab (non su una tab)? */
+/** Siamo su una pagina dello stack sopra le tab (non su una tab)? (+native-intent) */
 export function onStackPage(): boolean {
   return !TAB_PATHS.has(pathOf(currentLoc.pathname));
-}
-
-export function goToTab(to: string) {
-  if (!TAB_PATHS.has(pathOf(currentLoc.pathname)) && router.canDismiss()) router.dismissAll();
-  router.navigate(to as Href);
 }
 
 // Funzione unica (il router di expo-router è un singleton): prima ogni render ne creava una nuova e
@@ -42,8 +32,7 @@ function navigate(to: string | number, opts?: NavigateOpts) {
   // /dashboard è l'indirizzo dell'originale per la tab "/" (app/(app)/dashboard.tsx fa lo stesso dai link esterni)
   if (pathOf(to) === '/dashboard') to = to.replace(/^\/dashboard/, '/').replace(/^\/\//, '/');
   if (TAB_PATHS.has(pathOf(to))) {
-    if (opts?.replace) goToTab(to);
-    else router.navigate(to as Href);
+    router.navigate(to as Href);
     return;
   }
   // replace (sidebar e ricerca: niente cronologia che si accumula, come nel browser) solo da una pagina
