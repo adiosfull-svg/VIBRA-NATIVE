@@ -7,7 +7,10 @@
 - **Sola lettura**: mai scritture su Base44 né sul repo originale; l'app è in "modalità prova"
   (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
 - Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
-- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Branch con TUTTO il lavoro: **`claude/amazing-babbage-bfbu65`**
+- Aggiornamento 15/10: il lavoro sulle prestazioni continua su **`ccr-962ba42f-zm78fv`** (da
+  `claude/charming-franklin-gint2k` → `claude/serate-admin-optimization-4ro02f`): audit applicato, risultati e
+  lezioni in docs/PIANO-PRESTAZIONI.md (gara del 15/10). Una nuova sessione parte da lì.
+- Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Branch con TUTTO il lavoro (fino al 14/10): **`claude/amazing-babbage-bfbu65`**
   (catena awesome-tesla → ecstatic-dirac → practical-mccarthy → amazing-babbage; NON ancora unito a `main`).
   Una nuova sessione parte da qui (`git checkout -B <suo-branch> origin/claude/amazing-babbage-bfbu65`).
   NB: la cache dell'APK nativo dell'emulatore è per branch: il primo giro su un branch nuovo fa la build completa (~25 min).

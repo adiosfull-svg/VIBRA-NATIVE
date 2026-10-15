@@ -78,3 +78,32 @@ Ancora da fare (in ordine):
    telefono vero;
 6. titoli lunghi dell'header: l'originale li lascia sbordare a 11px, noi mettiamo i puntini.
 
+
+Gara del 15/10 (run 38774983208, commit ed78b43: e8ae180 + audit in 3 parti, branch `ccr-962ba42f-zm78fv`):
+- pr: la nativa vince 11/12 pagine alla prima apertura e 12/12 alla seconda (perde solo Clienti 1ª,
+  465 contro 159 ms); avvio 5,6-6,2 s contro 0,4-0,9 s dell'originale;
+- admin: 10/14 alla prima apertura e 8/14 alla seconda; avvio 7,5-15,5 s contro 0,9-4,9 s; perde Promoter
+  1ª (826 contro 133), dettaglio promoter, Dashboard 1ª (1707 contro 1225), Clienti, Locali e Analitica
+  alla 2ª; Serate 1ª 4518 → 1013 ms (originale 2020);
+- memoria: admin 625 → 519 MB, pr 607 → 524 MB (Chrome 350-450);
+- ATTENZIONE: le prime aperture variano molto tra run quasi uguali (Serate 1-5 s, anche l'originale):
+  servono più run per giudicare una singola modifica. «precarica fine» ora aspetta anche i dati
+  precaricati (lib/preloadData).
+- Lezioni dell'audit:
+  - una pagina dello stack precaricata in più (/locali, F3) faceva chiudere l'app con Indietro al 2° giro
+    della gara (bisezione 38768510965 → 38771609758): non precaricarla;
+  - verso le tab niente dismissTo (non cambia tab con le tab in primo piano) e niente dismissAll +
+    navigate da codice (cronologia delle tab persa, Indietro chiude l'app): sidebar e /dashboard restano
+    `navigate`; solo i link esterni da una pagina dello stack fanno dismissAll prima del linking
+    (app/+native-intent.tsx);
+  - in un file che importa l'icona `Map` da icons.generated `new Map()` costruisce l'icona: usare
+    `globalThis.Map` o importarla come `MapIcon`.
+
+Ancora da fare (in ordine):
+1. avvio: 3-4 s prima del JS (processo + bundle) e la prima pagina; l'originale in Chrome già aperto parte
+   in meno di 1-5 s;
+2. strato ui dell'audit (F33 Text, F34 cache dei fatti di classe, F25 hover/active/disabled in cache, F26
+   icone, F8 Img in cache): da misurare col banco (app/dev/bench.tsx) prima e dopo;
+3. admin: Promoter e dettaglio promoter alla 1ª apertura, Dashboard 1ª, ritorni su Clienti/Locali/Analitica;
+4. F11 (prefetch dei dati di rotta al tocco della sidebar, come prefetchRouteData dell'originale);
+5. scorrimento e titoli lunghi dell'header (vedi sopra).
