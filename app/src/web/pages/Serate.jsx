@@ -53,6 +53,13 @@ import { doc as webDocument, storage as webStorage, win as webWindow } from '@/w
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlInput, HtmlLabel, Img } from '@/ui/elements';
 
+// PORT: vero dalla prima volta che `open` è vero (poi resta montato: chiusura e riapertura come prima)
+function useMountedOnce(open) {
+  const mounted = useRef(false);
+  if (open) mounted.current = true;
+  return mounted.current;
+}
+
 const DOW_LABELS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
 
 function venueToTile(v) {
@@ -137,6 +144,8 @@ export default function Serate() {
    const [dateRange, setDateRange] = useState({ from: '', to: '' });
    const [yearFilter, setYearFilter] = useState(null);
    const [searchQuery, setSearchQuery] = useState('');
+   const formMounted = useMountedOnce(eventDialogOpen);
+   const compareMounted = useMountedOnce(compareOpen);
    const qc = useQueryClient();
    const navigate = useNavigate();
    const lastTouchRef = useRef(0);
@@ -836,8 +845,9 @@ export default function Serate() {
       )}
       {shownEvents < filteredEvents.length && <Div ref={eventsSentinelRef} />}
 
-      <Suspense fallback={null}><EventFormDialog open={eventDialogOpen} onOpenChange={setEventDialogOpen} event={editingEvent} onSave={handleSaveEvent} /></Suspense>
-      <Suspense fallback={null}><EventCompareDialog open={compareOpen} onOpenChange={setCompareOpen} events={events} attendances={attendances} promoters={promoters} /></Suspense>
+      {/* PORT: dialog montati dalla prima apertura (chiusi caricavano comunque modulo, form e query) */}
+      {formMounted && <Suspense fallback={null}><EventFormDialog open={eventDialogOpen} onOpenChange={setEventDialogOpen} event={editingEvent} onSave={handleSaveEvent} /></Suspense>}
+      {compareMounted && <Suspense fallback={null}><EventCompareDialog open={compareOpen} onOpenChange={setCompareOpen} events={events} attendances={attendances} promoters={promoters} /></Suspense>}
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
