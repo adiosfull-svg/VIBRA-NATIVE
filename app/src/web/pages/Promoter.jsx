@@ -1,6 +1,6 @@
 // Port di src/pages/Promoter.jsx (convertito da scripts/port/codemod.mjs).
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '@/web/hooks/usePullToRefresh';
 import PullToRefreshIndicator from '@/web/components/shared/PullToRefreshIndicator';
@@ -35,6 +35,9 @@ import { useBackTab } from '@/web/hooks/useBackTab';
 
 import { storage as webStorage, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, Span } from '@/ui/html';
+
+// PORT: default stabili (un `= []` nuovo a ogni render invalidava il memo delle card durante il caricamento)
+const EMPTY = [];
 
 const SORT_MODES = [
   { key: 'added', label: 'Ordine aggiunta', Icon: Clock },
@@ -105,7 +108,7 @@ export default function Promoter() {
   // Tasto back: torna al tab precedente
   useBackTab(activeTab, setActiveTab, 'team');
 
-  const { data: promoters = [] } = useQuery({
+  const { data: promoters = EMPTY } = useQuery({
     queryKey: ['promoters'],
     queryFn: () => base44.entities.Promoter.list(),
     staleTime: 30 * 60000,
@@ -115,7 +118,7 @@ export default function Promoter() {
     retry: 0,
   });
 
-  const { data: attendances = [] } = useQuery({
+  const { data: attendances = EMPTY } = useQuery({
     queryKey: ['attendances-all'], staleTime: STALE_FULL_TABLE, gcTime: GC_FULL_TABLE,
     queryFn: () => fetchAll(base44.entities.EventAttendance, {}, { sort: '-created_date' }),
     refetchOnWindowFocus: false,
@@ -123,7 +126,7 @@ export default function Promoter() {
     retry: 0,
   });
 
-  const { data: events = [] } = useQuery({
+  const { data: events = EMPTY } = useQuery({
     queryKey: ['events'],
     queryFn: () => base44.entities.Event.list('-date', 5000),
     staleTime: 30 * 60000,
@@ -133,7 +136,10 @@ export default function Promoter() {
     retry: 0,
   });
 
-  const { data: clients = [] } = useQuery({
+  // mappa degli eventi una volta per tutte le card (PromoterCardMobile)
+  const eventsMap = useMemo(() => new Map(events.map(e => [e.id, e])), [events]);
+
+  const { data: clients = EMPTY } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list(),
     staleTime: 30 * 60000,
@@ -143,7 +149,7 @@ export default function Promoter() {
     retry: 0,
   });
 
-  const { data: achievements = [] } = useQuery({
+  const { data: achievements = EMPTY } = useQuery({
     queryKey: ['achievements'],
     queryFn: () => base44.entities.Achievement.list(),
     staleTime: 30 * 60000,
@@ -153,7 +159,7 @@ export default function Promoter() {
     retry: 0,
   });
 
-  const { data: promoterAchievements = [] } = useQuery({
+  const { data: promoterAchievements = EMPTY } = useQuery({
     queryKey: ['promoter-achievements'],
     queryFn: () => base44.entities.PromoterAchievement.list(),
     staleTime: 30 * 60000,
@@ -163,7 +169,7 @@ export default function Promoter() {
     retry: 0,
   });
 
-  const { data: promoterRanks = [] } = useQuery({
+  const { data: promoterRanks = EMPTY } = useQuery({
     queryKey: ['promoter-ranks'],
     queryFn: () => base44.entities.PromoterRank.list(),
     staleTime: 30 * 60000,
@@ -471,6 +477,7 @@ export default function Promoter() {
                                     promoter={p}
                                     attendances={attendances}
                                     events={events}
+                                    eventsMap={eventsMap}
                                     clients={clients}
                                     achievements={achievements}
                                     promoterAchievements={promoterAchievements}
@@ -512,6 +519,7 @@ export default function Promoter() {
                           promoter={p}
                           attendances={attendances}
                           events={events}
+                          eventsMap={eventsMap}
                           clients={clients}
                           achievements={achievements}
                           promoterAchievements={promoterAchievements}

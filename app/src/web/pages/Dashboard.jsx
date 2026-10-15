@@ -1,6 +1,6 @@
 // Port di src/pages/Dashboard.jsx (convertito da scripts/port/codemod.mjs).
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
-import React, { useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { keepPreviousData } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
@@ -11,31 +11,44 @@ import { useAppSetting } from '@/web/hooks/useAppSetting';
 import PageTitle from '@/web/components/shared/PageTitle';
 
 import KpiFlashCard from '@/web/components/dashboard/KpiFlashCard';
-import LiveRankingWidget from '@/web/components/dashboard/LiveRankingWidget';
-import TopClientsWidget from '@/web/components/dashboard/TopClientsWidget';
-import RecentEventsWidget from '@/web/components/dashboard/RecentEventsWidget';
-import VenueRevenueWidget from '@/web/components/dashboard/VenueRevenueWidget';
-import RevenueTimelineWidget from '@/web/components/dashboard/RevenueTimelineWidget';
-import QuickStatsRow from '@/web/components/dashboard/QuickStatsRow';
-import AverageTablesStats from '@/web/components/dashboard/AverageTablesStats';
-import ActivePromotersPopup from '@/web/components/dashboard/ActivePromotersPopup';
-import ExportReportButton from '@/web/components/export/ExportReportButton';
+import LiveRankingWidgetBase from '@/web/components/dashboard/LiveRankingWidget';
+import TopClientsWidgetBase from '@/web/components/dashboard/TopClientsWidget';
+import RecentEventsWidgetBase from '@/web/components/dashboard/RecentEventsWidget';
+import VenueRevenueWidgetBase from '@/web/components/dashboard/VenueRevenueWidget';
+import RevenueTimelineWidgetBase from '@/web/components/dashboard/RevenueTimelineWidget';
+import QuickStatsRowBase from '@/web/components/dashboard/QuickStatsRow';
+import AverageTablesStatsBase from '@/web/components/dashboard/AverageTablesStats';
+import ActivePromotersPopupBase from '@/web/components/dashboard/ActivePromotersPopup';
+import ExportReportButtonBase from '@/web/components/export/ExportReportButton';
 import MonthPicker from '@/web/components/dashboard/MonthPicker';
 
 import { Div, P } from '@/ui/html';
+
+// PORT: widget in memo e dati con default stabili. Senza, ogni dataset in arrivo (promoters, events,
+// attendances-all, clients) e ogni ridisegno della pagina rifacevano tutti i widget, grafico compreso.
+const EMPTY = [];
+const LiveRankingWidget = memo(LiveRankingWidgetBase);
+const TopClientsWidget = memo(TopClientsWidgetBase);
+const RecentEventsWidget = memo(RecentEventsWidgetBase);
+const VenueRevenueWidget = memo(VenueRevenueWidgetBase);
+const RevenueTimelineWidget = memo(RevenueTimelineWidgetBase);
+const QuickStatsRow = memo(QuickStatsRowBase);
+const AverageTablesStats = memo(AverageTablesStatsBase);
+const ActivePromotersPopup = memo(ActivePromotersPopupBase);
+const ExportReportButton = memo(ExportReportButtonBase);
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(startOfMonth(new Date()));
   const [showPromotersPopup, setShowPromotersPopup] = useState(false);
   const [announcement] = useAppSetting('global_announcement');
 
-  const { data: promoters = [] } = useQuery({
+  const { data: promoters = EMPTY } = useQuery({
     queryKey: ['promoters'],
     queryFn: () => base44.entities.Promoter.list(),
     staleTime: 30 * 60000, gcTime: 45 * 60000, refetchOnMount: false, refetchOnWindowFocus: false, retry: 0,
     placeholderData: keepPreviousData,
   });
-  const { data: events = [] } = useQuery({
+  const { data: events = EMPTY } = useQuery({
     queryKey: ['events'],
     queryFn: () => base44.entities.Event.list('-date', 5000),
     // refetchOnMount: false come le altre query: il refresh arriva dall'invalidazione
@@ -43,13 +56,13 @@ export default function Dashboard() {
     staleTime: 30 * 60000, gcTime: 45 * 60000, refetchOnMount: false, refetchOnWindowFocus: false, retry: 0,
     placeholderData: keepPreviousData,
   });
-  const { data: attendances = [] } = useQuery({
+  const { data: attendances = EMPTY } = useQuery({
     queryKey: ['attendances-all'], staleTime: STALE_FULL_TABLE, gcTime: GC_FULL_TABLE,
     queryFn: () => fetchAll(base44.entities.EventAttendance, {}, { sort: '-created_date' }),
 refetchOnMount: false, refetchOnWindowFocus: false, retry: 0,
     placeholderData: keepPreviousData,
   });
-  const { data: clients = [] } = useQuery({
+  const { data: clients = EMPTY } = useQuery({
     queryKey: ['clients-dashboard-by-rating'],
     // Ordinato per rating (pre-calcolato) cosi il widget "Top Clienti" riflette i veri top 13
     // su TUTTI i clienti registrati, non solo gli ultimi creati.
@@ -58,24 +71,29 @@ refetchOnMount: false, refetchOnWindowFocus: false, retry: 0,
     placeholderData: keepPreviousData,
   });
 
-  const monthStart = startOfMonth(selectedMonth);
-  const monthEnd = endOfMonth(selectedMonth);
+  const { totalRevenue, activePromoters, monthlyRevenue, trend, lastEventName } = useMemo(() => {
+    const monthStart = startOfMonth(selectedMonth);
+    const monthEnd = endOfMonth(selectedMonth);
 
-  const totalRevenue = events.reduce((s, e) => s + (e.total_revenue || 0), 0);
-  const activePromoters = promoters.filter(p => p.status === 'attivo').length;
+    const totalRevenue = events.reduce((s, e) => s + (e.total_revenue || 0), 0);
+    const activePromoters = promoters.filter(p => p.status === 'attivo').length;
 
-  const monthlyRevenue = events
-    .filter(e => e.date && isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd }))
-    .reduce((s, e) => s + (e.total_revenue || 0), 0);
+    const monthlyRevenue = events
+      .filter(e => e.date && isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd }))
+      .reduce((s, e) => s + (e.total_revenue || 0), 0);
 
-  // Trend: confronto mese corrente vs mese precedente
-  const prevMonth = subMonths(selectedMonth, 1);
-  const prevStart = startOfMonth(prevMonth);
-  const prevEnd = endOfMonth(prevMonth);
-  const prevRevenue = events
-    .filter(e => e.date && isWithinInterval(parseISO(e.date), { start: prevStart, end: prevEnd }))
-    .reduce((s, e) => s + (e.total_revenue || 0), 0);
-  const trend = prevRevenue > 0 ? Math.round(((monthlyRevenue - prevRevenue) / prevRevenue) * 100) : null;
+    // Trend: confronto mese corrente vs mese precedente
+    const prevMonth = subMonths(selectedMonth, 1);
+    const prevStart = startOfMonth(prevMonth);
+    const prevEnd = endOfMonth(prevMonth);
+    const prevRevenue = events
+      .filter(e => e.date && isWithinInterval(parseISO(e.date), { start: prevStart, end: prevEnd }))
+      .reduce((s, e) => s + (e.total_revenue || 0), 0);
+    const trend = prevRevenue > 0 ? Math.round(((monthlyRevenue - prevRevenue) / prevRevenue) * 100) : null;
+    const lastEventName = events.length > 0 ? [...events].sort((a,b) => new Date(b.date)-new Date(a.date))[0]?.name?.slice(0,18) || '—' : null;
+    return { totalRevenue, activePromoters, monthlyRevenue, trend, lastEventName };
+  }, [events, promoters, selectedMonth]);
+  const closePromotersPopup = useCallback(() => setShowPromotersPopup(false), []);
 
   return (
     <Div className="space-y-5 pb-8">
@@ -125,7 +143,7 @@ refetchOnMount: false, refetchOnWindowFocus: false, retry: 0,
           title="Serate Totali"
           value={events.length}
           rawValue={events.length}
-          label={events.length > 0 ? `ultima: ${[...events].sort((a,b) => new Date(b.date)-new Date(a.date))[0]?.name?.slice(0,18) || '—'}` : 'nessuna serata'}
+          label={lastEventName != null ? `ultima: ${lastEventName}` : 'nessuna serata'}
           icon={CalendarDays}
           color="#fb923c"
         />
@@ -157,7 +175,7 @@ refetchOnMount: false, refetchOnWindowFocus: false, retry: 0,
 
       <ActivePromotersPopup
         open={showPromotersPopup}
-        onClose={() => setShowPromotersPopup(false)}
+        onClose={closePromotersPopup}
         promoters={promoters}
       />
     </Div>

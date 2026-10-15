@@ -7,7 +7,7 @@ import MobileNavBar from '../../../web/components/layout/MobileNavBar';
 import { THEME } from '../../../ui/palette.generated';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
 import { PRELOAD_FIRST_DELAY_MS, PRELOAD_GAP_MS, PRELOAD_STACK, PRELOAD_TABS } from '../../../lib/preloadRoutes';
-import { preloadPageData } from '../../../lib/preloadData';
+import { pageDataPreloaded, preloadPageData } from '../../../lib/preloadData';
 
 // Prima apertura di una tab: caricare il modulo della pagina e montarla bloccava il JS per ~1-2 s
 // sul telefono (Weekend "ci mette due secondi ad aprirsi"). Dopo l'avvio, a app ferma, le tab si
@@ -29,7 +29,9 @@ function usePreloadTabs() {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const step = () => {
       const next = routes.find((r) => !preloaded.has(r));
-      if (!next && !cancelled) { garaPreloadEnd(); return; }
+      // fine (per la gara) quando sono pronti anche i dati precaricati: arrivando durante la prima misura
+      // facevano ridisegnare le pagine montate e il loro lavoro finiva nei tempi della pagina aperta
+      if (!next && !cancelled) { pageDataPreloaded().then(garaPreloadEnd); return; }
       if (cancelled || !next) return;
       InteractionManager.runAfterInteractions(() => {
         if (cancelled) return;

@@ -15,8 +15,15 @@ type Preload = { queryKey: readonly unknown[]; queryFn: () => Promise<unknown>; 
 /** Query da precaricare per ruolo. */
 export function preloadQueriesFor(role?: string): Preload[] {
   const admin = role === 'admin' || role === 'super4';
-  if (!admin) return [];
+  // Download (web/pages/Download.jsx, tutti i ruoli): come prefetchDeferredData dell'originale
+  const common: Preload[] = [
+    { queryKey: ['download-items'], queryFn: () => base44.entities.DownloadItem.list(), staleTime: 5 * 60000 },
+  ];
+  if (!admin) return common;
   return [
+    ...common,
+    // Locali (web/pages/Locali.jsx): stessa queryFn della pagina (ordinati per sort_order)
+    { queryKey: ['venues'], queryFn: () => base44.entities.Venue.list('sort_order'), staleTime: 10 * 60000, gcTime: 15 * 60000 },
     // Serate (web/pages/Serate.jsx)
     { queryKey: ['seasonDividers'], queryFn: () => base44.entities.SeasonDivider.list(), staleTime: 10 * 60000, gcTime: 15 * 60000 },
     // Promoter (web/pages/Promoter.jsx); achievements come il prefetch deferito dell'originale (solo attivi:
@@ -30,19 +37,28 @@ export function preloadQueriesFor(role?: string): Preload[] {
 
 const PRELOAD_DATA_GAP_MS = 150;
 let started = false;
+let done: Promise<void> = Promise.resolve();
 
 /** Avvia il precaricamento (una volta per sessione): una query alla volta, a app ferma. */
-export function preloadPageData(role?: string) {
-  if (started) return;
+export function preloadPageData(role?: string): Promise<void> {
+  if (started) return done;
   started = true;
   const list = preloadQueriesFor(role);
   let i = 0;
-  const next = () => {
-    const q = list[i++];
-    if (!q) return;
-    InteractionManager.runAfterInteractions(() => {
-      queryClient.prefetchQuery(q as never).catch(() => {}).finally(() => setTimeout(next, PRELOAD_DATA_GAP_MS));
-    });
-  };
-  next();
+  done = new Promise<void>((resolve) => {
+    const next = () => {
+      const q = list[i++];
+      if (!q) { resolve(); return; }
+      InteractionManager.runAfterInteractions(() => {
+        queryClient.prefetchQuery(q as never).catch(() => {}).finally(() => setTimeout(next, PRELOAD_DATA_GAP_MS));
+      });
+    };
+    next();
+  });
+  return done;
+}
+
+/** Fine del precaricamento dei dati (subito se non è partito). */
+export function pageDataPreloaded(): Promise<void> {
+  return done;
 }

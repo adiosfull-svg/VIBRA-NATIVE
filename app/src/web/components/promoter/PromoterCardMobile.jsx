@@ -1,5 +1,5 @@
 // Port di src/components/promoter/PromoterCardMobile.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import { Pencil, Instagram, Target, ChevronDown, Star, GripVertical } from '@/ui/icons.generated';
@@ -26,20 +26,18 @@ const RUOLI_LABELS = {
 
 // Card compatta pensata per la visualizzazione mobile, con opzione di espansione
 // per mostrare gli stessi dati approfonditi della card desktop.
-export default function PromoterCardMobile({ promoter, attendances, events, onEdit, onGoals, clients = [], achievements = [], promoterAchievements = [], promoterRanks = [], dragHandleProps }) {
+function PromoterCardMobile({ promoter, attendances, events, eventsMap, onEdit, onGoals, clients = [], achievements = [], promoterAchievements = [], promoterRanks = [], dragHandleProps }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
 
-  const eventsById = useMemo(() => {
-    const m = {};
-    (events || []).forEach(e => { m[e.id] = e; });
-    return m;
-  }, [events]);
+  // PORT: mappa degli eventi costruita una volta dalla pagina (eventsMap) invece che in ogni card
+  const eventsIndex = useMemo(() => eventsMap || new Map((events || []).map(e => [e.id, e])), [eventsMap, events]);
+  const eventsById = useMemo(() => (expanded ? Object.fromEntries(eventsIndex) : null), [expanded, eventsIndex]);
 
   // Aggregazione condivisa: stessi numeri di classifica, card desktop e Miei Progressi.
   const agg = useMemo(
-    () => computePromoterAggregates(promoter.id, attendances, events),
-    [promoter.id, attendances, events]
+    () => computePromoterAggregates(promoter.id, attendances, eventsIndex),
+    [promoter.id, attendances, eventsIndex]
   );
   const pa = agg.myAtts;
   const totalRevenue = agg.totalRevenue;
@@ -255,3 +253,17 @@ export default function PromoterCardMobile({ promoter, attendances, events, onEd
     </Btn>
   );
 }
+
+// PORT: in memo. La pagina passa onEdit/onGoals come lambda nuove a ogni render (chiudono solo sul
+// promoter e su setter stabili): senza memo ogni dataset in arrivo (presenze, eventi, clienti,
+// achievements) ridisegnava tutte le card. Delle due funzioni conta solo se onGoals c'è.
+function sameProps(a, b) {
+  for (const k in a) {
+    if (k === 'onEdit' || k === 'onGoals') continue;
+    if (a[k] !== b[k]) return false;
+  }
+  for (const k in b) if (!(k in a)) return false;
+  return !!a.onGoals === !!b.onGoals;
+}
+
+export default memo(PromoterCardMobile, sameProps);

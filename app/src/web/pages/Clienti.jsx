@@ -112,6 +112,11 @@ export default function Clienti() {
   const [activeTab, setActiveTab] = useState(() => webWindow.history.state?._tab || 'clienti');
   const [rootClientId, setRootClientId] = useState('all');
   const [attendanceHubOpen, setAttendanceHubOpen] = useState(false);
+  // PORT: Box Presenze (~900 righe, memo ed effect sui clienti) montato alla prima apertura e poi tenuto
+  // montato (la sessione di inserimento resta tra chiusura e riapertura, come prima): da chiuso
+  // costava montaggio e ridisegni alla pagina precaricata.
+  const hubMounted = useRef(false);
+  if (attendanceHubOpen) hubMounted.current = true;
   const [reminderClient, setReminderClient] = useState(null);
   const qc = useQueryClient();
   const [glSearch, setGlSearch] = useState('');
@@ -1930,7 +1935,7 @@ export default function Clienti() {
         }}
       />
 
-      <AttendanceHubDialog
+      {hubMounted.current && <AttendanceHubDialog
         open={attendanceHubOpen}
         onOpenChange={setAttendanceHubOpen}
         events={events}
@@ -1951,7 +1956,7 @@ export default function Clienti() {
           // Tabelle complete (Achievement/rank, Vibra VS...): stale al prossimo mount
           invalidateFullTables(qc);
         }}
-      />
+      />}
 
       <ClientFormDialog
         open={dialogOpen}
