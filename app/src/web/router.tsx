@@ -22,6 +22,11 @@ const pathOf = (href: string) => (href.split(/[?#]/)[0].replace(/\/+$/, '') || '
  * delle tab, che diventa la route corrente) poi navigate, che StackClient risolve riusando la route corrente.
  * (dismissTo verso le tab con le tab già in primo piano non cambiava tab: gara di 38dc645, 15 s su ogni tab.)
  */
+/** Siamo su una pagina dello stack sopra le tab (non su una tab)? */
+export function onStackPage(): boolean {
+  return !TAB_PATHS.has(pathOf(currentLoc.pathname));
+}
+
 export function goToTab(to: string) {
   if (!TAB_PATHS.has(pathOf(currentLoc.pathname)) && router.canDismiss()) router.dismissAll();
   router.navigate(to as Href);
