@@ -1,6 +1,6 @@
 // Port di src/components/layout/Sidebar.jsx (versione mobile: pannello sinistro w-64 a comparsa).
 import { Image } from 'expo-image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useRef } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess, type RouteName } from '../../../lib/useRoleAccess';
@@ -53,14 +53,25 @@ export default function Sidebar() {
   const close = useCallback(() => setSidebarOpen(false), [setSidebarOpen]);
   return (
     <SideDrawer name="sidebar" open={open} onClose={close} side="left" width={WIDTH} backdropOpacity={0.6}>
-      <SidebarBody />
+      <SidebarBody open={open} />
     </SideDrawer>
   );
 }
 
-const SidebarBody = memo(function SidebarBody() {
+// Il corpo segue il percorso corrente solo da aperto: da chiuso (display: none) ogni navigazione lo
+// ridisegnava per intero (13 voci con icona) dentro il tempo di apertura della pagina nuova. Il percorso
+// letto da chiuso resta quello di prima; all'apertura la lista si allinea se nel frattempo è cambiato
+// (un disegno, durante l'animazione sul thread UI).
+type Location = ReturnType<typeof useCurrentLocation>;
+const SidebarBody = memo(function SidebarBody({ open }: { open: boolean }) {
+  const live = useCurrentLocation(); // layout: segue tutti i percorsi
+  const shown = useRef(live);
+  if (open) shown.current = live;
+  return <SidebarList location={shown.current} />;
+});
+
+const SidebarList = memo(function SidebarList({ location }: { location: Location }) {
   const { setSidebarOpen, setSearchOpen } = useLayoutUIActions();
-  const location = useCurrentLocation(); // layout: segue tutti i percorsi
   const navigate = useNavigate();
   const insets = useSafeAreaInsets();
   const { logoDataUrl: vibraLogoUrl } = useVibraLogo();

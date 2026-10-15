@@ -19,6 +19,7 @@ import { LocationPublisher } from '../../web/router';
 import { useEffect } from 'react';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
+import { useNotificationsPolling } from '../../web/hooks/useNotifications';
 
 // Immagini del guscio (header, nav bar, sidebar): in memoria prima del primo disegno, mai un flash
 // (docs/REGOLE-PRESTAZIONI.md §6). Le immagini delle pagine le precarica ogni pagina.
@@ -40,6 +41,13 @@ function StatusBarGlass() {
       <Div pointerEvents="none" className="absolute inset-0 bg-background/30" />
     </View>
   );
+}
+
+// Notifiche: un solo osservatore con polling e subscription per tutta l'app (come l'header unico
+// dell'originale); le campanelle delle pagine leggono la cache (web/hooks/useNotifications).
+function NotificationsPoller() {
+  useNotificationsPolling();
+  return null;
 }
 
 // Calcolatrice globale: resta attiva su tutte le rotte finché non la chiudi (come AppLayout.jsx).
@@ -65,6 +73,7 @@ export default function AppLayout() {
       <CalcolatriceProvider>
       <FixedHost>
       <LocationPublisher />
+      <NotificationsPoller />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
       <StatusBarGlass />

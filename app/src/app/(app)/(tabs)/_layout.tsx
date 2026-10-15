@@ -7,6 +7,7 @@ import MobileNavBar from '../../../web/components/layout/MobileNavBar';
 import { THEME } from '../../../ui/palette.generated';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
 import { PRELOAD_FIRST_DELAY_MS, PRELOAD_GAP_MS, PRELOAD_STACK, PRELOAD_TABS } from '../../../lib/preloadRoutes';
+import { preloadPageData } from '../../../lib/preloadData';
 
 // Prima apertura di una tab: caricare il modulo della pagina e montarla bloccava il JS per ~1-2 s
 // sul telefono (Weekend "ci mette due secondi ad aprirsi"). Dopo l'avvio, a app ferma, le tab si
@@ -18,8 +19,9 @@ const preloaded = new Set<string>();
 
 function usePreloadTabs() {
   // la Dashboard ('/') per chi non può vederla è un Redirect: precaricarla farebbe cambiare pagina
-  const { canAccessRoute } = useRoleAccess();
+  const { canAccessRoute, user } = useRoleAccess();
   const withHome = canAccessRoute('dashboard');
+  const role = user?.role;
   const navigation = useNavigation();
   useEffect(() => {
     const routes = [...PRELOAD_TABS, ...(withHome ? ['/'] : []), ...PRELOAD_STACK];
@@ -35,7 +37,11 @@ function usePreloadTabs() {
         // una tab montava un altro layout delle tab, che ripartiva da capo (un giro ogni 2,6 s) e il
         // link successivo (vibra://notifiche) non cambiava più pagina
         if (navigation.isFocused()) {
-          if (!preloaded.size) garaPreloadStart();
+          if (!preloaded.size) {
+            garaPreloadStart();
+            // dati delle pagine dello stack (lib/preloadData): in rete mentre si montano le tab
+            preloadPageData(role);
+          }
           preloaded.add(next);
           try { router.prefetch(next as never); } catch { /* route non pronta: si salta */ }
         }
@@ -44,7 +50,7 @@ function usePreloadTabs() {
     };
     timer = setTimeout(step, PRELOAD_FIRST_DELAY_MS);
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
-  }, [withHome, navigation]);
+  }, [withHome, navigation, role]);
 }
 
 export default function TabsLayout() {

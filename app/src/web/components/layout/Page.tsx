@@ -142,6 +142,16 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     }
     onLayout?.(e);
   }, [onLayout, own, scrollListeners]);
+  // Android: con `refreshControl` la ScrollView è avvolta in uno SwipeRefreshLayout (su iOS il controllo è
+  // un figlio in più): se il controllo compare DOPO il primo disegno (usePullToRefresh lo registra in un
+  // effect) la radice dell'albero cambia tipo e React smonta e rimonta TUTTO il contenuto della pagina.
+  // Serate, Semine e Promoter si montavano due volte a ogni apertura (il doppio del tempo e dei disegni).
+  // Sul telefono il controllo c'è sempre, abilitato solo quando una pagina registra un handler.
+  const refreshHandler = onRefresh ?? (hasPageRefresh ? runPageRefresh : null);
+  const isRefreshing = !!refreshHandler && (onRefresh ? refreshing : pageRefreshing);
+  const refreshControl = Platform.OS === 'web'
+    ? (refreshHandler ? <RefreshControl refreshing={isRefreshing} onRefresh={refreshHandler} tintColor={THEME['accent-foreground']} /> : undefined)
+    : <RefreshControl enabled={!!refreshHandler} refreshing={isRefreshing} onRefresh={refreshHandler ?? undefined} tintColor={THEME['accent-foreground']} progressBackgroundColor={THEME.card} colors={[THEME.primary]} />;
   return (
     <BlurTargetView ref={setBlurTarget as never} style={{ flex: 1, backgroundColor: THEME.background }}>
       <Animated.ScrollView
@@ -153,11 +163,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
         style={{ flex: 1, backgroundColor: THEME.background }}
         contentContainerStyle={{ paddingBottom: 72 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
-        refreshControl={onRefresh
-          ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME['accent-foreground']} />
-          : hasPageRefresh
-            ? <RefreshControl refreshing={pageRefreshing} onRefresh={runPageRefresh} tintColor={THEME['accent-foreground']} progressBackgroundColor={THEME.card} colors={[THEME.primary]} />
-            : undefined}
+        refreshControl={refreshControl}
         {...props}
       >
         <OwnPathProvider>

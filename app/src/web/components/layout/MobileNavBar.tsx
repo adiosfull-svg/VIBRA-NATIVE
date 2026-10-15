@@ -9,7 +9,7 @@ import { NativeBlur, usePageBlurTarget } from '../../../ui/pageLayers';
 import { Image } from 'expo-image';
 import { IMAGE_CACHE } from '../../../ui/imageCache';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
@@ -64,7 +64,9 @@ function VibraIcon({ active, logo }: { active: boolean; logo?: string }) {
   );
 }
 
-function NavIcon({ item, active, dragging, logo }: { item: NavItem; active: boolean; dragging: boolean; logo?: string }) {
+// memo: la barra si ridisegna a ogni cambio di stato della navigazione (anche 3 volte per navigazione);
+// le voci cambiano solo quando cambia quella attiva o il trascinamento
+const NavIcon = memo(function NavIcon({ item, active, dragging, logo }: { item: NavItem; active: boolean; dragging: boolean; logo?: string }) {
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.timing(scale, {
@@ -88,7 +90,7 @@ function NavIcon({ item, active, dragging, logo }: { item: NavItem; active: bool
       </Text>
     </View>
   );
-}
+});
 
 /**
  * Tab bar delle 5 tab (props di expo-router) e, senza props, barra delle altre pagine

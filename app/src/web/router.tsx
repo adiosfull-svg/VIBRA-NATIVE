@@ -7,15 +7,31 @@ import { Btn } from '../ui/html';
 
 type NavigateOpts = { replace?: boolean; state?: unknown };
 
+// Tab della barra in basso: ci si "torna" sempre con `navigate` (riprende il navigatore delle tab già
+// montato, con le pagine precaricate, e cambia tab). Con `push`/`replace` verso una tab da una pagina dello
+// stack expo-router creava un SECONDO navigatore delle tab sulla pila: Dashboard e Clienti rimontate da zero
+// a ogni apertura (1,2-1,4 s), 5 tab precaricate due volte in memoria (~600 MB).
+const TAB_PATHS = new Set(['/', '/dashboard', '/clienti', '/programmazione', '/semine', '/il-mio-vibra']);
+const pathOf = (href: string) => (href.split(/[?#]/)[0].replace(/\/+$/, '') || '/');
+
+// Funzione unica (il router di expo-router è un singleton): prima ogni render ne creava una nuova e
+// chi la metteva tra le dipendenze di memo/effect/callback ripartiva a ogni disegno (§4).
+function navigate(to: string | number, opts?: NavigateOpts) {
+  if (typeof to === 'number') {
+    if (to < 0 && router.canGoBack()) router.back();
+    return;
+  }
+  // /dashboard è l'indirizzo dell'originale per la tab "/" (app/(app)/dashboard.tsx fa lo stesso dai link esterni)
+  if (pathOf(to) === '/dashboard') to = to.replace(/^\/dashboard/, '/').replace(/^\/\//, '/');
+  if (TAB_PATHS.has(pathOf(to))) { router.navigate(to as Href); return; }
+  // replace (sidebar e ricerca: niente cronologia che si accumula, come nel browser) solo da una pagina
+  // dello stack: da una tab sostituirebbe il navigatore delle tab stesso (tutte le pagine precaricate
+  // smontate, e nessun "indietro")
+  if (opts?.replace && !TAB_PATHS.has(pathOf(currentLoc.pathname))) router.replace(to as Href);
+  else router.push(to as Href);
+}
 export function useNavigate() {
-  return (to: string | number, opts?: NavigateOpts) => {
-    if (typeof to === 'number') {
-      if (to < 0 && router.canGoBack()) router.back();
-      return;
-    }
-    if (opts?.replace) router.replace(to as Href);
-    else router.push(to as Href);
-  };
+  return navigate;
 }
 
 // Percorso corrente: lo pubblica <LocationPublisher/> (layout dell'app). usePathname/useGlobalSearchParams

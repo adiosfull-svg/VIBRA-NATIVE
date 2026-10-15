@@ -26,6 +26,97 @@ import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlTextarea, Img } from '@/ui/elements';
 const EventPromoterChart = React.lazy(() => import('@/web/components/event/EventPromoterChart'));
 
+// PORT: righe Ex PR e separatore come componenti a livello di modulo. Nell'originale erano funzioni
+// definite dentro EventCard: a ogni disegno della card React vedeva un componente NUOVO e smontava e
+// rimontava il loro contenuto.
+function ExPrRows({ rows, totalRevenue, compact = false }) {
+  if (rows.length === 0) return null;
+  return (
+    <>
+      {rows.map((row, i) => {
+        const pct = totalRevenue > 0 ? Math.round((row.revenue / totalRevenue) * 100) : 0;
+        return (
+          <Div key={i} className={`rounded-lg bg-secondary/30 border border-border/50 ${compact ? 'p-1.5 text-[11px]' : 'p-2.5 text-sm space-y-1.5'}`}>
+            <Div className="flex items-center justify-between">
+              <Div className="flex items-center gap-2">
+                <Div className={`rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground ${compact ? 'w-4 h-4 text-[9px]' : 'w-6 h-6 text-[10px]'}`}>×</Div>
+                <Span className="text-muted-foreground font-medium">{row.name}</Span>
+                {!compact && <Span className="text-[10px] text-muted-foreground/60 italic">ex PR</Span>}
+              </Div>
+              <Span className="font-bold text-muted-foreground">€{row.revenue.toLocaleString('it-IT')}</Span>
+            </Div>
+            {!compact && (
+              <Div className="w-full bg-secondary rounded-full h-1.5">
+                <Div className="bg-muted-foreground/40 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+              </Div>
+            )}
+          </Div>
+        );
+      })}
+    </>
+  );
+}
+
+function Divider({ show, label, color, controls }) {
+  if (!show) return null;
+  return (
+    <Div
+      className="flex items-center gap-2 py-1.5 px-3 rounded-lg border-l-2 mb-2 transition-opacity"
+      style={{ borderColor: color, backgroundColor: `${color}08` }}
+    >
+      <Span className="text-xs font-medium flex-1" style={{ color }}>{label}</Span>
+      {controls}
+    </Div>
+  );
+}
+
+// PORT: la mutazione della nota vive nel dialog, montato solo quando è aperto. Nell'originale
+// useMutation stava in ogni card: un osservatore react-query per riga della lista, mai usato finché
+// non si apre la nota.
+function EventNoteDialog({ event, noteText, setNoteText, onClose }) {
+  const queryClient = useQueryClient();
+  const updateNoteMut = useMutation({
+    mutationFn: async (notes) => {
+      await base44.entities.Event.update(event.id, { notes });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      onClose();
+    },
+  });
+  return (
+    <Div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <Div className="bg-card border border-border rounded-xl shadow-lg w-full max-w-sm">
+        <Div className="p-6 space-y-4">
+          <H className="font-semibold text-lg">Nota per {event.name}</H>
+          <HtmlTextarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Aggiungi una nota per ricordare dettagli particolari di questa serata..."
+            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            rows={4}
+          />
+          <Div className="flex gap-2 justify-end">
+            <Btn
+              button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-secondary/20">
+              Annulla
+            </Btn>
+            <Btn
+              button
+              onClick={() => updateNoteMut.mutate(noteText)}
+              disabled={updateNoteMut.isPending}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+              Salva
+            </Btn>
+          </Div>
+        </Div>
+      </Div>
+    </Div>
+  );
+}
+
 export default function EventCard({
   event,
   attendances,
@@ -43,17 +134,6 @@ export default function EventCard({
 }) {
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [noteText, setNoteText] = useState(event.notes || '');
-  const queryClient = useQueryClient();
-
-  const updateNoteMut = useMutation({
-    mutationFn: async (notes) => {
-      await base44.entities.Event.update(event.id, { notes });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-      setNoteDialogOpen(false);
-    },
-  });
 
   const eventAtts = attendances.filter(a => a.event_id === event.id);
   const promoterDirectAtts = eventAtts.filter(a => a.promoter_id && !a.client_id);
@@ -99,49 +179,17 @@ export default function EventCard({
   const { day, month } = formatDateShort();
 
   // Righe Ex PR condivise tra i layout
-  const ExPrRows = ({ compact = false }) => exPrRows.length > 0 ? (
-    <>
-      {exPrRows.map((row, i) => {
-        const pct = totalRevenue > 0 ? Math.round((row.revenue / totalRevenue) * 100) : 0;
-        return (
-          <Div key={i} className={`rounded-lg bg-secondary/30 border border-border/50 ${compact ? 'p-1.5 text-[11px]' : 'p-2.5 text-sm space-y-1.5'}`}>
-            <Div className="flex items-center justify-between">
-              <Div className="flex items-center gap-2">
-                <Div className={`rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground ${compact ? 'w-4 h-4 text-[9px]' : 'w-6 h-6 text-[10px]'}`}>×</Div>
-                <Span className="text-muted-foreground font-medium">{row.name}</Span>
-                {!compact && <Span className="text-[10px] text-muted-foreground/60 italic">ex PR</Span>}
-              </Div>
-              <Span className="font-bold text-muted-foreground">€{row.revenue.toLocaleString('it-IT')}</Span>
-            </Div>
-            {!compact && (
-              <Div className="w-full bg-secondary rounded-full h-1.5">
-                <Div className="bg-muted-foreground/40 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
-              </Div>
-            )}
-          </Div>
-        );
-      })}
-    </>
-  ) : null;
-
-  const Divider = () => showDivider ? (
-    <Div
-      className="flex items-center gap-2 py-1.5 px-3 rounded-lg border-l-2 mb-2 transition-opacity"
-      style={{ borderColor: dividerColor, backgroundColor: `${dividerColor}08` }}
-    >
-      <Span className="text-xs font-medium flex-1" style={{ color: dividerColor }}>{dividerLabel}</Span>
-      {dividerControls}
-    </Div>
-  ) : null;
+  const exPr = (compact) => <ExPrRows rows={exPrRows} totalRevenue={totalRevenue} compact={compact} />;
+  const divider = <Divider show={showDivider} label={dividerLabel} color={dividerColor} controls={dividerControls} />;
 
   // Solo separatore, senza card evento
-  if (dividerOnly) return <Divider />;
+  if (dividerOnly) return divider;
 
   // Layout a quadrati (grid)
   if (layout === 'grid') {
     return (
       <Div>
-        <Divider />
+        {divider}
         <Btn
           button
           onClick={() => onToggleExpand(!isExpanded)}
@@ -210,7 +258,7 @@ export default function EventCard({
                         </Div>
                       );
                     })}
-                    <ExPrRows />
+                    {exPr(false)}
                   </Div>
                   <Suspense fallback={<Div
                     className="h-32 vibra-skeleton rounded-lg"
@@ -236,7 +284,7 @@ export default function EventCard({
   if (layout === 'mini') {
     return (
       <Div>
-        <Divider />
+        {divider}
         <Btn
           button
           onClick={() => onToggleExpand(!isExpanded)}
@@ -276,7 +324,7 @@ export default function EventCard({
                       </Div>
                     </Div>
                   ))}
-                  <ExPrRows compact />
+                  {exPr(true)}
                 </Div>
               </>
             )}
@@ -297,7 +345,7 @@ export default function EventCard({
   // Layout rettangolare (default)
   return (
     <Div>
-      <Divider />
+      {divider}
       <Div className="rounded-xl bg-card border border-border overflow-hidden">
         <Btn
           className="px-3 py-3 flex items-center gap-2 cursor-pointer hover:bg-secondary/20 transition-colors"
@@ -394,7 +442,7 @@ export default function EventCard({
                         </Div>
                       );
                     })}
-                    <ExPrRows />
+                    {exPr(false)}
                   </Div>
                   <Suspense fallback={<Div
                     className="h-32 vibra-skeleton rounded-lg"
@@ -408,35 +456,7 @@ export default function EventCard({
 
       {/* Note dialog */}
       {noteDialogOpen && (
-        <Div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <Div className="bg-card border border-border rounded-xl shadow-lg w-full max-w-sm">
-            <Div className="p-6 space-y-4">
-              <H className="font-semibold text-lg">Nota per {event.name}</H>
-              <HtmlTextarea
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Aggiungi una nota per ricordare dettagli particolari di questa serata..."
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                rows={4}
-              />
-              <Div className="flex gap-2 justify-end">
-                <Btn
-                  button
-                  onClick={() => setNoteDialogOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-secondary/20">
-                  Annulla
-                </Btn>
-                <Btn
-                  button
-                  onClick={() => updateNoteMut.mutate(noteText)}
-                  disabled={updateNoteMut.isPending}
-                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
-                  Salva
-                </Btn>
-              </Div>
-            </Div>
-          </Div>
-        </Div>
+        <EventNoteDialog event={event} noteText={noteText} setNoteText={setNoteText} onClose={() => setNoteDialogOpen(false)} />
       )}
     </Div>
   );

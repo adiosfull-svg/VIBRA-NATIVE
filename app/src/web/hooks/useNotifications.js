@@ -1,33 +1,24 @@
-// Port 1:1 di src/hooks/useNotifications.jsx (cambiano solo gli import).
+// Port di src/hooks/useNotifications.jsx (stessa API).
+// PORT: nell'originale l'header (con la campanella) è montato una volta sola in AppLayout; qui ogni
+// pagina ha il suo header, e ogni pagina montata (5 tab precaricate + stack) aveva il suo osservatore con
+// polling e subscription realtime: a ogni apertura di pagina la campanella nuova rifaceva le due richieste
+// (dati "stale" dopo 60 s) e la pagina non era "pronta" finché non tornavano. Ora polling, refetch al
+// focus e subscription stanno in UN solo punto (useNotificationsPolling, layout dell'app); le campanelle
+// leggono la cache senza richieste proprie (docs/REGOLE-PRESTAZIONI.md §2).
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { base44 } from '../../lib/base44';
 import { useAuth } from '../../lib/auth';
 
-export function useNotifications() {
-  const { user } = useAuth();
+// Cooldown dopo "Cancella tutte": gli eventi realtime dei record eliminati
+// arrivano poco dopo la fine della mutazione e triggererebbero un refetch
+// che, per lag di read-after-write, restituirebbe le notifiche appena cancellate
+// facendole riapparire. Ignoriamo gli eventi per 2s dal click.
+let deleteAllCooldownUntil = 0;
+
+function notificationsQueryOptions(user) {
   const promoterId = user?.promoter_id;
-  const queryClient = useQueryClient();
-  // Cooldown dopo "Cancella tutte": gli eventi realtime dei record eliminati
-  // arrivano poco dopo la fine della mutazione e triggererebbero un refetch
-  // che, per lag di read-after-write, restituirebbe le notifiche appena cancellate
-  // facendole riapparire. Ignoriamo gli eventi per 2s dal click.
-  const deleteAllCooldownRef = useRef(0);
-
-  // Subscription realtime: invalida la query quando arriva una nuova notifica
-  useEffect(() => {
-    if (!user) return;
-    const unsubscribe = base44.entities.Notification.subscribe(() => {
-      // Durante una cancellazione/lettura in corso ogni record modificato genera un
-      // evento: rifare la query a metà operazione farebbe riapparire le notifiche.
-      if (queryClient.isMutating({ mutationKey: ['notifications'] })) return;
-      if (Date.now() < deleteAllCooldownRef.current) return;
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    });
-    return unsubscribe;
-  }, [user, queryClient]);
-
-  const { data: notifications = [] } = useQuery({
+  return {
     queryKey: ['notifications', promoterId],
     queryFn: async () => {
       // Carica notifiche personali + broadcast (recipient_promoter_id = null)
@@ -47,8 +38,42 @@ export function useNotifications() {
     },
     enabled: !!user,
     staleTime: 60 * 1000,        // ricarica ogni minuto
+  };
+}
+
+/** Un solo osservatore per tutta l'app (layout): polling, refetch al focus e subscription realtime. */
+export function useNotificationsPolling() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  // Subscription realtime: invalida la query quando arriva una nuova notifica
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = base44.entities.Notification.subscribe(() => {
+      // Durante una cancellazione/lettura in corso ogni record modificato genera un
+      // evento: rifare la query a metà operazione farebbe riapparire le notifiche.
+      if (queryClient.isMutating({ mutationKey: ['notifications'] })) return;
+      if (Date.now() < deleteAllCooldownUntil) return;
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    });
+    return unsubscribe;
+  }, [user, queryClient]);
+  useQuery({
+    ...notificationsQueryOptions(user),
     refetchInterval: 2 * 60 * 1000, // polling ogni 2 minuti
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useNotifications() {
+  const { user } = useAuth();
+  const promoterId = user?.promoter_id;
+  const queryClient = useQueryClient();
+
+  // solo lettura della cache: niente richiesta al montaggio di ogni campanella (vedi sopra)
+  const { data: notifications = [] } = useQuery({
+    ...notificationsQueryOptions(user),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -108,7 +133,7 @@ export function useNotifications() {
       await base44.entities.Notification.deleteMany({ recipient_promoter_id: null });
     },
     onMutate: async () => {
-      deleteAllCooldownRef.current = Date.now() + 2000;
+      deleteAllCooldownUntil = Date.now() + 2000;
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
       updateCache(() => []);
     },

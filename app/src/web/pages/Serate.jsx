@@ -483,8 +483,9 @@ export default function Serate() {
       );
     });
   }, [venueFiltered, searchQuery]);
-  // PORT: lista lunga → montaggio progressivo; callback stabili per le righe in memo
-  const { count: shownEvents, sentinelRef: eventsSentinelRef } = useProgressiveList(filteredEvents.length);
+  // PORT: lista lunga → montaggio progressivo (sul telefono entrano ~5 righe: 10 subito, poi 8 alla volta
+  // a un quarto di schermo dalla fine); callback stabili per le righe in memo
+  const { count: shownEvents, sentinelRef: eventsSentinelRef } = useProgressiveList(filteredEvents.length, { initial: 10, step: 8, ahead: 1.25 });
   const toggleExpanded = useCallback((id, expanded) => setExpandedEvent(expanded ? id : null), []);
   useDiagWhy('Serate', { events, attendances, promoters, venuesRaw, seasonDividersDB, shownEvents, layout, filteredEvents, attendancesByEvent, qc, navigate });
   const openEditEvent = useCallback((ev) => { setEditingEvent(ev); setEventDialogOpen(true); }, []);
@@ -765,7 +766,7 @@ export default function Serate() {
         <Div
           className={`dash-fade-up ${layout === 'mini' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2' : layout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-3'}`}
         >
-          {/* PORT: montaggio progressivo (hooks/useProgressiveList): prime 20 serate, le altre a blocchi */}
+          {/* PORT: montaggio progressivo (hooks/useProgressiveList): prime 10 serate, le altre a blocchi */}
           {filteredEvents.slice(0, shownEvents).map((event) => {
             const isExpanded = expandedEvent === event.id;
             const eventDividers = !venueFilter ? seasonDividersDB.filter(d => d.eventId === event.id) : [];

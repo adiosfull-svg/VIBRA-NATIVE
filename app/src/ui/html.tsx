@@ -829,7 +829,14 @@ export function hiddenAtWidth(className: string, width: number): boolean {
   return width < min;
 }
 
+const HIDDEN_VIEW_STYLE: ViewStyle = { display: 'none' };
+
 export function Div(props: DivProps) {
+  // Sul telefono un ramo nascosto per la larghezza ("hidden", "hidden sm:flex": versioni desktop di
+  // tabelle, date, etichette) non si costruisce nemmeno: sul web lo nasconde il CSS, qui costerebbe
+  // come se fosse visibile. Prima si eseguivano comunque tutti gli hook di DivBox e poi si restituiva
+  // una View vuota; ora si decide qui, prima di qualunque lavoro.
+  if (Platform.OS !== 'web' && props.className && hiddenAtWidth(props.className, cssViewport.width)) return <View style={HIDDEN_VIEW_STYLE} />;
   // position: sticky sul telefono (pageLayers): l'elemento segue lo scroll della pagina
   return isNativeSticky(props.className) ? <StickyDiv {...props} /> : <DivBox {...props} />;
 }
@@ -917,9 +924,6 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const trSpec = Platform.OS === 'web' ? null : transitionSpec(className, (style as { transition?: unknown } | undefined)?.transition);
   const tr = useCssTransition(trSpec, rnStyle?.opacity ?? classOpacity(rest), rnStyle?.backgroundColor, blur && Platform.OS !== 'web' ? blur.px : 0);
   const inPortal = useContext(InPortalContext);
-  // Sul telefono un ramo nascosto per la larghezza (versione desktop) non si costruisce nemmeno:
-  // sul web lo nasconde il CSS, qui costerebbe come se fosse visibile.
-  if (Platform.OS !== 'web' && hiddenAtWidth(rest, cssViewport.width)) return <View style={{ display: 'none' }} />;
   // position: fixed (relativo allo schermo): portale alla radice (le View di RN-web creano contesti
   // di sovrapposizione, z-50 non uscirebbe dalla pagina) e sul web anche position: fixed vero
   const fixed = FIXED.test(rest);
@@ -995,6 +999,9 @@ function textLike(defaultProps: Partial<TextLikeProps> = {}, inline = false) {
         ? <Btn className={className} style={style} onClick={onPress} {...(props as object)}>{children}</Btn>
         : <Div className={className} style={style} {...(props as object)}>{children}</Div>;
     }
+    // testo nascosto per la larghezza ("hidden sm:inline": le etichette dei pulsanti sul desktop):
+    // sul telefono non c'è niente da disegnare (come il ramo nascosto di Div)
+    if (Platform.OS !== 'web' && className && hiddenAtWidth(className, cssViewport.width)) return null;
     const text = <Text {...defaultProps} {...props} className={className} style={style} onPress={onPress}>{children}</Text>;
     return inlineBox ? <View style={inlineBox}>{text}</View> : text;
   };

@@ -8,11 +8,16 @@ import Page from '../../../web/components/layout/Page';
 // props, non va ridisegnata per questo (era l'intera pagina a ogni cambio tab)
 const IlMioVibra = memo(IlMioVibraPage);
 
+// Elemento della schermata costruito una volta: a ogni navigazione expo-router ridisegna le route montate
+// (anche le tab precaricate) e un elemento nuovo faceva ridisegnare Page (e il suo header) in ognuna; con
+// lo stesso elemento React salta Page e tutta la pagina (docs/REGOLE-PRESTAZIONI.md §4).
+const SCREEN = (
+  <Page>
+    <IlMioVibra />
+  </Page>
+);
+
 export default function IlMioVibraRoute() {
   diagMark('route il-mio-vibra');
-  return (
-    <Page>
-      <IlMioVibra />
-    </Page>
-  );
+  return SCREEN;
 }
