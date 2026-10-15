@@ -13,10 +13,9 @@ const TAB_PATHS = new Set(['/', '/clienti', '/programmazione', '/semine', '/il-m
 function toAppPath(url: string): string {
   const m = /^vibra:\/\/?(.*)$/i.exec(url);
   if (!m) return url;
-  let rest = '/' + m[1].replace(/^\/+/, '');
-  // /dashboard è l'indirizzo dell'originale per la tab "/"
-  rest = rest.replace(/^\/dashboard(?=$|[/?#])/, '/').replace(/^\/\/+/, '/');
-  return rest;
+  // /dashboard resta com'è: la route app/(app)/dashboard.tsx porta alla tab "/" (mandarlo direttamente alla
+  // tab cambiava la cronologia e un Indietro successivo chiudeva l'app: gara 38761956064)
+  return '/' + m[1].replace(/^\/+/, '');
 }
 
 export function redirectSystemPath({ path, initial }: { path: string; initial: boolean }): string | null {
