@@ -265,11 +265,13 @@ export default function Formazione() {
             </Btn>
 
             {/* Progress bar */}
-            <Div className="h-1 bg-border">
+            {/* PORT: barra piena spostata con x (thread UI) invece di animare width (thread JS) */}
+            <Div className="h-1 bg-border overflow-hidden">
               <motion.div
-                className="h-full transition-all"
-                style={{ width: `${progressPct}%`, background: moduleColor }}
-                animate={{ width: `${progressPct}%` }}
+                className="h-full w-full"
+                style={{ background: moduleColor }}
+                initial={false}
+                animate={{ x: `${progressPct - 100}%` }}
                 transition={{ duration: 0.3 }}
               />
             </Div>

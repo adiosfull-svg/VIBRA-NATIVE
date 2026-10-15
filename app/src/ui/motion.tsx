@@ -4,7 +4,7 @@
 // repeat: Infinity; width/height in px o %. height/width 'auto' non sono animabili in RN: l'elemento compare alla sua
 // misura naturale. AnimatePresence rende i figli (le animazioni di uscita non sono replicate).
 import { Children, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, type LayoutChangeEvent } from 'react-native';
+import { Animated, Dimensions, Easing, type LayoutChangeEvent } from 'react-native';
 import { Btn, Div, Span } from './html';
 import { Img } from './elements';
 
@@ -112,10 +112,12 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   }, [targetKey]);
   const used = new Set([...Object.keys(from ?? {}), ...Object.keys(to ?? {})]);
   const transform: any[] = [];
-  // % → px sulla larghezza dell'elemento (come translate in % del CSS); prima della misura: fermo a 0
-  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: [0, width] });
-  if (used.has('x')) transform.push({ translateX: pct.has('x') ? (waitWidth ? 0 : asPct(values.x)) : values.x });
-  if (used.has('y')) transform.push({ translateY: pct.has('y') ? (waitWidth ? 0 : asPct(values.y)) : values.y });
+  // % → px sulla larghezza dell'elemento (come translate in % del CSS); prima della misura la larghezza
+  // dello schermo come stima (una barra che entra da -100% non deve comparire piena per un frame)
+  const pctBase = width > 0 ? width : Dimensions.get('window').width;
+  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: [0, pctBase] });
+  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(values.x) : values.x });
+  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(values.y) : values.y });
   if (used.has('scale')) transform.push({ scale: values.scale });
   if (used.has('rotate')) transform.push({ rotate: values.rotate.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
   const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: values.opacity } : null), ...(transform.length ? { transform } : null) };

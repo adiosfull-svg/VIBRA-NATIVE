@@ -236,16 +236,20 @@ export default function RankCard({ promoter, stats, isActive = true }) {
                 <Div className="relative w-full h-5 bg-secondary/40 rounded-full overflow-hidden border border-white/[0.05]">
                   <Div className="absolute inset-0 rounded-full"
                     style={{ background: `linear-gradient(90deg, ${current.color}08, transparent)` }} />
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 1.2, ease: 'easeOut', delay: 0.2 }}
-                    className="absolute left-0 top-0 h-full rounded-full"
-                    style={{
-                      background: `linear-gradient(90deg, ${current.color}cc, ${next.color}cc)`,
-                      boxShadow: `0 0 12px ${current.color}80`,
-                    }}
-                  />
+                  {/* PORT: la barra cresceva animando width (thread JS, niente driver nativo): ora ha
+                      già la sua larghezza e scorre dentro da sinistra con x (thread UI), stesso effetto */}
+                  <Div className="absolute left-0 top-0 h-full rounded-full overflow-hidden" style={{ width: `${progress}%` }}>
+                    <motion.div
+                      initial={{ x: '-100%' }}
+                      animate={{ x: 0 }}
+                      transition={{ duration: 1.2, ease: 'easeOut', delay: 0.2 }}
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, ${current.color}cc, ${next.color}cc)`,
+                        boxShadow: `0 0 12px ${current.color}80`,
+                      }}
+                    />
+                  </Div>
                   {/* Shimmer */}
                   <motion.div
                     animate={{ x: ['-100%', '200%'] }}

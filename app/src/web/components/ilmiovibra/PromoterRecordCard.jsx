@@ -62,12 +62,15 @@ function StreakRow({ icon: Icon, label, current, record, accent, showInProgress 
       </Div>
       <Div className="relative w-full h-2.5 bg-secondary/40 rounded-full overflow-hidden border border-white/[0.04]">
         <Div className="absolute inset-0 rounded-full" style={{ background: `linear-gradient(90deg, ${accent}10, transparent)` }} />
-        <motion.div
-          initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-          transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-          className="absolute left-0 top-0 h-full rounded-full"
-          style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}66)`, boxShadow: `0 0 10px ${accent}80` }}
-        />
+        {/* PORT: crescita con x (thread UI) dentro un contenitore già largo pct%, non con width (thread JS) */}
+        <Div className="absolute left-0 top-0 h-full rounded-full overflow-hidden" style={{ width: `${pct}%` }}>
+          <motion.div
+            initial={{ x: '-100%' }} animate={{ x: 0 }}
+            transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
+            className="absolute inset-0 rounded-full"
+            style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}66)`, boxShadow: `0 0 10px ${accent}80` }}
+          />
+        </Div>
       </Div>
     </Div>
   );
