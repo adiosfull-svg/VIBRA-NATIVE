@@ -77,8 +77,12 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
       const t = setTimeout(() => setChartTier(0), 300);
       return () => clearTimeout(t);
     }
-    // Tutto simultaneo: nessuno scaglionamento, apre tutto insieme.
-    setChartTier(4);
+    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura, i grafici due frame dopo
+    // (prima tutto nello stesso commit del tocco sulla riga: nessun riscontro finché non era tutto montato)
+    setChartTier(1);
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setChartTier(4)); });
+    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
   }, [internalOpen]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
   useEffect(() => { setInternalOpen(open); }, [open]);
@@ -414,7 +418,9 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
       <TestCut id="overlay">{/* PORT: bisezione sull'emulatore (lib/testDiag) */}
       <Div
         style={{ transform: 'translateZ(0)' }}
-        className={`fixed inset-0 bg-black/80 touch-none ${internalOpen ? 'opacity-100' : 'opacity-0 transition-opacity duration-200'}`}
+        // PORT: classe di transizione sempre presente. Toglierla da aperto cambiava il tipo dell'elemento
+        // (ui/html: AnimatedBox → View, rimontato): lo sfondo compariva di colpo e spariva di colpo in chiusura
+        className={`fixed inset-0 bg-black/80 touch-none transition-opacity duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0'}`}
         onPointerDown={(e) => { if (e.target === e.currentTarget) handleOpenChange(false); }} />
       <Div className={`relative w-full max-sm:w-[calc(100%-1.5rem)] max-sm:rounded-2xl max-sm:max-h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-full bg-gradient-to-b from-background to-background/95 border border-border/50 shadow-lg flex flex-col overflow-hidden [will-change:transform,opacity] [backface-visibility:hidden] transition-[transform,opacity] duration-200 sm:max-w-2xl sm:max-h-[90vh] sm:rounded-2xl ${internalOpen ? 'opacity-100' : 'opacity-0 scale-95'}`}>
         <TestCut id="dialog">{/* PORT: bisezione sull'emulatore (lib/testDiag) */}

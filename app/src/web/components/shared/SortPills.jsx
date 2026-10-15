@@ -1,5 +1,6 @@
 // Port di src/components/shared/SortPills.jsx (convertito da scripts/port/codemod.mjs).
 import React from 'react';
+import { usePendingSelection } from '@/web/hooks/usePendingSelection';
 
 import { Btn, Div, Span } from '@/ui/html';
 
@@ -8,7 +9,9 @@ import { Btn, Div, Span } from '@/ui/html';
  * Label + pill rounded-full; attivo = bg-primary filled con shadow,
  * inattivo = border sottile su bg-secondary. Supporta icone opzionali.
  */
-export default function SortPills({ label, options, value, onChange, className = '', scrollable = false, children }) {
+export default function SortPills({ label, options, value: realValue, onChange, className = '', scrollable = false, children }) {
+  // pill evidenziata subito, riordino della lista (onChange) due frame dopo
+  const [value, select] = usePendingSelection(realValue, onChange);
   return (
     <Div className={`flex items-center gap-1.5 ${scrollable ? 'flex-nowrap overflow-x-auto no-scrollbar' : 'flex-wrap'} ${className}`}>
       {label &&
@@ -18,7 +21,7 @@ export default function SortPills({ label, options, value, onChange, className =
       <Btn
         button
         key={key}
-        onClick={() => onChange(key)}
+        onClick={() => select(key)}
         className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
         value === key ?
         "bg-[#551a8e] text-primary-foreground shadow-sm shadow-primary/30" :

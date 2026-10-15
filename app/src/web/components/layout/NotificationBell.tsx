@@ -29,12 +29,16 @@ export default function NotificationBell() {
   const bellRef = useRef<View>(null);
   const { progress, mounted } = usePresence(open);
 
+  // PORT: chiusura animata prima, navigazione due frame dopo (nello stesso gestore l'animazione di chiusura
+  // partiva solo dopo il commit della pagina nuova: pannello fermo a schermo)
+  const navigateSoon = (url: string) => requestAnimationFrame(() => requestAnimationFrame(() => navigate(url)));
+
   const handleNotificationClick = (n: any) => {
     if (!n.is_read) markAsRead(n.id);
     const url = n.action_url || '/notifiche';
     setOpen(false);
     if (/^https?:\/\//i.test(url) || url.startsWith('wa.me')) Linking.openURL(url.startsWith('wa.me') ? `https://${url}` : url);
-    else navigate(url);
+    else navigateSoon(url);
   };
 
   const openPanel = () => {
@@ -79,7 +83,7 @@ export default function NotificationBell() {
           <Div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
             {/* Header */}
             <Div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <Btn onClick={() => { setOpen(false); navigate('/notifiche'); }} className="font-semibold text-sm">
+              <Btn onClick={() => { setOpen(false); navigateSoon('/notifiche'); }} className="font-semibold text-sm">
                 Notifiche
               </Btn>
               <Div className="flex items-center gap-2">

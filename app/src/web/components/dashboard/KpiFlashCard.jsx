@@ -8,15 +8,19 @@ function AnimatedNumber({ target, prefix = '', suffix = '', duration = 1200 }) {
   const [current, setCurrent] = useState(0);
   useEffect(() => {
     let start = null;
+    let raf = 0;
     const step = (ts) => {
       if (!start) start = ts;
       const progress = Math.min((ts - start) / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
       setCurrent(Math.floor(ease * target));
-      if (progress < 1) requestAnimationFrame(step);
+      if (progress < 1) raf = requestAnimationFrame(step);
       else setCurrent(target);
     };
-    requestAnimationFrame(step);
+    raf = requestAnimationFrame(step);
+    // PORT: il ciclo vecchio si ferma quando cambia il valore (dati in cache, poi dalla rete): prima due cicli
+    // insieme si contendevano il numero, che sfarfallava tra i due valori
+    return () => cancelAnimationFrame(raf);
   }, [target]);
   return <Span>{prefix}{current.toLocaleString('it-IT')}{suffix}</Span>;
 }

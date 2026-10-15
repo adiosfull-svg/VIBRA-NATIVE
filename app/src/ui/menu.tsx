@@ -12,6 +12,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
 import { resolveDataState } from './dataState';
 import { useLabelControl } from './labelControl';
+import { usePendingSelection } from '../web/hooks/usePendingSelection';
 import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
 import { IconClassContext } from './icon';
@@ -205,11 +206,18 @@ export const SelectLabel = ({ className, children }: WithChildren) => <Div class
 export const SelectSeparator = ({ className }: { className?: string }) => <View className={cn('-mx-1 my-1 h-px bg-muted', className)} />;
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
+// Tab scelta evidenziata subito (TabsTrigger), contenuto cambiato due frame dopo (onValueChange): prima
+// evidenziazione e contenuto arrivavano insieme a lavoro finito (web/hooks/usePendingSelection).
+const ShownTabContext = createContext<string | null>(null);
 export function Tabs({ value, onValueChange, defaultValue, className, children }: WithChildren & { value?: string; defaultValue?: string; onValueChange?: (v: string) => void }) {
+  const real = value ?? defaultValue ?? '';
+  const [shown, select] = usePendingSelection(real, onValueChange);
   return (
-    <TabsPrimitive.Root value={value ?? defaultValue ?? ''} onValueChange={(v) => onValueChange?.(v)} className={className}>
-      {children}
-    </TabsPrimitive.Root>
+    <ShownTabContext.Provider value={shown}>
+      <TabsPrimitive.Root value={real} onValueChange={select} className={className}>
+        {children}
+      </TabsPrimitive.Root>
+    </ShownTabContext.Provider>
   );
 }
 export function TabsList({ className, children }: WithChildren) {
@@ -220,7 +228,8 @@ export function TabsList({ className, children }: WithChildren) {
   );
 }
 export function TabsTrigger({ className: rawClassName, children, value }: WithChildren & { value: string }) {
-  const { value: active } = TabsPrimitive.useRootContext();
+  const { value: root } = TabsPrimitive.useRootContext();
+  const active = useContext(ShownTabContext) ?? root;
   const on = active === value;
   const className = useMemo(() => resolveDataState(rawClassName, on), [rawClassName, on]);
   return (

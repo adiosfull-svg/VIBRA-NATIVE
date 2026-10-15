@@ -23,7 +23,7 @@ function RadialGlow() {
   // dimensione di default CSS: farthest-corner dal centro (w/2, -0.1h)
   const r = Math.hypot(w / 2, h * 1.1);
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={(e) => { const { width: nw, height: nh } = e.nativeEvent.layout; setSize((p) => (p.w === nw && p.h === nh ? p : { w: nw, h: nh })); }}>
       {w > 0 && (
         <Svg width={w} height={h}>
           <Defs>

@@ -631,7 +631,9 @@ export default function VibraSearch() {
   }, [deferredQ, clients, promoters, events, venuesRaw, user?.role, isAdmin, isSuper4, venueRows, downloadItemsEnriched]);
 
   const hasAny = results.clients.length + results.promoters.length + results.events.length + results.venues.length + results.appSections.length + results.settingsSections.length + results.materiale.length + results.downloadLoghi.length + (results.isLeaderSearch ? 1 : 0) > 0;
-  const goNavigate = (path) => { setOpen(false); navigate(path, { replace: true }); };
+  // PORT: prima si chiude (la ricerca sparisce subito), poi si naviga due frame dopo: nello stesso gestore
+  // la ricerca restava a schermo, ferma, finché non era disegnata la pagina di destinazione (§4)
+  const goNavigate = (path) => { setOpen(false); requestAnimationFrame(() => requestAnimationFrame(() => navigate(path, { replace: true }))); };
 
   // Apri il detail cliente: chiude VibraSearch per evitare conflitto di
   // layering. VibraSearch è un Dialog Radix modal (z-9999) con focus-trap

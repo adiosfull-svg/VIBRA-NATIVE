@@ -21,9 +21,13 @@ export function useCssTransition(spec: TransitionSpec | null, opacity: number | 
   const [shownBlur, setShownBlur] = useState(blurPx);
 
   const opTarget = spec?.opacity && opacity != null ? opacity : undefined;
-  if (opTarget != null && !op.current) op.current = new Animated.Value(opTarget);
+  // ultimo valore di arrivo: al montaggio (valore già a destinazione) niente animazione da x a x
+  const opLast = useRef<number | undefined>(undefined);
+  if (opTarget != null && !op.current) { op.current = new Animated.Value(opTarget); opLast.current = opTarget; }
   useEffect(() => {
     if (opTarget == null || !op.current) return;
+    if (opLast.current === opTarget) return;
+    opLast.current = opTarget;
     const a = Animated.timing(op.current, { toValue: opTarget, duration: spec!.opacity, easing: EASE, useNativeDriver: true });
     a.start();
     return () => a.stop();
@@ -39,7 +43,10 @@ export function useCssTransition(spec: TransitionSpec | null, opacity: number | 
   const bgState = bg.current;
   useEffect(() => {
     if (!bgState || !spec?.backgroundColor) return;
-    const a = Animated.timing(bgState.v, { toValue: 1, duration: spec.backgroundColor, easing: EASE, useNativeDriver: false });
+    // da un colore a sé stesso (montaggio): niente animazione (prima 150-300 ms di aggiornamenti per nulla)
+    if (bgState.from === bgState.to) return;
+    // colore animato sul thread UI (RN 0.86: backgroundColor è tra gli stili del driver nativo)
+    const a = Animated.timing(bgState.v, { toValue: 1, duration: spec.backgroundColor, easing: EASE, useNativeDriver: true });
     a.start();
     return () => a.stop();
   }, [bgState]); // eslint-disable-line react-hooks/exhaustive-deps

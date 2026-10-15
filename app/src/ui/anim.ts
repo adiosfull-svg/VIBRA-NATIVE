@@ -12,7 +12,9 @@ export function usePresence(open: boolean, inMs = 160, outMs = 140, easingIn = E
   const progress = useRef(new Animated.Value(open ? 1 : 0)).current;
   const [mounted, setMounted] = useState(open);
   useEffect(() => {
-    if (open) setMounted(true);
+    // apertura: prima si monta il contenuto, l'animazione parte al disegno successivo (prima partiva nello
+    // stesso effect e su Android il pannello compariva già quasi opaco, senza la comparsa)
+    if (open && !mounted) { setMounted(true); return; }
     const anim = Animated.timing(progress, {
       toValue: open ? 1 : 0,
       duration: open ? inMs : outMs,
@@ -21,6 +23,6 @@ export function usePresence(open: boolean, inMs = 160, outMs = 140, easingIn = E
     });
     anim.start(({ finished }) => { if (finished && !open) setMounted(false); });
     return () => anim.stop();
-  }, [open, progress, inMs, outMs, easingIn, easingOut]);
+  }, [open, mounted, progress, inMs, outMs, easingIn, easingOut]);
   return { progress, mounted };
 }

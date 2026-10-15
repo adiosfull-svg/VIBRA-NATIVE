@@ -117,7 +117,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   // cambi, e la pillola tornava per un attimo sulla voce vecchia per poi ripartire verso la nuova (lo
   // scatto avanti-indietro). Resta sulla destinazione finché la voce attiva non cambia.
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
-  useEffect(() => { setPendingIndex(null); }, [activeIndex]);
+  useEffect(() => { setPendingIndex(null); }, [activeIndex, searchOpen]);
   useEffect(() => {
     if (pendingIndex == null) return;
     // rete di sicurezza: navigazione rifiutata o verso la voce già attiva
@@ -144,7 +144,8 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   // gestore del tocco il commit della pagina nuova bloccava il JS prima che le animazioni partissero
   // (docs/REGOLE-PRESTAZIONI.md §4). Due frame: il primo disegna lo stato nuovo e avvia le animazioni.
   const goSoon = (item: NavItem | { path: string }) => {
-    if ('route' in item && item.route !== '__search__') {
+    // anche Cerca: searchOpen arriva dopo il montaggio della ricerca, e intanto la pillola tornava indietro
+    if ('route' in item) {
       const idx = items.current.indexOf(item);
       if (idx >= 0) setPendingIndex(idx);
     }
@@ -257,6 +258,9 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
         return;
       }
       setDragIndex(null);
+      // dopo un trascinamento la pillola è sotto il dito: la si centra sulla voce (l'indice visivo non
+      // cambia, quindi l'effetto della pillola non riparte da solo)
+      if (r.moved) Animated.timing(pillX, { toValue: r.index * itemWidth, duration: 280, easing: Easing.bezier(0.22, 1, 0.36, 1), useNativeDriver: true }).start();
       goSoon(items.current[r.index]);
     },
     onPanResponderTerminate: () => {

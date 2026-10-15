@@ -30,7 +30,13 @@ export default function AcademySideRail({ items, onJump }) {
   const borderPathRef = useRef(null);
 
   useEffect(() => {
+    // PORT: un controllo per frame (prima a ogni evento di scroll, con getBoundingClientRect di ogni tessera)
+    let raf = 0;
     const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(check);
+    };
+    const check = () => {
       if (scrubbingRef.current) return;
 
       const threshold = 150;
@@ -58,9 +64,9 @@ export default function AcademySideRail({ items, onJump }) {
 
     webWindow.addEventListener('scroll', onScroll, { passive: true });
 
-    onScroll();
+    check();
 
-    return () => webWindow.removeEventListener('scroll', onScroll);
+    return () => { cancelAnimationFrame(raf); webWindow.removeEventListener('scroll', onScroll); };
   }, [items]);
 
   const getIndexFromY = useCallback((clientY) => {
@@ -205,6 +211,9 @@ export default function AcademySideRail({ items, onJump }) {
     updateRailShape(0, 0);
 
     if (finalIdx >= 0 && finalIdx < items.length) {
+      // PORT: la voce scelta resta evidenziata (prima, azzerato lo scrub, tornava quella vecchia finché lo
+      // scroll verso la nuova non la riaggiornava: vecchia → nuova)
+      setActiveId(items[finalIdx].id);
       onJump(items[finalIdx].id);
     }
   };
