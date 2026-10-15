@@ -113,7 +113,18 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   const [width, setWidth] = useState(0);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [radial, setRadial] = useState<null | { anchorIndex: number; highlighted: number }>(null);
-  const visualIndex = dragIndex ?? (searchOpen && searchIndex >= 0 ? searchIndex : activeIndex);
+  // Voce toccata in attesa che la navigazione arrivi: al rilascio dragIndex torna null prima che la tab
+  // cambi, e la pillola tornava per un attimo sulla voce vecchia per poi ripartire verso la nuova (lo
+  // scatto avanti-indietro). Resta sulla destinazione finché la voce attiva non cambia.
+  const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  useEffect(() => { setPendingIndex(null); }, [activeIndex]);
+  useEffect(() => {
+    if (pendingIndex == null) return;
+    // rete di sicurezza: navigazione rifiutata o verso la voce già attiva
+    const t = setTimeout(() => setPendingIndex(null), 1500);
+    return () => clearTimeout(t);
+  }, [pendingIndex]);
+  const visualIndex = dragIndex ?? pendingIndex ?? (searchOpen && searchIndex >= 0 ? searchIndex : activeIndex);
   const itemWidth = width / NAV_ITEMS.length;
 
   // Pill: posizione animata (transform translateX)
@@ -128,6 +139,17 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
       useNativeDriver: true,
     }).start();
   }, [visualIndex, itemWidth, pillX]);
+
+  // Prima il feedback (pillola e icona, animate sul thread UI), poi la navigazione: partendo nello stesso
+  // gestore del tocco il commit della pagina nuova bloccava il JS prima che le animazioni partissero
+  // (docs/REGOLE-PRESTAZIONI.md §4). Due frame: il primo disegna lo stato nuovo e avvia le animazioni.
+  const goSoon = (item: NavItem | { path: string }) => {
+    if ('route' in item && item.route !== '__search__') {
+      const idx = items.current.indexOf(item);
+      if (idx >= 0) setPendingIndex(idx);
+    }
+    requestAnimationFrame(() => requestAnimationFrame(() => go(item)));
+  };
 
   const go = (item: NavItem | { path: string }) => {
     if ('route' in item) {
@@ -223,7 +245,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
         r.radial = false;
         setRadial(null);
         setDragIndex(null);
-        go(items.current[r.index]);
+        goSoon(items.current[r.index]);
         return;
       }
       if (r.radial) {
@@ -231,11 +253,11 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
         const opts = RADIAL_MENUS[items.current[r.index].route] ?? [];
         setRadial(null);
         setDragIndex(null);
-        if (r.highlighted >= 0) go(opts[r.highlighted]);
+        if (r.highlighted >= 0) goSoon(opts[r.highlighted]);
         return;
       }
       setDragIndex(null);
-      go(items.current[r.index]);
+      goSoon(items.current[r.index]);
     },
     onPanResponderTerminate: () => {
       const r = refs.current;
