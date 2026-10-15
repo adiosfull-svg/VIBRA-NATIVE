@@ -13,13 +13,22 @@ import { queryClient } from './queryClient';
 type Preload = { queryKey: readonly unknown[]; queryFn: () => Promise<unknown>; staleTime?: number; gcTime?: number };
 
 /** Query da precaricare per ruolo. */
-export function preloadQueriesFor(role?: string): Preload[] {
+export function preloadQueriesFor(role?: string, promoterId?: string | null): Preload[] {
   const admin = role === 'admin' || role === 'super4';
   // Download (web/pages/Download.jsx, tutti i ruoli): come prefetchDeferredData dell'originale
   const common: Preload[] = [
     { queryKey: ['download-items'], queryFn: () => base44.entities.DownloadItem.list(), staleTime: 5 * 60000 },
   ];
-  if (!admin) return common;
+  // Messaggi (non admin, con un promoter): chat ignorate e profilo Instagram, stesse queryFn e staleTime
+  // della pagina (InstagramDMsTab, InstagramProfileCard). L'admin senza promoter usa list(): non qui.
+  if (!admin) {
+    if (!promoterId) return common;
+    return [
+      ...common,
+      { queryKey: ['ignored-ig-chats', promoterId], queryFn: () => base44.entities.IgnoredInstagramChat.filter({ promoter_id: promoterId }), staleTime: 60000 },
+      { queryKey: ['promoter', promoterId], queryFn: () => base44.entities.Promoter.get(promoterId), staleTime: 60000 },
+    ];
+  }
   return [
     ...common,
     // Locali (web/pages/Locali.jsx): stessa queryFn della pagina (ordinati per sort_order)
@@ -40,10 +49,10 @@ let started = false;
 let done: Promise<void> = Promise.resolve();
 
 /** Avvia il precaricamento (una volta per sessione): una query alla volta, a app ferma. */
-export function preloadPageData(role?: string): Promise<void> {
+export function preloadPageData(role?: string, promoterId?: string | null): Promise<void> {
   if (started) return done;
   started = true;
-  const list = preloadQueriesFor(role);
+  const list = preloadQueriesFor(role, promoterId);
   let i = 0;
   done = new Promise<void>((resolve) => {
     const next = () => {

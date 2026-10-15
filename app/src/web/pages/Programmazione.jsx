@@ -107,6 +107,8 @@ export default function Programmazione() {
   const activeButtonRef = useRef(null);
   const [sentinelRef, stuck] = useStickySentinel();
   const sentinelNodeRef = useRef(null);
+  // PORT: ref stabile (in linea era nuovo a ogni render: React lo richiamava con null e poi col nodo)
+  const setSentinelNode = useCallback((node) => { sentinelRef(node); sentinelNodeRef.current = node; }, [sentinelRef]);
   const lastTabTouchRef = useRef(0);
   useStickyTabFlash(tabsScrollRef);
 
@@ -605,7 +607,7 @@ export default function Programmazione() {
 
       {/* Sentinel + Sticky tab bar (identico a Clienti) */}
       <Div
-        ref={(node) => { sentinelRef(node); sentinelNodeRef.current = node; }}
+        ref={setSentinelNode}
         style={{ height: 1, marginTop: 0, padding: 0, border: 'none' }} />
       <Div
         ref={tabsScrollRef}

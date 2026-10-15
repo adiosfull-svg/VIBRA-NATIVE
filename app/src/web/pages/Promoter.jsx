@@ -12,6 +12,7 @@ import { Plus, UserCheck, ArrowUpAZ, Clock, Move, Check, X, Sparkles, MapPin, Us
 import EmptyState from '@/web/components/shared/EmptyState';
 import PromoterFormDialog from '@/web/components/promoter/PromoterFormDialog';
 import PromoterCard from '@/web/components/promoter/PromoterCard';
+import { useMountedOnce } from '@/web/hooks/useMountedOnce';
 import PromoterCardMobile from '@/web/components/promoter/PromoterCardMobile';
 import { useIsMobile } from '@/web/hooks/use-mobile';
 import { stickyGlassStyle } from '@/legacy/utils/stickyGlass';
@@ -53,6 +54,9 @@ export default function Promoter() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [goalsPromoter, setGoalsPromoter] = useState(null);
+  // PORT: dialog montati alla prima apertura
+  const formMounted = useMountedOnce(dialogOpen);
+  const goalsMounted = useMountedOnce(!!goalsPromoter);
   const [sortMode, setSortMode] = useState('manual');
   const [manualOrder, setManualOrder] = useState(() => {
     try { return JSON.parse(webStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
@@ -138,6 +142,17 @@ export default function Promoter() {
 
   // mappa degli eventi una volta per tutte le card (PromoterCardMobile)
   const eventsMap = useMemo(() => new Map(events.map(e => [e.id, e])), [events]);
+  // PORT: presenze per promoter (stesso ordine dell'elenco completo: conta per i pareggi della deduplica):
+  // ogni card mobile scorreva tutte le presenze
+  const attsByPromoter = useMemo(() => {
+    const m = new Map();
+    for (const a of attendances) {
+      let list = m.get(a.promoter_id);
+      if (!list) { list = []; m.set(a.promoter_id, list); }
+      list.push(a);
+    }
+    return m;
+  }, [attendances]);
 
   const { data: clients = EMPTY } = useQuery({
     queryKey: ['clients'],
@@ -329,6 +344,8 @@ export default function Promoter() {
 
           <Div className="p-4">
             <TabsContent value="report">
+              {/* PORT: contenuto costruito solo con la tab attiva (anche il JSX di una tab nascosta caricava i moduli, ~100 KB) */}
+              {activeTab === 'report' && <>
               <Div className="dash-fade-up relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card/40 p-4">
                 <Div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl opacity-50"
                   style={{ background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)' }} />
@@ -338,9 +355,12 @@ export default function Promoter() {
                   events={events}
                 />
               </Div>
+              </>}
             </TabsContent>
 
             <TabsContent value="obiettivi">
+              {/* PORT: contenuto costruito solo con la tab attiva (anche il JSX di una tab nascosta caricava i moduli, ~100 KB) */}
+              {activeTab === 'obiettivi' && <>
               <Div className="dash-fade-up relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card/40 p-4 min-h-[calc(100dvh-7.5rem)]">
                 <Div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl opacity-50"
                   style={{ background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)' }} />
@@ -354,9 +374,12 @@ export default function Promoter() {
                   promoterRanks={promoterRanks}
                 />
               </Div>
+              </>}
             </TabsContent>
 
             <TabsContent value="growth">
+              {/* PORT: contenuto costruito solo con la tab attiva (anche il JSX di una tab nascosta caricava i moduli, ~100 KB) */}
+              {activeTab === 'growth' && <>
               <Div className="dash-fade-up">
                 <PromoterGrowthLeague
                   promoters={promoters}
@@ -364,9 +387,12 @@ export default function Promoter() {
                   events={events}
                 />
               </Div>
+              </>}
             </TabsContent>
 
             <TabsContent value="compare">
+              {/* PORT: contenuto costruito solo con la tab attiva (anche il JSX di una tab nascosta caricava i moduli, ~100 KB) */}
+              {activeTab === 'compare' && <>
               <Div className="dash-fade-up">
                 <PromoterCompareCharts
                   promoters={mainPromoters}
@@ -374,18 +400,24 @@ export default function Promoter() {
                   events={events}
                 />
               </Div>
+              </>}
             </TabsContent>
 
             <TabsContent value="expr">
+              {/* PORT: contenuto costruito solo con la tab attiva (anche il JSX di una tab nascosta caricava i moduli, ~100 KB) */}
+              {activeTab === 'expr' && <>
               <Div className="dash-fade-up">
                 <ExPrTab
                   attendances={attendances}
                   events={events}
                 />
               </Div>
+              </>}
             </TabsContent>
 
             <TabsContent value="mappa">
+              {/* PORT: contenuto costruito solo con la tab attiva (anche il JSX di una tab nascosta caricava i moduli, ~100 KB) */}
+              {activeTab === 'mappa' && <>
               <Div className="dash-fade-up min-h-[calc(100dvh-7.5rem)]">
                 {promoters.length > 0 ? (
                   <Div className="relative overflow-hidden rounded-2xl border border-white/[0.06]"
@@ -402,6 +434,7 @@ export default function Promoter() {
                   />
                 )}
               </Div>
+              </>}
             </TabsContent>
 
             <TabsContent value="team">
@@ -475,7 +508,7 @@ export default function Promoter() {
                                 {isMobile ? (
                                   <PromoterCardMobile
                                     promoter={p}
-                                    attendances={attendances}
+                                    attendances={attsByPromoter.get(p.id) ?? EMPTY}
                                     events={events}
                                     eventsMap={eventsMap}
                                     clients={clients}
@@ -517,7 +550,7 @@ export default function Promoter() {
                       {isMobile ? (
                         <PromoterCardMobile
                           promoter={p}
-                          attendances={attendances}
+                          attendances={attsByPromoter.get(p.id) ?? EMPTY}
                           events={events}
                           eventsMap={eventsMap}
                           clients={clients}
@@ -564,8 +597,9 @@ export default function Promoter() {
                         {isMobile ? (
                           <PromoterCardMobile
                             promoter={p}
-                            attendances={attendances}
+                            attendances={attsByPromoter.get(p.id) ?? EMPTY}
                             events={events}
+                            eventsMap={eventsMap}
                             clients={clients}
                             achievements={achievements}
                             promoterAchievements={promoterAchievements}
@@ -611,8 +645,9 @@ export default function Promoter() {
                         {isMobile ? (
                           <PromoterCardMobile
                             promoter={p}
-                            attendances={attendances}
+                            attendances={attsByPromoter.get(p.id) ?? EMPTY}
                             events={events}
+                            eventsMap={eventsMap}
                             clients={clients}
                             achievements={achievements}
                             promoterAchievements={promoterAchievements}
@@ -644,8 +679,8 @@ export default function Promoter() {
         </Div>
       </Tabs>
 
-      <PromoterFormDialog open={dialogOpen} onOpenChange={setDialogOpen} promoter={editing} onSave={handleSave} />
-      <PromoterGoalsDialog open={!!goalsPromoter} onOpenChange={o => !o && setGoalsPromoter(null)} promoter={goalsPromoter} />
+      {formMounted && <PromoterFormDialog open={dialogOpen} onOpenChange={setDialogOpen} promoter={editing} onSave={handleSave} />}
+      {goalsMounted && <PromoterGoalsDialog open={!!goalsPromoter} onOpenChange={o => !o && setGoalsPromoter(null)} promoter={goalsPromoter} />}
     </Div>
   );
 }

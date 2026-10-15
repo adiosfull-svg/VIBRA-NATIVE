@@ -1,5 +1,7 @@
 // Port di src/pages/Formazione.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { InteractionManager } from 'react-native';
+import { prefetchImages } from '@/ui/imageCache';
 import { ChevronLeft, ChevronRight, X, BookOpen, Maximize2, Grid3X3, List } from '@/ui/icons.generated';
 import { motion, AnimatePresence } from '@/ui/motion';
 import PageTitle from '@/web/components/shared/PageTitle';
@@ -98,6 +100,9 @@ const MODULE_COLORS = {
   'Timeline Annuale': '#f59e0b',
 };
 
+const THUMB_FIRST = 8;
+const THUMB_STEP = 10;
+
 export default function Formazione() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -107,6 +112,24 @@ export default function Formazione() {
 
   const displaySlides = activeModule ? SLIDES.filter(s => s.module === activeModule) : SLIDES;
   const currentSlide = displaySlides[currentIdx] || displaySlides[0];
+
+  // PORT: striscia delle miniature montata a blocchi: tutte insieme erano 58 pulsanti + 58 immagini, se ne
+  // vedono ~3,5. Prime max(8, corrente+4), il resto a app ferma; in coda un segnaposto largo quanto le
+  // mancanti (lo scorrimento non si ferma su una fine falsa); immagini delle mancanti precaricate.
+  const [thumbCount, setThumbCount] = useState(THUMB_FIRST);
+  useEffect(() => { setThumbCount(THUMB_FIRST); }, [activeModule]);
+  const shownThumbs = Math.min(displaySlides.length, Math.max(thumbCount, currentIdx + 4));
+  useEffect(() => {
+    if (shownThumbs >= displaySlides.length) return;
+    prefetchImages(displaySlides.slice(shownThumbs).map((sl) => BASE_URL + sl.file));
+    let timer = null;
+    const task = InteractionManager.runAfterInteractions(() => {
+      timer = setTimeout(() => setThumbCount((c) => Math.max(c, shownThumbs) + THUMB_STEP), 200);
+    });
+    return () => { task.cancel?.(); if (timer) clearTimeout(timer); };
+  // displaySlides è un array nuovo a ogni render: conta il modulo scelto
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shownThumbs, activeModule, displaySlides.length]);
 
   const go = useCallback((dir) => {
     setCurrentIdx(i => {
@@ -275,7 +298,7 @@ export default function Formazione() {
 
           {/* Thumbnail strip */}
           <Div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            {displaySlides.map((slide, idx) => {
+            {displaySlides.slice(0, shownThumbs).map((slide, idx) => {
               const col = MODULE_COLORS[slide.module];
               return (
                 <Btn
@@ -293,6 +316,9 @@ export default function Formazione() {
                 </Btn>
               );
             })}
+            {shownThumbs < displaySlides.length && (
+              <Div className="shrink-0" style={{ width: (displaySlides.length - shownThumbs) * 108 - 8 }} />
+            )}
           </Div>
         </Div>
       ) : (

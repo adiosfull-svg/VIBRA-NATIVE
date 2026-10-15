@@ -1,4 +1,6 @@
-import { Euro, Table2, Music2, Trophy, Crown } from 'lucide-react-native';
+// PORT: icone dallo stesso set dell'app (ui/icons.generated, lucide 0.475 come l'originale): lucide-react-native
+// caricava tutto il pacchetto (~1,6 MB, 1884 moduli) e le sue icone ignoravano className (24 px, colore sbagliato)
+import { Euro, Table2, Music2, Trophy, Crown } from '@/ui/icons.generated';
 import { InstagramIcon as Instagram } from '../../components/InstagramIcon';
 
 export const GOAL_TYPES = [

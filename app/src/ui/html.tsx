@@ -54,7 +54,15 @@ Dimensions.addEventListener('change', ({ window }) => Object.assign(cssViewport,
  * Come in CSS, testo contiguo (es. `Tutti ({n})`) forma un solo elemento: niente gap in mezzo, e il
  * testo vuoto o fatto solo di spazi non occupa posto.
  */
+const NO_CHILDREN: ReactNode[] = [];
 function wrapText(children: ReactNode): ReactNode {
+  // uscite rapide (stesso risultato di Children.toArray): niente figli, o un solo testo/numero. Non per un
+  // elemento singolo: toArray gli dà la chiave ".0" e senza si rimonterebbe passando da 1 a 2 figli.
+  if (children == null || typeof children === 'boolean') return NO_CHILDREN;
+  if (typeof children === 'string' || typeof children === 'number') {
+    const run = '' + children;
+    return run.trim() !== '' ? [<Text key="text-0">{run}</Text>] : NO_CHILDREN;
+  }
   const out: ReactNode[] = [];
   let run: string | null = null;
   const flush = () => {
@@ -635,12 +643,15 @@ function useRigidMinWidth(enabled: boolean, children: ReactNode, onLayout?: (e: 
   // dopo il disegno e in una transition (interrompibile): un aggiornamento sincrono qui (layout
   // effect) costringeva a finire in un colpo solo il montaggio a pezzi delle pagine precaricate
   // (Weekend: un blocco unico di 5,6 s sull'emulatore)
+  // PORT: da disattivo gira una volta sola (prima un effect a ogni disegno per ogni Div); da attivo a ogni
+  // disegno come prima (un discendente nuovo a testo invariato deve rimarcare la sonda)
   useEffect(() => {
     if (!enabled) return;
     lastSig.current = signature;
     const f = !!probe.current?.flexible;
     if (f !== flexible) startTransition(() => setFlexible(f));
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled ? {} : false]);
   if (!enabled) return { minStyle: null, onLayout, probe: null };
   return { minStyle: flexible ? null : RIGID_STYLE, onLayout, probe: probe.current };
 }
@@ -860,6 +871,8 @@ function DivBox(p: DivProps) {
 
 function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
   diagCount('div', className);
+  // tipo scelto al montaggio (ui/classStyleCache): vedi sotto
+  const captureMode = useRef<boolean | null>(null);
   const [handlers, props0] = splitGestureProps(all);
   // el.style.xxx = ... del codice web sul ref: istanza nativa con `style` (ui/domStyle)
   // id: sul web attributo del DOM (getElementById vero), sul telefono registrato (ui/domStyle)
@@ -959,9 +972,13 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
     </>
   );
   // telefono: classi statiche già viste → View semplice con lo stile in cache (ui/classStyleCache)
+  // Un'istanza nata come CaptureView resta CaptureView: passare a View al disegno successivo (lo stile ormai
+  // è in cache) cambiava il tipo dell'elemento e React la smontava e rimontava con tutti i figli.
   if (Platform.OS !== 'web' && Box === View) {
-    if (!boxClasses) return <View {...props} {...gestures} onLayout={min.onLayout} style={ownStyle}>{boxInner}</View>;
-    const cs = classStyle(boxClasses);
+    const cs = boxClasses ? classStyle(boxClasses) : null;
+    if (captureMode.current === null) captureMode.current = !!cs && !cs.cached && !!cs.key;
+    if (captureMode.current) return <CaptureView {...props} {...gestures} onLayout={min.onLayout} className={boxClasses || undefined} __cacheKey={cs && !cs.cached ? cs.key : null} __extraStyle={ownStyle}>{boxInner}</CaptureView>;
+    if (!cs) return <View {...props} {...gestures} onLayout={min.onLayout} style={ownStyle}>{boxInner}</View>;
     if (cs.cached) return <View {...props} {...gestures} onLayout={min.onLayout} style={[cs.style as ViewStyle, ...ownStyle]}>{boxInner}</View>;
     if (cs.key) return <CaptureView {...props} {...gestures} onLayout={min.onLayout} className={boxClasses} __cacheKey={cs.key} __extraStyle={ownStyle}>{boxInner}</CaptureView>;
   }
@@ -1031,10 +1048,26 @@ const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+
 const PRESSED: ViewStyle = { opacity: 0.85 };
 
 /** Pressable del pulsante: sul telefono, con classi statiche già viste, senza NativeWind (ui/classStyleCache). */
-function BtnPressable({ classes, ownStyle, children, ...p }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; children?: ReactNode }) {
+function BtnPressable({ classes, ownStyle: baseStyle, children, onPressIn, onPressOut, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; children?: ReactNode }) {
+  // Stato "premuto" qui e non in Btn: i figli arrivano già creati e React salta il loro ridisegno (prima ogni
+  // tocco ridisegnava due volte tutto il contenuto del pulsante). Con className, NativeWind sul web ignora
+  // uno style passato come funzione: per questo è a mano.
+  const [pressed, setPressed] = useState(false);
+  const p = {
+    ...rest,
+    onPressIn: (e: GestureResponderEvent) => { setPressed(true); onPressIn?.(e); },
+    onPressOut: (e: GestureResponderEvent) => { setPressed(false); onPressOut?.(e); },
+  };
+  const ownStyle = pressed ? [...baseStyle, PRESSED] : baseStyle;
+  // Tipo scelto al montaggio, come in DivBoxImpl: il primo pulsante di ogni stringa di classi nasceva
+  // CapturePressable e al disegno successivo (spesso setPressed in onPressIn) diventava Pressable: smontato
+  // sotto il dito, il tocco andava perso e "premuto" poteva restare acceso.
+  const captureMode = useRef<boolean | null>(null);
   if (Platform.OS !== 'web') {
-    if (!classes) return <Pressable {...p} style={ownStyle}>{children}</Pressable>;
-    const cs = classStyle(classes);
+    const cs = classes ? classStyle(classes) : null;
+    if (captureMode.current === null) captureMode.current = !!cs && !cs.cached && !!cs.key;
+    if (captureMode.current) return <CapturePressable {...p} className={classes || undefined} __cacheKey={cs && !cs.cached ? cs.key : null} __extraStyle={ownStyle}>{children}</CapturePressable>;
+    if (!cs) return <Pressable {...p} style={ownStyle}>{children}</Pressable>;
     if (cs.cached) return <Pressable {...p} style={[cs.style as ViewStyle, ...ownStyle]}>{children}</Pressable>;
     if (cs.key) return <CapturePressable {...p} className={classes} __cacheKey={cs.key} __extraStyle={ownStyle}>{children}</CapturePressable>;
   }
@@ -1089,8 +1122,6 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const min = { minStyle: strut.style ? [min0.minStyle, strut.style] : min0.minStyle, onLayout: strut.onLayout };
   // il <button> del browser centra in verticale il contenuto quando è più alto (salvo flex/grid)
   const buttonCenter = button && !CSS_FLEX.test(rest) && rnStyle?.justifyContent == null ? BUTTON_CENTER : null;
-  // Stato "premuto" a mano: con className, NativeWind sul web ignora uno style passato come funzione.
-  const [pressed, setPressed] = useState(false);
   // contesti per i figli solo se cambiano rispetto al genitore (vedi useSticky)
   const parentLead = useContext(LeadMarginContext);
   const parentProbe = useContext(MinContentProbeContext);
@@ -1116,9 +1147,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       disabled={disabled}
       onPress={handlePress}
       classes={cn(box, disabled && 'opacity-50')}
-      onPressIn={(e: GestureResponderEvent) => { setPressed(true); props.onPressIn?.(e); }}
-      onPressOut={(e: GestureResponderEvent) => { setPressed(false); props.onPressOut?.(e); }}
-      ownStyle={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle, pressed ? PRESSED : null]}
+      ownStyle={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       {content}

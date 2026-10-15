@@ -26,7 +26,7 @@ const NO_ATTENDANCES = [];
 const SerataRow = memo(function SerataRow({ event, attendances, promoters, layout, isExpanded, onToggle, onEditEvent, onDeleteEvent }) {
   useDiagWhy(`riga ${event.id}`, { event, attendances, promoters, layout, isExpanded, onToggle, onEditEvent, onDeleteEvent });
   return (
-    <Div className="serate-card-row">
+    <Div className="serate-card-row" id={`serata-${event.id}`}>
       <EventCard
         event={event}
         attendances={attendances}
@@ -52,15 +52,10 @@ import { toast } from '@/ui/use-toast';
 import { triggerStatsRecompute, refetchEventTables, writeThroughAttendances } from '@/web/lib/eventSync';
 
 import { doc as webDocument, storage as webStorage, win as webWindow } from '@/web/shims/dom';
+import { useMountedOnce } from '@/web/hooks/useMountedOnce';
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlInput, HtmlLabel, Img } from '@/ui/elements';
 
-// PORT: vero dalla prima volta che `open` è vero (poi resta montato: chiusura e riapertura come prima)
-function useMountedOnce(open) {
-  const mounted = useRef(false);
-  if (open) mounted.current = true;
-  return mounted.current;
-}
 
 const DOW_LABELS = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
 
@@ -124,10 +119,137 @@ function VenueFilterButton({ venueKey, label, sublabel, hex, isActive, hasFilter
   );
 }
 
+const NO_DIVIDERS = [];
+// default stabili delle query (SerateList è in memo); non si modificano
+const NO_DATA = [];
+
+// PORT: lista delle serate in memo, con stato di espansione, montaggio progressivo e auto-scroll propri:
+// aprire una card o aggiungere un blocco di righe non ridisegna più la testata della pagina (~100 elementi:
+// filtri dei locali, ordinamento, statistiche).
+const SerateList = memo(function SerateList({ filteredEvents, attendancesByEvent, promoters, layout, venueFilter, seasonDividersDB, onEditEvent, onDeleteEvent, dividerActions }) {
+  const [expandedEvent, setExpandedEvent] = useState(null);
+  const { count: shownEvents, sentinelRef: eventsSentinelRef } = useProgressiveList(filteredEvents.length, { initial: 10, step: 8, ahead: 1.25 });
+  const toggleExpanded = useCallback((id, expanded) => setExpandedEvent(expanded ? id : null), []);
+  const dividersByEvent = useMemo(() => {
+    const m = new Map();
+    for (const d of seasonDividersDB) {
+      let list = m.get(d.eventId);
+      if (!list) { list = []; m.set(d.eventId, list); }
+      list.push(d);
+    }
+    return m;
+  }, [seasonDividersDB]);
+
+  // Auto-scroll al tile espanso: centra la serata appena aperta così i
+  // risultati (lista promoter) sono immediatamente visibili a schermo.
+  // Su desktop la posizioniamo un po' più in basso (centrata) invece che
+  // attaccata al top, così l'header del tile resta comodo e il contenuto
+  // espanso è subito leggibile. Su mobile resta allineata in cima.
+  useEffect(() => {
+    if (!expandedEvent) return;
+    // PORT: sul telefono querySelector non trova nulla; la riga si registra con id (SerataRow)
+    const el = webDocument.getElementById(`serata-${expandedEvent}`) || webDocument.querySelector(`[data-event-id="${expandedEvent}"]`);
+    if (!el) return;
+    const t = setTimeout(() => {
+      const isDesktop = webWindow.innerWidth >= 1024;
+      el.scrollIntoView({ behavior: 'smooth', block: isDesktop ? 'center' : 'start' });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [expandedEvent]);
+
+  return (
+    <>
+      <Div
+        className={`dash-fade-up ${layout === 'mini' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2' : layout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-3'}`}
+      >
+          {/* PORT: montaggio progressivo (hooks/useProgressiveList): prime 10 serate, le altre a blocchi */}
+          {filteredEvents.slice(0, shownEvents).map((event) => {
+            const isExpanded = expandedEvent === event.id;
+            const eventDividers = !venueFilter ? (dividersByEvent.get(event.id) || NO_DIVIDERS) : NO_DIVIDERS;
+            return (
+              <React.Fragment key={event.id}>
+                {eventDividers.map(divider => {
+                  const currentIdx = filteredEvents.findIndex(e => e.id === divider.eventId);
+                  const dividerControls = (
+                    <>
+                      <Btn
+                        button
+                        onClick={() => dividerActions.current.move(divider.id, -10)}
+                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
+                        disabled={currentIdx <= 0}
+                        accessibilityLabel="Su di 10">↑↑</Btn>
+                      <Btn
+                        button
+                        onClick={() => dividerActions.current.move(divider.id, -1)}
+                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
+                        disabled={currentIdx <= 0}
+                        accessibilityLabel="Su">↑</Btn>
+                      <Btn
+                        button
+                        onClick={() => dividerActions.current.move(divider.id, 1)}
+                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
+                        disabled={currentIdx >= filteredEvents.length - 1}
+                        accessibilityLabel="Giù">↓</Btn>
+                      <Btn
+                        button
+                        onClick={() => dividerActions.current.move(divider.id, 10)}
+                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
+                        disabled={currentIdx >= filteredEvents.length - 1}
+                        accessibilityLabel="Giù di 10">↓↓</Btn>
+                      <Btn
+                        button
+                        onClick={() => dividerActions.current.edit(divider)}
+                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
+                        accessibilityLabel="Modifica">✎</Btn>
+                      <Btn
+                        button
+                        onClick={() => dividerActions.current.remove(divider.id)}
+                        className="text-[10px] px-1.5 py-0.5 rounded text-destructive hover:bg-destructive/20"
+                        accessibilityLabel="Elimina">✕</Btn>
+                    </>
+                  );
+                  return (
+                    <EventCard
+                      key={`divider-${divider.id}`}
+                      event={event}
+                      attendances={attendancesByEvent[event.id] || []}
+                      promoters={promoters}
+                      layout={layout}
+                      isExpanded={false}
+                      onToggleExpand={() => {}}
+                      onEdit={() => {}}
+                      onDelete={() => {}}
+                      showDivider={true}
+                      dividerLabel={divider.label}
+                      dividerColor={divider.color}
+                      dividerControls={dividerControls}
+                      dividerOnly={true}
+                    />
+                  );
+                })}
+                {/* PORT: riga in memo con callback stabili (aprire una card non ridisegna le altre) */}
+                <SerataRow
+                  event={event}
+                  attendances={attendancesByEvent[event.id] || NO_ATTENDANCES}
+                  promoters={promoters}
+                  layout={layout}
+                  isExpanded={isExpanded}
+                  onToggle={toggleExpanded}
+                  onEditEvent={onEditEvent}
+                  onDeleteEvent={onDeleteEvent}
+                />
+              </React.Fragment>
+            );
+          })}
+      </Div>
+      {shownEvents < filteredEvents.length && <Div ref={eventsSentinelRef} />}
+    </>
+  );
+});
+
 export default function Serate() {
    const [eventDialogOpen, setEventDialogOpen] = useState(false);
    const [editingEvent, setEditingEvent] = useState(null);
-   const [expandedEvent, setExpandedEvent] = useState(null);
    const [deleteId, setDeleteId] = useState(null);
    const [venueFilter, setVenueFilter] = useState(null);
    const [compareOpen, setCompareOpen] = useState(false);
@@ -156,23 +278,8 @@ export default function Serate() {
      webStorage.setItem('serateLayout', layout);
    }, [layout]);
 
-   // Auto-scroll al tile espanso: centra la serata appena aperta così i
-   // risultati (lista promoter) sono immediatamente visibili a schermo.
-   // Su desktop la posizioniamo un po' più in basso (centrata) invece che
-   // attaccata al top, così l'header del tile resta comodo e il contenuto
-   // espanso è subito leggibile. Su mobile resta allineata in cima.
-   useEffect(() => {
-     if (!expandedEvent) return;
-     const el = webDocument.querySelector(`[data-event-id="${expandedEvent}"]`);
-     if (!el) return;
-     const t = setTimeout(() => {
-       const isDesktop = webWindow.innerWidth >= 1024;
-       el.scrollIntoView({ behavior: 'smooth', block: isDesktop ? 'center' : 'start' });
-     }, 120);
-     return () => clearTimeout(t);
-   }, [expandedEvent]);
 
-  const { data: events = [] } = useQuery({
+  const { data: events = NO_DATA } = useQuery({
     queryKey: ['events'],
     queryFn: () => base44.entities.Event.list('-date', 5000),
     staleTime: 10 * 60000,
@@ -182,14 +289,14 @@ export default function Serate() {
     retry: 1,
   });
 
-  const { data: attendances = [] } = useQuery({
+  const { data: attendances = NO_DATA } = useQuery({
     ...attendancesAllOptions(),
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 1,
   });
 
-  const { data: promoters = [] } = useQuery({
+  const { data: promoters = NO_DATA } = useQuery({
     queryKey: ['promoters'],
     queryFn: () => base44.entities.Promoter.list(),
     staleTime: 10 * 60000,
@@ -250,7 +357,7 @@ export default function Serate() {
     return map;
   }, [attendances]);
 
-  const { data: seasonDividersDB = [] } = useQuery({
+  const { data: seasonDividersDB = NO_DATA } = useQuery({
     queryKey: ['seasonDividers'],
     queryFn: () => base44.entities.SeasonDivider.list(),
     staleTime: 10 * 60000,
@@ -485,10 +592,9 @@ export default function Serate() {
   }, [venueFiltered, searchQuery]);
   // PORT: lista lunga → montaggio progressivo (sul telefono entrano ~5 righe: 10 subito, poi 8 alla volta
   // a un quarto di schermo dalla fine); callback stabili per le righe in memo
-  const { count: shownEvents, sentinelRef: eventsSentinelRef } = useProgressiveList(filteredEvents.length, { initial: 10, step: 8, ahead: 1.25 });
-  const toggleExpanded = useCallback((id, expanded) => setExpandedEvent(expanded ? id : null), []);
-  useDiagWhy('Serate', { events, attendances, promoters, venuesRaw, seasonDividersDB, shownEvents, layout, filteredEvents, attendancesByEvent, qc, navigate });
+  useDiagWhy('Serate', { events, attendances, promoters, venuesRaw, seasonDividersDB, layout, filteredEvents, attendancesByEvent, qc, navigate });
   const openEditEvent = useCallback((ev) => { setEditingEvent(ev); setEventDialogOpen(true); }, []);
+  const dividerActions = useRef(null);
 
   const handleAddDivider = () => {
     let targetEventId = null;
@@ -515,6 +621,13 @@ export default function Serate() {
     const currentIdx = filteredEvents.findIndex(e => e.id === divider.eventId);
     const newIdx = Math.max(0, Math.min(filteredEvents.length - 1, currentIdx + direction));
     updateDividerMut.mutate({ id: dividerId, data: { eventId: filteredEvents[newIdx].id } });
+  };
+
+  // PORT: azioni dei separatori lette dalla lista in memo (ultimo valore in un ref stabile)
+  dividerActions.current = {
+    move: handleMoveDivider,
+    remove: handleRemoveDivider,
+    edit: (divider) => { setEditingDividerId(divider.id); setDividerLabel(divider.label); setDividerColor(divider.color); setEditDividerOpen(true); },
   };
 
   const handleSaveEditDivider = (dividerId, label, color) => {
@@ -763,91 +876,19 @@ export default function Serate() {
           actionLabel="Aggiungi Serata"
         />
       ) : (
-        <Div
-          className={`dash-fade-up ${layout === 'mini' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2' : layout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'space-y-3'}`}
-        >
-          {/* PORT: montaggio progressivo (hooks/useProgressiveList): prime 10 serate, le altre a blocchi */}
-          {filteredEvents.slice(0, shownEvents).map((event) => {
-            const isExpanded = expandedEvent === event.id;
-            const eventDividers = !venueFilter ? seasonDividersDB.filter(d => d.eventId === event.id) : [];
-            return (
-              <React.Fragment key={event.id}>
-                {eventDividers.map(divider => {
-                  const currentIdx = filteredEvents.findIndex(e => e.id === divider.eventId);
-                  const dividerControls = (
-                    <>
-                      <Btn
-                        button
-                        onClick={() => handleMoveDivider(divider.id, -10)}
-                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
-                        disabled={currentIdx <= 0}
-                        accessibilityLabel="Su di 10">↑↑</Btn>
-                      <Btn
-                        button
-                        onClick={() => handleMoveDivider(divider.id, -1)}
-                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
-                        disabled={currentIdx <= 0}
-                        accessibilityLabel="Su">↑</Btn>
-                      <Btn
-                        button
-                        onClick={() => handleMoveDivider(divider.id, 1)}
-                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
-                        disabled={currentIdx >= filteredEvents.length - 1}
-                        accessibilityLabel="Giù">↓</Btn>
-                      <Btn
-                        button
-                        onClick={() => handleMoveDivider(divider.id, 10)}
-                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
-                        disabled={currentIdx >= filteredEvents.length - 1}
-                        accessibilityLabel="Giù di 10">↓↓</Btn>
-                      <Btn
-                        button
-                        onClick={() => { setEditingDividerId(divider.id); setDividerLabel(divider.label); setDividerColor(divider.color); setEditDividerOpen(true); }}
-                        className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground hover:bg-secondary/50"
-                        accessibilityLabel="Modifica">✎</Btn>
-                      <Btn
-                        button
-                        onClick={() => handleRemoveDivider(divider.id)}
-                        className="text-[10px] px-1.5 py-0.5 rounded text-destructive hover:bg-destructive/20"
-                        accessibilityLabel="Elimina">✕</Btn>
-                    </>
-                  );
-                  return (
-                    <EventCard
-                      key={`divider-${divider.id}`}
-                      event={event}
-                      attendances={attendancesByEvent[event.id] || []}
-                      promoters={promoters}
-                      layout={layout}
-                      isExpanded={false}
-                      onToggleExpand={() => {}}
-                      onEdit={() => {}}
-                      onDelete={() => {}}
-                      showDivider={true}
-                      dividerLabel={divider.label}
-                      dividerColor={divider.color}
-                      dividerControls={dividerControls}
-                      dividerOnly={true}
-                    />
-                  );
-                })}
-                {/* PORT: riga in memo con callback stabili (aprire una card non ridisegna le altre) */}
-                <SerataRow
-                  event={event}
-                  attendances={attendancesByEvent[event.id] || NO_ATTENDANCES}
-                  promoters={promoters}
-                  layout={layout}
-                  isExpanded={isExpanded}
-                  onToggle={toggleExpanded}
-                  onEditEvent={openEditEvent}
-                  onDeleteEvent={setDeleteId}
-                />
-              </React.Fragment>
-            );
-          })}
-        </Div>
+        // PORT: lista in un componente in memo (espansioni e blocchi della lista non ridisegnano la testata)
+        <SerateList
+          filteredEvents={filteredEvents}
+          attendancesByEvent={attendancesByEvent}
+          promoters={promoters}
+          layout={layout}
+          venueFilter={venueFilter}
+          seasonDividersDB={seasonDividersDB}
+          onEditEvent={openEditEvent}
+          onDeleteEvent={setDeleteId}
+          dividerActions={dividerActions}
+        />
       )}
-      {shownEvents < filteredEvents.length && <Div ref={eventsSentinelRef} />}
 
       {/* PORT: dialog montati dalla prima apertura (chiusi caricavano comunque modulo, form e query) */}
       {formMounted && <Suspense fallback={null}><EventFormDialog open={eventDialogOpen} onOpenChange={setEventDialogOpen} event={editingEvent} onSave={handleSaveEvent} /></Suspense>}

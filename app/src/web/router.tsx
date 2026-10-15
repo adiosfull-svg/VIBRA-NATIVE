@@ -7,10 +7,12 @@ import { Btn } from '../ui/html';
 
 type NavigateOpts = { replace?: boolean; state?: unknown };
 
-// Tab della barra in basso: ci si "torna" sempre con `navigate` (riprende il navigatore delle tab già
-// montato, con le pagine precaricate, e cambia tab). Con `push`/`replace` verso una tab da una pagina dello
-// stack expo-router creava un SECONDO navigatore delle tab sulla pila: Dashboard e Clienti rimontate da zero
-// a ogni apertura (1,2-1,4 s), 5 tab precaricate due volte in memoria (~600 MB).
+// Tab della barra in basso. Da una pagina dello stack `push`/`replace` e anche `navigate` verso una tab
+// accodano un SECONDO navigatore delle tab sulla pila (StackClient riusa la route solo se è la corrente o
+// con pop): Dashboard e Clienti rimontate da zero (1,2-1,4 s), tab precaricate due volte in memoria.
+// `dismissTo` (POP_TO) torna al navigatore esistente e cambia tab, ma toglie le pagine sopra: si usa quando
+// si chiede `replace` (sidebar, come il Link replace dell'originale). Il tocco semplice sulla barra resta
+// `navigate`, per avere Indietro come nell'originale (push nella cronologia).
 const TAB_PATHS = new Set(['/', '/dashboard', '/clienti', '/programmazione', '/semine', '/il-mio-vibra']);
 const pathOf = (href: string) => (href.split(/[?#]/)[0].replace(/\/+$/, '') || '/');
 
@@ -23,7 +25,11 @@ function navigate(to: string | number, opts?: NavigateOpts) {
   }
   // /dashboard è l'indirizzo dell'originale per la tab "/" (app/(app)/dashboard.tsx fa lo stesso dai link esterni)
   if (pathOf(to) === '/dashboard') to = to.replace(/^\/dashboard/, '/').replace(/^\/\//, '/');
-  if (TAB_PATHS.has(pathOf(to))) { router.navigate(to as Href); return; }
+  if (TAB_PATHS.has(pathOf(to))) {
+    if (opts?.replace && !TAB_PATHS.has(pathOf(currentLoc.pathname))) router.dismissTo(to as Href);
+    else router.navigate(to as Href);
+    return;
+  }
   // replace (sidebar e ricerca: niente cronologia che si accumula, come nel browser) solo da una pagina
   // dello stack: da una tab sostituirebbe il navigatore delle tab stesso (tutte le pagine precaricate
   // smontate, e nessun "indietro")

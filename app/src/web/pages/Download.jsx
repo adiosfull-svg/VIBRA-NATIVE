@@ -1,5 +1,8 @@
 // Port di src/pages/Download.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
+import { useMountedOnce } from '@/web/hooks/useMountedOnce';
+import { prefetchImages } from '@/ui/imageCache';
 import { makeTapHandlers } from '@/web/lib/tapHandlers';
 import { Download, FolderOpen, FileText, Plus, Trash2, Share2 } from '@/ui/icons.generated';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,15 +17,17 @@ import { doc as webDocument } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Img } from '@/ui/elements';
 
+const previewOf = (item) => (item.file_url
+  ? (item.file_type === 'img' ? item.file_url : null)
+  : item.preview);
+
 function FileCard({ item, isAdmin, onDelete }) {
   const isPdf = item.type === 'file';
   // Supporta sia items statici (file relativo) che items da DB (file_url assoluto)
   const downloadUrl = item.file_url
     ? item.file_url
     : isPdf ? (BASE_FILE + item.file) : (BASE_IMG + item.file);
-  const previewUrl = item.file_url
-    ? (item.file_type === 'img' ? item.file_url : null)
-    : item.preview;
+  const previewUrl = previewOf(item);
 
   const handleDownload = () => {
     const link = webDocument.createElement('a');
@@ -133,6 +138,17 @@ export default function DownloadPage() {
   const totalFiles = allSections.reduce((acc, s) => acc + s.items.length, 0);
   const visibleSections = activeSection ? allSections.filter(s => s.id === activeSection) : allSections;
 
+  // PORT: card montate a blocchi su tutte le sezioni (prima tutte insieme), a app ferma si completano; le
+  // anteprime delle card non ancora montate si precaricano. I contatori restano sui dati.
+  const totalItems = visibleSections.reduce((n, sec) => n + sec.items.length, 0);
+  const { count: shownItems, sentinelRef: itemsSentinelRef } = useProgressiveList(totalItems, { initial: 10, step: 10, idleStep: 10 });
+  const pendingPreviews = shownItems < totalItems
+    ? visibleSections.flatMap((sec) => sec.items).slice(shownItems).map(previewOf).filter(Boolean).join('\n')
+    : '';
+  useEffect(() => { if (pendingPreviews) prefetchImages(pendingPreviews.split('\n')); }, [pendingPreviews]);
+  const uploadMounted = useMountedOnce(uploadOpen);
+  let budget = shownItems;
+
   const handleDelete = async (id) => {
     await base44.entities.DownloadItem.delete(id);
     qc.invalidateQueries({ queryKey: ['download-items'] });
@@ -190,7 +206,7 @@ export default function DownloadPage() {
             <Span className="text-xs text-muted-foreground">({section.items.length} file)</Span>
           </Div>
           <Div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {section.items.map((item, idx) => (
+            {section.items.slice(0, Math.max(0, budget)).map((item, idx) => (
               <FileCard
                 key={item.id || idx}
                 item={item}
@@ -198,16 +214,18 @@ export default function DownloadPage() {
                 onDelete={item.id ? () => handleDelete(item.id) : null}
               />
             ))}
+            {(() => { budget -= section.items.length; return null; })()}
           </Div>
         </Div>
       ))}
+      {shownItems < totalItems && <Div ref={itemsSentinelRef} />}
 
-      <UploadMaterialDialog
+      {uploadMounted && <UploadMaterialDialog
         open={uploadOpen}
         onOpenChange={setUploadOpen}
         customSections={customSections}
         onSaved={() => qc.invalidateQueries({ queryKey: ['download-items'] })}
-      />
+      />}
     </Div>
   );
 }

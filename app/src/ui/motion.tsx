@@ -54,11 +54,16 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
   const from = numeric(rawFrom);
   const to = numeric(rawTo);
   const values = useRef<Record<string, Animated.Value>>({}).current;
+  // ultimo valore di arrivo per chiave (all'inizio, quello di partenza): verso lo stesso valore niente
+  // animazione (es. la barra di Formazione con width già uguale faceva 300 ms di animazione sul JS)
+  const lastTarget = useRef<Record<string, number>>({}).current;
   for (const k of KEYS) {
     if (!values[k]) {
       const start = initial === false ? (Array.isArray(to?.[k]) ? to![k].at(-1) : to?.[k]) : from?.[k];
       const first = Array.isArray(to?.[k]) ? to![k][0] : undefined;
-      values[k] = new Animated.Value(typeof start === 'number' ? start : typeof first === 'number' ? first : DEFAULTS[k]);
+      const v0 = typeof start === 'number' ? start : typeof first === 'number' ? first : DEFAULTS[k];
+      values[k] = new Animated.Value(v0);
+      lastTarget[k] = v0;
     }
   }
   // dimensioni: l'unità la decide il valore di arrivo (0 → '45%' parte da 0%)
@@ -67,6 +72,7 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
     if (!values[k]) {
       const start = initial === false ? null : sizeOf(from?.[k]);
       values[k] = new Animated.Value(start ? start.n : sizeOf(to![k])!.n);
+      lastTarget[k] = start ? start.n : sizeOf(to![k])!.n;
     }
   }
   // width/height non vanno col driver nativo: allora niente driver nativo per tutto l'elemento
@@ -78,18 +84,24 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
     const delay = (transition?.delay ?? 0) * 1000;
     // valori non numerici (es. 'auto') non si animano: l'elemento resta com'è
     const ok = (v: unknown) => (Array.isArray(v) ? v.every((n) => typeof n === 'number') : Number.isFinite(Number(v)));
-    const anims = KEYS.filter((k) => to[k] !== undefined && ok(to[k])).map((k) => {
+    // keyframe sempre; le altre chiavi solo se l'arrivo cambia
+    const anims = KEYS.filter((k) => to[k] !== undefined && ok(to[k]) && (Array.isArray(to[k]) || Number(to[k]) !== lastTarget[k])).map((k) => {
       const v = to[k];
       if (Array.isArray(v)) {
         const step = duration / Math.max(1, v.length - 1);
         const seq = Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
         return transition?.repeat === Infinity ? Animated.loop(seq) : seq;
       }
+      lastTarget[k] = Number(v);
       return Animated.timing(values[k], { toValue: Number(v), duration, delay, easing: easing(transition?.ease), useNativeDriver: nativeDriver });
     });
     for (const k of sizes) {
-      anims.push(Animated.timing(values[k], { toValue: sizeOf(to[k])!.n, duration, delay, easing: easing(transition?.ease), useNativeDriver: false }));
+      const n = sizeOf(to[k])!.n;
+      if (n === lastTarget[k]) continue;
+      lastTarget[k] = n;
+      anims.push(Animated.timing(values[k], { toValue: n, duration, delay, easing: easing(transition?.ease), useNativeDriver: false }));
     }
+    if (!anims.length) return;
     const all = Animated.parallel(anims);
     all.start();
     return () => all.stop();

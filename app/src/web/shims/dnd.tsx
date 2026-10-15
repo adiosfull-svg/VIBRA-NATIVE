@@ -5,7 +5,7 @@
 // { draggableId, type, source: { droppableId, index }, destination: { droppableId, index } } come nell'originale.
 // Il trascinamento si prende il tocco (onMoveShouldSetResponderCapture): la pagina non scorre.
 // Un tocco breve resta un tap (apre la nota).
-import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { View } from 'react-native';
 
 type DropResult = {
@@ -48,6 +48,8 @@ const measure = (node: View | null) => new Promise<Rect | null>((resolve) => {
 
 type TouchEv = { touches?: { clientX: number; clientY: number }[]; changedTouches?: { clientX: number; clientY: number }[] };
 
+const IDLE_STYLE = {};
+
 export function Draggable({ draggableId, index, isDragDisabled, children }: {
   draggableId: string; index: number; isDragDisabled?: boolean;
   children: (provided: { innerRef: (n: View | null) => void; draggableProps: object; dragHandleProps: object | null }, snapshot: { isDragging: boolean }) => ReactNode;
@@ -58,6 +60,12 @@ export function Draggable({ draggableId, index, isDragDisabled, children }: {
   const s = useRef({ x: 0, y: 0, armed: false, timer: null as ReturnType<typeof setTimeout> | null, rects: null as null | Promise<[string, Item, Rect | null][]> });
 
   if (drop) drop.items.set(draggableId, { index, node: drop.items.get(draggableId)?.node ?? null });
+  // PORT: handlers, innerRef e stile a riposo con identità stabile (leggono indice e id da ref): prima erano
+  // nuovi a ogni render e rompevano il memo dei figli (PromoterCardMobile riceve dragHandleProps)
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  const idRef = useRef(draggableId);
+  idRef.current = draggableId;
 
   const cancel = () => {
     if (s.current.timer) clearTimeout(s.current.timer);
@@ -68,7 +76,7 @@ export function Draggable({ draggableId, index, isDragDisabled, children }: {
 
   const point = (e: TouchEv) => (e.touches?.[0] ?? e.changedTouches?.[0]);
 
-  const handlers = isDragDisabled || !drop || !ctx ? null : {
+  const handlers = useMemo(() => isDragDisabled || !drop || !ctx ? null : {
     onTouchStart: (e: TouchEv) => {
       const p = point(e);
       if (!p) return;
@@ -109,8 +117,8 @@ export function Draggable({ draggableId, index, isDragDisabled, children }: {
           if (!best || d < best.d) best = { index: it.index, d };
         }
         ctx.onDragEnd({
-          draggableId, type: drop.type,
-          source: { droppableId: drop.id, index },
+          draggableId: idRef.current, type: drop.type,
+          source: { droppableId: drop.id, index: indexRef.current },
           destination: best ? { droppableId: drop.id, index: best.index } : null,
         });
       });
@@ -119,12 +127,14 @@ export function Draggable({ draggableId, index, isDragDisabled, children }: {
     // durante il trascinamento il tocco è nostro: la pagina non scorre e il tap non parte
     onMoveShouldSetResponderCapture: () => s.current.armed,
     onResponderTerminationRequest: () => !s.current.armed,
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragDisabled, drop, ctx]);
+  const innerRef = useCallback((n: View | null) => { if (drop) drop.items.set(idRef.current, { index: indexRef.current, node: n }); }, [drop]);
 
   const provided = {
-    innerRef: (n: View | null) => { if (drop) drop.items.set(draggableId, { index, node: n }); },
+    innerRef,
     draggableProps: {
-      style: drag ? { transform: [{ translateX: drag.dx }, { translateY: drag.dy }], zIndex: 50 } : {},
+      style: drag ? { transform: [{ translateX: drag.dx }, { translateY: drag.dy }], zIndex: 50 } : IDLE_STYLE,
     },
     dragHandleProps: handlers,
   };

@@ -61,6 +61,7 @@ import { useOverlay } from '@/web/lib/overlayStackContext';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
+import { useMountedOnce } from '@/web/hooks/useMountedOnce';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
 
@@ -92,15 +93,6 @@ const EMPTY_GROUPS = [];
 const EMPTY_ATTS = [];
 const EMPTY_STATS = { visits: 0, fri: 0, sat: 0, sun: 0, extra: 0, totalSpent: 0, avgSpent: 0, attendances: EMPTY_ATTS, rating: null };
 
-// Funzione con identità stabile che chiama sempre l'ultima versione (gestori passati nel contesto della
-// selezione multipla: senza, il valore del contesto era nuovo a ogni render e ridisegnava i ~10 consumatori).
-// Vero dalla prima volta che `open` è vero, poi resta: dialog montati alla prima apertura (si inizializzano
-// negli effect, che girano anche al montaggio con open=true) e tenuti per le aperture successive.
-function useMountedOnce(open) {
-  const mounted = useRef(false);
-  if (open) mounted.current = true;
-  return mounted.current;
-}
 
 function useStableHandler(fn) {
   const ref = useRef(fn);
@@ -422,6 +414,8 @@ export default function Clienti() {
   const activeButtonRef = useRef(null);
   const [sentinelRef, stuck] = useStickySentinel();
   const sentinelNodeRef = useRef(null);
+  // PORT: ref stabile (in linea era nuovo a ogni render: React lo richiamava con null e poi col nodo)
+  const setSentinelNode = useCallback((node) => { sentinelRef(node); sentinelNodeRef.current = node; }, [sentinelRef]);
   const lastTabTouchRef = useRef(0);
 
   useStickyTabFlash(tabsScrollRef);
@@ -1331,10 +1325,7 @@ export default function Clienti() {
 
       {/* Tab bar */}
       <Div
-        ref={(node) => {
-          sentinelRef(node);
-          sentinelNodeRef.current = node;
-        }}
+        ref={setSentinelNode}
         style={{
           height: 1,
           marginTop: 0,

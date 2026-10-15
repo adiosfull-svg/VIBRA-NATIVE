@@ -1,6 +1,6 @@
 // Port di src/pages/Locali.jsx (convertito da scripts/port/codemod.mjs).
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation } from '@/web/router';
 import { makeTapHandlers } from '@/web/lib/tapHandlers';
 import { useQuery } from '@tanstack/react-query';
@@ -39,6 +39,9 @@ const TABS = [
   { key: 'analytics', label: 'Analitica' },
 ];
 
+// PORT: default stabili delle query (VenueCard è in memo)
+const EMPTY = [];
+
 export default function Locali() {
   const location = useLocation();
   const venueParam = new URLSearchParams(location.search).get('venue');
@@ -76,7 +79,7 @@ export default function Locali() {
     webWindow.scrollTo(0, stuck ? stickyTopRef.current : 0);
   };
 
-  const { data: venuesRaw = [] } = useQuery({
+  const { data: venuesRaw = EMPTY } = useQuery({
     queryKey: ['venues'],
     queryFn: () => base44.entities.Venue.list('sort_order'),
     staleTime: 10 * 60000,
@@ -84,9 +87,10 @@ export default function Locali() {
     refetchOnWindowFocus: false,
     retry: 1,
   });
-  const venues = venuesRaw.map(toDisplayVenue);
+  // PORT: oggetti stabili (VenueCard è in memo)
+  const venues = useMemo(() => venuesRaw.map(toDisplayVenue), [venuesRaw]);
 
-  const { data: events = [] } = useQuery({
+  const { data: events = EMPTY } = useQuery({
     queryKey: ['events'],
     queryFn: () => base44.entities.Event.list('-date', 5000),
     staleTime: 10 * 60000,
@@ -94,13 +98,13 @@ export default function Locali() {
     refetchOnWindowFocus: false,
     retry: 1,
   });
-  const { data: attendances = [] } = useQuery({
+  const { data: attendances = EMPTY } = useQuery({
     queryKey: ['attendances-all'], staleTime: STALE_FULL_TABLE, gcTime: GC_FULL_TABLE,
     queryFn: () => fetchAll(base44.entities.EventAttendance, {}, { sort: '-created_date' }),
     refetchOnWindowFocus: false,
     retry: 1,
   });
-  const { data: promoters = [] } = useQuery({
+  const { data: promoters = EMPTY } = useQuery({
     queryKey: ['promoters'],
     queryFn: () => base44.entities.Promoter.list(),
     staleTime: 10 * 60000,

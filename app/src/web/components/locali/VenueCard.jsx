@@ -1,5 +1,5 @@
 // Port di src/components/locali/VenueCard.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, memo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, subMonths } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -15,9 +15,27 @@ import { url as webURL } from '@/web/shims/dom';
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlInput, Img } from '@/ui/elements';
 
-function getEventRev(ev, attendances) {
+// PORT: presenze raggruppate per serata una volta per elenco (condiviso da tutte le card, nell'ordine
+// originale): prima ogni card filtrava tutte le presenze per ogni sua serata (serate × presenze) a ogni render
+const attsByEventCache = new WeakMap();
+const NO_ATTS = [];
+function attendancesByEvent(attendances) {
+  let m = attsByEventCache.get(attendances);
+  if (!m) {
+    m = new Map();
+    for (const a of attendances) {
+      let list = m.get(a.event_id);
+      if (!list) { list = []; m.set(a.event_id, list); }
+      list.push(a);
+    }
+    attsByEventCache.set(attendances, m);
+  }
+  return m;
+}
+
+function getEventRev(ev, byEvent) {
   if (ev.total_revenue) return ev.total_revenue;
-  return attendances.filter(a => a.event_id === ev.id).reduce((s, a) => s + (a.revenue || 0), 0);
+  return (byEvent.get(ev.id) || NO_ATTS).reduce((s, a) => s + (a.revenue || 0), 0);
 }
 
 
@@ -214,7 +232,7 @@ function LogoEditDialog({ open, onClose, venueKey, currentLogoUrl, onConfirm, up
   );
 }
 
-export default function VenueCard({ venue, events, attendances, promoters, defaultExpanded = false }) {
+function VenueCard({ venue, events, attendances, promoters, defaultExpanded = false }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -240,6 +258,9 @@ export default function VenueCard({ venue, events, attendances, promoters, defau
     setUploading(false);
   };
 
+  // PORT: derivati in useMemo (stessi numeri, stessi pareggi nei top: ordine di inserimento invariato)
+  const { venueEvents, totalSerate, enrichedEvents, totalRevenue, avgRevenue, totalTables, avgTables, maxRevenue, top10Revenue, top10Tables, recentEvents, topPromoters } = useMemo(() => {
+  const byEvent = attendancesByEvent(attendances);
   const venueEvents = getVenueEvents(venue, events).sort((a, b) =>
     (b.date || '').localeCompare(a.date || '')
   );
@@ -247,7 +268,7 @@ export default function VenueCard({ venue, events, attendances, promoters, defau
   const totalSerate = venueEvents.length;
 
   const enrichedEvents = venueEvents.map(ev => {
-    const rev = getEventRev(ev, attendances);
+    const rev = getEventRev(ev, byEvent);
     const dow = getEventDow(ev);
     const tables = calcTables(rev, dow, ev.table_threshold);
     return { ...ev, _rev: rev, _tables: tables };
@@ -265,7 +286,8 @@ export default function VenueCard({ venue, events, attendances, promoters, defau
 
   const promoterRevMap = {};
   venueEvents.forEach(ev => {
-    attendances.filter(a => a.event_id === ev.id && a.promoter_id).forEach(a => {
+    (byEvent.get(ev.id) || NO_ATTS).forEach(a => {
+      if (!a.promoter_id) return;
       promoterRevMap[a.promoter_id] = (promoterRevMap[a.promoter_id] || 0) + (a.revenue || 0);
     });
   });
@@ -274,6 +296,8 @@ export default function VenueCard({ venue, events, attendances, promoters, defau
     .slice(0, 5)
     .map(([pid, rev]) => ({ promoter: promoters.find(p => p.id === pid), revenue: rev }))
     .filter(r => r.promoter);
+  return { venueEvents, totalSerate, enrichedEvents, totalRevenue, avgRevenue, totalTables, avgTables, maxRevenue, top10Revenue, top10Tables, recentEvents, topPromoters };
+  }, [venue, events, attendances, promoters]);
 
   const venueName = venue.is_extra ? 'Extra / Festivi' : venue.name;
 
@@ -526,3 +550,6 @@ export default function VenueCard({ venue, events, attendances, promoters, defau
     </Btn>
   );
 }
+
+// PORT: in memo (Locali passa venue e dati stabili)
+export default memo(VenueCard);
