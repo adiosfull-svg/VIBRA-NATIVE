@@ -17,12 +17,13 @@ import { HtmlInput, Img } from '@/ui/elements';
 
 // PORT: presenze raggruppate per serata una volta per elenco (condiviso da tutte le card, nell'ordine
 // originale): prima ogni card filtrava tutte le presenze per ogni sua serata (serate × presenze) a ogni render
+// (globalThis.Map: in questo file `Map` è l'icona importata da icons.generated)
 const attsByEventCache = new WeakMap();
 const NO_ATTS = [];
 function attendancesByEvent(attendances) {
   let m = attsByEventCache.get(attendances);
   if (!m) {
-    m = new Map();
+    m = new globalThis.Map();
     for (const a of attendances) {
       let list = m.get(a.event_id);
       if (!list) { list = []; m.set(a.event_id, list); }
