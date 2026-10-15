@@ -12,7 +12,7 @@ import { useStickyTabScroll } from '@/web/hooks/useStickyTabScroll';
 import { stickyGlassStyle } from '@/legacy/utils/stickyGlass';
 import { useStickyTabFlash } from '@/web/hooks/useStickyTabFlash';
 import { useSetStickyHeader } from '@/web/lib/stickyHeaderContext';
-import { makeTapHandlers } from '@/web/lib/tapHandlers';
+import SubTabButtons from '@/web/components/shared/SubTabButtons';
 import { useAuth } from '@/lib/auth';
 import { useViewAsPromoter } from '@/lib/viewAs';
 import { prefetchAchievementsData, prefetchTeamData } from '@/web/lib/prefetchCoreData';
@@ -56,6 +56,11 @@ export default function IlMioVibra() {
   const { canAccessIlMioVibra } = useRoleAccess();
   const { user } = useAuth();
   const { effectivePromoterId } = useViewAsPromoter();
+  // PORT: prefetch alla pressione di una tab (stabile: SubTabButtons in memo)
+  const prefetchForTab = useCallback((key) => (
+    key === 'achievements' || key === 'vibravs' ? () => prefetchAchievementsData(effectivePromoterId)
+      : key === 'accordi' ? () => prefetchTeamData(effectivePromoterId) : undefined
+  ), [effectivePromoterId]);
 
   // Carica tutti i settings. Niente refetchInterval: il polling ogni 60s
   // causava traffico continuo su mobile. staleTime 5min (default globale) basta.
@@ -72,7 +77,6 @@ export default function IlMioVibra() {
   const tabsScrollRef = useRef(null);
   const scrollRef = useRef(null);
   const activeButtonRef = useRef(null);
-  const lastTabTouchRef = useRef(0);
   const [sentinelRef, stuck] = useStickySentinel();
   useStickyTabFlash(tabsScrollRef);
   const setStuckHeader = useSetStickyHeader();
@@ -109,6 +113,10 @@ export default function IlMioVibra() {
     setSearchParams(next);
     scrollToTab();
   };
+  // PORT: handler stabile per la barra (SubTabButtons in memo)
+  const setActiveTabRef = useRef(setActiveTab);
+  setActiveTabRef.current = setActiveTab;
+  const onTabSelect = useCallback((key) => setActiveTabRef.current(key), []);
 
 
 
@@ -217,24 +225,7 @@ export default function IlMioVibra() {
       >
         <Div className="sticky-glass absolute inset-0" style={stickyGlassStyle(stuck)} />
         <Div ref={scrollRef} className="relative overflow-x-auto overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}>
-        <Div className={`relative flex gap-1 bg-secondary/30 p-1 rounded-xl w-max min-w-full`}>
-          {TABS.map(({ key, label, icon: TabIcon }) => (
-            <Btn
-              button
-              key={key}
-              ref={activeTab === key ? activeButtonRef : null}
-              {...makeTapHandlers(lastTabTouchRef, () => setActiveTab(key))}
-              onPointerDown={key === 'achievements' || key === 'vibravs' ? () => prefetchAchievementsData(effectivePromoterId) : key === 'accordi' ? () => prefetchTeamData(effectivePromoterId) : undefined}
-              className={`cursor-pointer flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-                activeTab === key
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}>
-              <TabIcon className="w-3.5 h-3.5 flex-shrink-0" />
-              {label}
-            </Btn>
-          ))}
-        </Div>
+        <SubTabButtons tabs={TABS} active={activeTab} onSelect={onTabSelect} activeRef={activeButtonRef} onPointerDownFor={prefetchForTab} />
         </Div>
       </Div>
 

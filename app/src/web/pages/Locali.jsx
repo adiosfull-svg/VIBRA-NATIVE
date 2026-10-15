@@ -1,8 +1,8 @@
 // Port di src/pages/Locali.jsx (convertito da scripts/port/codemod.mjs).
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from '@/web/router';
-import { makeTapHandlers } from '@/web/lib/tapHandlers';
+import SubTabButtons from '@/web/components/shared/SubTabButtons';
 import { useQuery } from '@tanstack/react-query';
 import PageTitle from '@/web/components/shared/PageTitle';
 import { base44 } from '@/lib/base44';
@@ -34,9 +34,9 @@ function toDisplayVenue(v) {
   };
 }
 
-const TABS = [
-  { key: 'locali', label: 'Locali' },
-  { key: 'analytics', label: 'Analitica' },
+const TAB_BUTTONS = [
+  { key: 'locali', label: 'Locali', icon: MapPin },
+  { key: 'analytics', label: 'Analitica', icon: BarChart3 },
 ];
 
 // PORT: default stabili delle query (VenueCard è in memo)
@@ -47,7 +47,6 @@ export default function Locali() {
   const venueParam = new URLSearchParams(location.search).get('venue');
   const [tab, setTab] = useState(() => webWindow.history.state?._tab || 'locali');
   const tabsRef = useRef(null);
-  const lastTouchRef = useRef(0);
   const [sentinelRef, stuck] = useStickySentinel();
   useStickyTabFlash(tabsRef);
   const setStuckHeader = useSetStickyHeader();
@@ -78,6 +77,10 @@ export default function Locali() {
     setTab(key);
     webWindow.scrollTo(0, stuck ? stickyTopRef.current : 0);
   };
+  // PORT: handler stabile per la barra (SubTabButtons in memo)
+  const tabChangeRef = useRef(handleTabChange);
+  tabChangeRef.current = handleTabChange;
+  const onTabSelect = useCallback((key) => tabChangeRef.current(key), []);
 
   const { data: venuesRaw = EMPTY } = useQuery({
     queryKey: ['venues'],
@@ -123,22 +126,7 @@ export default function Locali() {
         style={{ height: 1, marginTop: 0, padding: 0, border: 'none' }} />
       <Div ref={tabsRef} className={`dash-fade-up group sticky top-[env(safe-area-inset-top)] z-20 pt-4 pb-1.5 -mx-4 px-4 border-b ${stuck ? 'border-border is-stuck' : 'border-transparent'}`} style={{ marginTop: 0 }}>
         <Div className="sticky-glass absolute inset-0" style={stickyGlassStyle(stuck)} />
-        <Div className={`relative flex gap-1 bg-secondary/40 p-1 rounded-xl w-max`}>
-          {TABS.map(t => (
-            <Btn
-              button
-              key={t.key}
-              {...makeTapHandlers(lastTouchRef, () => handleTabChange(t.key))}
-              className={`cursor-pointer flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === t.key
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}>
-              {t.key === 'locali' ? <MapPin className="w-3.5 h-3.5" /> : <BarChart3 className="w-3.5 h-3.5" />}
-              {t.label}
-            </Btn>
-          ))}
-        </Div>
+        <SubTabButtons tabs={TAB_BUTTONS} active={tab} onSelect={onTabSelect} className="relative flex gap-1 bg-secondary/40 p-1 rounded-xl w-max" buttonClassName="px-4 py-1.5 text-sm" iconClassName="w-3.5 h-3.5" />
       </Div>
 
       {/* ── Header count ── */}

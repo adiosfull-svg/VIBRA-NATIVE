@@ -58,7 +58,7 @@ import { useStickyTabScroll } from '@/web/hooks/useStickyTabScroll';
 import { stickyGlassStyle } from '@/legacy/utils/stickyGlass';
 import { useStickyTabFlash } from '@/web/hooks/useStickyTabFlash';
 import { useSetStickyHeader } from '@/web/lib/stickyHeaderContext';
-import { makeTapHandlers } from '@/web/lib/tapHandlers';
+import SubTabButtons from '@/web/components/shared/SubTabButtons';
 import { useBackTab } from '@/web/hooks/useBackTab';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 import { useDragScroll } from '@/web/hooks/useDragScroll';
@@ -109,7 +109,6 @@ export default function Programmazione() {
   const sentinelNodeRef = useRef(null);
   // PORT: ref stabile (in linea era nuovo a ogni render: React lo richiamava con null e poi col nodo)
   const setSentinelNode = useCallback((node) => { sentinelRef(node); sentinelNodeRef.current = node; }, [sentinelRef]);
-  const lastTabTouchRef = useRef(0);
   useStickyTabFlash(tabsScrollRef);
 
   // Preload idle dei chunk dei tab non ancora visitati: parte dopo il primo
@@ -559,6 +558,8 @@ export default function Programmazione() {
     setActiveTab(key);
     scrollToTab();
   };
+  // PORT: handler stabile per la barra (SubTabButtons in memo: si evidenzia da sola, subito)
+  const onTabSelect = useStableHandler(handleTabClick);
 
   // Centra il tab attivo nella barra (scorrimento fluido, come in Clienti).
   const scrollToActiveTab = useCallback(() => {
@@ -622,23 +623,7 @@ export default function Programmazione() {
           }} />
         <Div className="relative flex items-center gap-2">
           <Div ref={scrollRef} className="relative overflow-x-auto overflow-y-hidden flex-1 min-w-0" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}>
-            <Div className="relative flex gap-1 bg-secondary/30 p-1 rounded-xl w-max min-w-full">
-              {TABS.map(({ key, label, icon: TabIcon }) => (
-                <Btn
-                  button
-                  key={key}
-                  ref={activeTab === key ? activeButtonRef : null}
-                  {...makeTapHandlers(lastTabTouchRef, () => handleTabClick(key))}
-                  className={`cursor-pointer flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-                    activeTab === key
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}>
-                  <TabIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                  {label}
-                </Btn>
-              ))}
-            </Div>
+            <SubTabButtons tabs={TABS} active={activeTab} onSelect={onTabSelect} activeRef={activeButtonRef} />
           </Div>
           {searchConfig && (
             <AnimatePresence>
