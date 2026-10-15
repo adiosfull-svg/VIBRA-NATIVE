@@ -12,15 +12,10 @@ type NavigateOpts = { replace?: boolean; state?: unknown };
 // con pop): Dashboard e Clienti rimontate da zero (1,2-1,4 s), tab precaricate due volte in memoria.
 // Qui resta `navigate` (anche per il replace della sidebar): Indietro come nell'originale. Con dismissAll +
 // navigate la cronologia delle tab cambiava e il successivo Indietro poteva chiudere l'app (gara diagnostica
-// 38756767101); dismissTo con le tab in primo piano non cambiava tab. I link esterni verso una tab passano
-// da +native-intent (dismissAll da una pagina dello stack, poi il linking normale).
+// 38756767101); dismissTo con le tab in primo piano non cambiava tab.
 const TAB_PATHS = new Set(['/', '/dashboard', '/clienti', '/programmazione', '/semine', '/il-mio-vibra']);
 const pathOf = (href: string) => (href.split(/[?#]/)[0].replace(/\/+$/, '') || '/');
 
-/** Siamo su una pagina dello stack sopra le tab (non su una tab)? (+native-intent) */
-export function onStackPage(): boolean {
-  return !TAB_PATHS.has(pathOf(currentLoc.pathname));
-}
 
 // Funzione unica (il router di expo-router è un singleton): prima ogni render ne creava una nuova e
 // chi la metteva tra le dipendenze di memo/effect/callback ripartiva a ogni disegno (§4).

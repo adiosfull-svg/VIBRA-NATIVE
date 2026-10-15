@@ -11,8 +11,7 @@ import { useEffect } from 'react';
 
 export default function DashboardRoute() {
   useEffect(() => {
-    // navigate (come prima dell'audit): dismissAll + navigate poteva far chiudere l'app al successivo
-    // Indietro. I link esterni a /dashboard non arrivano qui: +native-intent li manda alla tab "/".
+    // navigate (come prima dell'audit): dismissAll + navigate poteva far chiudere l'app al successivo Indietro
     if (router.canGoBack()) router.navigate('/');
     else router.replace('/');
   }, []);
