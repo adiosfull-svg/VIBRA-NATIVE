@@ -1,6 +1,7 @@
 // Port di src/components/programmazione/RecontactList.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
+import { Animated, Easing } from 'react-native';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Search, MessageCircle, CheckCircle2, Clock, Star, Instagram, Gem, ArrowDown01, ArrowDownAZ, ArrowDownWideNarrow, X } from '@/ui/icons.generated';
@@ -60,14 +61,27 @@ function buildTrendPhrase(client) {
 
 
 /** Riga swipeable — identica a ClientsToRecontactDialog */
+// PORT: posizione della riga in un Animated.Value (setValue mentre il dito si muove, animazioni sul driver
+// nativo al rilascio): prima ogni movimento era un setState che ridisegnava la riga, e al rilascio la riga
+// saltava a 0/±120 senza scorrere (le transizioni di transform non passano da ui/cssTransition).
+const SWIPE_GREEN = 'rgba(16,185,129,0.2)';
+const SWIPE_CLEAR = 'rgba(16,185,129,0)';
 function SwipeableRow({ children, onSwipeRight, onSwipeLeft, hasPhone, disabled }) {
-  const [offset, setOffset] = useState(0);
-  const [swiped, setSwiped] = useState(null);
+  const x = useRef(new Animated.Value(0)).current;
   const startX = useRef(0);
   const startY = useRef(0);
   const swiping = useRef(false);
   const offsetRef = useRef(0);
+  const timer = useRef(null);
+  const latest = useRef({ onSwipeRight, onSwipeLeft });
+  latest.current = { onSwipeRight, onSwipeLeft };
   const threshold = 60;
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const slideTo = (to, cb) => {
+    offsetRef.current = to;
+    Animated.timing(x, { toValue: to, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(cb);
+  };
 
   const onTouchStart = (e) => {
     if (disabled) return;
@@ -91,44 +105,39 @@ function SwipeableRow({ children, onSwipeRight, onSwipeLeft, hasPhone, disabled 
     }
     const clamped = Math.max(-120, Math.min(120, dx));
     offsetRef.current = clamped;
-    setOffset(clamped);
+    x.setValue(clamped);
   };
 
   const onTouchEnd = () => {
-    if (!swiping.current) { setOffset(0); offsetRef.current = 0; return; }
+    if (!swiping.current) { if (offsetRef.current !== 0) slideTo(0); return; }
     swiping.current = false;
-    if (offsetRef.current > threshold) {
-      setOffset(120);
-      setSwiped('right');
-    } else if (offsetRef.current < -threshold && hasPhone) {
-      setOffset(-120);
-      setSwiped('left');
-    } else {
-      setOffset(0);
-      offsetRef.current = 0;
-    }
+    let side = null;
+    if (offsetRef.current > threshold) { side = 'right'; slideTo(120); }
+    else if (offsetRef.current < -threshold && hasPhone) { side = 'left'; slideTo(-120); }
+    else slideTo(0);
+    if (!side) return;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      if (side === 'right') latest.current.onSwipeRight?.();
+      else latest.current.onSwipeLeft?.();
+      slideTo(0);
+    }, 300);
   };
 
-  useEffect(() => {
-    if (!swiped) return;
-    const t = setTimeout(() => {
-      if (swiped === 'right') onSwipeRight?.();
-      else if (swiped === 'left') onSwipeLeft?.();
-      setOffset(0);
-      offsetRef.current = 0;
-      setSwiped(null);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [swiped, onSwipeRight, onSwipeLeft]);
-
-  const rightBg = offset > 0 ? `rgba(16,185,129,${Math.min(0.2, offset / 300)})` : 'transparent';
-  const leftBg = offset < 0 && hasPhone ? `rgba(16,185,129,${Math.min(0.2, Math.abs(offset) / 300)})` : 'transparent';
+  const background = useMemo(() => x.interpolate({
+    inputRange: [-120, -60, 0, 60, 120],
+    outputRange: hasPhone ? [SWIPE_GREEN, SWIPE_GREEN, SWIPE_CLEAR, SWIPE_GREEN, SWIPE_GREEN] : [SWIPE_CLEAR, SWIPE_CLEAR, SWIPE_CLEAR, SWIPE_GREEN, SWIPE_GREEN],
+    extrapolate: 'clamp',
+  }), [x, hasPhone]);
+  const rightHint = useMemo(() => x.interpolate({ inputRange: [20, 20.01, 80], outputRange: [0, 0.25, 1], extrapolate: 'clamp' }), [x]);
+  const leftHint = useMemo(() => x.interpolate({ inputRange: [-80, -20.01, -20], outputRange: [1, 0.25, 0], extrapolate: 'clamp' }), [x]);
+  const rowStyle = useMemo(() => ({ transform: [{ translateX: x }], backgroundColor: background }), [x, background]);
 
   return (
     <Div className="relative overflow-hidden">
       <Div
-        className="absolute inset-y-0 right-0 flex items-center justify-end pr-4 transition-opacity duration-150"
-        style={{ opacity: offset > 20 ? Math.min(1, offset / 80) : 0 }}
+        className="absolute inset-y-0 right-0 flex items-center justify-end pr-4"
+        animatedStyle={{ opacity: rightHint }}
       >
         <Div className="flex items-center gap-1.5 text-emerald-400">
           <CheckCircle2 className="w-4 h-4" />
@@ -137,8 +146,8 @@ function SwipeableRow({ children, onSwipeRight, onSwipeLeft, hasPhone, disabled 
       </Div>
       {hasPhone && (
         <Div
-          className="absolute inset-y-0 left-0 flex items-center pl-4 transition-opacity duration-150"
-          style={{ opacity: offset < -20 ? Math.min(1, Math.abs(offset) / 80) : 0 }}
+          className="absolute inset-y-0 left-0 flex items-center pl-4"
+          animatedStyle={{ opacity: leftHint }}
         >
           <Div className="flex items-center gap-1.5 text-emerald-400">
             <WhatsAppIcon className="w-4 h-4 text-emerald-400" />
@@ -147,12 +156,9 @@ function SwipeableRow({ children, onSwipeRight, onSwipeLeft, hasPhone, disabled 
         </Div>
       )}
       <Div
-        className="relative transition-transform duration-200"
-        style={{
-          transform: `translateX(${offset}px)`,
-          background: offset > 0 ? rightBg : leftBg,
-          touchAction: 'pan-y',
-        }}
+        className="relative"
+        style={{ touchAction: 'pan-y' }}
+        animatedStyle={rowStyle}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -231,10 +237,15 @@ export default function RecontactList({ clients, clientStatsMap, events, onConta
     if (s.key?.startsWith('venue_logo_')) venueLogoMap[s.key.replace('venue_logo_', '')] = s.value;
   });
 
+  // PORT: etichetta "contattato" aggiornata subito in tutte le liste (cache ottimistica, come fa l'originale
+  // con setQueryData) e una sola scrittura: prima Client.update qui e di nuovo in onContact (Weekend), con due
+  // invalidazioni di tutte le liste clienti
   const markAsContacted = async (clientId) => {
-    await base44.entities.Client.update(clientId, { last_contacted_at: new Date().toISOString() });
+    const now = new Date().toISOString();
+    qc.setQueriesData({ queryKey: ['clients'] }, (list) => (Array.isArray(list) ? list.map((c) => (c.id === clientId ? { ...c, last_contacted_at: now } : c)) : list));
+    if (onContact) { onContact(clientId); return; }
+    await base44.entities.Client.update(clientId, { last_contacted_at: now });
     qc.invalidateQueries({ queryKey: ['clients'] });
-    onContact?.(clientId);
   };
 
   const handleClientClick = (e, client) => {
