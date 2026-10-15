@@ -3,7 +3,7 @@
 // IntersectionObserver; qui la pagina è lo ScrollView di Page: la barra è incollata quando lo
 // scroll ha portato la sentinella sopra il `top` della barra (safe area, come
 // top-[env(safe-area-inset-top)]). Lo stato cambia solo quando si attraversa la soglia.
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { startTransition, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pageScroll } from '../shims/pageScroll';
 import { PageLayerContext } from '../../ui/pageLayers';
@@ -22,6 +22,7 @@ export function useStickySentinel(): [(node: unknown) => void, boolean] {
   const node = useRef<unknown>(null);
   const off = useRef<(() => void) | null>(null);
   const first = useRef(true);
+  const last = useRef(false);
 
   // PORT: iscrizione dentro il ref a callback, senza stato. Prima setEl(node) faceva un secondo disegno
   // completo della pagina al montaggio (e due per render con i ref in linea, chiamati con null e poi node).
@@ -42,7 +43,9 @@ export function useStickySentinel(): [(node: unknown) => void, boolean] {
       try { if (n?.isFocused && !n.isFocused()) return; } catch { /* fuori da un navigatore */ }
       const o = l ? l.offsetOf(el) : pageScroll.offsetOf(el);
       if (o != null) offset = o;
-      if (offset != null) setStuck((l ? l.y() : pageScroll.y) + t > offset);
+      // PORT: il cambio ridisegna tutta la pagina (vetro, bordo, header): a bassa priorità, così un
+      // tocco durante lo scroll non aspetta quel disegno (lo scroll e la sticky sono sul thread UI)
+      if (offset != null) { const next = (l ? l.y() : pageScroll.y) + t > offset; if (next !== last.current) { last.current = next; startTransition(() => setStuck(next)); } }
     };
     check();
     recheck.current = check;
