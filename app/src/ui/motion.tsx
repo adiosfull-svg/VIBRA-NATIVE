@@ -3,8 +3,8 @@
 // Proprietà animate: opacity, x, y, scale, rotate (numeri), anche a keyframe ([0, 1, 0]) e con
 // repeat: Infinity; width/height in px o %. height/width 'auto' non sono animabili in RN: l'elemento compare alla sua
 // misura naturale. AnimatePresence rende i figli (le animazioni di uscita non sono replicate).
-import { Children, useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { Animated, Easing } from 'react-native';
+import { Children, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Animated, Easing, type LayoutChangeEvent } from 'react-native';
 import { Btn, Div, Span } from './html';
 import { Img } from './elements';
 
@@ -47,7 +47,7 @@ function numeric(t: Record<string, any> | undefined) {
   return out;
 }
 
-function useMotion(initial: Target, animate: Target, transition?: Transition) {
+function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0) {
   const rawFrom = typeof initial === 'object' ? initial : undefined;
   const rawTo = typeof animate === 'object' ? animate : undefined;
   const pct = new Set(PCT_KEYS.filter((k) => isPct(rawFrom?.[k]) || isPct(rawTo?.[k])));
@@ -75,11 +75,14 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
       lastTarget[k] = start ? start.n : sizeOf(to![k])!.n;
     }
   }
-  // width/height non vanno col driver nativo: allora niente driver nativo per tutto l'elemento
-  const nativeDriver = sizes.length === 0 && pct.size === 0;
-  const targetKey = JSON.stringify(to ?? {});
+  // width/height non vanno col driver nativo: allora niente driver nativo per tutto l'elemento.
+  // PORT: x/y in % (es. lo scintillio infinito di RankCard) restano sul driver nativo: il valore resta in
+  // % e diventa px con la larghezza dell'elemento (onLayout); prima giravano sul thread JS per sempre.
+  const nativeDriver = sizes.length === 0;
+  const waitWidth = pct.size > 0 && !(width > 0);
+  const targetKey = JSON.stringify(to ?? {}) + (pct.size ? `|${width > 0 ? 1 : 0}` : '');
   useEffect(() => {
-    if (!to) return;
+    if (!to || waitWidth) return;
     const duration = (transition?.duration ?? 0.3) * 1000;
     const delay = (transition?.delay ?? 0) * 1000;
     // valori non numerici (es. 'auto') non si animano: l'elemento resta com'è
@@ -109,9 +112,10 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
   }, [targetKey]);
   const used = new Set([...Object.keys(from ?? {}), ...Object.keys(to ?? {})]);
   const transform: any[] = [];
-  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] });
-  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(values.x) : values.x });
-  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(values.y) : values.y });
+  // % → px sulla larghezza dell'elemento (come translate in % del CSS); prima della misura: fermo a 0
+  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: [0, width] });
+  if (used.has('x')) transform.push({ translateX: pct.has('x') ? (waitWidth ? 0 : asPct(values.x)) : values.x });
+  if (used.has('y')) transform.push({ translateY: pct.has('y') ? (waitWidth ? 0 : asPct(values.y)) : values.y });
   if (used.has('scale')) transform.push({ scale: values.scale });
   if (used.has('rotate')) transform.push({ rotate: values.rotate.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
   const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: values.opacity } : null), ...(transform.length ? { transform } : null) };
@@ -123,11 +127,18 @@ function useMotion(initial: Target, animate: Target, transition?: Transition) {
 
 function make(Comp: React.ComponentType<any>, direct = false) {
   return function MotionComponent({ initial, animate, exit: _e, transition, whileTap: _t, whileHover: _h, layout: _l, layoutId: _li, variants: _v, style, className, children, ...rest }: MotionProps) {
-    const animated = useMotion(initial, animate, transition);
+    // x/y in %: serve la larghezza dell'elemento (misurata una volta, poi solo se cambia)
+    const usesPct = PCT_KEYS.some((k) => isPct((typeof initial === 'object' ? initial : undefined)?.[k]) || isPct((typeof animate === 'object' ? animate : undefined)?.[k]));
+    const [width, setWidth] = useState(0);
+    const animated = useMotion(initial, animate, transition, width);
+    const ownLayout = (rest as { onLayout?: (e: LayoutChangeEvent) => void }).onLayout;
+    const onLayout = usesPct
+      ? (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; setWidth((w) => (Math.abs(w - nw) < 0.5 ? w : nw)); ownLayout?.(e); }
+      : ownLayout;
     // Div: lo stile animato va sull'elemento stesso (posizione assoluta, h-full, flex-1 restano suoi)
-    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest}>{children}</Comp>;
+    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} onLayout={onLayout}>{children}</Comp>;
     return (
-      <Animated.View style={animated}>
+      <Animated.View style={animated} onLayout={usesPct ? onLayout : undefined}>
         <Comp className={className} style={style} {...rest}>{children}</Comp>
       </Animated.View>
     );

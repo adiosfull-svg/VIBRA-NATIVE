@@ -2,11 +2,15 @@
 // (customCss.web.ts: preserve-3d, backface-visibility, retro ruotato) bastano; in RN la rotazione
 // del contenitore non nasconde la faccia girata, quindi ruotano le due facce: davanti rotateY(r),
 // dietro rotateY(r + 180), entrambe con backfaceVisibility hidden e la prospettiva di 1200px.
-import { createContext, useContext, useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Platform, StyleSheet } from 'react-native';
 
 type Flip = { deg: number; animate: boolean };
 export const FlipContext = createContext<Flip | null>(null);
+/** Inclinazione durante il trascinamento (gradi, Animated.Value sul thread UI): si somma alla rotazione delle
+ *  facce. La dà useFlipGesture del telefono; prima ogni movimento del dito era un setState che ridisegnava
+ *  tutta la card. */
+export const FlipTiltContext = createContext<Animated.Value | null>(null);
 
 const FACE = /(^|\s)semina-flip-(front|back)(\s|$)/;
 const INNER = /(^|\s)semina-flip-inner(\s|$)/;
@@ -26,6 +30,7 @@ export function flipInner(className: string | undefined, style: Record<string, a
 /** Stile animato di una faccia (semina-flip-front/back) dentro un semina-flip-inner, o null. */
 export function useFlipFace(className: string | undefined) {
   const flip = useContext(FlipContext);
+  const tilt = useContext(FlipTiltContext);
   const kind = className?.match(FACE)?.[2] as 'front' | 'back' | undefined;
   // l'Animated.Value serve solo alle facce: niente allocazione a ogni render di ogni Div
   const ref = useRef<Animated.Value | null>(null);
@@ -40,9 +45,13 @@ export function useFlipFace(className: string | undefined) {
     a.start();
     return () => a.stop();
   }, [deg, animate, kind, value]);
-  if (!flip || !kind || !value) return null;
   const offset = kind === 'back' ? 180 : 0;
-  const rotateY = value.interpolate({ inputRange: [-360, 360], outputRange: [`${-360 + offset}deg`, `${360 + offset}deg`] });
+  // nodo stabile (un nodo nuovo a ogni render staccava e riattaccava l'animazione nativa)
+  const rotateY = useMemo(
+    () => (value ? (tilt ? Animated.add(value, tilt) : value).interpolate({ inputRange: [-360, 360], outputRange: [`${-360 + offset}deg`, `${360 + offset}deg`] }) : null),
+    [value, tilt, offset],
+  );
+  if (!flip || !kind || !value || !rotateY) return null;
   return [
     kind === 'back' ? StyleSheet.absoluteFill : null,
     { backfaceVisibility: 'hidden' as const, transform: [{ perspective: 1200 }, { rotateY }] },

@@ -12,6 +12,7 @@ import { extractNameFromHandle } from '@/legacy/utils/seminaParse';
 import CachedImage from '@/web/components/shared/CachedImage';
 import SeminaRecettivitaSlider from '@/web/components/programmazione/SeminaRecettivitaSlider';
 import { useFlipGesture } from '@/web/hooks/useFlipGesture';
+import { FlipTiltContext } from '@/ui/flip';
 
 import { win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
@@ -44,7 +45,7 @@ function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps
   // PORT: retro (~34 elementi) montato dalla prima inclinazione (prima dei 90° c'è margine) e poi tenuto;
   // prima era montato in ogni card anche se non si girava mai
   const backOn = useRef(false);
-  if (flipped || flip.rotation !== 0) backOn.current = true;
+  if (flipped || flip.rotation !== 0 || flip.tilting) backOn.current = true;
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { getVenueLogo } = useAllVenueLogos();
@@ -207,6 +208,7 @@ function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps
     <Div
       {...(dragHandleProps || {})}
       className={`shrink-0 w-[180px] sm:w-full semina-flip-container ${isDragging ? 'opacity-60 ring-2 ring-pink-500' : ''} ${isOff ? 'opacity-40 grayscale' : ''}`}>
+      <FlipTiltContext.Provider value={flip.tilt ?? null}>
       <Div
         ref={flip.innerRef}
         className="semina-flip-inner"
@@ -421,6 +423,7 @@ function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps
           {backOn.current && <SeminaCardBack semina={semina} onClose={() => setFlipped(false)} />}
         </Div>
       </Div>
+      </FlipTiltContext.Provider>
     </Div>
   );
 }
