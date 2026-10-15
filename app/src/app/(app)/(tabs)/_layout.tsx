@@ -25,6 +25,8 @@ function usePreloadTabs() {
   const promoterId = user?.promoter_id ?? null;
   const navigation = useNavigation();
   useEffect(() => {
+    // Niente /locali precaricata (F3 dell'audit): una pagina dello stack precaricata in più faceva chiudere
+    // l'app al successivo Indietro (gara 38771609758 contro 38768510965)
     const routes = [...PRELOAD_TABS, ...(withHome ? ['/'] : []), ...PRELOAD_STACK];
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
