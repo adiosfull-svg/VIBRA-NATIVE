@@ -1,5 +1,6 @@
 // Port di src/pages/Notifiche.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
+import { Animated, Easing } from 'react-native';
 import { useNavigate } from '@/web/router';
 import { Bell, CheckCheck, Trash2, ArrowLeft, X } from '@/ui/icons.generated';
 import { useNotifications } from '@/web/hooks/useNotifications';
@@ -38,8 +39,12 @@ const TYPE_LABEL = {
 // ─── SwipeableNotif ───────────────────────────────────────────────────────────
 const SWIPE_THRESHOLD = 80; // px
 
+// PORT: posizione in un Animated.Value (setValue col dito, ritorno a 0 animato sul driver nativo):
+// prima ogni movimento era un setState che ridisegnava la notifica, e la transition di transform
+// non passa da ui/cssTransition (al rilascio la riga saltava a 0 senza scorrere).
 function SwipeableNotif({ children, onDelete }) {
-  const [offsetX, setOffsetX] = useState(0);
+  const x = useRef(new Animated.Value(0)).current;
+  const offsetRef = useRef(0);
   const [deleted, setDeleted] = useState(false);
   const startX = useRef(null);
   const isDragging = useRef(false);
@@ -52,19 +57,25 @@ function SwipeableNotif({ children, onDelete }) {
   const handleTouchMove = (e) => {
     if (!isDragging.current || startX.current === null) return;
     const dx = e.touches[0].clientX - startX.current;
-    if (dx < 0) setOffsetX(Math.max(dx, -140));
+    if (dx < 0) {
+      offsetRef.current = Math.max(dx, -140);
+      x.setValue(offsetRef.current);
+    }
   };
 
   const handleTouchEnd = () => {
     isDragging.current = false;
-    if (offsetX < -SWIPE_THRESHOLD) {
+    if (offsetRef.current < -SWIPE_THRESHOLD) {
       setDeleted(true);
       setTimeout(onDelete, 250);
     } else {
-      setOffsetX(0);
+      offsetRef.current = 0;
+      Animated.timing(x, { toValue: 0, duration: 250, easing: Easing.ease, useNativeDriver: true }).start();
     }
     startX.current = null;
   };
+
+  const rowStyle = useMemo(() => ({ transform: [{ translateX: x }] }), [x]);
 
   if (deleted) return null;
 
@@ -76,7 +87,7 @@ function SwipeableNotif({ children, onDelete }) {
       </Div>
       {/* Contenuto scorrevole */}
       <Div
-        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.25s ease' }}
+        animatedStyle={rowStyle}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

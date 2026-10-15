@@ -1,5 +1,5 @@
 // Port di src/components/client/LeadersList.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React from 'react';
 import { Star, Instagram, MessageCircle, CheckCircle2, Clock, GitBranch } from '@/ui/icons.generated';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/menu';
 import { differenceInDays, parseISO, format } from 'date-fns';
@@ -11,6 +11,7 @@ import SelectCheckbox from '@/web/components/client/SelectCheckbox';
 import { useBulkSelection } from '@/web/lib/bulkSelectionContext';
 import { useAllVenueLogos } from '@/web/hooks/useAllVenueLogos';
 import WhatsAppIcon from '@/web/components/shared/WhatsAppIcon';
+import SwipeableRow from '@/web/components/shared/SwipeableRow';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { A, Img } from '@/ui/elements';
@@ -46,104 +47,8 @@ function formatContactTime(last_contacted_at) {
   return `${weeks}sett. fa`;
 }
 
-function SwipeableLeaderRow({ children, onSwipeRight, onSwipeLeft, hasPhone, disabled }) {
-  const [offset, setOffset] = useState(0);
-  const [swiped, setSwiped] = useState(null);
-  const startX = useRef(0);
-  const startY = useRef(0);
-  const swiping = useRef(false);
-  const offsetRef = useRef(0);
-  const threshold = 60;
-
-  const onTouchStart = useCallback((e) => {
-    if (disabled) return;
-    startX.current = e.touches[0].clientX;
-    startY.current = e.touches[0].clientY;
-    swiping.current = false;
-  }, [disabled]);
-
-  const onTouchMove = useCallback((e) => {
-    if (disabled) return;
-    const dx = e.touches[0].clientX - startX.current;
-    const dy = e.touches[0].clientY - startY.current;
-    if (!swiping.current) {
-      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-        swiping.current = true;
-      }
-      return;
-    }
-    const clamped = Math.max(-120, Math.min(120, dx));
-    offsetRef.current = clamped;
-    setOffset(clamped);
-  }, [disabled]);
-
-  const onTouchEnd = useCallback(() => {
-    if (!swiping.current) { setOffset(0); offsetRef.current = 0; return; }
-    swiping.current = false;
-    if (offsetRef.current > threshold) {
-      setOffset(120);
-      setSwiped('right');
-    } else if (offsetRef.current < -threshold && hasPhone) {
-      setOffset(-120);
-      setSwiped('left');
-    } else {
-      setOffset(0);
-      offsetRef.current = 0;
-    }
-  }, [hasPhone]);
-
-  useEffect(() => {
-    if (!swiped) return;
-    const t = setTimeout(() => {
-      if (swiped === 'right') onSwipeRight?.();
-      else if (swiped === 'left') onSwipeLeft?.();
-      setOffset(0);
-      offsetRef.current = 0;
-      setSwiped(null);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [swiped, onSwipeRight, onSwipeLeft]);
-
-  const rightBg = offset > 0 ? `rgba(16,185,129,${Math.min(0.2, offset / 300)})` : 'transparent';
-  const leftBg = offset < 0 && hasPhone ? `rgba(16,185,129,${Math.min(0.2, Math.abs(offset) / 300)})` : 'transparent';
-
-  return (
-    <Div className="relative overflow-hidden">
-      <Div
-        className="absolute inset-y-0 right-0 flex items-center justify-end pr-4 transition-opacity duration-150"
-        style={{ opacity: offset > 20 ? Math.min(1, offset / 80) : 0 }}
-      >
-        <Div className="flex items-center gap-1.5 text-emerald-400">
-          <CheckCircle2 className="w-4 h-4" />
-          <Span className="text-[11px] font-semibold">Sentito</Span>
-        </Div>
-      </Div>
-      {hasPhone && (
-        <Div
-          className="absolute inset-y-0 left-0 flex items-center pl-4 transition-opacity duration-150"
-          style={{ opacity: offset < -20 ? Math.min(1, Math.abs(offset) / 80) : 0 }}
-        >
-          <Div className="flex items-center gap-1.5 text-emerald-400">
-            <WhatsAppIcon className="w-4 h-4 text-emerald-400" />
-            <Span className="text-[11px] font-semibold">WhatsApp</Span>
-          </Div>
-        </Div>
-      )}
-      <Div
-        className="relative transition-transform duration-200"
-        style={{
-          transform: `translateX(${offset}px)`,
-          background: offset > 0 ? rightBg : leftBg,
-          touchAction: 'pan-y',
-        }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}>
-        {children}
-      </Div>
-    </Div>
-  );
-}
+// PORT: SwipeableLeaderRow era una copia della riga di Da ricontattare con setState a ogni movimento;
+// ora la riga condivisa sul thread UI (shared/SwipeableRow).
 
 /**
  * Lista leader condivisa tra il box Leader di Clienti (ordinata per impatto)
@@ -228,7 +133,7 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
         const daysSinceContacted = c.last_contacted_at ? differenceInDays(today, new Date(c.last_contacted_at)) : null;
         const contactStale = daysSinceContacted !== null && daysSinceContacted > 8;
         return (
-          <SwipeableLeaderRow key={c.id} onSwipeRight={() => markAsContacted(c.id)} onSwipeLeft={() => { const p = c.phone?.replace(/[^0-9]/g, ''); if (p) { const a = webDocument.createElement('a'); a.href = `https://wa.me/${p}`; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.click(); } }} hasPhone={!!c.phone} disabled={selectMode}>
+          <SwipeableRow key={c.id} rightLabel="Sentito" onSwipeRight={() => markAsContacted(c.id)} onSwipeLeft={() => { const p = c.phone?.replace(/[^0-9]/g, ''); if (p) { const a = webDocument.createElement('a'); a.href = `https://wa.me/${p}`; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.click(); } }} hasPhone={!!c.phone} disabled={selectMode}>
             <Btn
               onClick={(e) => {
                 if (selectMode) { toggleSelect?.(c); return; }
@@ -347,7 +252,7 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
                 </Btn>
               )}
             </Btn>
-          </SwipeableLeaderRow>
+          </SwipeableRow>
         );
       })}
     </Div>
