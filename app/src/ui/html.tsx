@@ -12,7 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { CapturePressable, CaptureView, classStyle } from './classStyleCache';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
-import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
+import { themeColor } from './colors';
+import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickyBlurTooTallContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, hasBreakableText, MinContentProbeContext, type MinContentProbe, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
@@ -820,10 +821,16 @@ function BlurFill({ px }: { px: number }) {
   const sticky = useContext(StickyBlurTargetContext);
   const inPortal = useContext(InPortalContext);
   const opaqueBehind = useContext(OpaqueBehindContext);
+  const tooTall = useContext(StickyBlurTooTallContext);
   const page = usePageBlurTarget();
+  if (px && tooTall) return <View pointerEvents="none" style={TALL_VEIL} />;
   if (!px || (opaqueBehind && !sticky)) return null;
   return <NativeBlur intensity={Math.min(100, px * 4)} target={sticky ?? (inPortal ? page : null)} />;
 }
+
+// barra sticky su un contenuto troppo alto da sfocare (pageLayers): velo quasi pieno col colore della
+// pagina, così le righe sotto non si leggono attraverso il vetro
+const TALL_VEIL = [StyleSheet.absoluteFill, { backgroundColor: themeColor('background/80') }];
 
 const FIXED = /(^|\s)fixed(\s|$)/;
 const WEB_FIXED = { position: 'fixed' } as unknown as ViewStyle;

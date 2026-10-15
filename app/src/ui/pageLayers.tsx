@@ -12,7 +12,7 @@
 // Altrove (blur dentro la pagina) resta il velo semitrasparente di prima.
 import { BlurTargetView, BlurView } from 'expo-blur';
 import { Component, createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
-import { Animated, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, PixelRatio, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingPx } from './webClasses';
 import { useScreenNavigation } from '../web/screenNavigation';
@@ -89,6 +89,13 @@ export function useStickyPin(className: string) {
 // ── bersagli del blur ────────────────────────────────────────────────────────
 /** Bersaglio della barra sticky: i fratelli che la seguono (StickySplit). */
 export const StickyBlurTargetContext = createContext<View | null>(null);
+/**
+ * Bersaglio troppo alto per sfocarlo: Dimezis (RenderNodeBlurController) dà al nodo del blur la
+ * dimensione di TUTTO il bersaglio; oltre il limite delle texture della GPU il blur non si disegna e
+ * restava solo il velo al 30% (in Clienti, ~44.000 px, si leggevano le righe attraverso la barra).
+ */
+export const StickyBlurTooTallContext = createContext(false);
+const MAX_BLUR_TARGET_PX = 8192;
 
 type PageTarget = { el: View | null };
 const pageTargets: PageTarget[] = [];
@@ -166,11 +173,17 @@ function NativeBlurInner({ intensity, tint = 'dark', target, style }: { intensit
  */
 export function StickySplit({ before, sticky, after, gap }: { before: ReactNode[]; sticky: ReactNode; after: ReactNode[]; gap: number }) {
   const [target, setTarget] = useState<View | null>(null);
+  const [tooTall, setTooTall] = useState(false);
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    setTooTall(e.nativeEvent.layout.height * PixelRatio.get() > MAX_BLUR_TARGET_PX);
+  }, []);
   return (
     <>
       {before}
-      <StickyBlurTargetContext.Provider value={target}>{sticky}</StickyBlurTargetContext.Provider>
-      {after.length ? <BlurTargetView ref={setTarget as never} style={{ rowGap: gap }}>{after}</BlurTargetView> : null}
+      <StickyBlurTooTallContext.Provider value={tooTall}>
+        <StickyBlurTargetContext.Provider value={tooTall ? null : target}>{sticky}</StickyBlurTargetContext.Provider>
+      </StickyBlurTooTallContext.Provider>
+      {after.length ? <BlurTargetView ref={setTarget as never} onLayout={onLayout} style={{ rowGap: gap }}>{after}</BlurTargetView> : null}
     </>
   );
 }

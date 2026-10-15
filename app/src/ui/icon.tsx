@@ -40,6 +40,10 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
   const inner: Record<string, unknown> = {};
   const wrap = Platform.OS !== 'web' && Object.keys(flat).some((k) => POSITIONED_KEYS.test(k));
   for (const [k, v] of Object.entries(flat)) (wrap && WRAP_KEYS.test(k) ? outer : inner)[k] = v;
+  // absolute top-1/2 -translate-y-1/2 (icona centrata nel campo): su Android top 50% + translate
+  // in percentuale non la centrava (lente sotto il campo di Clienti) → occupo tutta l'altezza del
+  // contenitore e centro con flex, senza percentuali
+  if (wrap) centerVertically(outer, Number(height));
   const svg = (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth}
       strokeLinecap="round" strokeLinejoin="round" style={wrap ? inner : style}>
@@ -52,6 +56,20 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
     </Svg>
   );
   return wrap ? <View style={outer}>{svg}</View> : svg;
+}
+
+function centerVertically(o: Record<string, unknown>, h: number) {
+  if (o.position !== 'absolute' || o.top !== '50%' || o.bottom != null || !Array.isArray(o.transform)) return;
+  const tf = o.transform as Record<string, unknown>[];
+  const i = tf.findIndex((t) => 'translateY' in t);
+  if (i < 0) return;
+  const ty = tf[i].translateY;
+  if (ty !== '-50%' && !(typeof ty === 'number' && Math.abs(ty + h / 2) < 1)) return;
+  o.top = 0;
+  o.bottom = 0;
+  o.justifyContent = 'center';
+  const rest = tf.filter((_, j) => j !== i);
+  if (rest.length) o.transform = rest; else delete o.transform;
 }
 
 const POSITIONED_KEYS = /^(position|transform|top|left|right|bottom)$/;
