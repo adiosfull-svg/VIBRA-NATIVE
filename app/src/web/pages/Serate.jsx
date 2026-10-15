@@ -19,10 +19,12 @@ const EventPromoterChart = React.lazy(() => import('@/web/components/event/Event
 const EventCompareDialog = React.lazy(() => import('@/web/components/serate/EventCompareDialog'));
 import EventCard from '@/web/components/serate/EventCard';
 import { useProgressiveList } from '@/web/hooks/useProgressiveList';
+import { useDiagWhy } from '@/lib/testDiag';
 
 // PORT: riga della lista in memo: le closure per EventCard si rifanno solo quando cambia la sua serata
 const NO_ATTENDANCES = [];
 const SerataRow = memo(function SerataRow({ event, attendances, promoters, layout, isExpanded, onToggle, onEditEvent, onDeleteEvent }) {
+  useDiagWhy(`riga ${event.id}`, { event, attendances, promoters, layout, isExpanded, onToggle, onEditEvent, onDeleteEvent });
   return (
     <Div className="serate-card-row">
       <EventCard
@@ -484,6 +486,7 @@ export default function Serate() {
   // PORT: lista lunga → montaggio progressivo; callback stabili per le righe in memo
   const { count: shownEvents, sentinelRef: eventsSentinelRef } = useProgressiveList(filteredEvents.length);
   const toggleExpanded = useCallback((id, expanded) => setExpandedEvent(expanded ? id : null), []);
+  useDiagWhy('Serate', { events, attendances, promoters, venuesRaw, seasonDividersDB, shownEvents, layout, filteredEvents, attendancesByEvent, qc, navigate });
   const openEditEvent = useCallback((ev) => { setEditingEvent(ev); setEventDialogOpen(true); }, []);
 
   const handleAddDivider = () => {

@@ -10,7 +10,7 @@ import { THEME } from '../../../ui/palette.generated';
 import AppHeader from './AppHeader';
 import { pageScroll } from '../../shims/pageScroll';
 import { OwnPathProvider, useScreenNavigation } from '../../router';
-import { diagCount, diagMark, diagTime, dumpLayout, TEST_DIAG } from '../../../lib/testDiag';
+import { diagCount, diagMark, diagTime, dumpLayout, TEST_DIAG, useDiagWhy } from '../../../lib/testDiag';
 import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
 
@@ -102,6 +102,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     diagMark(`Page monta ${id} ${title ?? ''}`);
     return () => diagMark(`Page smonta ${id} ${title ?? ''}`);
   }, [title]);
+  useDiagWhy(`Page ${title ?? ''}`, { children, insets, contentReady, hasPageRefresh, pageRefreshing, navigation, onScroll, onRefresh });
   const blurEl = useRef<View | null>(null);
   const setBlurTarget = useCallback((el: View | null) => { blurEl.current = el; blurHandle.current?.set(el); }, []);
   const layer = useMemo<PageLayer>(() => ({

@@ -3,6 +3,7 @@
 // frattempo. Se il battito si ferma il JS è bloccato; se i render non scendono a zero a pagina
 // ferma c'è un ciclo di aggiornamenti. Spenta (nessun costo) nelle build normali.
 import './garaStartMark';
+import { useRef } from 'react';
 export const TEST_DIAG = process.env.EXPO_PUBLIC_TEST_DIAG === '1';
 
 export const diagCounts: Record<string, number> = {};
@@ -222,4 +223,14 @@ export function diagQueries(cache: { subscribe: (fn: (e: { type: string; query: 
 /** Segnaposto temporale nel logcat (solo build di test): "VIBRA mark <etichetta>". */
 export function diagMark(label: string) {
   if (TEST_DIAG) console.log(`VIBRA mark ${label}`);
+}
+
+/** Diagnostica dei ridisegni: nel logcat quali valori hanno cambiato identità dal disegno precedente. */
+export function useDiagWhy(label: string, values: Record<string, unknown>) {
+  const prev = useRef<Record<string, unknown> | null>(null);
+  if (!TEST_DIAG) return;
+  const p = prev.current;
+  const changed = p ? Object.keys(values).filter((k) => !Object.is(p[k], values[k])) : ['(montaggio)'];
+  console.log(`VIBRA perché ${label} ${changed.join(',') || '(niente: genitore o stato)'}`);
+  prev.current = values;
 }
