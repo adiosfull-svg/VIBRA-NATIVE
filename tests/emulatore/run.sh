@@ -41,13 +41,38 @@ gfx_row() {
   local total=$(v 'Total frames rendered') jank=$(v 'Janky frames')
   echo "| $1 | $total | ${jank%% *} | $(echo "$jank" | grep -oE '[0-9.]+%') | $(v '50th percentile') | $(v '90th percentile') | $(v '95th percentile') | $(v '99th percentile') | $(v 'Number Slow UI thread') | $(v 'Number Slow issue draw commands') |" >> "$OUT/fluidita.md"
 }
+# TRACE=1 ([traccia]): traccia di sistema Perfetto di ogni percorso (thread UI, montaggio delle viste di
+# React Native, disegno) → out/tracce/<percorso>.pftrace, da leggere con tools/traccia/analizza.py
+trace_start() {
+  mkdir -p "$OUT/tracce"
+  adb shell rm -f /data/misc/perfetto-traces/vibra.pftrace
+  adb shell perfetto --background --txt -o /data/misc/perfetto-traces/vibra.pftrace -c - <<'CFG' > /dev/null
+buffers { size_kb: 49152 fill_policy: RING_BUFFER }
+data_sources { config { name: "linux.ftrace" ftrace_config {
+  ftrace_events: "sched/sched_switch" ftrace_events: "power/suspend_resume"
+  atrace_categories: "view" atrace_categories: "gfx" atrace_categories: "input" atrace_categories: "am"
+  atrace_categories: "dalvik" atrace_categories: "wm" atrace_categories: "res" atrace_categories: "bionic"
+  atrace_apps: "com.vibra.mobile"
+} } }
+data_sources { config { name: "linux.process_stats" } }
+data_sources { config { name: "android.surfaceflinger.frametimeline" } }
+duration_ms: 600000
+CFG
+}
+trace_stop() {
+  adb shell killall -TERM perfetto 2>/dev/null || adb shell pkill -TERM perfetto || true
+  sleep 4
+  adb pull /data/misc/perfetto-traces/vibra.pftrace "$OUT/tracce/$1.pftrace" > /dev/null 2>&1 || echo "traccia di $1 non scaricata"
+}
 cd "$OUT/screens"
 for f in $(ls "$OLDPWD"/${FLOWS:-tests/emulatore}/*.yaml 2>/dev/null || echo "$OLDPWD/${FLOWS}"); do
   name=$(basename "$f" .yaml)
   echo "== $name"
   if [ "${FLUID:-}" = 1 ]; then adb shell dumpsys gfxinfo $PKG reset > /dev/null 2>&1 || true; rec_start "$name"; fi
+  if [ "${TRACE:-}" = 1 ]; then trace_start; fi
   maestro test -e EMAIL="${EMAIL:-admin@vibra.local}" "$f" --format junit --output "$OUT/$name.xml" > "$OUT/$name.log" 2>&1 || { status=1; echo "FALLITO $name"; }
   if [ "${FLUID:-}" = 1 ]; then gfx_row "$name"; rec_stop "$name"; fi
+  if [ "${TRACE:-}" = 1 ]; then trace_stop "$name"; fi
   adb exec-out uiautomator dump /dev/tty > "$OUT/$name-ui.xml" 2>/dev/null || true
   adb exec-out screencap -p > "$OUT/screens/$name-fine.png" || true
 done

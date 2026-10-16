@@ -33,6 +33,10 @@ on:
         description: 'si = gara nativa contro originale (tools/gara) invece dei percorsi Maestro'
         required: false
         default: ''
+      traccia:
+        description: 'si = traccia di sistema Perfetto di ogni percorso (out/tracce/*.pftrace)'
+        required: false
+        default: ''
       fluidita:
         description: 'si = animazioni attive, video di ogni percorso e frame persi (dumpsys gfxinfo) in fluidita.md'
         required: false
@@ -48,7 +52,7 @@ on:
 
 jobs:
   emulatore:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]') || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[fluidita]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]') || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[fluidita]') || contains(github.event.head_commit.message, '[traccia]')
     # a livello di job (i push senza [emu] non annullano niente); le esecuzioni a mano non si annullano
     concurrency:
       # la gara ha un gruppo suo: non annulla (e non è annullata da) un giro di percorsi Maestro
@@ -70,6 +74,8 @@ jobs:
       GARA: ${{ (github.event.inputs.gara == 'si' || contains(github.event.head_commit.message, '[gara]')) && '1' || '' }}
       # [fluidita]: animazioni attive + video + frame persi per percorso (tests/emulatore/run.sh)
       FLUID: ${{ (github.event.inputs.fluidita == 'si' || contains(github.event.head_commit.message, '[fluidita]')) && '1' || '' }}
+      # [traccia]: traccia Perfetto di ogni percorso (tests/emulatore/run.sh)
+      TRACE: ${{ (github.event.inputs.traccia == 'si' || contains(github.event.head_commit.message, '[traccia]')) && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -124,7 +130,7 @@ jobs:
           ENV
           # gara: solo la sonda leggera (la diagnostica completa rallenterebbe la nativa)
           # fluidità: senza la diagnostica (battito e misure costano frame), come l'APK vero
-          if [ "$GARA" = 1 ]; then echo EXPO_PUBLIC_TEST_GARA=1 >> .env; elif [ "$FLUID" != 1 ]; then echo EXPO_PUBLIC_TEST_DIAG=1 >> .env; fi
+          if [ "$GARA" = 1 ]; then echo EXPO_PUBLIC_TEST_GARA=1 >> .env; elif [ "$FLUID" != 1 ] && [ "$TRACE" != 1 ]; then echo EXPO_PUBLIC_TEST_DIAG=1 >> .env; fi
           echo "${{ github.event.inputs.extra_env }}" | tr ';' '\n' | grep '=' >> .env || true
           cat .env
 

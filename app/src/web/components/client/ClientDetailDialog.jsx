@@ -77,17 +77,12 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
       const t = setTimeout(() => setChartTier(0), 300);
       return () => clearTimeout(t);
     }
-    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura; i grafici a dissolvenza
-    // finita (220 ms), uno per frame. Montarli due frame dopo il tocco cadeva DENTRO l'animazione: il
-    // montaggio di migliaia di view occupa anche il thread UI e la dissolvenza perdeva frame (micro lag).
+    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura, i grafici due frame dopo
+    // (prima tutto nello stesso commit del tocco sulla riga: nessun riscontro finché non era tutto montato)
     setChartTier(1);
-    let raf = 0;
-    const next = (tier) => {
-      setChartTier(tier);
-      if (tier < 5) raf = requestAnimationFrame(() => next(tier + 1));
-    };
-    const t = setTimeout(() => next(2), 220);
-    return () => { clearTimeout(t); cancelAnimationFrame(raf); };
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setChartTier(4)); });
+    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
   }, [internalOpen]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
   useEffect(() => { setInternalOpen(open); }, [open]);
@@ -784,10 +779,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         </Div>
 
         {/* Spider chart skill */}
-        {/* PORT: dal tier 2 (a dissolvenza finita): misurato su Pixel 8 Pro (Test Lab) il frame d'apertura
-            del dettaglio durava 150-180 ms tra montaggio, disegno e comandi alla GPU; il radar SVG era la
-            parte più pesante del primo frame */}
-        {chartTier >= 2 && allClients.length > 0 && (
+        {chartTier >= 1 && allClients.length > 0 && (
           <ClientSkillRadar
             client={client}
             allClients={allClients}
@@ -797,7 +789,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         )}
 
         {/* Grafico mensile spesa */}
-        {chartTier >= 3 && enriched.length > 0 && (
+        {chartTier >= 2 && enriched.length > 0 && (
           <Div className="rounded-xl bg-gradient-to-b from-card to-card/80 border border-border/60 p-3 sm:p-4 space-y-2 shadow-lg shadow-violet-500/10">
             <SectionHeader icon={TrendingUp} title="Andamento Spesa (12 mesi)" color="#a78bfa" />
             <Div className="h-32 sm:h-40">
@@ -820,7 +812,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         )}
 
         {/* Grafico mensile presenze */}
-        {chartTier >= 4 && enriched.length > 0 && (
+        {chartTier >= 3 && enriched.length > 0 && (
           <Div className="rounded-xl bg-gradient-to-b from-card to-card/80 border border-border/60 p-3 sm:p-4 space-y-2 shadow-lg shadow-emerald-500/10">
             <SectionHeader icon={Users} title="Andamento Presenze (12 mesi)" color="#4ade80" />
             <Div className="h-28 sm:h-36">
@@ -837,7 +829,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
         )}
 
         {/* Presenze per giorno settimana */}
-        {chartTier >= 5 && byDay.length > 0 && (
+        {chartTier >= 4 && byDay.length > 0 && (
           <Div className="rounded-xl bg-gradient-to-b from-card to-card/80 border border-border/60 p-3 sm:p-4 space-y-2 shadow-lg shadow-blue-500/10">
             <SectionHeader icon={Calendar} title="Presenze per Giorno" color="#60a5fa" />
             <Div className="h-24 sm:h-32">
