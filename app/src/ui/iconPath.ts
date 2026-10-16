@@ -8,7 +8,9 @@
 const n = (v: string | undefined, d = 0) => (v == null ? d : Number(v));
 export function shapeToD(tag: string, a: Record<string, string>): string | null {
   switch (tag) {
-    case 'path': return a.d ?? null;
+    // un path che comincia con "m" relativa è relativo all'origine; dopo un'altra forma sarebbe relativo
+    // al punto in cui quella finisce (la lente di Search perdeva il manico): si riparte da M0 0
+    case 'path': return a.d == null ? null : /^\s*m/.test(a.d) ? `M0 0${a.d}` : a.d;
     case 'line': return `M${n(a.x1)} ${n(a.y1)}L${n(a.x2)} ${n(a.y2)}`;
     case 'circle': {
       const cx = n(a.cx), cy = n(a.cy), r = n(a.r);

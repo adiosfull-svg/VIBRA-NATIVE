@@ -12,6 +12,8 @@ test('forme lucide → sottotracciati', () => {
   assert.equal(shapeToD('polygon', { points: '1,2 3,4 5,6' }), 'M1 2L3 4L5 6Z');
   assert.equal(combinedD([['path', { d: 'M1 1' }], ['line', { x1: '0', y1: '0', x2: '1', y2: '1' }]]), 'M1 1M0 0L1 1');
   assert.equal(combinedD([['path', { d: 'M1 1' }], ['foo', {}]]), null);
+  // Search: cerchio + "m21 21-4.3-4.3" (relativa all'origine, non alla fine del cerchio)
+  assert.equal(shapeToD('path', { d: 'm21 21-4.3-4.3' }), 'M0 0m21 21-4.3-4.3');
 });
 
 test('colore pieno', () => {
