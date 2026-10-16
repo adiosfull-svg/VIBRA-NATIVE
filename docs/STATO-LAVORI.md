@@ -214,8 +214,12 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - **DOM**: `shims/dom.ts` definisce `Image` e `IntersectionObserver` globali; `ui/domStyle.ts` dà ai ref
   nativi (Div, campi) un `style` alla DOM (`el.style.x = ...` → setNativeProps o ignorato). Cercare altre API
   del browser usate senza shim quando l'utente segnala un `ReferenceError`/`TypeError`.
-- **Blur** (Dimezis, `ui/pageLayers.tsx`): nav bar e fascia dell'orario (`StatusBarGlass`) sfocano la pagina
+- **Blur** (Dimezis, `ui/pageLayers.tsx`): la nav bar sfoca la pagina
   in primo piano (BlurTargetView di Page); la barra sticky sfoca i fratelli che la seguono (`StickySplit`).
+  Bersaglio della sticky oltre 8192 px (Clienti, Il mio VIBRA): Dimezis dimensiona il nodo del blur su
+  tutto il bersaglio e oltre il limite delle texture non disegna → velo `background/92` (`StickyBlurTooTallContext`).
+  Barra di stato e barra di navigazione di Android: colore pieno del body (`SystemBarsFill` in `(app)/_layout`).
+  Entrate di `motion` con y di pochi px (6-14 → 0): niente spostamento, solo dissolvenza (richiesta utente).
 - **Tab veloci**: tab precaricate dopo l'avvio (`(tabs)/_layout.tsx`), pagine in `memo`, `useLocation`
   per pagina (`LocationPublisher` + `useRoutePath`; Sidebar `useCurrentLocation`), scroll per pagina nel
   `PageLayer` (useStickySentinel, usePageWindow), contesti del layout con valore memoizzato. Regola: niente

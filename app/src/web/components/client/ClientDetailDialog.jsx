@@ -77,12 +77,17 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
       const t = setTimeout(() => setChartTier(0), 300);
       return () => clearTimeout(t);
     }
-    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura, i grafici due frame dopo
-    // (prima tutto nello stesso commit del tocco sulla riga: nessun riscontro finché non era tutto montato)
+    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura; i grafici a dissolvenza
+    // finita (220 ms), uno per frame. Montarli due frame dopo il tocco cadeva DENTRO l'animazione: il
+    // montaggio di migliaia di view occupa anche il thread UI e la dissolvenza perdeva frame (micro lag).
     setChartTier(1);
-    let r2 = 0;
-    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setChartTier(4)); });
-    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
+    let raf = 0;
+    const next = (tier) => {
+      setChartTier(tier);
+      if (tier < 4) raf = requestAnimationFrame(() => next(tier + 1));
+    };
+    const t = setTimeout(() => next(2), 220);
+    return () => { clearTimeout(t); cancelAnimationFrame(raf); };
   }, [internalOpen]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
   useEffect(() => { setInternalOpen(open); }, [open]);

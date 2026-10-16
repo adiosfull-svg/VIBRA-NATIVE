@@ -47,9 +47,19 @@ function numeric(t: Record<string, any> | undefined) {
   return out;
 }
 
+// Entrata "sale di qualche px e compare" (initial y: 6-14 → y: 0) all'apertura di ogni sezione: richiesto
+// che i componenti restino fermi al loro posto, quindi resta solo la dissolvenza. I pannelli che scorrono
+// davvero (y in % o oltre 24 px, keyframe) restano animati.
+function withoutEntryLift(from: Record<string, any> | undefined, to: Record<string, any> | undefined) {
+  if (!from || typeof from.y !== 'number' || from.y === 0 || Math.abs(from.y) > 24) return [from, to];
+  if (to && to.y !== undefined && to.y !== 0) return [from, to];
+  const { y: _f, ...f } = from;
+  const t = to && 'y' in to ? (({ y: _t, ...rest }) => rest)(to) : to;
+  return [f, t];
+}
+
 function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0) {
-  const rawFrom = typeof initial === 'object' ? initial : undefined;
-  const rawTo = typeof animate === 'object' ? animate : undefined;
+  const [rawFrom, rawTo] = withoutEntryLift(typeof initial === 'object' ? initial : undefined, typeof animate === 'object' ? animate : undefined);
   const pct = new Set(PCT_KEYS.filter((k) => isPct(rawFrom?.[k]) || isPct(rawTo?.[k])));
   const from = numeric(rawFrom);
   const to = numeric(rawTo);

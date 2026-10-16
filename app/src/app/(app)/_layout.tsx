@@ -12,8 +12,6 @@ import { LayoutUIProvider } from '../../web/lib/layoutUI';
 import { THEME } from '../../ui/palette.generated';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NativeBlur, usePageBlurTarget } from '../../ui/pageLayers';
-import { Div } from '../../ui/html';
 import { FixedHost } from '../../ui/fixedPortal';
 import { LocationPublisher } from '../../web/router';
 import { useEffect } from 'react';
@@ -30,20 +28,24 @@ function useShellImages() {
 }
 
 /**
- * Fascia dell'orario (telefono): l'app disegna fino al bordo dello schermo e la pagina scorreva sotto
- * l'orario nitida. Stesso vetro della nav bar: blur della pagina in primo piano + bg-background/30.
+ * Barra di stato (orario) e barra di navigazione di Android: l'app disegna fino ai bordi dello schermo e
+ * lì si vedeva la pagina che scorreva sotto (vetro sfocato). Ora colore pieno del body, come la cornice
+ * del browser per l'originale. Per ultime: sopra pagine, nav bar, pannelli e veli.
  */
-function StatusBarGlass() {
-  const top = useSafeAreaInsets().top;
-  const target = usePageBlurTarget();
-  if (Platform.OS === 'web' || !top) return null;
+function SystemBarsFill() {
+  const { top, bottom } = useSafeAreaInsets();
+  if (Platform.OS === 'web') return null;
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: top }}>
-      <NativeBlur intensity={24} target={target} style={StyleSheet.absoluteFill} />
-      <Div pointerEvents="none" className="absolute inset-0 bg-background/30" />
-    </View>
+    <>
+      {top > 0 && <View pointerEvents="none" style={[styles.bar, { top: 0, height: top }]} />}
+      {bottom > 0 && <View pointerEvents="none" style={[styles.bar, { bottom: 0, height: bottom }]} />}
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  bar: { position: 'absolute', left: 0, right: 0, backgroundColor: THEME.background },
+});
 
 // Notifiche: un solo osservatore con polling e subscription per tutta l'app (come l'header unico
 // dell'originale); le campanelle delle pagine leggono la cache (web/hooks/useNotifications).
@@ -93,7 +95,6 @@ export default function AppLayout() {
       <NotificationsPoller />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
-      <StatusBarGlass />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
       {/* Calcolatrice globale — persiste su tutte le rotte */}
@@ -103,6 +104,7 @@ export default function AppLayout() {
           così il velo copre tutto (anche il pulsante Cerca flottante e la calcolatrice) */}
       <Sidebar />
       <AccountMenuPanel />
+      <SystemBarsFill />
       </CalcolatriceProvider>
     </LayoutUIProvider>
   );
