@@ -27,7 +27,7 @@ def get(path, tok):
         return json.load(r)
 
 
-FRAMES = re.compile(r'^(\d\d-\d\d \d\d:\d\d:\d\d)\.\d+.*VIBRA_FRAMES.*n=(\d+) jank=(\d+) p50=([\d.]+) p90=([\d.]+) p99=([\d.]+) max=([\d.]+)')
+FRAMES = re.compile(r'^(\d\d-\d\d \d\d:\d\d:\d\d)\.\d+.*VIBRA_FRAMES.*n=(\d+) jank=(\d+) p50=([\d.]+) p90=([\d.]+) p99=([\d.]+) max=([\d.]+)(?: worst=(\S*))?')
 
 
 def frames_from_logcat(out):
@@ -46,8 +46,8 @@ def frames_from_logcat(out):
         for line in open(f, encoding='utf-8', errors='replace'):
             m = FRAMES.search(line)
             if m:
-                t, n, j, p50, p90, p99, mx = m.groups()
-                rows.append((t, int(n), int(j), float(p50), float(p90), float(p99), float(mx)))
+                t, n, j, p50, p90, p99, mx, w = m.groups()
+                rows.append((t, int(n), int(j), float(p50), float(p90), float(p99), float(mx), w or ''))
         if not rows:
             print(f'| {dev} | nessuna riga VIBRA_FRAMES (build senza VIBRA_FRAME_METRICS?) | | | | | | |')
             continue
@@ -60,10 +60,10 @@ def frames_from_logcat(out):
     worst.sort(reverse=True)
     if worst:
         print('\n### Finestre peggiori (da guardare nel video del dispositivo)\n')
-        print('| dispositivo | ora (logcat) | frame | persi | p90 | p99 | più lungo |')
-        print('|---|---|---|---|---|---|---|')
+        print('| dispositivo | ora (logcat) | frame | persi | p90 | p99 | più lungo | fasi del più lungo (ms) |')
+        print('|---|---|---|---|---|---|---|---|')
         for _, dev, r, _s in worst[:12]:
-            print(f'| {dev} | {r[0]} | {r[1]} | {r[2]} | {r[4]:.1f} ms | {r[5]:.1f} ms | {r[6]:.0f} ms |')
+            print(f'| {dev} | {r[0]} | {r[1]} | {r[2]} | {r[4]:.1f} ms | {r[5]:.1f} ms | {r[6]:.0f} ms | {r[7]} |')
     print()
 
 

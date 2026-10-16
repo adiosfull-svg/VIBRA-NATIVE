@@ -23,7 +23,7 @@ on:
       durata:
         description: 'Durata dell esplorazione Robo (es. 300s)'
         required: false
-        default: '300s'
+        default: '420s'
       riprendi:
         description: 'Solo scaricare i risultati di un test già fatto: "<link console> gs://<bucket>/<cartella>" (niente build, niente nuovo test)'
         required: false
@@ -46,7 +46,7 @@ jobs:
     env:
       UTENTE: ${{ github.event.inputs.utente || 'pr' }}
       DISPOSITIVI: ${{ github.event.inputs.dispositivi || 'husky,34 e3q,34' }}
-      DURATA: ${{ github.event.inputs.durata || '300s' }}
+      DURATA: ${{ github.event.inputs.durata || '420s' }}
       RIPRENDI: ${{ github.event.inputs.riprendi }}
     steps:
       - uses: actions/checkout@v4
