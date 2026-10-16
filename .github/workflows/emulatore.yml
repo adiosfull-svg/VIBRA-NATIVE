@@ -33,6 +33,10 @@ on:
         description: 'si = gara nativa contro originale (tools/gara) invece dei percorsi Maestro'
         required: false
         default: ''
+      fluidita:
+        description: 'si = animazioni attive, video di ogni percorso e frame persi (dumpsys gfxinfo) in fluidita.md'
+        required: false
+        default: ''
   push:
     paths:
       - 'app/**'
@@ -44,7 +48,7 @@ on:
 
 jobs:
   emulatore:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]') || contains(github.event.head_commit.message, '[gara]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]') || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[fluidita]')
     # a livello di job (i push senza [emu] non annullano niente); le esecuzioni a mano non si annullano
     concurrency:
       # la gara ha un gruppo suo: non annulla (e non è annullata da) un giro di percorsi Maestro
@@ -64,6 +68,8 @@ jobs:
       EMAIL: ${{ matrix.utente }}@vibra.local
       UTENTE: ${{ matrix.utente }}
       GARA: ${{ (github.event.inputs.gara == 'si' || contains(github.event.head_commit.message, '[gara]')) && '1' || '' }}
+      # [fluidita]: animazioni attive + video + frame persi per percorso (tests/emulatore/run.sh)
+      FLUID: ${{ (github.event.inputs.fluidita == 'si' || contains(github.event.head_commit.message, '[fluidita]')) && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -117,7 +123,8 @@ jobs:
           EXPO_PUBLIC_TEST_LOGIN=${{ matrix.utente }}@vibra.local:vibra
           ENV
           # gara: solo la sonda leggera (la diagnostica completa rallenterebbe la nativa)
-          if [ "$GARA" = 1 ]; then echo EXPO_PUBLIC_TEST_GARA=1 >> .env; else echo EXPO_PUBLIC_TEST_DIAG=1 >> .env; fi
+          # fluidità: senza la diagnostica (battito e misure costano frame), come l'APK vero
+          if [ "$GARA" = 1 ]; then echo EXPO_PUBLIC_TEST_GARA=1 >> .env; elif [ "$FLUID" != 1 ]; then echo EXPO_PUBLIC_TEST_DIAG=1 >> .env; fi
           echo "${{ github.event.inputs.extra_env }}" | tr ';' '\n' | grep '=' >> .env || true
           cat .env
 
@@ -213,7 +220,7 @@ jobs:
           ram-size: 4096M
           disk-size: 6000M
           emulator-options: -no-window -gpu ${{ github.event.inputs.gpu || 'swangle_indirect' }} -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          disable-animations: ${{ env.FLUID != '1' }}
           script: bash ${{ env.GARA == '1' && 'tests/gara/run.sh' || 'tests/emulatore/run.sh' }}
 
       - name: Pubblica i risultati
