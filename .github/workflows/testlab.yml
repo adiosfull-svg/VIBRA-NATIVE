@@ -150,14 +150,11 @@ jobs:
           echo "DIR=$DIR" >> "$GITHUB_ENV"
           args=()
           for d in $DISPOSITIVI; do args+=(--device "model=${d%,*},version=${d#*,},locale=it,orientation=portrait"); done
-          # risultati in un bucket del progetto: quello predefinito di Test Lab non si può elencare
-          BUCKET="gs://${GCP_PROJECT}-testlab"
-          gsutil ls "$BUCKET" > /dev/null 2>&1 || gsutil mb -l us-central1 "$BUCKET"
           # percorso guidato (tools/testlab/robo-<utente>.json): Clienti, dettaglio, Weekend, Semine...;
           # finito quello Robo esplora da solo per il tempo che resta
           robo=(); [ -f "tools/testlab/robo-$UTENTE.json" ] && robo=(--robo-script "tools/testlab/robo-$UTENTE.json")
           gcloud firebase test android run --type robo --app "$APK" "${args[@]}" "${robo[@]}" \
-            --timeout "$DURATA" --results-bucket "$BUCKET" --results-dir "$DIR" --format=json --quiet \
+            --timeout "$DURATA" --results-dir "$DIR" --format=json --quiet \
             --client-details "matrixLabel=VIBRA ${GITHUB_SHA::7} $UTENTE" > out/esito.json 2> out/testlab.log || true
           cat out/testlab.log | tail -30
           cat out/esito.json
@@ -171,7 +168,8 @@ jobs:
             echo "More details are available at [ ${RIPRENDI%% *} ]." > out/testlab.log
             g=${RIPRENDI#* }; bucket=$(echo "$g" | cut -d/ -f1-3); DIR=$(echo "$g" | cut -d/ -f4)
           else
-            # gcloud stampa il bucket come link della console: .../storage/browser/<bucket>/<cartella>/
+            # bucket predefinito di Test Lab (non elencabile; uno proprio richiede la fatturazione):
+            # gcloud lo stampa come link della console .../storage/browser/<bucket>/<cartella>/
             bucket=$(grep -oE 'storage/browser/[^/ ]+' out/testlab.log | head -1 | sed 's|storage/browser/|gs://|')
           fi
           echo "bucket: $bucket  cartella: $DIR"

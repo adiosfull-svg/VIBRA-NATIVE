@@ -69,6 +69,9 @@ def frames_from_logcat(out):
 
 def main(out):
     frames_from_logcat(out)
+    if not os.path.exists(f'{out}/testlab.log'):
+        print('Test Lab non partito (manca testlab.log): vedi il log del job.')
+        return
     log = open(f'{out}/testlab.log', encoding='utf-8', errors='replace').read()
     m = re.search(r'project/([^/]+)/testlab/histories/([^/]+)/matrices/([^/\]\s]+)', log)
     if not m:
