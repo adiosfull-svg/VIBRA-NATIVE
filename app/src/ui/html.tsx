@@ -830,7 +830,7 @@ function BlurFill({ px }: { px: number }) {
 
 // barra sticky su un contenuto troppo alto da sfocare (pageLayers): velo quasi pieno col colore della
 // pagina, così le righe sotto non si leggono attraverso il vetro
-const TALL_VEIL = [StyleSheet.absoluteFill, { backgroundColor: themeColor('background/80') }];
+const TALL_VEIL = [StyleSheet.absoluteFill, { backgroundColor: themeColor('background/92') }];
 
 const FIXED = /(^|\s)fixed(\s|$)/;
 const WEB_FIXED = { position: 'fixed' } as unknown as ViewStyle;
