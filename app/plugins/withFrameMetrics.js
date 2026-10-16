@@ -2,7 +2,8 @@
 // Misura la fluidità vera dal sistema: Window.OnFrameMetricsAvailableListener dà la durata di ogni
 // frame disegnato e la sua scadenza (16,7 ms a 60 Hz, 8,3 ms a 120 Hz). Ogni 5 s scrive nel logcat
 //   VIBRA_FRAMES n=<frame> jank=<oltre la scadenza> p50=<ms> p90=<ms> p99=<ms> max=<ms> worst=<fasi>
-// worst = dove è andato il tempo nel frame più lungo della finestra (ms): in=input, anim=animazioni,
+// worst = dove è andato il tempo nel frame più lungo della finestra (ms): wait=thread UI occupato prima
+// del frame (es. creazione delle viste), in=input, anim=animazioni,
 // layout=misura e posizioni, draw=registrazione del disegno, sync=caricamento immagini/texture,
 // cmd=comandi alla GPU, swap=consegna del frame, gpu=lavoro della GPU (ombre, sfocature)
 // (solo se nei 5 s si è disegnato qualcosa). I test Robo di Test Lab non raccolgono gli FPS: così si
@@ -40,8 +41,8 @@ object VibraFrameStats {
           worstTotal = total
           fun ms(id: Int) = metrics.getMetric(id) / 1_000_000.0
           val gpu = if (android.os.Build.VERSION.SDK_INT >= 31) ms(FrameMetrics.GPU_DURATION) else -1.0
-          worst = String.format(java.util.Locale.US, "in=%.0f,anim=%.0f,layout=%.0f,draw=%.0f,sync=%.0f,cmd=%.0f,swap=%.0f,gpu=%.0f",
-            ms(FrameMetrics.INPUT_HANDLING_DURATION), ms(FrameMetrics.ANIMATION_DURATION), ms(FrameMetrics.LAYOUT_MEASURE_DURATION),
+          worst = String.format(java.util.Locale.US, "wait=%.0f,in=%.0f,anim=%.0f,layout=%.0f,draw=%.0f,sync=%.0f,cmd=%.0f,swap=%.0f,gpu=%.0f",
+            ms(FrameMetrics.UNKNOWN_DELAY_DURATION), ms(FrameMetrics.INPUT_HANDLING_DURATION), ms(FrameMetrics.ANIMATION_DURATION), ms(FrameMetrics.LAYOUT_MEASURE_DURATION),
             ms(FrameMetrics.DRAW_DURATION), ms(FrameMetrics.SYNC_DURATION), ms(FrameMetrics.COMMAND_ISSUE_DURATION),
             ms(FrameMetrics.SWAP_BUFFERS_DURATION), gpu)
         }
