@@ -21,7 +21,8 @@ def main(path, soglia=150, quante=40):
     tp = TraceProcessor(trace=path, config=TraceProcessorConfig(bin_path=binp) if binp else None)
     q = lambda s: tp.query(s).as_pandas_dataframe()  # noqa: E731
     m = q(f"""select t.utid from thread t join thread_track tt using(utid) join slice s on s.track_id = tt.id
-              where '{PKG}' like '%' || t.name group by t.utid order by count(*) desc limit 1""")
+              left join process p on t.upid = p.upid
+        where ('{PKG}' like '%' || t.name) or (p.name like '{PKG}%' and t.tid = p.pid) group by t.utid order by count(*) desc limit 1""")
     if m.empty:
         print('thread principale non trovato'); return
     utid = int(m.utid[0])

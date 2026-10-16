@@ -23,7 +23,8 @@ def main(path, soglia=40):
     # il processo può risultare "<pre-initialized>" se è nato dallo zygote dopo l'inizio della traccia
     main_tid = tp.query(f"""
         select t.utid from thread t join thread_track tt using(utid) join slice s on s.track_id = tt.id
-        where '{PKG}' like '%' || t.name group by t.utid order by count(*) desc limit 1""").as_pandas_dataframe()
+        left join process p on t.upid = p.upid
+        where ('{PKG}' like '%' || t.name) or (p.name like '{PKG}%' and t.tid = p.pid) group by t.utid order by count(*) desc limit 1""").as_pandas_dataframe()
     if main_tid.empty:
         print('thread principale dell\'app non trovato')
         return

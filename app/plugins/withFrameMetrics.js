@@ -11,6 +11,8 @@
 const { withMainActivity } = require('@expo/config-plugins');
 
 const IMPORTS = `
+import android.os.Looper
+import android.os.SystemClock
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
@@ -78,6 +80,68 @@ object VibraFrameStats {
       copy.size, j, p(0.5), p(0.9), p(0.99), copy.last() / 1_000_000.0, w))
   }
 }
+
+// VIBRA (plugins/withFrameMetrics.js): operazioni lente del thread UI con i loro stack campionati.
+// Ogni messaggio del Looper principale (anche Choreographer#doFrame: montaggio, disegno) oltre 40 ms
+// scrive VIBRA_SLOW ms=<durata> n=<campioni> msg=<handler/callback>, poi le funzioni più presenti negli
+// stack (campionati ogni 5 ms mentre il messaggio gira) come VIBRA_SLOW_TOP <presenze>/<campioni> <metodo>.
+object VibraLooperMon {
+  @Volatile private var start = 0L
+  @Volatile private var current: String? = null
+  private val samples = ArrayList<Array<StackTraceElement>>()
+  private val lock = Any()
+
+  fun attach() {
+    val main = Looper.getMainLooper().thread
+    Looper.getMainLooper().setMessageLogging { s ->
+      if (s.startsWith(">>>>> Dispatching")) {
+        synchronized(lock) { samples.clear() }
+        current = s
+        start = SystemClock.uptimeMillis()
+      } else if (s.startsWith("<<<<< Finished")) {
+        val t0 = start
+        start = 0L
+        val d = SystemClock.uptimeMillis() - t0
+        if (t0 != 0L && d >= 40) {
+          val copy: List<Array<StackTraceElement>>
+          synchronized(lock) { copy = ArrayList(samples) }
+          report(d, current ?: "", copy)
+        }
+      }
+    }
+    val th = HandlerThread("vibra-looper-mon").apply { start() }
+    val h = Handler(th.looper)
+    h.post(object : Runnable {
+      override fun run() {
+        val t0 = start
+        if (t0 != 0L && SystemClock.uptimeMillis() - t0 > 8) {
+          val st = main.stackTrace
+          synchronized(lock) { if (samples.size < 400) samples.add(st) }
+        }
+        h.postDelayed(this, 5)
+      }
+    })
+  }
+
+  private fun report(ms: Long, msg: String, st: List<Array<StackTraceElement>>) {
+    val m = msg.replace(Regex("^>>>>> Dispatching to "), "").take(160)
+    Log.i("VIBRA_SLOW", "ms=$ms n=\${st.size} msg=$m")
+    if (st.isEmpty()) return
+    val incl = HashMap<String, Int>()
+    val leaf = HashMap<String, Int>()
+    for (s in st) {
+      val seen = HashSet<String>()
+      for ((i, f) in s.withIndex()) {
+        val k = f.className + "." + f.methodName
+        if (i == 0) leaf[k] = (leaf[k] ?: 0) + 1
+        if (seen.add(k)) incl[k] = (incl[k] ?: 0) + 1
+      }
+    }
+    for ((k, v) in leaf.entries.sortedByDescending { it.value }.take(8)) Log.i("VIBRA_SLOW_LEAF", "$v/\${st.size} $k")
+    for ((k, v) in incl.entries.filter { !it.key.startsWith("android.os.") && !it.key.startsWith("java.lang.reflect") && !it.key.startsWith("com.android.internal.os") }
+        .sortedByDescending { it.value }.take(30)) Log.i("VIBRA_SLOW_TOP", "$v/\${st.size} $k")
+  }
+}
 `;
 
 module.exports = function withFrameMetrics(config) {
@@ -87,7 +151,7 @@ module.exports = function withFrameMetrics(config) {
     if (src.includes('VibraFrameStats')) return cfg;
     if (cfg.modResults.language !== 'kt') throw new Error('withFrameMetrics: MainActivity non in Kotlin');
     src = src.replace(/^(package [^\n]+\n)/, `$1${IMPORTS}`);
-    src = src.replace(/(super\.onCreate\([^)]*\))/, '$1\n    VibraFrameStats.attach(this)');
+    src = src.replace(/(super\.onCreate\([^)]*\))/, '$1\n    VibraFrameStats.attach(this)\n    VibraLooperMon.attach()');
     if (!src.includes('VibraFrameStats.attach')) throw new Error('withFrameMetrics: super.onCreate non trovato');
     cfg.modResults.contents = src + HELPER;
     return cfg;
