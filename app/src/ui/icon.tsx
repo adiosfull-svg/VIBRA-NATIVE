@@ -7,6 +7,7 @@ import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from 'react
 import { cssInterop } from 'nativewind';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
+import { combinedD, opaque } from './iconPath';
 import { cn } from './cn';
 import { TextClassContext, TextStyleContext } from './text';
 
@@ -47,10 +48,11 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
   // in percentuale non la centrava (lente sotto il campo di Clienti) → occupo tutta l'altezza del
   // contenitore e centro con flex, senza percentuali
   if (wrap) centerVertically(outer, Number(height));
+  const single = Platform.OS !== 'web' && node.length > 1 && fill === 'none' && opaque(color) ? combinedD(node) : null;
   const svg = (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth}
       strokeLinecap="round" strokeLinejoin="round" style={wrap ? inner : style}>
-      {node.map(([tag, attrs], i) => {
+      {single ? <Path d={single} /> : node.map(([tag, attrs], i) => {
         const El = ELEMENTS[tag];
         if (!El) return null;
         const props = Object.fromEntries(Object.entries(attrs).map(([k, v]) => [camel(k), v]));
