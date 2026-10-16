@@ -43,13 +43,17 @@ def main(out):
         dev = ', '.join(f"{d['key']}={d['value']}" for d in st.get('dimensionValue', []) if d['key'] in ('Model', 'Version'))
         base = f'projects/{project}/histories/{history}/executions/{execution}/steps/{sid}'
         try:
-            g = get(f'{base}/perfMetricsSummary', tok).get('graphicsStats', {})
+            summary = get(f'{base}/perfMetricsSummary', tok)
+            json.dump(summary, open(f'{out}/perf-summary-{sid}.json', 'w'), indent=1)
+            g = summary.get('graphicsStats', {})
         except Exception as e:  # noqa: BLE001
             g = {}
             print(f'<!-- perfMetricsSummary {sid}: {e} -->')
         fps = []
         try:
-            for s in get(f'{base}/perfSampleSeries', tok).get('perfSampleSeries', []):
+            series = get(f'{base}/perfSampleSeries', tok).get('perfSampleSeries', [])
+            json.dump(series, open(f'{out}/perf-series-{sid}.json', 'w'), indent=1)
+            for s in series:
                 if s.get('basicPerfSampleSeries', {}).get('sampleSeriesLabel') == 'graphicsFrameRate':
                     fps += [x['value'] for x in get(f"{base}/perfSampleSeries/{s['sampleSeriesId']}/samples", tok).get('perfSamples', [])]
         except Exception as e:  # noqa: BLE001

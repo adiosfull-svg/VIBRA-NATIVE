@@ -24,6 +24,10 @@ on:
         description: 'Durata dell esplorazione Robo (es. 300s)'
         required: false
         default: '300s'
+      riprendi:
+        description: 'Solo scaricare i risultati di un test già fatto: link della console Test Lab (niente build, niente nuovo test)'
+        required: false
+        default: ''
   push:
     paths:
       - 'app/**'
@@ -43,6 +47,7 @@ jobs:
       UTENTE: ${{ github.event.inputs.utente || 'pr' }}
       DISPOSITIVI: ${{ github.event.inputs.dispositivi || 'husky,34 e3q,34' }}
       DURATA: ${{ github.event.inputs.durata || '300s' }}
+      RIPRENDI: ${{ github.event.inputs.riprendi }}
     steps:
       - uses: actions/checkout@v4
 
@@ -61,20 +66,24 @@ jobs:
           grep -iE "pixel|galaxy|samsung" out/modelli.txt | head -40 || cat out/modelli.txt | head -40
 
       - uses: actions/setup-node@v4
+        if: env.RIPRENDI == ''
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
 
       - uses: actions/setup-java@v4
+        if: env.RIPRENDI == ''
         with:
           distribution: temurin
           java-version: 17
 
       - uses: gradle/actions/setup-gradle@v4
+        if: env.RIPRENDI == ''
 
       # ── stack locale (come nell'Emulatore) + tunnel pubblico temporaneo ──
       - name: Stack locale di prova
+        if: env.RIPRENDI == ''
         run: |
           mkdir -p scripts/local/bin
           curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin
@@ -86,6 +95,7 @@ jobs:
           curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
 
       - name: Tunnel verso il backend di prova
+        if: env.RIPRENDI == ''
         run: |
           curl -sSL -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/download/2024.12.2/cloudflared-linux-amd64
           chmod +x /tmp/cloudflared
@@ -101,10 +111,12 @@ jobs:
 
       # ── APK arm64 di prova (telefoni veri) ──
       - name: Dipendenze
+        if: env.RIPRENDI == ''
         working-directory: app
         run: npm ci
 
       - name: Configurazione di prova
+        if: env.RIPRENDI == ''
         working-directory: app
         run: |
           cat > .env <<ENV
@@ -116,17 +128,20 @@ jobs:
           cat .env
 
       - name: Progetto Android
+        if: env.RIPRENDI == ''
         working-directory: app
         run: npx expo prebuild -p android --no-install
         env:
           CI: 1
 
       - name: Compila APK (arm64)
+        if: env.RIPRENDI == ''
         working-directory: app/android
         run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
 
       # ── Test Lab ──
       - name: Test Robo sui telefoni veri
+        if: env.RIPRENDI == ''
         run: |
           APK=app/android/app/build/outputs/apk/release/app-release.apk
           DIR="vibra-${{ github.run_id }}"
@@ -142,13 +157,21 @@ jobs:
       - name: Scarica video, log e prestazioni
         if: always()
         run: |
-          bucket=$(grep -oE 'gs://[^/ ]+' out/testlab.log | head -1)
-          echo "bucket: $bucket"
-          if [ -n "$bucket" ]; then
+          mkdir -p out
+          if [ -n "$RIPRENDI" ]; then
+            echo "More details are available at [ $RIPRENDI ]." > out/testlab.log
+            DIR=$(gsutil ls "$(gsutil ls | grep test-lab- | head -1)" | grep -o 'vibra-[0-9]*' | sort | tail -1)
+          fi
+          # gcloud stampa il bucket come link della console: .../storage/browser/<bucket>/<cartella>/
+          bucket=$(grep -oE 'storage/browser/[^/ ]+' out/testlab.log | head -1 | sed 's|storage/browser/|gs://|')
+          [ -n "$bucket" ] || bucket=$(gsutil ls | grep test-lab- | head -1 | sed 's|/$||')
+          echo "bucket: $bucket  cartella: $DIR"
+          if [ -n "$bucket" ] && [ -n "$DIR" ]; then
+            # solo ciò che serve: video, logcat, screenshot, metriche (niente APK)
             gsutil -m cp -r "$bucket/$DIR" out/ 2>&1 | tail -3 || true
-            # solo ciò che serve (video, logcat, screenshot, metriche): niente APK e archivi pesanti
             find out -name "*.apk" -delete; find out -size +90M -delete
           fi
+          find out -type f | head -60
           python3 tools/testlab/prestazioni.py out > out/prestazioni.md || true
           cat out/prestazioni.md || true
 
