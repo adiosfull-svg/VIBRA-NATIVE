@@ -45,12 +45,14 @@ gfx_row() {
 # React Native, disegno) → out/tracce/<percorso>.pftrace, da leggere con tools/traccia/analizza.py
 trace_start() {
   mkdir -p "$OUT/tracce"
+  # l'app legge all'avvio se la traccia è attiva: si chiude prima, il percorso la riapre (launchApp)
+  adb shell am force-stop $PKG
   adb shell rm -f /data/misc/perfetto-traces/vibra.pftrace
   adb shell perfetto --background --txt -o /data/misc/perfetto-traces/vibra.pftrace -c - <<'CFG' > /dev/null
 buffers { size_kb: 49152 fill_policy: RING_BUFFER }
 data_sources { config { name: "linux.ftrace" ftrace_config {
   ftrace_events: "sched/sched_switch" ftrace_events: "power/suspend_resume"
-  atrace_categories: "view" atrace_categories: "gfx" atrace_categories: "input" atrace_categories: "am"
+  atrace_categories: "view" atrace_categories: "input" atrace_categories: "am"
   atrace_categories: "dalvik" atrace_categories: "wm" atrace_categories: "res" atrace_categories: "bionic"
   atrace_apps: "com.vibra.mobile"
 } } }

@@ -142,7 +142,7 @@ jobs:
         working-directory: app
         run: |
           # solo ciò che entra nella parte nativa (le variabili EXPO_PUBLIC_ finiscono nel bundle JS)
-          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID") | sha256sum | cut -c1-16)
+          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID" "trace=$TRACE") | sha256sum | cut -c1-16)
           echo "key=apk-x86_64-$h" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache/restore@v4
@@ -158,6 +158,8 @@ jobs:
           npx expo prebuild -p android --no-install
           # lo stack locale è http (adb reverse su 127.0.0.1): permesso solo in questa build
           sed -i 's/<application /<application android:usesCleartextTraffic="true" /' android/app/src/main/AndroidManifest.xml
+          # traccia: app "profileable" (le sue sezioni di Trace e i campioni Java arrivano a Perfetto)
+          if [ "$TRACE" = 1 ]; then sed -i 's|</application>|<profileable android:shell="true"/></application>|' android/app/src/main/AndroidManifest.xml; fi
         env:
           CI: 1
           # fluidità: durata dei frame nel logcat (VIBRA_FRAMES, plugins/withFrameMetrics.js)
