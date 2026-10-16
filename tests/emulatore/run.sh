@@ -57,6 +57,10 @@ data_sources { config { name: "linux.ftrace" ftrace_config {
   atrace_apps: "com.vibra.mobile"
 } } }
 data_sources { config { name: "linux.process_stats" } }
+data_sources { config { name: "linux.perf" perf_event_config {
+  timebase { frequency: 500 }
+  callstack_sampling { scope { target_cmdline: "com.vibra.mobile" } }
+} } }
 data_sources { config { name: "android.surfaceflinger.frametimeline" } }
 duration_ms: 600000
 CFG
