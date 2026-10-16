@@ -153,7 +153,10 @@ jobs:
           # risultati in un bucket del progetto: quello predefinito di Test Lab non si può elencare
           BUCKET="gs://${GCP_PROJECT}-testlab"
           gsutil ls "$BUCKET" > /dev/null 2>&1 || gsutil mb -l us-central1 "$BUCKET"
-          gcloud firebase test android run --type robo --app "$APK" "${args[@]}" \
+          # percorso guidato (tools/testlab/robo-<utente>.json): Clienti, dettaglio, Weekend, Semine...;
+          # finito quello Robo esplora da solo per il tempo che resta
+          robo=(); [ -f "tools/testlab/robo-$UTENTE.json" ] && robo=(--robo-script "tools/testlab/robo-$UTENTE.json")
+          gcloud firebase test android run --type robo --app "$APK" "${args[@]}" "${robo[@]}" \
             --timeout "$DURATA" --results-bucket "$BUCKET" --results-dir "$DIR" --format=json --quiet \
             --client-details "matrixLabel=VIBRA ${GITHUB_SHA::7} $UTENTE" > out/esito.json 2> out/testlab.log || true
           cat out/testlab.log | tail -30
