@@ -25,7 +25,7 @@ on:
         required: false
         default: '300s'
       riprendi:
-        description: 'Solo scaricare i risultati di un test già fatto: link della console Test Lab (niente build, niente nuovo test)'
+        description: 'Solo scaricare i risultati di un test già fatto: "<link console> gs://<bucket>/<cartella>" (niente build, niente nuovo test)'
         required: false
         default: ''
   push:
@@ -133,6 +133,8 @@ jobs:
         run: npx expo prebuild -p android --no-install
         env:
           CI: 1
+          # durata dei frame nel logcat (plugins/withFrameMetrics.js): Robo non raccoglie gli FPS
+          VIBRA_FRAME_METRICS: 1
 
       - name: Compila APK (arm64)
         if: env.RIPRENDI == ''
@@ -148,8 +150,11 @@ jobs:
           echo "DIR=$DIR" >> "$GITHUB_ENV"
           args=()
           for d in $DISPOSITIVI; do args+=(--device "model=${d%,*},version=${d#*,},locale=it,orientation=portrait"); done
+          # risultati in un bucket del progetto: quello predefinito di Test Lab non si può elencare
+          BUCKET="gs://${GCP_PROJECT}-testlab"
+          gsutil ls "$BUCKET" > /dev/null 2>&1 || gsutil mb -l us-central1 "$BUCKET"
           gcloud firebase test android run --type robo --app "$APK" "${args[@]}" \
-            --timeout "$DURATA" --results-dir "$DIR" --format=json --quiet \
+            --timeout "$DURATA" --results-bucket "$BUCKET" --results-dir "$DIR" --format=json --quiet \
             --client-details "matrixLabel=VIBRA ${GITHUB_SHA::7} $UTENTE" > out/esito.json 2> out/testlab.log || true
           cat out/testlab.log | tail -30
           cat out/esito.json
@@ -158,17 +163,20 @@ jobs:
         if: always()
         run: |
           mkdir -p out
+          # riprendi = "<link della console> <gs://bucket/cartella>" (il secondo è nel log del test)
           if [ -n "$RIPRENDI" ]; then
-            echo "More details are available at [ $RIPRENDI ]." > out/testlab.log
-            DIR=$(gsutil ls "$(gsutil ls | grep test-lab- | head -1)" | grep -o 'vibra-[0-9]*' | sort | tail -1)
+            echo "More details are available at [ ${RIPRENDI%% *} ]." > out/testlab.log
+            g=${RIPRENDI#* }; bucket=$(echo "$g" | cut -d/ -f1-3); DIR=$(echo "$g" | cut -d/ -f4)
+          else
+            # gcloud stampa il bucket come link della console: .../storage/browser/<bucket>/<cartella>/
+            bucket=$(grep -oE 'storage/browser/[^/ ]+' out/testlab.log | head -1 | sed 's|storage/browser/|gs://|')
           fi
-          # gcloud stampa il bucket come link della console: .../storage/browser/<bucket>/<cartella>/
-          bucket=$(grep -oE 'storage/browser/[^/ ]+' out/testlab.log | head -1 | sed 's|storage/browser/|gs://|')
-          [ -n "$bucket" ] || bucket=$(gsutil ls | grep test-lab- | head -1 | sed 's|/$||')
           echo "bucket: $bucket  cartella: $DIR"
           if [ -n "$bucket" ] && [ -n "$DIR" ]; then
             # solo ciò che serve: video, logcat, screenshot, metriche (niente APK)
             gsutil -m cp -r "$bucket/$DIR" out/ 2>&1 | tail -3 || true
+            # nel branch dei risultati solo ciò che serve: video, logcat, screenshot, misure
+            find out -name "*.apk" -delete; find out -name "*.pb" -delete
             find out -name "*.apk" -delete; find out -size +90M -delete
           fi
           find out -type f | head -60

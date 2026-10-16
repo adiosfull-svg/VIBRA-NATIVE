@@ -136,7 +136,7 @@ jobs:
         working-directory: app
         run: |
           # solo ciò che entra nella parte nativa (le variabili EXPO_PUBLIC_ finiscono nel bundle JS)
-          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1) | sha256sum | cut -c1-16)
+          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID") | sha256sum | cut -c1-16)
           echo "key=apk-x86_64-$h" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache/restore@v4
@@ -154,6 +154,8 @@ jobs:
           sed -i 's/<application /<application android:usesCleartextTraffic="true" /' android/app/src/main/AndroidManifest.xml
         env:
           CI: 1
+          # fluidità: durata dei frame nel logcat (VIBRA_FRAMES, plugins/withFrameMetrics.js)
+          VIBRA_FRAME_METRICS: ${{ env.FLUID }}
 
       - name: Compila APK (x86_64)
         if: steps.apkcache.outputs.cache-hit != 'true'

@@ -6,7 +6,9 @@ poi chiede alla Tool Results API, per ogni dispositivo: graphicsStats (frame tot
 percentili dei tempi per frame, frame lenti per thread UI/disegno) e la serie degli FPS.
 Uso: prestazioni.py <cartella out>  → Markdown su stdout.
 """
+import glob
 import json
+import os
 import re
 import subprocess
 import sys
@@ -25,7 +27,48 @@ def get(path, tok):
         return json.load(r)
 
 
+FRAMES = re.compile(r'^(\d\d-\d\d \d\d:\d\d:\d\d)\.\d+.*VIBRA_FRAMES.*n=(\d+) jank=(\d+) p50=([\d.]+) p90=([\d.]+) p99=([\d.]+) max=([\d.]+)')
+
+
+def frames_from_logcat(out):
+    """Righe VIBRA_FRAMES (plugins/withFrameMetrics.js) nel logcat di ogni dispositivo."""
+    files = sorted(glob.glob(f'{out}/**/logcat', recursive=True))
+    if not files:
+        return
+    print('## Fluidità misurata dall\'app (FrameMetrics di Android, finestre di 5 s)\n')
+    print('Frame "perso" = oltre la scadenza del display (16,7 ms a 60 Hz, 8,3 ms a 120 Hz).\n')
+    print('| dispositivo | frame | persi | % persi | p50 mediano | p90 medio | p99 peggiore | frame più lungo |')
+    print('|---|---|---|---|---|---|---|---|')
+    worst = []
+    for f in files:
+        dev = os.path.basename(os.path.dirname(f))
+        rows = []
+        for line in open(f, encoding='utf-8', errors='replace'):
+            m = FRAMES.search(line)
+            if m:
+                t, n, j, p50, p90, p99, mx = m.groups()
+                rows.append((t, int(n), int(j), float(p50), float(p90), float(p99), float(mx)))
+        if not rows:
+            print(f'| {dev} | nessuna riga VIBRA_FRAMES (build senza VIBRA_FRAME_METRICS?) | | | | | | |')
+            continue
+        n = sum(r[1] for r in rows)
+        j = sum(r[2] for r in rows)
+        p50s = sorted(r[3] for r in rows)
+        print(f'| {dev} | {n} | {j} | {100 * j / n:.1f}% | {p50s[len(p50s) // 2]:.1f} ms | {sum(r[4] for r in rows) / len(rows):.1f} ms | {max(r[5] for r in rows):.1f} ms | {max(r[6] for r in rows):.0f} ms |')
+        start = rows[0][0]
+        worst += [(r[2] / r[1], dev, r, start) for r in rows if r[1] >= 10]
+    worst.sort(reverse=True)
+    if worst:
+        print('\n### Finestre peggiori (da guardare nel video del dispositivo)\n')
+        print('| dispositivo | ora (logcat) | frame | persi | p90 | p99 | più lungo |')
+        print('|---|---|---|---|---|---|---|')
+        for _, dev, r, _s in worst[:12]:
+            print(f'| {dev} | {r[0]} | {r[1]} | {r[2]} | {r[4]:.1f} ms | {r[5]:.1f} ms | {r[6]:.0f} ms |')
+    print()
+
+
 def main(out):
+    frames_from_logcat(out)
     log = open(f'{out}/testlab.log', encoding='utf-8', errors='replace').read()
     m = re.search(r'project/([^/]+)/testlab/histories/([^/]+)/matrices/([^/\]\s]+)', log)
     if not m:
