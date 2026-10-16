@@ -1,0 +1,35 @@
+diff --git a/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java b/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java
+index b6e0a38..26af58b 100644
+--- a/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java
++++ b/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java
+@@ -1142,6 +1142,15 @@ class TSpanView extends TextView {
+     Typeface typeface = null;
+     int weight = font.absoluteFontWeight;
+     final String fontFamily = font.fontFamily;
++    // VIBRA: il font risolto si ricorda (prima a OGNI disegno di ogni testo si rileggeva il file dagli
++    // asset e si ricostruiva il Typeface: 50-60% dei frame d'apertura dei grafici su Pixel 8 Pro).
++    // Stesso risultato: stessa chiave → stesso Typeface già costruito.
++    final String cacheKey = fontFamily + "|" + weight + "|" + isItalic + "|" + style + "|" + font.fontVariationSettings;
++    final Typeface cached = sTypefaceCache.get(cacheKey);
++    if (cached != null) {
++      applyResolvedTypeface(paint, font, cached);
++      return;
++    }
+     if (fontFamily != null && fontFamily.length() > 0) {
+       String otfpath = FONTS + fontFamily + OTF;
+       String ttfpath = FONTS + fontFamily + TTF;
+@@ -1182,7 +1191,14 @@ class TSpanView extends TextView {
+     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+       typeface = Typeface.create(typeface, weight, isItalic);
+     }
++    if (typeface != null) sTypefaceCache.put(cacheKey, typeface);
++    applyResolvedTypeface(paint, font, typeface);
++  }
++
++  private static final java.util.concurrent.ConcurrentHashMap<String, Typeface> sTypefaceCache =
++      new java.util.concurrent.ConcurrentHashMap<>();
+ 
++  private void applyResolvedTypeface(Paint paint, FontData font, Typeface typeface) {
+     paint.setLinearText(true);
+     paint.setSubpixelText(true);
+     paint.setTypeface(typeface);
