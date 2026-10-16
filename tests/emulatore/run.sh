@@ -45,6 +45,12 @@ gfx_row() {
 # React Native, disegno) → out/tracce/<percorso>.pftrace, da leggere con tools/traccia/analizza.py
 trace_start() {
   mkdir -p "$OUT/tracce"
+  # campionamento del codice (linux.perf): il servizio traced_perf è spento di default sugli emulatori
+  if [ -z "${PERF_ON:-}" ]; then
+    adb shell su 0 setprop persist.traced_perf.enable 1 || adb shell setprop persist.traced_perf.enable 1 || true
+    adb shell su 0 setprop security.perf_harden 0 || true
+    sleep 2; adb shell getprop persist.traced_perf.enable; PERF_ON=1
+  fi
   # l'app legge all'avvio se la traccia è attiva: si chiude prima, il percorso la riapre (launchApp)
   adb shell am force-stop $PKG
   adb shell rm -f /data/misc/perfetto-traces/vibra.pftrace
