@@ -5,7 +5,8 @@
 import { createContext, useContext } from 'react';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 import { cssInterop } from 'nativewind';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
 import { cn } from './cn';
 import { TextClassContext, TextStyleContext } from './text';
 
@@ -29,16 +30,18 @@ const ELEMENTS: Record<string, React.ComponentType<any>> = {
 // Proprietà SVG in kebab-case → camelCase per react-native-svg
 const camel = (k: string) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 
-function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill = 'none', strokeWidth = 2, style }: {
+function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill = 'none', strokeWidth = 2, style, anim }: {
   className?: string;
   node: IconNode; width?: number; height?: number; color?: string; fill?: string; strokeWidth?: number | string; style?: object;
+  /** animate-spin / animate-pulse (ui/cssAnimation): stile animato sul contenitore dell'icona */
+  anim?: object;
 }) {
   // posizione e trasformazioni (absolute top-1/2 -translate-y-1/2 delle icone dentro i campi):
   // sull'Svg di Android il translate in percentuale non si applica, su una View sì
   const flat = (StyleSheet.flatten(style) ?? {}) as Record<string, unknown>;
   const outer: Record<string, unknown> = {};
   const inner: Record<string, unknown> = {};
-  const wrap = Platform.OS !== 'web' && Object.keys(flat).some((k) => POSITIONED_KEYS.test(k));
+  const wrap = Platform.OS !== 'web' && (!!anim || Object.keys(flat).some((k) => POSITIONED_KEYS.test(k)));
   for (const [k, v] of Object.entries(flat)) (wrap && WRAP_KEYS.test(k) ? outer : inner)[k] = v;
   // absolute top-1/2 -translate-y-1/2 (icona centrata nel campo): su Android top 50% + translate
   // in percentuale non la centrava (lente sotto il campo di Clienti) → occupo tutta l'altezza del
@@ -55,6 +58,7 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
       })}
     </Svg>
   );
+  if (anim) return <Animated.View style={[outer, anim]}>{svg}</Animated.View>;
   return wrap ? <View style={outer}>{svg}</View> : svg;
 }
 
@@ -85,8 +89,16 @@ cssInterop(SvgIcon, {
 // Dal contesto di testo ereditato tengo solo il colore (text-<colore>), non dimensione/peso.
 export const TEXT_COLOR = /^(?:[a-z0-9]+:)*text-(?!(?:xs|sm|base|lg|xl|[2-9]xl|left|center|right|justify|start|end|wrap|nowrap|balance|pretty|ellipsis|clip)$)[a-z]/;
 
+/** Icona con animate-spin / animate-pulse: animazione sul driver nativo (non Reanimated di NativeWind). */
+function AnimatedSvgIcon({ kind, ...props }: { kind: CssAnimationKind } & Record<string, any>) {
+  const anim = useCssAnimation(kind);
+  return <SvgIcon {...(props as any)} anim={anim} />;
+}
+
 export function makeIcon(name: string, node: IconNode) {
-  function Icon({ className, size, color, fill, strokeWidth, style }: IconProps) {
+  function Icon({ className: rawClassName, size, color, fill, strokeWidth, style }: IconProps) {
+    const kind = Platform.OS !== 'web' ? cssAnimationOf(rawClassName) : null;
+    const className = kind ? withoutCssAnimation(rawClassName ?? '') : rawClassName;
     const inheritedText = useContext(TextClassContext);
     const inheritedStyleColor = useContext(TextStyleContext).color as string | undefined;
     const iconDefaults = useContext(IconClassContext);
@@ -96,8 +108,10 @@ export function makeIcon(name: string, node: IconNode) {
     const inheritedColor = inheritedText.split(/\s+/).filter((c) => TEXT_COLOR.test(c)).join(' ');
     // size esplicito (prop, come in lucide) vince sulle classi di dimensione di default
     const sizeClasses = size != null ? '' : cn('w-6 h-6', iconDefaults);
+    const Comp: any = kind ? AnimatedSvgIcon : SvgIcon;
     return (
-      <SvgIcon
+      <Comp
+        {...(kind ? { kind } : null)}
         node={node}
         className={cn(sizeClasses, 'text-foreground', inheritedColor, className)}
         {...(size != null ? { width: size, height: size } : null)}

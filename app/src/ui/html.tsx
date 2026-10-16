@@ -13,6 +13,7 @@ import { cn } from './cn';
 import { CapturePressable, CaptureView, classStyle } from './classStyleCache';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { themeColor } from './colors';
+import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickyBlurTooTallContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
 import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
@@ -856,7 +857,18 @@ export function Div(props: DivProps) {
   // una View vuota; ora si decide qui, prima di qualunque lavoro.
   if (Platform.OS !== 'web' && props.className && hiddenAtWidth(props.className, cssViewport.width)) return <View style={HIDDEN_VIEW_STYLE} />;
   // position: sticky sul telefono (pageLayers): l'elemento segue lo scroll della pagina
+  if (Platform.OS !== 'web') {
+    const anim = cssAnimationOf(props.className);
+    if (anim) return <CssAnimatedDiv kind={anim} {...props} />;
+  }
   return isNativeSticky(props.className) ? <StickyDiv {...props} /> : <DivBox {...props} />;
+}
+
+/** animate-spin / animate-pulse (ui/cssAnimation): driver nativo, ferme a schermata nascosta, non Reanimated. */
+function CssAnimatedDiv({ kind, className, animatedStyle, ...props }: DivProps & { kind: CssAnimationKind }) {
+  const anim = useCssAnimation(kind);
+  const merged = useMemo(() => (animatedStyle ? [animatedStyle, anim] : anim), [animatedStyle, anim]);
+  return <Div {...props} className={withoutCssAnimation(className ?? '')} animatedStyle={merged} />;
 }
 
 function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProps) {
