@@ -1,7 +1,29 @@
 diff --git a/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java b/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java
-index b6e0a38..26af58b 100644
+index b6e0a38..520e065 100644
 --- a/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java
 +++ b/node_modules/react-native-svg/android/src/main/java/com/horcrux/svg/TSpanView.java
+@@ -307,8 +307,8 @@ class TSpanView extends TextView {
+       }
+ 
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+-        paint.setFontVariationSettings(
+-            fontWeightTag + font.absoluteFontWeight + font.fontVariationSettings);
++        applyFontVariation(
++            paint, fontWeightTag + font.absoluteFontWeight + font.fontVariationSettings);
+       }
+     }
+   }
+@@ -487,8 +487,8 @@ class TSpanView extends TextView {
+       }
+ 
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+-        paint.setFontVariationSettings(
+-            fontWeightTag + font.absoluteFontWeight + font.fontVariationSettings);
++        applyFontVariation(
++            paint, fontWeightTag + font.absoluteFontWeight + font.fontVariationSettings);
+       }
+     }
+     // OpenType.js font data
 @@ -1142,6 +1142,15 @@ class TSpanView extends TextView {
      Typeface typeface = null;
      int weight = font.absoluteFontWeight;
@@ -18,7 +40,7 @@ index b6e0a38..26af58b 100644
      if (fontFamily != null && fontFamily.length() > 0) {
        String otfpath = FONTS + fontFamily + OTF;
        String ttfpath = FONTS + fontFamily + TTF;
-@@ -1182,7 +1191,14 @@ class TSpanView extends TextView {
+@@ -1182,7 +1191,40 @@ class TSpanView extends TextView {
      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
        typeface = Typeface.create(typeface, weight, isItalic);
      }
@@ -28,6 +50,32 @@ index b6e0a38..26af58b 100644
 +
 +  private static final java.util.concurrent.ConcurrentHashMap<String, Typeface> sTypefaceCache =
 +      new java.util.concurrent.ConcurrentHashMap<>();
++
++  // VIBRA: Paint.setFontVariationSettings costruisce un nuovo Typeface (createFromTypefaceWithVariation)
++  // a ogni chiamata, cioè a ogni misura/disegno di ogni testo. Il Typeface con le variazioni si ricorda
++  // per (font di partenza, impostazioni): stesso oggetto che avrebbe prodotto Paint, costruito una volta.
++  private static final java.util.concurrent.ConcurrentHashMap<Typeface, java.util.concurrent.ConcurrentHashMap<String, Typeface>> sVariationCache =
++      new java.util.concurrent.ConcurrentHashMap<>();
++
++  @androidx.annotation.RequiresApi(api = Build.VERSION_CODES.O)
++  private static void applyFontVariation(Paint paint, String settings) {
++    Typeface base = paint.getTypeface();
++    if (base == null) base = Typeface.DEFAULT;
++    java.util.concurrent.ConcurrentHashMap<String, Typeface> byBase = sVariationCache.get(base);
++    if (byBase == null) {
++      byBase = new java.util.concurrent.ConcurrentHashMap<>();
++      sVariationCache.put(base, byBase);
++    }
++    Typeface varied = byBase.get(settings);
++    if (varied == null) {
++      Paint probe = new Paint();
++      probe.setTypeface(base);
++      probe.setFontVariationSettings(settings);
++      varied = probe.getTypeface() != null ? probe.getTypeface() : base;
++      byBase.put(settings, varied);
++    }
++    paint.setTypeface(varied);
++  }
  
 +  private void applyResolvedTypeface(Paint paint, FontData font, Typeface typeface) {
      paint.setLinearText(true);
