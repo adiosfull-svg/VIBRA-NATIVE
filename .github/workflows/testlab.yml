@@ -1,0 +1,166 @@
+# Firebase Test Lab: l'app su telefoni VERI (top di gamma) con video e misure di fluidità.
+# L'emulatore dei runner non ha GPU (1-3 frame al secondo): lì le animazioni non si possono giudicare.
+# - stesso backend di prova dell'Emulatore (scripts/local, dati sintetici, utente di prova con accesso
+#   automatico), esposto ai telefoni di Test Lab con un tunnel temporaneo di Cloudflare per la durata del test
+# - APK arm64 di prova (NON distribuire: backend di prova e utente incorporati)
+# - test "Robo" di Test Lab: esplora l'app da solo per qualche minuto, registra video, logcat e
+#   prestazioni (frame, CPU, memoria); i risultati finiscono nel branch testlab-risultati-<run>
+# Parte a mano (Actions → "Test Lab" → Run workflow) o con un push il cui messaggio contiene [testlab].
+# Servono i secret GCP_SA_KEY (chiave JSON del service account) e GCP_PROJECT_ID.
+name: Test Lab
+
+on:
+  workflow_dispatch:
+    inputs:
+      utente:
+        description: 'Utente di prova (pr o admin)'
+        required: false
+        default: 'pr'
+      dispositivi:
+        description: 'Dispositivi, separati da spazio (modello,versione); vuoto = Pixel 8 Pro e Galaxy S24'
+        required: false
+        default: ''
+      durata:
+        description: 'Durata dell esplorazione Robo (es. 300s)'
+        required: false
+        default: '300s'
+  push:
+    paths:
+      - 'app/**'
+      - '.github/workflows/testlab.yml'
+
+jobs:
+  testlab:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[testlab]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    concurrency:
+      group: testlab-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    env:
+      UTENTE: ${{ github.event.inputs.utente || 'pr' }}
+      DISPOSITIVI: ${{ github.event.inputs.dispositivi || 'husky,34 e3q,34' }}
+      DURATA: ${{ github.event.inputs.durata || '300s' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Modelli disponibili
+        run: |
+          mkdir -p out
+          gcloud firebase test android models list --format="table(id,brand,name,form,supportedVersionIds.list())" > out/modelli.txt 2>&1 || true
+          grep -iE "pixel|galaxy|samsung" out/modelli.txt | head -40 || cat out/modelli.txt | head -40
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # ── stack locale (come nell'Emulatore) + tunnel pubblico temporaneo ──
+      - name: Stack locale di prova
+        run: |
+          mkdir -p scripts/local/bin
+          curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C scripts/local/bin
+          scripts/local/dev_stack.sh --reset
+          P="psql -h $PWD/scripts/local/.data/sock -p 55433 -U postgres -d postgres"
+          cols=$($P -At -c "select string_agg(quote_ident(column_name), ',') from information_schema.columns where table_schema='public' and table_name='client' and column_name not in ('id','name')")
+          $P -c "insert into client (name, $cols) select c.name || ' ' || g, $cols from client c, generate_series(1,9) g"
+          $P -c "insert into semina (name, promoter_id, instagram, phone, eta, provenienza, notes, status, recettivita, display_order) select 'Semina ' || g, 'prom000000000000000001', 'semina.' || g, '+39 333 000 00' || lpad(g::text, 2, '0'), 18 + g % 10, (array['Napoli','Pozzuoli','Vomero','Posillipo'])[1 + g % 4], case when g % 3 = 0 then 'Nota di prova ' || g || ': da richiamare venerdì' end, (array['nuovo','contattato','interessato','convertito'])[1 + g % 4], 1 + g % 5, g from generate_series(1,12) g"
+          curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
+
+      - name: Tunnel verso il backend di prova
+        run: |
+          curl -sSL -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/download/2024.12.2/cloudflared-linux-amd64
+          chmod +x /tmp/cloudflared
+          nohup /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:54321 > /tmp/tunnel.log 2>&1 &
+          for i in $(seq 1 60); do
+            url=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/tunnel.log | head -1)
+            [ -n "$url" ] && break; sleep 2
+          done
+          [ -n "$url" ] || { cat /tmp/tunnel.log; exit 1; }
+          for i in $(seq 1 30); do curl -sf "$url/rest/v1/" > /dev/null && break; sleep 2; done
+          echo "TUNNEL=$url" >> "$GITHUB_ENV"
+          echo "tunnel: $url"
+
+      # ── APK arm64 di prova (telefoni veri) ──
+      - name: Dipendenze
+        working-directory: app
+        run: npm ci
+
+      - name: Configurazione di prova
+        working-directory: app
+        run: |
+          cat > .env <<ENV
+          EXPO_PUBLIC_BACKEND=local
+          EXPO_PUBLIC_SUPABASE_URL=$TUNNEL
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=dev
+          EXPO_PUBLIC_TEST_LOGIN=$UTENTE@vibra.local:vibra
+          ENV
+          cat .env
+
+      - name: Progetto Android
+        working-directory: app
+        run: npx expo prebuild -p android --no-install
+        env:
+          CI: 1
+
+      - name: Compila APK (arm64)
+        working-directory: app/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      # ── Test Lab ──
+      - name: Test Robo sui telefoni veri
+        run: |
+          APK=app/android/app/build/outputs/apk/release/app-release.apk
+          DIR="vibra-${{ github.run_id }}"
+          echo "DIR=$DIR" >> "$GITHUB_ENV"
+          args=()
+          for d in $DISPOSITIVI; do args+=(--device "model=${d%,*},version=${d#*,},locale=it,orientation=portrait"); done
+          gcloud firebase test android run --type robo --app "$APK" "${args[@]}" \
+            --timeout "$DURATA" --results-dir "$DIR" --format=json --quiet \
+            --client-details "matrixLabel=VIBRA ${GITHUB_SHA::7} $UTENTE" > out/esito.json 2> out/testlab.log || true
+          cat out/testlab.log | tail -30
+          cat out/esito.json
+
+      - name: Scarica video, log e prestazioni
+        if: always()
+        run: |
+          bucket=$(grep -oE 'gs://[^/ ]+' out/testlab.log | head -1)
+          echo "bucket: $bucket"
+          if [ -n "$bucket" ]; then
+            gsutil -m cp -r "$bucket/$DIR" out/ 2>&1 | tail -3 || true
+            # solo ciò che serve (video, logcat, screenshot, metriche): niente APK e archivi pesanti
+            find out -name "*.apk" -delete; find out -size +90M -delete
+          fi
+          python3 tools/testlab/prestazioni.py out > out/prestazioni.md || true
+          cat out/prestazioni.md || true
+
+      - name: Pubblica i risultati
+        if: always()
+        run: |
+          [ -d out ] || exit 0
+          cd out
+          git init -q -b testlab-risultati
+          git config user.name "testlab"
+          git config user.email "testlab@users.noreply.github.com"
+          echo "run ${{ github.run_id }} — utente $UTENTE — commit ${{ github.sha }} — dispositivi $DISPOSITIVI — $(date -u)" > INFO.txt
+          git add -A
+          git commit -qm "Risultati Test Lab: run ${{ github.run_id }} (${GITHUB_SHA::7})"
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/testlab-risultati HEAD:refs/heads/testlab-risultati-${{ github.run_id }}
