@@ -57,17 +57,14 @@ trace_start() {
   adb shell perfetto --background --txt -o /data/misc/perfetto-traces/vibra.pftrace -c - <<'CFG' > /dev/null
 buffers { size_kb: 49152 fill_policy: RING_BUFFER }
 data_sources { config { name: "linux.ftrace" ftrace_config {
-  ftrace_events: "sched/sched_switch" ftrace_events: "power/suspend_resume"
-  atrace_categories: "view" atrace_categories: "input" atrace_categories: "am"
-  atrace_categories: "dalvik" atrace_categories: "wm" atrace_categories: "bionic"
+  atrace_categories: "view"
   atrace_apps: "com.vibra.mobile"
 } } }
-data_sources { config { name: "linux.process_stats" } }
+data_sources { config { name: "linux.process_stats" process_stats_config { scan_all_processes_on_start: true } } }
 data_sources { config { name: "linux.perf" perf_event_config {
-  timebase { frequency: 500 }
+  timebase { frequency: 250 }
   callstack_sampling { scope { target_cmdline: "com.vibra.mobile" } }
 } } }
-data_sources { config { name: "android.surfaceflinger.frametimeline" } }
 duration_ms: 600000
 CFG
 }
