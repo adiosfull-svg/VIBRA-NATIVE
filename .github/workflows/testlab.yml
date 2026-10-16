@@ -24,6 +24,10 @@ on:
         description: 'Durata dell esplorazione Robo (es. 300s)'
         required: false
         default: '420s'
+      extra_env:
+        description: 'Variabili in più per la build di prova, separate da ; (es. EXPO_PUBLIC_TEST_NO_BLUR=1 per un esperimento)'
+        required: false
+        default: ''
       riprendi:
         description: 'Solo scaricare i risultati di un test già fatto: "<link console> gs://<bucket>/<cartella>" (niente build, niente nuovo test)'
         required: false
@@ -125,6 +129,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY=dev
           EXPO_PUBLIC_TEST_LOGIN=$UTENTE@vibra.local:vibra
           ENV
+          echo "${{ github.event.inputs.extra_env }}" | tr ';' '\n' | grep '=' >> .env || true
           cat .env
 
       - name: Progetto Android

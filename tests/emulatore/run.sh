@@ -53,7 +53,7 @@ buffers { size_kb: 49152 fill_policy: RING_BUFFER }
 data_sources { config { name: "linux.ftrace" ftrace_config {
   ftrace_events: "sched/sched_switch" ftrace_events: "power/suspend_resume"
   atrace_categories: "view" atrace_categories: "input" atrace_categories: "am"
-  atrace_categories: "dalvik" atrace_categories: "wm" atrace_categories: "res" atrace_categories: "bionic"
+  atrace_categories: "dalvik" atrace_categories: "wm" atrace_categories: "bionic"
   atrace_apps: "com.vibra.mobile"
 } } }
 data_sources { config { name: "linux.process_stats" } }
