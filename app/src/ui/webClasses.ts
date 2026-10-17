@@ -49,6 +49,7 @@ export const nativeClasses = { enabled: true };
  * (transition-[transform,opacity] con scale-95 → opacity-100) mandava in loop il thread JS: milioni di
  * allocazioni native e app uccisa per memoria. Le animazioni vere passano da motion.tsx.
  */
+const HOVER_VARIANT = /(?:^|:)(?:hover|group-hover(?:\/[\w-]+)?|peer-hover(?:\/[\w-]+)?):/;
 const CSS_TRANSITION = /^(?:transition(?:-\S+)?|duration-\S+|ease-\S+|delay-\S+)$/;
 const SIZE_PROP: Record<string, string> = { h: 'height', w: 'width', 'min-h': 'minHeight', 'max-h': 'maxHeight', 'min-w': 'minWidth', 'max-w': 'maxWidth' };
 const BREAKPOINT_MIN: Record<string, number> = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 };
@@ -109,6 +110,9 @@ function computeNormalized(className?: string): Normalized {
 
   for (const c of list) {
     if (nativeClasses.enabled && CSS_TRANSITION.test(c.slice(c.lastIndexOf(':') + 1))) continue;
+    // hover: sul telefono non scatta mai (Pressability senza hover W3C): via, così le classi restano in cache
+    // (ui/classStyleCache) e NativeWind non trasforma il Div in un elemento interattivo
+    if (nativeClasses.enabled && HOVER_VARIANT.test(c)) continue;
     let vm: RegExpMatchArray | null;
     if (nativeClasses.enabled && (vm = c.match(VIEWPORT_SIZE))) {
       const bp = vm[2] ? BREAKPOINT_MIN[vm[2]] : undefined;

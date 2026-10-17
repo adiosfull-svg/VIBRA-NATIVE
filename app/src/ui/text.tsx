@@ -173,22 +173,44 @@ export function Text(p: AppTextProps) {
   try { return TextImpl(p); } finally { diagTime('text-corpo', performance.now() - t); }
 }
 
+// Fatti delle classi che dipendono solo dalle stringhe (classi ereditate + proprie): in cache, come
+// normalizeClasses, invece di cn + 4 regex a ogni disegno di ogni testo.
+type TextFacts = { merged: string; ownWeight: boolean; fontFamily: string | undefined; truncate: boolean; clamp: number; nowrap: boolean };
+const factsCache = new Map<string, TextFacts>();
+function textFacts(inherited: string, className: string | undefined): TextFacts {
+  const key = `${inherited}|${className ?? ''}`;
+  let f = factsCache.get(key);
+  if (!f) {
+    const merged = cn('text-base text-foreground', inherited, className);
+    f = {
+      merged,
+      ownWeight: /(^|\s)font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)(\s|$)/.test(className ?? ''),
+      fontFamily: fontFamilyFor(merged),
+      truncate: /(^|\s)truncate(\s|$)/.test(merged),
+      clamp: Number(merged.match(/(?:^|\s)line-clamp-(\d+)/)?.[1] ?? 0),
+      nowrap: /(^|\s)whitespace-nowrap(\s|$)/.test(merged),
+    };
+    if (factsCache.size > 5000) factsCache.clear();
+    factsCache.set(key, f);
+  }
+  return f;
+}
+const NO_STYLE = webStyle(undefined).style;
+
 function TextImpl({ className, style, numberOfLines, children, ...props }: AppTextProps) {
   diagCount('text', typeof children === 'string' ? children : className);
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);
   const inFlex = useContext(FlexParentContext) === 'flex';
-  const merged = cn('text-base text-foreground', inherited, className);
-  const converted = webStyle(StyleSheet.flatten(style)).style;
+  const facts = textFacts(inherited, className);
+  const { merged, truncate, clamp } = facts;
+  const converted = style == null ? NO_STYLE : webStyle(StyleSheet.flatten(style)).style;
   // style di testo dei contenitori, salvo ciò che le classi proprie ridefiniscono
   const applied = withoutClassOverrides(inheritedStyle, className);
   // peso: style proprio > classe propria > style ereditato > classi ereditate
-  const ownWeight = /(^|\s)font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)(\s|$)/.test(className ?? '');
-  const styleWeight = weightClass(converted.fontWeight) ?? (ownWeight ? null : weightClass(applied.fontWeight));
-  const fontFamily = fontFamilyFor(styleWeight ? `${merged} ${styleWeight}` : merged);
+  const styleWeight = weightClass(converted.fontWeight) ?? (facts.ownWeight ? null : weightClass(applied.fontWeight));
+  const fontFamily = styleWeight ? fontFamilyFor(`${merged} ${styleWeight}`) : facts.fontFamily;
   const childStyle = nextTextStyle(inheritedStyle, className, converted);
-  const truncate = /(^|\s)truncate(\s|$)/.test(merged);
-  const clamp = Number(merged.match(/(?:^|\s)line-clamp-(\d+)/)?.[1] ?? 0);
   const probe = useContext(WrapProbeContext);
   const narrow = useContext(NarrowCellContext) && Platform.OS !== 'web';
   const word = narrow && !numberOfLines && !truncate && !clamp ? longestWord(children) : null;
@@ -196,7 +218,7 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   const flatText = mcProbe ? plainText(children) : null;
   const [broken, setBroken] = useState<string | null>(null);
   const [wordWidth, setWordWidth] = useState<{ word: string; width: number } | null>(null);
-  if (probe && !probe.flexible && !numberOfLines && !truncate && !clamp && !/(^|\s)whitespace-nowrap(\s|$)/.test(merged) && hasBreakableText(children)) probe.mark();
+  if (probe && !probe.flexible && !numberOfLines && !truncate && !clamp && !facts.nowrap && hasBreakableText(children)) probe.mark();
   const textStyle = [cssDefaults(merged, inherited, className ?? '', { ...applied, ...converted }, inFlex), WEB_NO_WORD_BREAK, applied, converted, fontFamily ? { fontFamily, fontWeight: 'normal' as const } : null];
   const minWord = word && wordWidth?.word === word ? { minWidth: wordWidth.width } : null;
   const text = (
@@ -218,12 +240,15 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
         }
       } : props.onTextLayout}
     >
-      {/* i figli (testo annidato, icone) ereditano colore e stile come in CSS */}
-      <FlexParentContext.Provider value="text">
-        <TextStyleContext.Provider value={childStyle}>
-          <TextClassContext.Provider value={merged}>{children}</TextClassContext.Provider>
-        </TextStyleContext.Provider>
-      </FlexParentContext.Provider>
+      {/* i figli (testo annidato, icone) ereditano colore e stile come in CSS; un testo semplice non
+          ha discendenti che leggano i contesti: niente Provider */}
+      {typeof children === 'string' || typeof children === 'number' ? children : (
+        <FlexParentContext.Provider value="text">
+          <TextStyleContext.Provider value={childStyle}>
+            <TextClassContext.Provider value={merged}>{children}</TextClassContext.Provider>
+          </TextStyleContext.Provider>
+        </FlexParentContext.Provider>
+      )}
     </RNText>
   );
   // parola spezzata: si misura una volta (testo invisibile su una riga) e diventa la larghezza minima

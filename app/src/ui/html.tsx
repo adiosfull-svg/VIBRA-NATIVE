@@ -147,7 +147,24 @@ function useSticky(need: boolean): boolean {
 }
 
 // Figli che in CSS non si allungano all'altezza della riga della griglia
-const NO_STRETCH = /(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/;
+// Le stesse stringhe di classi tornano a ogni disegno di ogni Div/Btn: il risultato dei test sulle classi
+// (dipende solo dalla stringa) si tiene in cache invece di rifare ~25 regex per elemento.
+function cachedTest(re: RegExp): { test(s: string): boolean } {
+  const memo = new Map<string, boolean>();
+  return {
+    test(s: string) {
+      let v = memo.get(s);
+      if (v === undefined) {
+        if (memo.size > 5000) memo.clear();
+        v = re.test(s);
+        memo.set(s, v);
+      }
+      return v;
+    },
+  };
+}
+
+const NO_STRETCH = cachedTest(/(^|\s)(h-|size-|aspect-|self-(start|center|end|baseline))/);
 // h-full in una cella: in CSS è l'altezza della riga della griglia (definita dopo il calcolo delle
 // tracce). In Yoga la cella non ha altezza definita e il 100% esplode (Dashboard: card alte 25.000 px,
 // pagina "vuota" sotto la Classifica). Nella cella h-full diventa quindi "allungati alla riga".
@@ -310,7 +327,7 @@ function stickySplit(nodes: ReactNode, className?: string): ReactNode {
 
 const SPACE = /(?:^|\s)space-([xy])-(\S+)/g;
 // fuori dal flusso: niente gap col gap di RN, ma in CSS contano come fratello precedente per space-*
-const OUT_OF_FLOW = /(?:^|\s)(absolute|fixed)(?:\s|$)/;
+const OUT_OF_FLOW = cachedTest(/(?:^|\s)(absolute|fixed)(?:\s|$)/);
 
 /** Margine inline in px (numero o "12px"), altrimenti null. */
 function inlinePx(v: unknown): number | null {
@@ -432,13 +449,13 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
 // (salvo classi che lo decidono esplicitamente), ma solo se il genitore è flex in CSS:
 // i figli di un blocco non si restringono (FlexParentContext).
 // (anche la griglia: i suoi figli sono "bloccati" come gli elementi flex, niente righe in linea)
-const CSS_FLEX = /(^|\s)(?:max-sm:)?(flex|inline-flex|grid)(\s|$)/;
-const SHRINK_CLASS = /(^|\s)(shrink-0|flex-shrink-0|flex-none|shrink|flex-shrink|flex-1|flex-auto|flex-initial|grow|flex-grow)(\s|$)/;
+const CSS_FLEX = cachedTest(/(^|\s)(?:max-sm:)?(flex|inline-flex|grid)(\s|$)/);
+const SHRINK_CLASS = cachedTest(/(^|\s)(shrink-0|flex-shrink-0|flex-none|shrink|flex-shrink|flex-1|flex-auto|flex-initial|grow|flex-grow)(\s|$)/);
 
 // Elementi "in linea a blocco" (inline-flex, inline-block): in un blocco sono larghi quanto il
 // contenuto e li posiziona il text-align del contenitore (in RN si allungherebbero a tutta riga).
-const INLINE_LEVEL = /(^|\s)(inline-flex|inline-block|inline-grid)(\s|$)/;
-const OWN_MARGIN_Y = /(^|\s)-?m[tyb]?-\S+/;
+const INLINE_LEVEL = cachedTest(/(^|\s)(inline-flex|inline-block|inline-grid)(\s|$)/);
+const OWN_MARGIN_Y = cachedTest(/(^|\s)-?m[tyb]?-\S+/);
 
 /** Padding + bordo inferiori dalle classi (p-, py-, pb-, border, border-b): la linea di base sta sopra. */
 function bottomInset(cls: string): number {
@@ -471,7 +488,7 @@ function useInlineBlockStrut(enabled: boolean, inherited: string, text: string, 
   const size = fontSizeOf(own), lh = inheritedLineHeight(own, size);
   return { style: inlineBlockMargins(parentSize, parentLh, size, lh, h, bottomInset(cls)) as ViewStyle, onLayout: handle };
 }
-const SELF = /(^|\s)self-/;
+const SELF = cachedTest(/(^|\s)self-/);
 
 function inlineAlign(inherited: string): 'flex-start' | 'center' | 'flex-end' {
   let align: 'flex-start' | 'center' | 'flex-end' = 'flex-start';
@@ -491,12 +508,12 @@ function ringShadow(ring: string): ViewStyle {
   return v;
 }
 
-const MX_AUTO = /(^|\s)mx-auto(\s|$)/;
-const OWN_WIDTH = /(^|\s)(w-|size-|absolute(\s|$)|fixed(\s|$))/;
-const POSITIONED = /(^|\s)(relative|absolute|sticky)(\s|$)/;
-const Z_CLASS = /(^|\s)(?:[a-z0-9-]+:)*-?z-/;
+const MX_AUTO = cachedTest(/(^|\s)mx-auto(\s|$)/);
+const OWN_WIDTH = cachedTest(/(^|\s)(w-|size-|absolute(\s|$)|fixed(\s|$))/);
+const POSITIONED = cachedTest(/(^|\s)(relative|absolute|sticky)(\s|$)/);
+const Z_CLASS = cachedTest(/(^|\s)(?:[a-z0-9-]+:)*-?z-/);
 // anche transform crea un contesto di sovrapposizione: si disegna con i posizionati, nell'ordine del codice
-const TRANSFORMED = /(^|\s)-?(translate-[xy]|scale|rotate|skew)-/;
+const TRANSFORMED = cachedTest(/(^|\s)-?(translate-[xy]|scale|rotate|skew)-/);
 const hasTransform = (rawClass: string, style?: Record<string, any>) =>
   TRANSFORMED.test(rawClass) || (Array.isArray(style?.transform) ? style.transform.length > 0 : style?.transform != null && style.transform !== 'none');
 
@@ -540,8 +557,8 @@ function textSignature(children: ReactNode): string {
 // tronca. Per gli elementi whitespace-nowrap (es. tutti i Button): primo layout alla larghezza
 // naturale, poi quella larghezza diventa minWidth. Non vale con overflow nascosto/truncate
 // (lì anche in CSS min-width: auto = 0) o con larghezza esplicita.
-const NOWRAP = /(^|\s)whitespace-nowrap(\s|$)/;
-const NO_MIN_CONTENT = /(^|\s)(truncate|overflow-hidden|overflow-x-auto|overflow-auto|min-w-\S+|w-\S+|size-\S+|basis-\S+|flex-none|shrink-0|flex-shrink-0)(\s|$)/;
+const NOWRAP = cachedTest(/(^|\s)whitespace-nowrap(\s|$)/);
+const NO_MIN_CONTENT = cachedTest(/(^|\s)(truncate|overflow-hidden|overflow-x-auto|overflow-auto|min-w-\S+|w-\S+|size-\S+|basis-\S+|flex-none|shrink-0|flex-shrink-0)(\s|$)/);
 
 function useMinContentWidth(className: string | undefined, style: Record<string, any> | undefined, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void, inRow = false) {
   const enabled = NOWRAP.test(className ?? '') && !NO_MIN_CONTENT.test(className ?? '')
@@ -569,10 +586,10 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
 // larghezza naturale, come in CSS; quello col testo sì (es. un titolo accanto a dei controlli va a capo
 // invece di spingere fuori i controlli). Il testo lo dice con WrapProbeContext (text.tsx).
 const FlexRowContext = createContext(false);
-const FLEX_COL = /(^|\s)(?:max-sm:)?flex-col(-reverse)?(\s|$)/;
-const FLEX_ROW = /(^|\s)(?:max-sm:)?(flex|inline-flex)(\s|$)/;
-const FLEX_WRAP = /(^|\s)flex-wrap(\s|$)/;
-const OUT_OF_FLOW_CLASS = /(^|\s)(absolute|fixed|hidden)(\s|$)/;
+const FLEX_COL = cachedTest(/(^|\s)(?:max-sm:)?flex-col(-reverse)?(\s|$)/);
+const FLEX_ROW = cachedTest(/(^|\s)(?:max-sm:)?(flex|inline-flex)(\s|$)/);
+const FLEX_WRAP = cachedTest(/(^|\s)flex-wrap(\s|$)/);
+const OUT_OF_FLOW_CLASS = cachedTest(/(^|\s)(absolute|fixed|hidden)(\s|$)/);
 const isFlexRow = (cls: string) => FLEX_ROW.test(cls) && !FLEX_COL.test(cls);
 
 const RIGID_BTN = { flexShrink: 0 };
@@ -606,7 +623,7 @@ function useButtonMinContent(enabled: boolean, children: ReactNode, onLayout?: (
   return { style: { minWidth: done!.min }, onLayout, probe: null };
 }
 const MEASURE_NATURAL = { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' as const };
-const SIZED = /(^|\s)(w|h|size)-/;
+const SIZED = cachedTest(/(^|\s)(w|h|size)-/);
 /** Contenuto che in CSS non va mai a capo: testi di una parola, icone con dimensione, Span/P con questi. */
 function unbreakableContent(children: ReactNode): boolean {
   let ok = true;
@@ -691,8 +708,8 @@ type DivProps = Omit<ViewProps, keyof WebGestureProps> & WebGestureProps & {
 // Sul web una View con overflow auto scorre (CSS); su Android/iOS no: lì diventa una ScrollView.
 // Le classi/stili che dispongono i figli (padding, gap, direzione, allineamento) vanno sul
 // contenitore del contenuto, il resto (dimensioni, bordi, sfondo, posizione) sulla ScrollView.
-const SCROLL_Y = /(^|\s)overflow(-y)?-(auto|scroll)(\s|$)/;
-const SCROLL_X = /(^|\s)overflow-x-(auto|scroll)(\s|$)/;
+const SCROLL_Y = cachedTest(/(^|\s)overflow(-y)?-(auto|scroll)(\s|$)/);
+const SCROLL_X = cachedTest(/(^|\s)overflow-x-(auto|scroll)(\s|$)/);
 const CONTENT_CLASS = /^(p[xytrblse]?-|gap-|flex-(row|col|wrap|nowrap)|items-|justify-|content-|divide-)/;
 const CONTENT_STYLE = /^(padding|gap|rowGap|columnGap|flexDirection|flexWrap|alignItems|justifyContent|alignContent)/;
 
@@ -814,7 +831,7 @@ function backdropBlur(className: string, style: unknown): { css?: string; px: nu
 
 /** Un antenato ha uno sfondo pieno: dietro al vetro c'è solo quello (CSS), non la pagina sotto al portale. */
 const OpaqueBehindContext = createContext(false);
-const OPAQUE_BG = /(^|\s)bg-(background|card|popover)(\s|$)/;
+const OPAQUE_BG = cachedTest(/(^|\s)bg-(background|card|popover)(\s|$)/);
 
 function BlurFill({ px }: { px: number }) {
   // bersaglio (pageLayers): dentro una barra sticky ciò che le scorre sotto; fuori dalla pagina
@@ -833,7 +850,7 @@ function BlurFill({ px }: { px: number }) {
 // pagina, così le righe sotto non si leggono attraverso il vetro
 const TALL_VEIL = [StyleSheet.absoluteFill, { backgroundColor: themeColor('background/92') }];
 
-const FIXED = /(^|\s)fixed(\s|$)/;
+const FIXED = cachedTest(/(^|\s)fixed(\s|$)/);
 const WEB_FIXED = { position: 'fixed' } as unknown as ViewStyle;
 
 // Breakpoint di Tailwind (min-width)
@@ -841,10 +858,19 @@ const BREAKPOINT_PX: Record<string, number> = { sm: 640, md: 768, lg: 1024, xl: 
 const SHOWN_AT = /(?:^|\s)(sm|md|lg|xl|2xl):(block|flex|grid|inline-flex|inline-block|inline|table|contents)(?=\s|$)/g;
 
 /** "hidden sm:block" su uno schermo più stretto di sm: nascosto (es. le versioni desktop delle tabelle). */
+const shownFrom = new Map<string, number>();
 export function hiddenAtWidth(className: string, width: number): boolean {
-  if (!/(^|\s)hidden(\s|$)/.test(className)) return false;
-  let min = Infinity;
-  for (const m of className.matchAll(SHOWN_AT)) min = Math.min(min, BREAKPOINT_PX[m[1]]);
+  // larghezza da cui l'elemento si vede (0: non nascosto), in cache per stringa di classi
+  let min = shownFrom.get(className);
+  if (min === undefined) {
+    min = 0;
+    if (/(^|\s)hidden(\s|$)/.test(className)) {
+      min = Infinity;
+      for (const m of className.matchAll(SHOWN_AT)) min = Math.min(min, BREAKPOINT_PX[m[1]]);
+    }
+    if (shownFrom.size > 5000) shownFrom.clear();
+    shownFrom.set(className, min);
+  }
   return width < min;
 }
 
@@ -1012,7 +1038,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
 
 // Un <span>/<p> usato come contenitore (flex, dimensioni fisse, gap...) in RN deve essere una View:
 // il testo figlio eredita comunque le classi di testo tramite il contesto.
-const BOXY = /(^|\s)(?:[a-z]+:)*(flex|inline-flex|grid|items-|justify-|gap-|space-[xy]-|size-|w-\d|h-\d|w-\[|h-\[|aspect-|block(?=\s|$)|inline-block(?=\s|$))/;
+const BOXY = cachedTest(/(^|\s)(?:[a-z]+:)*(flex|inline-flex|grid|items-|justify-|gap-|space-[xy]-|size-|w-\d|h-\d|w-\[|h-\[|aspect-|block(?=\s|$)|inline-block(?=\s|$))/);
 
 /** Un <span> che contiene blocchi (span block, div...) in CSS li impila: in RN serve una View, non testo annidato. */
 function hasBoxyChild(children: ReactNode): boolean {
@@ -1065,13 +1091,46 @@ type BtnProps = Omit<PressableProps, 'children' | 'style' | keyof WebGestureProp
 const BUTTON_CENTER: ViewStyle = { justifyContent: 'center' };
 
 // <button> senza classi di visualizzazione/larghezza: inline-block come nel browser
-const BUTTON_BLOCKY = /(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+|self-\S+|absolute|fixed)(\s|$)/;
+const BUTTON_BLOCKY = cachedTest(/(^|\s)(block|flex|inline-flex|grid|hidden|w-\S+|min-w-\S+|self-\S+|absolute|fixed)(\s|$)/);
 
 /** <button>: cliccabile, eredita/propaga le classi di testo come Div. */
 const PRESSED: ViewStyle = { opacity: 0.85 };
 
+type BtnStates = { base: string; disabled: ViewStyle | null; active: ViewStyle | null };
+const btnStatesCache = new Map<string, BtnStates>();
+const DISABLED_OPACITY = /^disabled:opacity-(\d+)$/;
+const ACTIVE_SCALE = /^active:scale-(?:(\d+)|\[(\d*\.?\d+)\])$/;
+
+/**
+ * Telefono: `disabled:opacity-N`, `disabled:pointer-events-none` e `active:scale-*` (in tutti i Button di
+ * shadcn) come stili applicati da qui, così le classi restanti sono statiche e vanno in cache
+ * (ui/classStyleCache) invece di passare ogni volta da NativeWind. Le altre varianti restano a NativeWind.
+ */
+function btnStates(box: string): BtnStates {
+  let out = btnStatesCache.get(box);
+  if (out) return out;
+  const base: string[] = [];
+  let disabled: ViewStyle | null = null;
+  let scale: number | null = null;
+  let m: RegExpMatchArray | null;
+  for (const c of box.split(/\s+/)) {
+    if (!c) continue;
+    if ((m = c.match(DISABLED_OPACITY))) { disabled = { ...(disabled ?? {}), opacity: Number(m[1]) / 100 }; continue; }
+    if (c === 'disabled:pointer-events-none') { disabled = { ...(disabled ?? {}), pointerEvents: 'none' }; continue; }
+    if ((m = c.match(ACTIVE_SCALE))) { scale = m[1] != null ? Number(m[1]) / 100 : Number(m[2]); continue; }
+    base.push(c);
+  }
+  const rest = base.join(' ');
+  // con altre trasformazioni nelle classi lo scale si comporrebbe con quelle: resta a NativeWind
+  if (scale != null && TRANSFORMED.test(` ${rest}`)) { base.push(box.split(/\s+/).find((c) => ACTIVE_SCALE.test(c))!); scale = null; }
+  out = { base: base.join(' '), disabled, active: scale != null ? { transform: [{ scale }] } : null };
+  if (btnStatesCache.size > 5000) btnStatesCache.clear();
+  btnStatesCache.set(box, out);
+  return out;
+}
+
 /** Pressable del pulsante: sul telefono, con classi statiche già viste, senza NativeWind (ui/classStyleCache). */
-function BtnPressable({ classes, ownStyle: baseStyle, children, onPressIn, onPressOut, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; children?: ReactNode }) {
+function BtnPressable({ classes, ownStyle: baseStyle0, disabledStyle, activeStyle, children, onPressIn, onPressOut, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; disabledStyle?: ViewStyle | null; activeStyle?: ViewStyle | null; children?: ReactNode }) {
   // Stato "premuto" qui e non in Btn: i figli arrivano già creati e React salta il loro ridisegno (prima ogni
   // tocco ridisegnava due volte tutto il contenuto del pulsante). Con className, NativeWind sul web ignora
   // uno style passato come funzione: per questo è a mano.
@@ -1081,7 +1140,9 @@ function BtnPressable({ classes, ownStyle: baseStyle, children, onPressIn, onPre
     onPressIn: (e: GestureResponderEvent) => { setPressed(true); onPressIn?.(e); },
     onPressOut: (e: GestureResponderEvent) => { setPressed(false); onPressOut?.(e); },
   };
-  const ownStyle = pressed ? [...baseStyle, PRESSED] : baseStyle;
+  // disabled: subito dopo lo stile delle classi (vince su opacity-50 come in NativeWind), active: in fondo
+  const baseStyle = disabledStyle ? [disabledStyle, ...baseStyle0] : baseStyle0;
+  const ownStyle = pressed ? (activeStyle ? [...baseStyle, PRESSED, activeStyle] : [...baseStyle, PRESSED]) : baseStyle;
   // Tipo scelto al montaggio, come in DivBoxImpl: il primo pulsante di ogni stringa di classi nasceva
   // CapturePressable e al disegno successivo (spesso setPressed in onPressIn) diventava Pressable: smontato
   // sotto il dito, il tocco andava perso e "premuto" poteva restare acceso.
@@ -1116,6 +1177,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const text = button ? cn('text-center', ownText) : ownText;
   const { box: box0, grid, gradient: classGradient, ring, viewport } = normalizeClasses(rest);
   const box = gridCell ? withoutHFull(box0) : box0;
+  const states = Platform.OS !== 'web' && box ? btnStates(box) : null;
   const ringStyle = ring ? ringShadow(ring) : null;
   const vpStyle = viewportSizeStyle(viewport);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
@@ -1169,7 +1231,9 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       {...gestures}
       disabled={disabled}
       onPress={handlePress}
-      classes={cn(box, disabled && 'opacity-50')}
+      classes={cn(states ? states.base : box, disabled && 'opacity-50')}
+      disabledStyle={disabled ? states?.disabled : null}
+      activeStyle={states?.active}
       ownStyle={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
