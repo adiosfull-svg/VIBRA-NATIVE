@@ -234,3 +234,21 @@ export function useDiagWhy(label: string, values: Record<string, unknown>) {
   console.log(`VIBRA perché ${label} ${changed.join(',') || '(niente: genitore o stato)'}`);
   prev.current = values;
 }
+
+// ── Barra in basso: dal rilascio del dito alla tab nuova (tutte le build di prova; costa nulla) ──
+// Riga nel logcat: "VIBRA nav <tab> js=<ms> frame=<ms>": js = la barra si ridisegna con la tab nuova
+// (navigazione e commit di React finiti), frame = due frame dopo (la tab nuova è a schermo).
+const TEST_BUILD = !!process.env.EXPO_PUBLIC_TEST_LOGIN;
+let navProbe: { route: string; t: number } | null = null;
+export function navProbeStart(route: string) {
+  if (TEST_BUILD) navProbe = { route, t: performance.now() };
+}
+export function navProbeArrived(route: string) {
+  const p = navProbe;
+  if (!p || p.route !== route) return;
+  navProbe = null;
+  const js = performance.now() - p.t;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    console.log(`VIBRA nav ${route} js=${Math.round(js)} frame=${Math.round(performance.now() - p.t)}`);
+  }));
+}

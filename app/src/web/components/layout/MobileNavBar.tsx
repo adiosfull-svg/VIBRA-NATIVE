@@ -25,6 +25,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
+import { navProbeArrived, navProbeStart } from '../../../lib/testDiag';
 import { Div } from '../../../ui/html';
 import { ContactRound, Instagram, LayoutGrid, Search, Send, Sprout } from '../../../ui/icons.generated';
 import { THEME } from '../../../ui/palette.generated';
@@ -224,6 +225,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
     pillX.value = animate && !wasHidden ? withTiming(i * w, { duration: PILL_MS, easing: PILL_EASE }) : i * w;
   }, [mode, itemW, visual, pillX]);
   useEffect(() => { syncTo(restIndex); }, [restIndex, syncTo]);
+  useEffect(() => { navProbeArrived(activeRoute); }, [activeRoute]);
   // larghezza nota (o cambiata): pillola al suo posto senza animazione
   useEffect(() => {
     itemW.value = itemWidth;
@@ -284,7 +286,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
       if (longPress.current) clearTimeout(longPress.current);
       longPress.current = null;
       const item = items.current[idx];
-      if (item) goRef.current(item);
+      if (item) { navProbeStart(item.route); goRef.current(item); }
       // rete di sicurezza: navigazione rifiutata o verso la voce già attiva → pillola a riposo
       if (settle.current) clearTimeout(settle.current);
       settle.current = setTimeout(() => { settle.current = null; syncTo(restRef.current, true); }, 1500);

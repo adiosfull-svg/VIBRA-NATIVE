@@ -146,7 +146,9 @@ jobs:
         working-directory: app
         run: |
           # solo ciò che entra nella parte nativa (le variabili EXPO_PUBLIC_ finiscono nel bundle JS)
-          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID" "trace=$TRACE") | sha256sum | cut -c1-16)
+          # + i flag statici di Reanimated in package.json (compilati nel C++), solo se ci sono
+          rea=$(node -p "JSON.stringify(require('./package.json').reanimated ?? '')")
+          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID" "trace=$TRACE"; [ "$rea" = '""' ] || echo "reanimated=$rea") | sha256sum | cut -c1-16)
           echo "key=apk-x86_64-$h" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache/restore@v4

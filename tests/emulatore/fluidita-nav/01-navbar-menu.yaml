@@ -1,0 +1,52 @@
+# Fluidità di barra in basso e menu laterale (da usare con `traccia: si` o `fluidita: si`):
+# apre e chiude due volte il menu burger, cambia tab dalla barra e trascina il dito lungo la barra.
+# Nel logcat "VIBRA nav <tab> js=.. frame=..": dal rilascio del dito al disegno della tab nuova.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE|I Miei Progressi"
+    timeout: 180000
+# precaricamento di tab e pannelli finito (lib/preloadRoutes.ts, ui/sideDrawer.tsx)
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 15000
+    optional: true
+- tapOn: "Menu"
+- extendedWaitUntil:
+    visible: "Guida all'uso"
+    timeout: 10000
+- waitForAnimationToEnd
+- pressKey: back
+- waitForAnimationToEnd
+- tapOn: "Menu"
+- extendedWaitUntil:
+    visible: "Guida all'uso"
+    timeout: 10000
+- waitForAnimationToEnd
+- pressKey: back
+- waitForAnimationToEnd
+- tapOn: "Weekend"
+- waitForAnimationToEnd
+- tapOn: "Clienti"
+- waitForAnimationToEnd
+- tapOn: "Il Mio"
+- waitForAnimationToEnd
+- tapOn: "Weekend"
+- waitForAnimationToEnd
+- tapOn: "Clienti"
+- waitForAnimationToEnd
+# trascinamento lento lungo la barra (prima voce → ultima)
+- swipe:
+    start: "8%, 95%"
+    end: "92%, 95%"
+    duration: 2000
+- waitForAnimationToEnd
+- takeScreenshot: fine-navbar-menu
