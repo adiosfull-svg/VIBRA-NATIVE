@@ -382,6 +382,22 @@ export const Path = forwardRef<any, PathProps>((props, ref) => {
     if (typeof ref === 'function') ref(node);
     else if (ref) (ref as { current: unknown }).current = node;
   }, [ref]);
-  return <SvgPath ref={setRef} {...props} />;
+  return <SvgPath ref={setRef} {...(Platform.OS === 'web' ? props : withRnPointerEvents(props))} />;
 });
+
+// pointerEvents degli SVG del web ('stroke', 'visiblePainted', 'fill'...): su Android react-native-svg
+// accetta solo i valori di RN e con gli altri l'app CADE (IllegalArgumentException "No enum constant
+// ...STROKE": il filo trasparente delle Comitive chiudeva l'app all'apertura di una comitiva con legami).
+const RN_POINTER_EVENTS = new Set(['auto', 'none', 'box-none', 'box-only']);
+function withRnPointerEvents(props: PathProps): PathProps {
+  const p = props as PathProps & { style?: unknown; pointerEvents?: string };
+  const st = p.style as { pointerEvents?: string } | undefined;
+  const badStyle = !!st && !Array.isArray(st) && typeof st === 'object' && st.pointerEvents != null && !RN_POINTER_EVENTS.has(st.pointerEvents);
+  const badProp = p.pointerEvents != null && !RN_POINTER_EVENTS.has(p.pointerEvents);
+  if (!badStyle && !badProp) return props;
+  const out = { ...p };
+  if (badStyle) out.style = { ...st, pointerEvents: 'auto' };
+  if (badProp) out.pointerEvents = 'auto';
+  return out as PathProps;
+}
 Path.displayName = 'Path';
