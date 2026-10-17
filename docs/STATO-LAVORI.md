@@ -228,6 +228,15 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Prova: `tests/emulatore/pr/08-sticky-tap.yaml` + `.sh` (run.sh esegue `<percorso>.sh` dopo il percorso),
   `EXPO_PUBLIC_TEST_NO_FLINGSTOP=1` = comportamento di prima. Risultato: 23 tap su 24, percorsi admin/pr verdi
   (run 39047119059). run.sh taglia il logcat oltre 90 MB (GitHub rifiuta file >100 MB).
+  Seconda causa trovata la sera del 17/10 (il tocco "non immediato" sul telefono): il tocco sulla SCRITTA o
+  sull'ICONA della tab non arrivava mai al pulsante, solo quello sul bordo del pulsante. Le classi `hover:`
+  (es. `hover:text-foreground` delle tab non attive, ereditata dal testo) fanno aggiungere a NativeWind un
+  `onPress` vuoto al Text, che diventa premibile e si tiene il tocco; l'Svg dell'icona idem. Nella barra lo
+  salvava il tap di riserva (+150-450 ms), fuori dalle barre il tocco sulla scritta andava perso.
+  Corretto: `nativeTextClass` in `ui/text.tsx` toglie hover:/focus:/active: dal testo sul telefono, icone con
+  `pointerEvents="none"` (`ui/icon.tsx`), tap di riserva dopo 50 ms. Emulatore (run 39067905613): 17 tap su 20
+  arrivano direttamente al pulsante, evidenziazione ~20 ms dopo il rilascio (prima ~180 ms); pr verdi
+  (run 39067907202). Regola: mai classi con stato (hover/active/focus) passate a un Text o a una View senza tocco.
 - **Classi**: NativeWind scarta dvh/env()/calc() → `viewportSizeStyle` (webStyle) le calcola; le classi
   `transition-*/duration-*/ease-*/delay-*` NON vanno a NativeWind (la sua interop mandava in loop il JS:
   "Scudo OOM" nel logcat e app uccisa, era il crash del dettaglio cliente) → `ui/cssTransition.ts` anima
