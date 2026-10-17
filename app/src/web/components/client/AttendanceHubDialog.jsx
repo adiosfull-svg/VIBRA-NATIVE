@@ -1,5 +1,6 @@
 // Port di src/components/client/AttendanceHubDialog.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Animated, Easing, Platform } from 'react-native';
 import { createPortal } from '@/web/shims/react-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
 // Dialog principale gestito come overlay sempre montato (custom) per preservare la
@@ -671,6 +672,10 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
   );
 }
 
+// PORT: popup animato sul driver nativo (telefono), curva di transition duration-200
+const NATIVE_HUB = Platform.OS !== 'web';
+const HUB_EASE = Easing.bezier(0.4, 0, 0.2, 1);
+
 // ─── Main Dialog (full-screen, header persistente, layout a riquadri) ────────
 
 export default function AttendanceHubDialog({ open, onOpenChange, events, clients, attendances, promoterId, onSaved, onClientDetail }) {
@@ -678,10 +683,22 @@ export default function AttendanceHubDialog({ open, onOpenChange, events, client
   // fade + zoom; la chiusura notifica il parent dopo 220ms (fade-out completo).
   const [internalOpen, setInternalOpen] = useState(false);
   const closeTimerRef = useRef(null);
-  useEffect(() => { setInternalOpen(open); }, [open]);
+  // PORT: sul telefono dissolvenza e scale-95 con un Animated.Value sul driver nativo, avviato prima del
+  // setState (come ClientDetailDialog): la chiusura non aspetta il ridisegno di tutto l'hub
+  const shown = useRef(new Animated.Value(0)).current;
+  const animateShown = (v) => Animated.timing(shown, { toValue: v ? 1 : 0, duration: 200, easing: HUB_EASE, useNativeDriver: true }).start();
+  useEffect(() => {
+    if (NATIVE_HUB) animateShown(open);
+    setInternalOpen(open);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => clearTimeout(closeTimerRef.current), []);
+  const hubAnim = useMemo(() => (NATIVE_HUB ? {
+    root: { opacity: shown },
+    panel: { transform: [{ scale: shown.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] },
+  } : null), [shown]);
   const requestClose = () => {
-    setInternalOpen(false);
+    if (NATIVE_HUB) { animateShown(false); setTimeout(() => setInternalOpen(false), 0); }
+    else setInternalOpen(false);
     clearTimeout(closeTimerRef.current);
     closeTimerRef.current = setTimeout(() => onOpenChange?.(false), 220);
   };
@@ -787,14 +804,16 @@ export default function AttendanceHubDialog({ open, onOpenChange, events, client
         // pointer-events-none dipende da `open` (parent), NON da internalOpen: durante il
         // fade-out (220ms) l'overlay continua a intercettare i tocchi, così il click
         // sintetico dopo la chiusura non attiva gli elementi della pagina sotto.
-        className={`fixed z-[9999] flex items-center justify-center max-sm:pt-[env(safe-area-inset-top)] max-sm:pb-[env(safe-area-inset-bottom)] sm:p-8 transition-opacity duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0'} ${open ? '' : 'pointer-events-none'}`}
+        className={`fixed z-[9999] flex items-center justify-center max-sm:pt-[env(safe-area-inset-top)] max-sm:pb-[env(safe-area-inset-bottom)] sm:p-8 ${NATIVE_HUB ? '' : `transition-opacity duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0'}`} ${open ? '' : 'pointer-events-none'}`}
+        animatedStyle={hubAnim?.root}
         style={{ top: 0, left: 0, right: 0, bottom: 'auto', height: '100dvh' }}>
         <Div className="absolute inset-0 bg-black/80 touch-none" onPointerDown={(e) => { if (e.target === e.currentTarget) requestClose(); }} />
         {/* Popup centrato (angoli stondati, margini laterali). Altezza DEFINITA (non auto):
             i tab interni usano h-full / grid. Zoom-in via scale solo da chiuso: da aperto
             nessun transform, così gli elementi fixed interni (picker serata) restano relativi al viewport. */}
         <Div
-          className={`relative max-sm:w-[calc(100%-1.5rem)] max-sm:h-[calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-sm:rounded-2xl sm:w-full sm:h-full bg-background border border-border shadow-lg flex flex-col overflow-hidden transition-transform duration-200 sm:rounded-2xl ${internalOpen ? '' : 'scale-95'}`}
+          className={`relative max-sm:w-[calc(100%-1.5rem)] max-sm:h-[calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-sm:rounded-2xl sm:w-full sm:h-full bg-background border border-border shadow-lg flex flex-col overflow-hidden sm:rounded-2xl ${NATIVE_HUB ? '' : `transition-transform duration-200 ${internalOpen ? '' : 'scale-95'}`}`}
+          animatedStyle={hubAnim?.panel}
           style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(167,139,250,0.12) 0%, rgba(196,181,253,0.05) 30%, transparent 55%)' }}
         >
 

@@ -8,6 +8,7 @@ import { cssInterop } from 'nativewind';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
 import { combinedD, opaque } from './iconPath';
+import { classTransform, transitionSpec, useCssTransition, withoutClassTransform } from './cssTransition';
 import { cn } from './cn';
 import { TextClassContext, TextStyleContext } from './text';
 
@@ -97,10 +98,21 @@ function AnimatedSvgIcon({ kind, ...props }: { kind: CssAnimationKind } & Record
   return <SvgIcon {...(props as any)} anim={anim} />;
 }
 
+/**
+ * Icona con transition-transform e una trasformazione di stato (la freccia `rotate-180` dei pannelli che si
+ * aprono): la rotazione si anima sul driver nativo invece di scattare.
+ */
+function TransitionSvgIcon({ duration, transform, ...props }: { duration: number; transform: NonNullable<ReturnType<typeof classTransform>> } & Record<string, any>) {
+  const tr = useCssTransition({ transform: duration }, undefined, undefined, 0, transform);
+  return <SvgIcon {...(props as any)} anim={tr.style ?? undefined} />;
+}
+
 export function makeIcon(name: string, node: IconNode) {
   function Icon({ className: rawClassName, size, color, fill, strokeWidth, style }: IconProps) {
     const kind = Platform.OS !== 'web' ? cssAnimationOf(rawClassName) : null;
-    const className = kind ? withoutCssAnimation(rawClassName ?? '') : rawClassName;
+    const trMs = Platform.OS !== 'web' && !kind ? transitionSpec(rawClassName, undefined)?.transform : undefined;
+    const trTransform = trMs ? classTransform(rawClassName) : null;
+    const className = kind ? withoutCssAnimation(rawClassName ?? '') : trTransform ? withoutClassTransform(rawClassName ?? '') : rawClassName;
     const inheritedText = useContext(TextClassContext);
     const inheritedStyleColor = useContext(TextStyleContext).color as string | undefined;
     const iconDefaults = useContext(IconClassContext);
@@ -110,10 +122,12 @@ export function makeIcon(name: string, node: IconNode) {
     const inheritedColor = inheritedText.split(/\s+/).filter((c) => TEXT_COLOR.test(c)).join(' ');
     // size esplicito (prop, come in lucide) vince sulle classi di dimensione di default
     const sizeClasses = size != null ? '' : cn('w-6 h-6', iconDefaults);
-    const Comp: any = kind ? AnimatedSvgIcon : SvgIcon;
+    // il tipo resta lo stesso per tutta la vita dell'icona finché la classe di transizione c'è
+    const Comp: any = kind ? AnimatedSvgIcon : trTransform ? TransitionSvgIcon : SvgIcon;
     return (
       <Comp
         {...(kind ? { kind } : null)}
+        {...(trTransform ? { duration: trMs, transform: trTransform } : null)}
         node={node}
         className={cn(sizeClasses, 'text-foreground', inheritedColor, className)}
         {...(size != null ? { width: size, height: size } : null)}

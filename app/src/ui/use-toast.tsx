@@ -10,7 +10,7 @@ import { X } from './icons.generated';
 import { Text } from './text';
 
 type ToastProps = { id?: string; title?: ReactNode; description?: ReactNode; action?: ReactNode; variant?: 'default' | 'destructive'; duration?: number; className?: string };
-type ToastItem = ToastProps & { id: string };
+type ToastItem = ToastProps & { id: string; leaving?: boolean };
 
 const TOAST_LIMIT = 20;
 let toasts: ToastItem[] = [];
@@ -19,8 +19,13 @@ let count = 0;
 
 function emit() { for (const l of listeners) l(toasts); }
 
+// chiusura: prima l'animazione d'uscita (ToastView), poi via dall'elenco (prima spariva di colpo)
 export function dismiss(id?: string) {
-  toasts = id ? toasts.filter((t) => t.id !== id) : [];
+  toasts = toasts.map((t) => (!id || t.id === id ? { ...t, leaving: true } : t));
+  emit();
+}
+function remove(id: string) {
+  toasts = toasts.filter((t) => t.id !== id);
   emit();
 }
 
@@ -49,16 +54,23 @@ function useToastList() {
   return state;
 }
 
-function ToastView({ id, title, description, action, variant, duration, className }: ToastItem) {
+function ToastView({ id, title, description, action, variant, duration, className, leaving }: ToastItem) {
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    if (leaving) return;
     Animated.timing(anim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     const t = setTimeout(() => dismiss(id), duration || 3000);
     return () => clearTimeout(t);
-  }, [id, duration, anim]);
+  }, [id, duration, anim, leaving]);
+  useEffect(() => {
+    if (!leaving) return;
+    const a = Animated.timing(anim, { toValue: 0, duration: 150, useNativeDriver: true });
+    a.start(({ finished }) => { if (finished) remove(id); });
+    return () => a.stop();
+  }, [leaving, id, anim]);
   const destructive = variant === 'destructive';
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] }) }] }}>
+    <Animated.View pointerEvents={leaving ? 'none' : 'auto'} style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-40, 0] }) }] }}>
       <Div className={cn(
         'relative flex w-full items-center justify-between overflow-hidden rounded-md border p-6 pr-8 shadow-lg mt-2',
         destructive ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-border bg-background text-foreground',

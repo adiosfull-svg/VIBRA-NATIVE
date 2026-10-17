@@ -1,11 +1,14 @@
 // Transizioni CSS sul telefono (transition nello style o classi transition-*): opacità, colore di
-// sfondo e comparsa/scomparsa del backdrop-blur, animati con Animated. Le classi transition-* non
+// sfondo, comparsa/scomparsa del backdrop-blur e trasformazioni delle classi (scale/rotate/translate),
+// animati con Animated sul driver nativo. Le classi transition-* non
 // passano a NativeWind (webClasses: la sua interop andava in loop sul dettaglio cliente); qui si
 // anima solo ciò che serve, il resto cambia subito come prima.
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
-import type { TransitionSpec } from './cssTransitionSpec';
-export { classOpacity, transitionSpec, type TransitionSpec } from './cssTransitionSpec';
+import { IDENTITY_TRANSFORM, type ClassTransform, type TransitionSpec } from './cssTransitionSpec';
+export { classOpacity, classTransform, transitionSpec, withoutClassTransform, type ClassTransform, type TransitionSpec } from './cssTransitionSpec';
+
+const TRANSFORM_KEYS = ['translateX', 'translateY', 'scale', 'scaleX', 'scaleY', 'rotate'] as const;
 
 const EASE = Easing.bezier(0.25, 0.1, 0.25, 1);
 
@@ -14,8 +17,9 @@ const EASE = Easing.bezier(0.25, 0.1, 0.25, 1);
  * (undefined = non toccati); `blurPx`: blur richiesto ora (0 = nessuno). Restituisce lo style animato
  * e il blur da disegnare con la sua opacità (resta montato durante la dissolvenza in uscita).
  */
-export function useCssTransition(spec: TransitionSpec | null, opacity: number | undefined, backgroundColor: string | undefined, blurPx: number) {
+export function useCssTransition(spec: TransitionSpec | null, opacity: number | undefined, backgroundColor: string | undefined, blurPx: number, transform: ClassTransform | null = null) {
   const op = useRef<Animated.Value | null>(null);
+  const tf = useRef<{ values: Record<string, Animated.Value>; last: ClassTransform; style: unknown[] } | null>(null);
   const bg = useRef<{ v: Animated.Value; from: string; to: string; color: Animated.AnimatedInterpolation<string> } | null>(null);
   const blur = useRef<{ v: Animated.Value; px: number } | null>(null);
   const [shownBlur, setShownBlur] = useState(blurPx);
@@ -32,6 +36,34 @@ export function useCssTransition(spec: TransitionSpec | null, opacity: number | 
     a.start();
     return () => a.stop();
   }, [opTarget]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // trasformazioni: create solo quando le classi ne danno una diversa dall'identità (un `transition-all` senza
+  // scale/rotate non deve coprire le trasformazioni date da altro, es. active:scale-95)
+  const tfTarget = spec?.transform && transform ? transform : null;
+  // valore del disegno precedente: se la prima trasformazione arriva dopo il montaggio parte da lì
+  const tfSeen = useRef(tfTarget);
+  if (tfTarget && !tf.current && tfTarget !== IDENTITY_TRANSFORM) {
+    const from = tfSeen.current ?? tfTarget;
+    const values = Object.fromEntries(TRANSFORM_KEYS.map((k) => [k, new Animated.Value(from[k])]));
+    tf.current = {
+      values, last: from,
+      style: TRANSFORM_KEYS.map((k) => (k === 'rotate'
+        ? { rotate: values.rotate.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) }
+        : { [k]: values[k] })),
+    };
+  }
+  tfSeen.current = tfTarget;
+  const tfKey = tfTarget ? TRANSFORM_KEYS.map((k) => tfTarget[k]).join(',') : '';
+  useEffect(() => {
+    const t = tf.current;
+    if (!tfTarget || !t) return;
+    const changed = TRANSFORM_KEYS.filter((k) => t.last[k] !== tfTarget[k]);
+    t.last = tfTarget;
+    if (!changed.length) return;
+    const a = Animated.parallel(changed.map((k) => Animated.timing(t.values[k], { toValue: tfTarget[k], duration: spec!.transform, easing: EASE, useNativeDriver: true })));
+    a.start();
+    return () => a.stop();
+  }, [tfKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bgTarget = spec?.backgroundColor ? backgroundColor : undefined;
   const makeBg = (start: number, from: string, to: string) => {
@@ -62,10 +94,12 @@ export function useCssTransition(spec: TransitionSpec | null, opacity: number | 
     return () => a.stop();
   }, [blurPx, blurMs]);
 
-  const style: Record<string, unknown> | null = opTarget != null || bgState
+  const tfStyle = tfTarget && tf.current ? tf.current.style : null;
+  const style: Record<string, unknown> | null = opTarget != null || bgState || tfStyle
     ? {
         ...(opTarget != null && op.current ? { opacity: op.current } : null),
         ...(bgState ? { backgroundColor: bgState.color } : null),
+        ...(tfStyle ? { transform: tfStyle } : null),
       }
     : null;
   return {
