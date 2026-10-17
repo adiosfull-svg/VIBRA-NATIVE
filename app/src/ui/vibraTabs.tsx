@@ -17,6 +17,7 @@ import { memo, useEffect, useLayoutEffect, useState, type ReactNode } from 'reac
 import { StyleSheet, View } from 'react-native';
 import Animated, { makeMutable, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { runOnUISync } from 'react-native-worklets';
 
 /** Indice (nell'ordine delle route del navigatore) della tab a schermo: lo scrive anche il thread UI. */
 export const shownTab = makeMutable(-1);
@@ -37,8 +38,20 @@ export function resyncShownTab() {
 const OFFSCREEN = 100000;
 
 const TabScene = memo(function TabScene({ index, focused, children }: { index: number; focused: boolean; children: ReactNode }) {
-  // avvio: la prima tab col focus è subito a schermo (stile iniziale calcolato in questo render)
-  if (focused && shownTab.value === -1) { shownTab.value = index; focusedTab = index; }
+  // una tab che si monta col focus (avvio, o prima visita a una tab non precaricata) va a schermo
+  // PRIMA di calcolare lo stile iniziale: scritta in modo sincrono sul thread UI, perché la scrittura
+  // normale dal JS arriva dopo e l'aggiornamento della vista non ancora montata andrebbe perso
+  // (con ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS il transform non passa dallo ShadowTree): pagina vuota.
+  useState(() => {
+    if (!focused) return;
+    focusedTab = index;
+    runOnUISync((i: number) => {
+      'worklet';
+      if (pendingTab.value >= 0 && pendingTab.value !== i) return;
+      pendingTab.value = -1;
+      shownTab.value = i;
+    }, index);
+  });
   // solo quando cambia il focus nel JS: un ridisegno qualsiasi mentre il thread UI ha già cambiato tab
   // non deve riportare indietro quella vecchia
   useLayoutEffect(() => {

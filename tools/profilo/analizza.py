@@ -11,14 +11,29 @@ import json
 import sys
 
 FINESTRA_MS = 600
-MARCA = 'VIBRA_MARCA_NAV'
+MARCA = 'navProbeStart'  # VIBRA_MARCA_NAV può finire inlined in navProbeStart (hermesc -O)
 
 
 def main(path, titolo=''):
     d = json.load(open(path))
     frames = d.get('stackFrames', {})
     samples = sorted(d.get('samples', []), key=lambda s: float(s['ts']))
-    name = {k: str(v.get('name', '?')) for k, v in frames.items()}
+    # solo il thread JS (quello dei segni): il campionatore registra anche altri thread di Hermes
+    def ha_marca(s):
+        sf = s.get('sf')
+        while sf is not None and str(sf) in frames:
+            if MARCA in str(frames[str(sf)].get('name', '')):
+                return True
+            sf = frames[str(sf)].get('parent')
+        return False
+    tid_js = next((s['tid'] for s in samples if ha_marca(s)), None)
+    if tid_js is not None:
+        samples = [s for s in samples if s['tid'] == tid_js]
+    # nome senza la posizione nel bundle ("foo(/tmp/emb/index.android.bundle:12:3)" → "foo"), riga a parte
+    def nome(v):
+        n = str(v.get('name', '?'))
+        return n.split('(/')[0] + (f":{v.get('funcLine')}" if v.get('funcLine') else '')
+    name = {k: nome(v) for k, v in frames.items()}
     parent = {k: v.get('parent') for k, v in frames.items()}
 
     def stack(sf):
