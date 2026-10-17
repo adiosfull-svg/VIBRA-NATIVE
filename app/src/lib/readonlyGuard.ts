@@ -8,8 +8,8 @@ const ENTITY_READS = new Set(['list', 'filter', 'get', 'subscribe', 'schema']);
 const AUTH_ALLOWED = new Set([
   'me', 'isAuthenticated', 'hasToken', 'setToken', 'logout', 'redirectToLogin', 'loginWithProvider',
 ]);
-/** Funzioni server che si limitano a leggere: si possono chiamare anche in modalità prova. */
-const READ_ONLY_FUNCTIONS = new Set<string>([]);
+/** Funzioni server che si limitano a leggere (verificato sul codice in base44/functions dell'originale): anche in modalità prova. */
+const READ_ONLY_FUNCTIONS = new Set<string>(['getComitiveDirectory']);
 
 export class ReadOnlyError extends Error {
   readonly readOnly = true;

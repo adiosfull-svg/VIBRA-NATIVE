@@ -1,0 +1,114 @@
+# PR: tab Comitive di Clienti. Crea una comitiva, l'editor (tela) si apre, si aggiungono due paganti,
+# si torna alla lista e si riapre la comitiva dalla card (era il crash segnalato il 17/10).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "Il Mio Vibra|I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible:
+      text: "Il Mio Vibra|I Miei Progressi"
+    timeout: 180000
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-00-clienti
+# la barra delle tab scorre in orizzontale (Comitive sta prima di Tabelle): passi brevi, a ogni passo
+# si prova il tocco su Comitive finché la tab si apre
+- repeat:
+    while:
+      notVisible: "Crea comitiva"
+    times: 8
+    commands:
+      - swipe:
+          start: 75%, 16%
+          end: 45%, 16%
+          duration: 600
+      - waitForAnimationToEnd
+      - tapOn:
+          text: "Comitive"
+          optional: true
+      - waitForAnimationToEnd
+- takeScreenshot: comitive-00b-tab-scorse
+- extendedWaitUntil:
+    visible: "Crea comitiva"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-01-tab
+- tapOn: "Crea comitiva"
+- tapOn: "Dai un nome alla comitiva.*"
+- inputText: "Prova emulatore"
+- hideKeyboard
+- tapOn: "Crea e apri"
+- extendedWaitUntil:
+    visible: "Aggiungi persone"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-02-editor-vuoto
+# due paganti dalla barra laterale (pulsante +)
+- tapOn:
+    text: "Aggiungi"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Aggiungi"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: comitive-03-aggiunti
+- back
+- waitForAnimationToEnd
+- takeScreenshot: comitive-04-dopo-indietro
+# la card della comitiva nella lista: riapre l'editor
+- tapOn: "Prova emulatore"
+- extendedWaitUntil:
+    visible: "Prova emulatore"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-05-riaperta
+# filo tra le due card: dalla maniglia destra della prima alla seconda, poi tipo "Amici"
+- swipe:
+    start: 38%, 54%
+    end: 68%, 56%
+    duration: 1200
+- waitForAnimationToEnd
+- takeScreenshot: comitive-05b-scelta-legame
+- tapOn:
+    text: "Amici"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: comitive-05c-filo
+# particelle sui fili: due foto a distanza, devono essere in punti diversi
+- waitForAnimationToEnd:
+    timeout: 700
+- takeScreenshot: comitive-05c2-particelle
+# tocco sulla prima card: pannello della card
+- tapOn:
+    point: 22%, 53%
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: comitive-05d-pannello
+- back
+- waitForAnimationToEnd:
+    timeout: 3000
+# trascinamento della tela (pan): non deve chiudere l'app
+- swipe:
+    start: 60%, 60%
+    end: 30%, 45%
+    duration: 500
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: comitive-06-pan
+- back
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: comitive-07-chiusa

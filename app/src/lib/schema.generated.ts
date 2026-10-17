@@ -169,12 +169,16 @@ export const SCHEMA = {
       "created_by": "text",
       "created_by_id": "text",
       "created_date": "timestamptz",
+      "external_client_ids": "jsonb",
+      "external_meta": "jsonb",
       "group_ids": "jsonb",
       "id": "text",
       "name": "text",
       "notes": "text",
       "positions": "jsonb",
       "promoter_id": "text",
+      "promoter_ids": "jsonb",
+      "sizes": "jsonb",
       "updated_date": "timestamptz"
     },
     "table": "comitiva"

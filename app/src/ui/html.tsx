@@ -25,6 +25,7 @@ import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from '.
 import { initialWindowMetrics } from 'react-native-safe-area-context';
 import { classOpacity, classTransform, transitionSpec, useCssTransition } from './cssTransition';
 import { useDomStyleRef } from './domStyle';
+import { splitDataProps, toDataSet } from './domData';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
 // serve sul telefono; se manca, Clienti va in errore ("cannot add a new property", "exactly one
@@ -1020,12 +1021,16 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   diagCount('div', className);
   // tipo scelto al montaggio (ui/classStyleCache): vedi sotto
   const captureMode = useRef<boolean | null>(null);
-  const [handlers, props0] = splitGestureProps(all);
+  const [handlers, props00] = splitGestureProps(all);
+  // data-*: sul web dataSet (attributi veri), sul telefono registrati sull'istanza (ui/domData)
+  const [dataAttrs, props0] = splitDataProps(props00);
   // el.style.xxx = ... del codice web sul ref: istanza nativa con `style` (ui/domStyle)
   // id: sul web attributo del DOM (getElementById vero), sul telefono registrato (ui/domStyle)
   const elementId = (props0 as { id?: string }).id;
-  const domRef = useDomStyleRef((props0 as { ref?: never }).ref, elementId);
-  const props = (props0 as { ref?: unknown }).ref || elementId ? { ...props0, ref: domRef } : props0;
+  const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
+  const domRef = useDomStyleRef((props0 as { ref?: never }).ref, elementId, nativeData);
+  const props1 = (props0 as { ref?: unknown }).ref || elementId || nativeData ? { ...props0, ref: domRef } : props0;
+  const props = dataAttrs && Platform.OS === 'web' ? { ...props1, dataSet: toDataSet(dataAttrs) } : props1;
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);

@@ -184,11 +184,15 @@ create table public.comitiva (
   created_by text default public.app_email(),
   "client_ids" jsonb,
   "color" text default '#a78bfa',
+  "external_client_ids" jsonb,
+  "external_meta" jsonb,
   "group_ids" jsonb,
   "name" text,
   "notes" text,
   "positions" jsonb,
-  "promoter_id" text
+  "promoter_id" text,
+  "promoter_ids" jsonb,
+  "sizes" jsonb
 );
 create trigger comitiva_touch before update on public.comitiva
   for each row execute function public.touch_updated_date();

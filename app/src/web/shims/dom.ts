@@ -13,6 +13,7 @@ import { blobToBase64, saveBase64File } from './files';
 import { pageScroll } from './pageScroll';
 import { windowTouchSink } from '../../ui/gestures';
 import { getRegisteredById, setScrollIntoViewImpl } from '../../ui/domStyle';
+import { elementFromPoint } from '../../ui/domData';
 
 type AnyFn = (...a: any[]) => any;
 
@@ -189,6 +190,8 @@ export const doc = {
   querySelector: () => null,
   querySelectorAll: () => [],
   getElementById: (id: string) => getRegisteredById(id),
+  // solo elementi con attributi data-* (ui/domData): il codice web lo usa con closest('[data-x]')
+  elementFromPoint: (x: number, y: number) => elementFromPoint(x, y),
   getElementsByClassName: () => [],
   createElement: (tag: string) => (tag === 'a' ? anchor() : fakeElement()),
   createTextNode: () => fakeElement(),
@@ -279,7 +282,8 @@ export const win = {
   requestAnimationFrame: (cb: FrameRequestCallback) => requestAnimationFrame(cb),
   cancelAnimationFrame: (id: number) => cancelAnimationFrame(id),
   setTimeout, clearTimeout, setInterval, clearInterval,
-  matchMedia: (_q: string) => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
+  // telefono: schermo touch senza hover (pointer: coarse / hover: none come Chrome su Android)
+  matchMedia: (q: string) => ({ matches: /\(\s*(pointer\s*:\s*coarse|hover\s*:\s*none|any-pointer\s*:\s*coarse)\s*\)/.test(q), addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
   get devicePixelRatio() { return PixelRatio.get(); },
   visualViewport,
   localStorage: storage,
@@ -322,6 +326,46 @@ if (typeof g.Image === 'undefined') {
     decode() { return Promise.resolve(); }
     addEventListener(type: string, fn: AnyFn) { if (type === 'load') this.onload = fn; if (type === 'error') this.onerror = fn; }
     removeEventListener() {}
+  };
+}
+if (typeof g.ResizeObserver === 'undefined') {
+  /**
+   * ResizeObserver: misura (getBoundingClientRect di Fabric) al frame dopo observe() e quando cambia la
+   * finestra (rotazione, tastiera). Basta per i contenitori a tutto schermo del codice web (tela delle
+   * Comitive); prima `new ResizeObserver` era un ReferenceError che chiudeva l'app.
+   */
+  type Entry = { target: unknown; contentRect: { width: number; height: number; top: number; left: number } };
+  g.ResizeObserver = class {
+    private cb: AnyFn;
+    private targets = new Set<{ getBoundingClientRect?: () => { width: number; height: number; top: number; left: number } }>();
+    private sub: { remove(): void } | null = null;
+    private frame = 0;
+    constructor(cb: AnyFn) { this.cb = cb; }
+    private fire = () => {
+      this.frame = 0;
+      const entries: Entry[] = [];
+      for (const t of this.targets) {
+        try {
+          const r = t.getBoundingClientRect?.();
+          if (r) entries.push({ target: t, contentRect: { width: r.width, height: r.height, top: 0, left: 0 } });
+        } catch { /* elemento smontato */ }
+      }
+      if (entries.length) this.cb(entries, this);
+    };
+    private schedule = () => { if (!this.frame) this.frame = requestAnimationFrame(this.fire); };
+    observe(t: never) {
+      this.targets.add(t);
+      if (!this.sub) this.sub = Dimensions.addEventListener('change', () => setTimeout(this.schedule, 50));
+      this.schedule();
+    }
+    unobserve(t: never) { this.targets.delete(t); }
+    disconnect() {
+      this.targets.clear();
+      this.sub?.remove();
+      this.sub = null;
+      if (this.frame) cancelAnimationFrame(this.frame);
+      this.frame = 0;
+    }
   };
 }
 if (typeof g.IntersectionObserver === 'undefined') {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeClasses, radiusFromClasses, spacingPx } from './webClasses.ts';
+import { normalizeClasses, parseGridTemplate, radiusFromClasses, spacingPx } from './webClasses.ts';
 import { themeColor } from './colors.ts';
 
 test('flex del web va in riga', () => {
@@ -76,4 +76,9 @@ test('classi di dimensione relative alla finestra (dvh, env, calc) calcolate al 
 
 test('transizioni CSS tolte sul telefono (NativeWind le animerebbe)', () => {
   assert.equal(normalizeClasses('relative transition-[transform,opacity] duration-200 ease-out delay-75 hover:transition-all opacity-0 scale-95').box, 'relative opacity-0 scale-95');
+});
+
+test('grid-cols con minmax(0,1fr) (barra delle Comitive)', () => {
+  assert.deepEqual(parseGridTemplate('minmax(0,1fr)_auto_minmax(0,1fr)'), [{ fr: 1 }, { auto: true }, { fr: 1 }]);
+  assert.equal(parseGridTemplate('minmax(100px,200px)_1fr'), null);
 });

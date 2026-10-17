@@ -276,6 +276,31 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   15,6% / 8,4% (mattina: 17,8% / 7,7%; percorsi Robo diversi, non confrontabili alla lettera); Robo non ha aperto
   il dettaglio cliente.
 
+## Comitive (17/10, branch `claude/comitive-funnel`)
+- Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
+  (`new ResizeObserver` → ReferenceError, `el.addEventListener`, `e.target.closest`, `elementFromPoint`).
+  Riconvertite le 4 parti dall'originale del 16/10 (paganti di altri PR e promoter con
+  `getComitiveDirectory`, ammessa in modalità prova perché legge soltanto; dimensione delle card; ecc.).
+- Strato ui: `ui/domData.ts` = attributi data-* su Div (web: dataSet; telefono: registro sull'istanza con
+  closest/getAttribute/setAttribute/querySelectorAll, `document.elementFromPoint` tra gli elementi con
+  attributi). Il codemod ora TIENE data-* su Div/Btn/Path (i file convertiti prima non li hanno: riconvertire
+  quando serve, es. ClientSerateMenu/menu del tasto lungo). `ui/gestures`: un pointer per dito (pinch).
+  Shim: ResizeObserver, matchMedia('(pointer: coarse)') vero. webStyle: color-mix(in srgb).
+- Animazioni della tela sul telefono (17/10): `comitive/comitiveAnim.jsx`, un orologio Reanimated per tela (fermo
+  durante pan/zoom/trascinamento e a schermata non a fuoco). Particelle, anelli cm-end-pulse e battito cm-beat sono
+  View sopra l'Svg (solo transform/opacity): le prop animate di react-native-svg (cx, r...) ridisegnano tutta la
+  tela a ogni frame. cm-wire-flow (fili obiettivo e filo in costruzione) = Svg piccolo attorno al filo con
+  strokeDashoffset animato. cm-pop-in = Keyframe; cm-drop-ring, etichetta trascinata (cm-ghost-*) e
+  .cm-list-dragging (setNativeProps sulle righe) rifatti. Particelle solo fino a 60 fili. Senza blur.
+  Flow emulatore: la tab Comitive sta PRIMA di Tabelle nella barra (si cerca a passi brevi).
+  Fili: Svg dimensionato sui nodi (react-native-svg non disegna fuori dal riquadro). Tocco sui fili: distanza
+  dalla curva (PORT in ComitivaEditor). Emulatore: `tests/emulatore/pr/10-comitive.yaml`.
+- Secondo crash (nativo) appena c'è un filo: il Path di aggancio ha `pointerEvents: 'stroke'` e RNSVG su Android
+  va in IllegalArgumentException (`No enum constant ...STROKE`). `ui/elements` Path ora passa a react-native-svg
+  solo auto/none/box-none/box-only. webClasses: `minmax(0,1fr)` nei grid-template (TopBar dell'editor).
+  Verifica 17/10: giro 39049796947 (crea, riapre, filo "Amici", pannello card, pan) senza crash; la versione
+  vecchia (eef7cd4, giro 39049798881) va in errore JS al primo tocco sulla card (onPointerDown).
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
