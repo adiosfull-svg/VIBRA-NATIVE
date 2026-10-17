@@ -13,7 +13,10 @@ export default function AnimatedNumber({ target, prefix = '', suffix = '', durat
       if (!start) start = ts;
       const progress = Math.min((ts - start) / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
-      setCurrent(ease * target);
+      // PORT: valore arrotondato a quello che si vede (con lo stesso numero React non ridisegna): prima un
+      // ridisegno a ogni frame per 1,2 s anche quando la cifra mostrata non cambiava
+      const f = 10 ** decimals;
+      setCurrent(decimals > 0 ? Math.round(ease * target * f) / f : Math.floor(ease * target));
       if (progress < 1) rafId = requestAnimationFrame(step);
       else setCurrent(target);
     };

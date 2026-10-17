@@ -236,6 +236,23 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   04-dettaglio, 05-tab-ritorno, 06-semine. Tutti PASSATI sull'ultimo commit. Dati di prova: 450 clienti +
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
+## Animazioni fluide (17/10) — branch `claude/animazioni-fluide`
+- `ui/cssTransition`: `transition-transform`/`transition`/`transition-all` animano anche scale/rotate/translate delle
+  classi (sul driver nativo); prima scattavano (scale-95 dei popup, frecce rotate-180, pallino degli Switch).
+- Dettaglio cliente e hub Aggiungi Presenze: dissolvenza + scale-95 con Animated.Value avviato nel gestore del tocco,
+  prima del setState (la chiusura non aspetta il ridisegno); grafici e conteggio del radar a animazione finita.
+- Shim `requestIdleCallback` = dopo le animazioni in corso (InteractionManager, timeout ≥ 320 ms): prima 1 ms.
+- `ui/cssAnimation`: keyframe una tantum dell'index.css (menu-pop-in/out, backdrop-fade-in/out, search-*,
+  heatmap-row-in, chart-fs-in). `dash-fade-up` resta senza animazione (entrate senza spostamento, richiesta utente).
+- `ui/enterView`: entrata di Dialog/AlertDialog (fade + zoom-in-95) e di Popover/Dropdown/Select (fade + 8 px).
+  Le uscite restano immediate (rn-primitives smonta subito).
+- `AnimatePresence` (ui/motion) ora fa le uscite `exit` (anche mode="wait", initial={false}); toast con uscita.
+- Percorso `tests/emulatore/pr/09-dettaglio-apri-chiudi.yaml` (con `fluidita: si`). NB: sull'emulatore senza GPU
+  gfxinfo dà il 100% di frame persi: non serve a confrontare animazioni brevi, servono i telefoni veri.
+- Già rotto PRIMA di questo branch (ccr-962ba42f @1269c89, verificato con app_ref): 04-dettaglio, 06-semine e a volte
+  02-clienti falliscono al primo passo perché la tab "I Miei Progressi" resta fuori schermo (barra non centrata,
+  log "VIBRA hscroll lancio x=0").
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
