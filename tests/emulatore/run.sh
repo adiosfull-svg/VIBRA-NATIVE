@@ -89,15 +89,18 @@ for f in $(ls "$OLDPWD"/${FLOWS:-tests/emulatore}/*.yaml 2>/dev/null || echo "$O
 done
 cd "$OLDPWD"
 kill $LOGCAT 2>/dev/null
-grep -E "ReactNativeJS|AndroidRuntime|FATAL|ExceptionsManager|VIBRA" "$OUT/logcat-full.txt" | head -n 200000 > "$OUT/logcat-app.txt" || true
+grep -E "ReactNativeJS|AndroidRuntime|FATAL|ExceptionsManager|VIBRA" "$OUT/logcat-full.txt" > "$OUT/logcat-app.txt" || true
+# GitHub rifiuta file oltre 100 MB (i risultati non si pubblicavano): righe più frequenti, poi inizio e fine
+for f in logcat-full.txt logcat-app.txt; do
+  if [ "$(stat -c %s "$OUT/$f")" -gt 90000000 ]; then
+    cut -c 19- "$OUT/$f" | sed -E 's/[0-9]+/N/g' | sort | uniq -c | sort -rn | head -80 > "$OUT/${f%.txt}-frequenti.txt"
+    { head -c 40000000 "$OUT/$f"; echo; echo "... [tagliato: file troppo grande] ..."; tail -c 40000000 "$OUT/$f"; } > "$OUT/$f.tmp" && mv "$OUT/$f.tmp" "$OUT/$f"
+  fi
+done
 cp -r ~/.maestro/tests "$OUT/maestro-debug" 2>/dev/null || true
 # crash dell'app (segnale nativo con traccia, eccezione Java, ANR, Scudo OOM) → crash.txt e giro fallito
 awk -f tests/emulatore/crash.awk "$OUT/logcat-full.txt" "$OUT/logcat-full.txt" > "$OUT/crash.txt" || true
 crash=$(grep -cE "Fatal signal|FATAL EXCEPTION|ANR in|Scudo OOM" "$OUT/crash.txt")
 if [ "$crash" != 0 ]; then status=1; echo "CRASH DELL'APP: vedi crash.txt"; head -40 "$OUT/crash.txt"; else rm -f "$OUT/crash.txt"; fi
 printf 'esito: %s\ncrash: %s\n' "$status" "$crash" > "$OUT/esito.txt"
-# log troppo grandi per il push (limite 100 MB): riepilogo dei tag più rumorosi, logcat compresso
-awk '{for(i=1;i<=NF;i++) if ($i ~ /^[VDIWEF]\//) {sub(/\(.*/,"",$i); n[$i]++; break}} END {for (t in n) print n[t], t}' "$OUT/logcat-full.txt" | sort -rn | head -40 > "$OUT/logcat-rumorosi.txt" || true
-find "$OUT/maestro-debug" -name device-logcat.txt -delete 2>/dev/null || true
-gzip -f "$OUT/logcat-full.txt" || true
 exit 0

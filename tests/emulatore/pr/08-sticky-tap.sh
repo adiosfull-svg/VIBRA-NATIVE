@@ -12,7 +12,7 @@ center() {
     sed -E 's/.*bounds="\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]".*/\1 \2 \3 \4/' |
     awk '{ printf "%d %d", ($1+$3)/2, ($2+$4)/2 }'
 }
-taps() { adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -c "VIBRA subtab"; }
+taps() { adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -cE "VIBRA subtab [a-z_]+\s*$"; }
 UI=$(dump)
 read -r _ Y <<< "$(center 'Parco Paganti' "$UI")"
 if [ -z "${Y:-}" ]; then echo "barra non trovata" > "$REPORT"; exit 0; fi
@@ -30,6 +30,7 @@ for round in 1 2; do
       if [ "$verso" = inizio ]; then from=$L; to=$R; x=$XS; else from=$R; to=$L; x=$XE; fi
       [ -z "$x" ] && continue
       before=$(taps)
+      adb shell log -t ReactNativeJS "VIBRA prova attesa=$d verso=$verso"
       adb shell "input swipe $from $Y $to $Y 70; sleep $d; input tap $x $Y"
       sleep 2.5
       after=$(taps)
@@ -40,6 +41,6 @@ for round in 1 2; do
   done
 done
 printf '\nTap arrivati: %s su %s\n\nRighe dell'"'"'app (tocchi sulla barra e tab scelte):\n\n```\n' "$ok" "$tot" >> "$REPORT"
-adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -E "VIBRA (hscroll|subtab)" | tail -80 >> "$REPORT"
+adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -E "VIBRA (hscroll|subtab|prova|pagina)" | tail -600 >> "$REPORT"
 echo '```' >> "$REPORT"
 cat "$REPORT"

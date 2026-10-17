@@ -216,10 +216,18 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Limite: con swangle l'emulatore disegna ~1,5 frame/s sia per la nativa sia per Chrome, quindi i ms sono
   dominati dall'emulatore. Serve per vedere cosa compare frame per frame (es. il logo del menu), non per
   misurare la fluidità: quella si giudica sui telefoni veri.
-- Il logcat completo esce compresso (`logcat-full.txt.gz`) con `logcat-rumorosi.txt` (tag più frequenti):
-  oltre 100 MB il push dei risultati falliva e il giro non lasciava nulla.
 
 ## Lezioni sullo strato ui/ e sul telefono (10-11/10, tutto verificato sull'emulatore)
+- **17/10 barre orizzontali delle tab (sticky e non)**: dopo uno scorrimento il primo tap su una tab andava
+  perso (emulatore: 0 su 12). Due cause, corrette in `ScrollBox` di `ui/html.tsx` (solo Android, `overflow-x`):
+  1) lo scroller nativo resta "in corso" (coda del lancio, rimbalzo invisibile al bordo) e HorizontalScrollView
+  si prende il tocco → si ferma al bordo o sotto 0,15 dp/ms, solo per i lanci del dito (lo scrollTo smooth
+  della tab attiva di Il Mio Vibra non va fermato), `overScrollMode="never"`;
+  2) il tocco arriva alla barra (touchstart/touchend) ma non al pulsante (responder di RN dopo il gesto annullato
+  dal nativo) → tap di riserva: la barra riconosce il tap e lo consegna al Btn sotto il dito (`HScrollTapContext`).
+  Prova: `tests/emulatore/pr/08-sticky-tap.yaml` + `.sh` (run.sh esegue `<percorso>.sh` dopo il percorso),
+  `EXPO_PUBLIC_TEST_NO_FLINGSTOP=1` = comportamento di prima. Risultato: 23 tap su 24, percorsi admin/pr verdi
+  (run 39047119059). run.sh taglia il logcat oltre 90 MB (GitHub rifiuta file >100 MB).
 - **Classi**: NativeWind scarta dvh/env()/calc() → `viewportSizeStyle` (webStyle) le calcola; le classi
   `transition-*/duration-*/ease-*/delay-*` NON vanno a NativeWind (la sua interop mandava in loop il JS:
   "Scudo OOM" nel logcat e app uccisa, era il crash del dettaglio cliente) → `ui/cssTransition.ts` anima
@@ -251,10 +259,14 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- **Crash nativo (14/10): non ripetuto.** I due giri completi di verifica sul commit 6bfd611 (38499030579,
-  38499032795; pr e admin) sono passati senza crash dell'app (`Fatal signal` nel giro 38499032795 = SIGILL di
-  `googlequicksearchbox`, app di sistema, all'avvio dell'emulatore; le righe "app died" = Maestro che chiude l'app
-  tra un percorso e l'altro). fastIntl resta. Se ricapita: cercare `Fatal signal` con pid di `com.vibra.mobile`.
+- **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
+  solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
+  (b) 14/10, due SIGSEGV identici all'avvio dentro GWP-ASan (`android_unsafe_frame_pointer_chase` ←
+  `GuardedPoolAllocator::deallocate` ← libhermesvm, giri 38497270069 e 38596753210), sparito dopo
+  `plugins/withGwpAsanOff.js` (c9827f4): 0 crash in ~80 giri dopo e in 6 giri di ripetizione del 17/10 su c2ae595;
+  (c) 14/10, NumberFormatException `calc(100% + 16px)` in RNSVG (Academy, corretto). Gli altri "Fatal" sono app di
+  sistema (googlequicksearchbox, Gmail). Da ora `tests/emulatore/crash.awk` cerca i crash dell'app nel logcat:
+  se ce n'è uno il giro risulta fallito, `crash.txt` con la traccia nel branch dei risultati, `crash: N` in esito.txt.
 - **Misura del giro 38499126870** (02-clienti): nei frame lunghi (1-3,6 s) il corpo di Div pesa 100-670 ms e Text
   <110 ms per battito (es. 827 div/535 text/358 btn: frame 3600 ms, corpi 433 ms) → ~15-35%: il grosso è
   React + jsx di NativeWind (react-native-css-interop) + commit di Fabric. Prossima misura: tempo nel wrapper

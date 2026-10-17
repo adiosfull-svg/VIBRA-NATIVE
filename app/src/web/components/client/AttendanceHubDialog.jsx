@@ -429,7 +429,16 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
   const [addedRows, setAddedRows] = useState([]);
   const [localClients, setLocalClients] = useState(initialClients);
 
-  useEffect(() => { setLocalClients(initialClients); }, [initialClients]);
+  // Merge invece di sovrascrivere: i clienti creati dentro il box restano nella
+  // lista locale finché il refetch del server non li include. Prima venivano
+  // persi a ogni aggiornamento e la loro presenza appariva "(cliente rimosso)".
+  useEffect(() => {
+    setLocalClients(prev => {
+      const ids = new Set(initialClients.map(c => c.id));
+      const extra = prev.filter(c => !ids.has(c.id));
+      return extra.length ? [...initialClients, ...extra] : initialClients;
+    });
+  }, [initialClients]);
 
   // Reset added rows quando cambia la serata
   useEffect(() => { setAddedRows([]); }, [selectedEvent?.id]);

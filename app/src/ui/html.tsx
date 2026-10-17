@@ -6,7 +6,7 @@ import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
-import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
+import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
@@ -761,12 +761,41 @@ function domScrollRef(view: ScrollView, offset: { x: number; y: number }) {
 const FLING_STOP = Platform.OS === 'android' && process.env.EXPO_PUBLIC_TEST_NO_FLINGSTOP !== '1';
 const FLING_STOP_SPEED = 0.15; // dp/ms: da qui al termine il contenuto si sposta solo di pochi dp
 
+// Tap di riserva nelle barre orizzontali (Android). Sull'emulatore (tests/emulatore/pr/08-sticky-tap) il
+// primo tap su una tab dopo uno scorrimento arrivava all'app (touchstart/touchend sulla barra) ma il
+// pulsante non lo riceveva: il sistema dei responder di RN, dopo il gesto annullato dal nativo (la
+// ScrollView che scorre), o la barra stessa (un evento di scroll durante il tocco) se lo prendevano.
+// Qui la barra riconosce il tap (breve, quasi fermo, non annullato) e, se nessun pulsante l'ha ricevuto,
+// lo consegna al pulsante sotto il dito.
+type TapTarget = { view: { current: any }; press: { current: (() => void) | null } };
+const HScrollTapContext = createContext<Set<TapTarget> | null>(null);
+let lastBtnPress = 0;
+let lastFallback = 0;
+const TAP_SLOP = 10; // dp
+const TAP_MAX_MS = 600;
+
+function deliverTap(targets: Set<TapTarget>, x: number, y: number, since: number) {
+  // dopo il rilascio: se un pulsante ha ricevuto il tocco (onPressIn/onPress) nel frattempo non si fa
+  // niente; i suoi eventi possono arrivare anche qualche frame dopo il touchend della barra
+  setTimeout(() => {
+    if (lastBtnPress >= since) return;
+    for (const t of targets) {
+      t.view.current?.measure?.((_x: number, _y: number, w: number, h: number, px: number, py: number) => {
+        if (lastBtnPress >= since || !(x >= px && x <= px + w && y >= py && y <= py + h)) return;
+        if (TEST_DIAG) console.log('VIBRA hscroll tap-di-riserva');
+        lastBtnPress = lastFallback = performance.now();
+        t.press.current?.();
+      });
+    }
+  }, 150);
+}
+
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
   axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void; ref?: Ref<unknown>;
 }) {
   const offset = useRef({ x: 0, y: 0 }).current;
   const viewRef = useRef<ScrollView | null>(null);
-  const fling = useRef({ on: false, x: 0, t: 0, max: 0, last: 0 }).current;
+  const fling = useRef({ on: false, x: 0, t: 0, max: 0, last: 0, drag: false }).current;
   const flingStop = FLING_STOP && axis === 'x';
   const setRef = useCallback((view: ScrollView | null) => {
     viewRef.current = view;
@@ -774,7 +803,11 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
     if (typeof ref === 'function') ref(value);
     else if (ref) (ref as { current: unknown }).current = value;
   }, [ref, offset]);
-  const stopAt = useCallback((x: number) => { fling.on = false; viewRef.current?.scrollTo({ x, y: 0, animated: false }); }, [fling]);
+  const stopAt = useCallback((x: number) => {
+    if (TEST_DIAG) console.log(`VIBRA hscroll ferma x=${Math.round(x)}`);
+    fling.on = false;
+    viewRef.current?.scrollTo({ x, y: 0, animated: false });
+  }, [fling]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
     offset.x = contentOffset.x;
@@ -799,18 +832,55 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
   // lancio che parte già a un bordo (dito rilasciato con il contenuto fermo al bordo): nessun evento di
   // scroll arriverà, lo scroller va fermato subito. A fine lancio (posizione ferma da qualche frame)
   // si ferma comunque ciò che resta dello scroller.
+  // solo i lanci del dito: uno scorrimento animato della pagina (scrollTo smooth, es. tab attiva al
+  // centro) emette gli stessi eventi e non va fermato
+  const onScrollEndDrag = useCallback(() => { fling.drag = true; }, [fling]);
   const onMomentumScrollBegin = useCallback(() => {
+    if (!fling.drag) return;
+    fling.drag = false;
+    if (TEST_DIAG) console.log(`VIBRA hscroll lancio x=${Math.round(offset.x)}`);
     fling.on = true;
     fling.t = 0;
     if (offset.x <= 0.5) stopAt(0);
     else if (offset.x >= fling.max - 0.5) stopAt(fling.max);
   }, [fling, offset, stopAt]);
   const onMomentumScrollEnd = useCallback(() => { if (fling.on) stopAt(offset.x); }, [fling, offset, stopAt]);
-  const { onTouchStart } = props;
+  const tapTargets = useMemo(() => (flingStop ? new Set<TapTarget>() : null), [flingStop]);
+  const touch = useRef({ x: 0, y: 0, t: 0, ok: false }).current;
+  const { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel } = props;
+  const tapHandlers = useMemo(() => (tapTargets ? {
+    onTouchStart: (e: GestureResponderEvent) => {
+      const n = e.nativeEvent;
+      Object.assign(touch, { x: n.pageX, y: n.pageY, t: performance.now(), ok: n.touches.length <= 1 });
+      onTouchStart?.(e);
+    },
+    onTouchMove: (e: GestureResponderEvent) => {
+      const n = e.nativeEvent;
+      if (Math.abs(n.pageX - touch.x) > TAP_SLOP || Math.abs(n.pageY - touch.y) > TAP_SLOP || n.touches.length > 1) touch.ok = false;
+      onTouchMove?.(e);
+    },
+    onTouchEnd: (e: GestureResponderEvent) => {
+      const n = e.nativeEvent;
+      if (touch.ok && performance.now() - touch.t < TAP_MAX_MS && Math.abs(n.pageX - touch.x) <= TAP_SLOP && Math.abs(n.pageY - touch.y) <= TAP_SLOP) {
+        deliverTap(tapTargets, touch.x, touch.y, touch.t);
+      }
+      touch.ok = false;
+      onTouchEnd?.(e);
+    },
+    onTouchCancel: (e: GestureResponderEvent) => { touch.ok = false; onTouchCancel?.(e); },
+  } : null), [tapTargets, touch, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel]);
   const diagTouchStart = useCallback((e: GestureResponderEvent) => {
-    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0}`);
-    onTouchStart?.(e);
-  }, [fling, onTouchStart]);
+    const n = e.nativeEvent;
+    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0} x=${Math.round(offset.x)} page=${Math.round(n.pageX)},${Math.round(n.pageY)} loc=${Math.round(n.locationX)},${Math.round(n.locationY)} target=${(n.target as any)?.__nativeTag ?? (n.target as any)?._nativeTag ?? n.target}`);
+    (tapHandlers?.onTouchStart ?? onTouchStart)?.(e);
+  }, [fling, offset, onTouchStart, tapHandlers]);
+  // build di test: cosa succede al tocco (fine, annullato dal nativo, la ScrollView prende il tocco)
+  const diag = useMemo(() => (TEST_DIAG && axis === 'x' ? {
+    onTouchEnd: (e: GestureResponderEvent) => { console.log('VIBRA hscroll fine-tocco'); (tapHandlers?.onTouchEnd ?? onTouchEnd)?.(e); },
+    onTouchCancel: (e: GestureResponderEvent) => { console.log('VIBRA hscroll tocco-annullato'); (tapHandlers?.onTouchCancel ?? onTouchCancel)?.(e); },
+    onResponderGrant: () => console.log('VIBRA hscroll prende-il-tocco'),
+    onResponderTerminate: () => console.log('VIBRA hscroll perde-il-tocco'),
+  } : null), [axis, tapHandlers, onTouchEnd, onTouchCancel]);
   const outer: string[] = [];
   const inner: string[] = [];
   for (const c of box.split(/\s+/)) {
@@ -833,16 +903,19 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
       style={outerStyle}
       contentContainerStyle={innerStyle}
       onScroll={handleScroll}
+      onScrollEndDrag={flingStop ? onScrollEndDrag : undefined}
       onMomentumScrollBegin={flingStop ? onMomentumScrollBegin : undefined}
       onMomentumScrollEnd={flingStop ? onMomentumScrollEnd : undefined}
-      onTouchStart={TEST_DIAG && axis === 'x' ? diagTouchStart : onTouchStart}
+      {...tapHandlers}
+      onTouchStart={TEST_DIAG && axis === 'x' ? diagTouchStart : (tapHandlers?.onTouchStart ?? onTouchStart)}
+      {...diag}
       overScrollMode={flingStop ? 'never' : undefined}
       scrollEventThrottle={16}
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
     >
-      {children}
+      {tapTargets ? <HScrollTapContext.Provider value={tapTargets}>{children}</HScrollTapContext.Provider> : children}
     </ScrollView>
   );
 }
@@ -1148,6 +1221,43 @@ function BtnPressable({ classes, ownStyle: baseStyle, children, onPressIn, onPre
   return <Pressable {...p} className={classes} style={ownStyle}>{children}</Pressable>;
 }
 
+function assignRef(r: Ref<unknown> | undefined, v: unknown) {
+  if (typeof r === 'function') r(v);
+  else if (r) (r as { current: unknown }).current = v;
+}
+
+/** Pulsante dentro una barra orizzontale (HScrollTapContext): si registra per il tap di riserva. */
+function useHScrollTap(targets: Set<TapTarget> | null, onPress: PressableProps['onPress'], outerRef: Ref<unknown> | undefined) {
+  const view = useRef<any>(null);
+  const press = useRef<(() => void) | null>(null);
+  press.current = onPress ? () => onPress({} as GestureResponderEvent) : null;
+  useEffect(() => {
+    if (!targets) return undefined;
+    const t: TapTarget = { view, press };
+    targets.add(t);
+    return () => { targets.delete(t); };
+  }, [targets]);
+  // ref stabile (un ref a funzione nuovo a ogni disegno fa richiamare a React il ref esterno a ogni
+  // disegno: con ref esterni che aggiornano lo stato era un ciclo infinito); il ref esterno riceve la
+  // vista al montaggio e quando cambia (es. ref della tab attiva), come un ref normale
+  const ref = useCallback((v: unknown) => { view.current = v; }, []);
+  useLayoutEffect(() => {
+    if (!targets) return undefined;
+    assignRef(outerRef, view.current);
+    return () => assignRef(outerRef, null);
+  }, [targets, outerRef]);
+  const onPressRef = useRef(onPress);
+  onPressRef.current = onPress;
+  const handle = useCallback((e: GestureResponderEvent) => {
+    // lo stesso tocco già consegnato dal tap di riserva (eventi del pulsante arrivati in ritardo)
+    if (performance.now() - lastFallback < 300) return;
+    lastBtnPress = performance.now();
+    onPressRef.current?.(e);
+  }, []);
+  const onPressIn = useCallback(() => { lastBtnPress = performance.now(); }, []);
+  return targets ? { ref, onPress: handle, onPressIn } : null;
+}
+
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
   diagCount('btn', className);
   const [handlers, props] = splitGestureProps(all);
@@ -1155,9 +1265,12 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const form = useForm();
   const gridCell = useContext(GridCellContext);
   const press = onPress ?? onClick;
-  const handlePress: PressableProps['onPress'] = type === 'submit' && form
+  const handlePress0: PressableProps['onPress'] = type === 'submit' && form
     ? (e) => { press?.(e); form.submit(); }
     : press;
+  const tapTargets = useContext(HScrollTapContext);
+  const tap = useHScrollTap(tapTargets, disabled ? undefined : handlePress0, (all as { ref?: Ref<unknown> }).ref);
+  const handlePress = tap ? tap.onPress : handlePress0;
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);
   const layout = useContext(FlexParentContext);
@@ -1217,6 +1330,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       onLayout={min.onLayout}
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
+      {...(tap ? { ref: tap.ref, onPressIn: (e: GestureResponderEvent) => { tap.onPressIn(); (props as PressableProps).onPressIn?.(e); } } : null)}
       {...gestures}
       disabled={disabled}
       onPress={handlePress}

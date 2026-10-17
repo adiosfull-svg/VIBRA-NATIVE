@@ -7,6 +7,8 @@ import { Sparkles, Loader2, Check, AlertCircle, Users, X, Plus, History, Star, P
 import ParsedEntryCard from '@/web/components/client/ParsedEntryCard';
 import ClientSearchRow from '@/web/components/client/AttendanceClientSearchRow';
 import ClientAvatar from '@/web/components/client/ClientAvatar';
+import { triggerStatsRecompute } from '@/web/lib/eventSync';
+import { toast } from '@/ui/use-toast';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput, HtmlTextarea } from '@/ui/elements';
@@ -203,7 +205,15 @@ export default function SmartBatchImport({
   const [groupCreated, setGroupCreated] = useState(false);
   const qc = useQueryClient();
 
-  useEffect(() => { setLocalClients(clients); }, [clients]);
+  // Merge invece di sovrascrivere: i clienti creati nel box non spariscono
+  // (e la loro presenza non diventa "(cliente rimosso)") a ogni refetch.
+  useEffect(() => {
+    setLocalClients(prev => {
+      const ids = new Set(clients.map(c => c.id));
+      const extra = prev.filter(c => !ids.has(c.id));
+      return extra.length ? [...clients, ...extra] : clients;
+    });
+  }, [clients]);
   useEffect(() => { setEntries(null); setSavedCount(0); setError(null); setAddedRows([]); setLeftCollapsed(false); }, [selectedEvent?.id]);
 
   // Quando l'AI finisce l'estrazione (entries diventa non-null), collassa il
@@ -297,6 +307,9 @@ export default function SmartBatchImport({
   // ── Crea cliente + salva presenza immediatamente (mostra in lista destra) ──
   const handleClientCreated = async (newClient, entry) => {
     setLocalClients(prev => [...prev, newClient]);
+    qc.setQueryData(['clients', promoterId], (old) =>
+      Array.isArray(old) && !old.some(c => c.id === newClient.id) ? [...old, newClient] : old
+    );
     // Non salvare la presenza in automatico: imposta solo come selezionato.
     // L'utente confermerà con il pulsante "Conferma" del batch.
     setEntries(prev => prev.map((e, i) => {
@@ -312,6 +325,9 @@ export default function SmartBatchImport({
     let count = 0;
     const createdAtts = [];
     const updatedNewPeople = {}; // { clientId: delta }
+    let saveFailed = false;
+    setError(null);
+    try {
     for (const entry of entries) {
       if (entry.excluded || entry.alreadyPresent) continue;
       if (!entry.selectedClient) continue;
@@ -417,6 +433,11 @@ export default function SmartBatchImport({
         }
       }
     }
+    } catch {
+      // Prima un errore a metà lasciava lo spinner bloccato e nessun messaggio.
+      // Ora le presenze già create restano, le entries rimangono per riprovare.
+      saveFailed = true;
+    }
 
     // Optimistic: aggiungi tutte le presenze create alla cache attendances e
     // aggiorna new_people_brought nella cache clients, così la pagina Clienti
@@ -435,6 +456,15 @@ export default function SmartBatchImport({
 
     setSaving(false);
     setSavedCount(count);
+    if (count > 0) triggerStatsRecompute(qc);
+    if (saveFailed) {
+      const msg = `Salvataggio interrotto${count > 0 ? ` dopo ${count} presenz${count === 1 ? 'a' : 'e'}` : ''}. Riprova: chi è già stato salvato verrà saltato.`;
+      setError(msg);
+      // Il pannello con l'errore può essere collassato su mobile: avvisa anche col toast
+      toast({ title: 'Salvataggio interrotto', description: msg, variant: 'destructive' });
+      onSaved();
+      return;
+    }
     setEntries(null);
     setBatchText('');
     onSaved();

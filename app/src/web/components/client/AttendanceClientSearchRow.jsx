@@ -9,6 +9,8 @@ import {
   Users, Star, Loader2, UserPlus, FolderOpen, Plus
 } from '@/ui/icons.generated';
 import ClientAvatar from '@/web/components/client/ClientAvatar';
+import { toast } from '@/ui/use-toast';
+import { triggerStatsRecompute } from '@/web/lib/eventSync';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 
@@ -115,18 +117,29 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
   const handleCreateNewClient = async () => {
     if (!newName.trim() || !promoterId) return;
     setCreatingNewSaving(true);
-    const created = await base44.entities.Client.create({
-      name: newName.trim(),
-      phone: newPhone.trim() || undefined,
-      instagram: newInsta.trim() || undefined,
-      promoter_id: promoterId,
-      source_type: 'direct',
-    });
-    qc.invalidateQueries({ queryKey: ['clients', promoterId] });
-    onNewClient(created);
-    setCreatingNew(false); setNewName(''); setNewPhone(''); setNewInsta('');
-    handleSelectClient(created);
-    setCreatingNewSaving(false);
+    try {
+      const created = await base44.entities.Client.create({
+        name: newName.trim(),
+        phone: newPhone.trim() || undefined,
+        instagram: newInsta.trim() || undefined,
+        promoter_id: promoterId,
+        source_type: 'direct',
+      });
+      // Scrive subito il nuovo cliente nella cache ['clients']: prima veniva solo
+      // invalidata, e finché il refetch non lo includeva la lista del box veniva
+      // sovrascritta senza di lui → la sua presenza appariva come "(cliente rimosso)".
+      qc.setQueryData(['clients', promoterId], (old) =>
+        Array.isArray(old) && !old.some(c => c.id === created.id) ? [...old, created] : old
+      );
+      qc.invalidateQueries({ queryKey: ['clients', promoterId] });
+      onNewClient(created);
+      setCreatingNew(false); setNewName(''); setNewPhone(''); setNewInsta('');
+      handleSelectClient(created);
+    } catch {
+      toast({ title: 'Creazione cliente fallita', description: 'Riprova tra qualche secondo.', variant: 'destructive' });
+    } finally {
+      setCreatingNewSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -216,8 +229,13 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
     if (!eventId) return;
     setSaving(true);
     const toSave = getClientsToSave();
+    let savedAny = false;
+    let failed = 0;
 
     for (const { client: c, rev, ppl } of toSave) {
+      // Su un nuovo tentativo dopo un errore parziale, salta chi è già stato salvato
+      if (existingClientIds.has(c.id)) continue;
+      try {
       const att = await base44.entities.EventAttendance.create({
         event_id: eventId,
         client_id: c.id,
@@ -240,13 +258,32 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
         } catch {}
       }
       onAdded(c, rev, ppl, att.id);
+      savedAny = true;
+      } catch {
+        failed++;
+      }
+    }
+
+    // Ricalcolo statistiche (visite, rating, ultima presenza) + refresh clienti
+    // al termine: prima l'aggiunta non lo avviava (lo facevano solo modifica ed
+    // eliminazione) e i numeri si aggiornavano solo dopo molti minuti.
+    if (savedAny) triggerStatsRecompute(qc);
+
+    setSaving(false);
+    if (failed > 0) {
+      // Non resettare: il promoter vede ancora la selezione e può riprovare.
+      toast({
+        title: failed === toSave.length ? 'Salvataggio fallito' : `${failed} presenz${failed === 1 ? 'a non salvata' : 'e non salvate'}`,
+        description: 'Riprova tra qualche secondo. Le presenze già salvate restano.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     const savedRevenue = revenue;
     reset();
     setRevenue(savedRevenue);
     setOpen(true);
-    setSaving(false);
     setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 80);
   };
 
