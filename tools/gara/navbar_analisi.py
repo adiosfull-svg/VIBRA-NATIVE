@@ -91,23 +91,34 @@ def analizza(app):
         return None
 
     ev = app['eventi']
-    # scostamento tra l'orologio dello script e il video: dal primo tocco
-    first = tap_frame(ev[0], ev[0]['t'] - 0.5, ev[0]['t'] + 3.0)
-    off = (T[first] - ev[0]['t']) if first is not None else 0.25
+    # orologio dello script contro tempo del video: con la registrazione dell'emulatore coincidono (off 0);
+    # con screenrecord sul telefono si stima dal primo tocco
+    off = 0.0
+    if not app['video'].endswith('.webm'):
+        first = tap_frame(ev[0], ev[0]['t'] - 0.5, ev[0]['t'] + 3.0)
+        off = (T[first] - ev[0]['t']) if first is not None else 0.25
     righe = []
     for k, e in enumerate(ev):
         if e['kind'] == 'chiudi':
             continue
-        i = tap_frame(e, e['t'] + off - 0.4, e['t'] + off + 1.2)
+        t2 = e.get('t2', e['t'] + 1.0) - (e.get('durata') or 0)
+        # il pallino del tocco tra l'avvio del comando e poco dopo il suo ritorno; se non si vede (pochi
+        # frame), il tocco è al ritorno del comando (inizio dello swipe)
+        i = tap_frame(e, e['t'] + off - 0.1, t2 + off + 0.25)
+        if i is None and 't2' in e:
+            i = min(n - 1, max(1, idx_at(t2 + off)))
+            riga_stimata = True
+        else:
+            riga_stimata = False
         riga = {'kind': e['kind'], 'voce': e.get('voce'), 'apertura': e.get('apertura')}
         righe.append(riga)
         if i is None:
             riga['errore'] = 'tocco non visto nel video'
             continue
-        t_tap = T[i]
+        t_tap = T[i] if not riga_stimata else t2 + off
         riga['t'] = round(float(t_tap), 3)
-        # l'orologio dello script e quello del video scivolano un po': si riallinea a ogni tocco visto
-        off = 0.7 * off + 0.3 * (t_tap - e['t'])
+        if riga_stimata:
+            riga['tocco_stimato'] = True
         nxt = ev[k + 1]['t'] + off - 0.35 if k + 1 < len(ev) else T[-1]
         end = min(n, idx_at(nxt))
         if e['kind'] in ('lento', 'veloce'):

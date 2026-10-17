@@ -65,6 +65,7 @@ function startRec(nome) {
     sh(`rm -f /sdcard/nav-${nome}.mp4`);
     rec = spawn('adb', ['shell', 'screenrecord', '--bit-rate', '3000000', '--size', size, `/sdcard/nav-${nome}.mp4`]);
   } else ext = 'webm';
+  // la registrazione dell'emulatore parte quando il comando ritorna: tempo 0 del video ≈ adesso
   return Date.now();
 }
 async function stopRec(nome) {
@@ -99,9 +100,11 @@ async function sequenza(nome, burger) {
   const t0 = startRec(nome);
   await sleep(2500);
   const at = () => (Date.now() - t0) / 1000;
+  // ogni evento con l'ora prima (t) e dopo (t2) il comando: `input` impiega 0,3-0,9 s ad avviarsi e
+  // inietta il tocco alla fine (lo swipe tiene giù il dito per la sua durata prima di ritornare)
+  const invia = (e, cmd) => { e.t = at(); eventi.push(e); sh(cmd); e.t2 = at(); };
   const tap = async (kind, i, pausa) => {
-    eventi.push({ kind, voce: i, x: xs[i], y, t: at() });
-    sh(`input tap ${xs[i]} ${y}`);
+    invia({ kind, voce: i, x: xs[i], y }, `input tap ${xs[i]} ${y}`);
     await sleep(pausa);
   };
   // tocchi lenti: la barra è ferma prima di ogni tocco
@@ -111,17 +114,14 @@ async function sequenza(nome, burger) {
   for (const i of [2, 1, 0]) await tap('veloce', i, 450);
   await sleep(2600);
   // trascinamento dalla prima all'ultima voce
-  eventi.push({ kind: 'trascina', voce: 0, x: xs[0], y, x2: xs[4], durata: 0.9, t: at() });
-  sh(`input swipe ${xs[0]} ${y} ${xs[4]} ${y} 900`);
+  invia({ kind: 'trascina', voce: 0, x: xs[0], y, x2: xs[4], durata: 0.9 }, `input swipe ${xs[0]} ${y} ${xs[4]} ${y} 900`);
   await sleep(3500);
   // menu laterale: due aperture (la seconda dice se il menu si ricostruisce a ogni apertura)
   if (burger) {
     for (const k of [1, 2]) {
-      eventi.push({ kind: 'menu', apertura: k, x: burger.x, y: burger.y, t: at() });
-      sh(`input tap ${burger.x} ${burger.y}`);
+      invia({ kind: 'menu', apertura: k, x: burger.x, y: burger.y }, `input tap ${burger.x} ${burger.y}`);
       await sleep(2800);
-      eventi.push({ kind: 'chiudi', x: W - dp(30), y: Math.round(H / 2), t: at() });
-      sh(`input tap ${W - dp(30)} ${Math.round(H / 2)}`);
+      invia({ kind: 'chiudi', x: W - dp(30), y: Math.round(H / 2) }, `input tap ${W - dp(30)} ${Math.round(H / 2)}`);
       await sleep(2200);
     }
   } else note.push(`${nome}: pulsante del menu non trovato`);
@@ -164,12 +164,20 @@ async function originale() {
   if (!device) { note.push('originale: nessun dispositivo per Playwright'); return null; }
   sh('am force-stop com.android.chrome');
   sh('pm clear com.android.chrome');
+  // niente richiesta «Chrome notifications» sopra la pagina (copriva la barra)
+  try { sh('pm grant com.android.chrome android.permission.POST_NOTIFICATIONS'); } catch { /* Android < 13 */ }
   const context = await device.launchBrowser({ args: ['--disable-fre', '--no-first-run', '--no-default-browser-check'] });
   const page = await context.newPage();
   await page.goto(`${ORIGINE}/?as=${utente}`, { timeout: 90000 });
   await page.waitForTimeout(4000);
   await page.goto(`${ORIGINE}/il-mio-vibra`, { timeout: 90000 });
   await page.waitForTimeout(6000);
+  // eventuali finestre di Chrome sopra la pagina
+  for (const testo of ['No thanks', 'No, grazie', 'Non ora']) {
+    const xml = adb('exec-out', 'uiautomator', 'dump', '/dev/tty');
+    const m = xml.match(new RegExp(`text="${testo}"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`));
+    if (m) { sh(`input tap ${(Number(m[1]) + Number(m[3])) >> 1} ${(Number(m[2]) + Number(m[4])) >> 1}`); await sleep(1500); }
+  }
   // posizione del burger sullo schermo: rettangolo CSS × dpr + scostamento del contenuto di Chrome
   // (ricavato dalla pillola: centro sullo schermo contro centro CSS)
   const pill = findPill();
