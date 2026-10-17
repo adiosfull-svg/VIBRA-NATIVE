@@ -90,6 +90,13 @@ done
 cd "$OLDPWD"
 kill $LOGCAT 2>/dev/null
 grep -E "ReactNativeJS|AndroidRuntime|FATAL|ExceptionsManager|VIBRA" "$OUT/logcat-full.txt" > "$OUT/logcat-app.txt" || true
+# GitHub rifiuta file oltre 100 MB (i risultati non si pubblicavano): righe più frequenti, poi inizio e fine
+for f in logcat-full.txt logcat-app.txt; do
+  if [ "$(stat -c %s "$OUT/$f")" -gt 90000000 ]; then
+    cut -c 19- "$OUT/$f" | sed -E 's/[0-9]+/N/g' | sort | uniq -c | sort -rn | head -80 > "$OUT/${f%.txt}-frequenti.txt"
+    { head -c 40000000 "$OUT/$f"; echo; echo "... [tagliato: file troppo grande] ..."; tail -c 40000000 "$OUT/$f"; } > "$OUT/$f.tmp" && mv "$OUT/$f.tmp" "$OUT/$f"
+  fi
+done
 cp -r ~/.maestro/tests "$OUT/maestro-debug" 2>/dev/null || true
 # crash dell'app (segnale nativo con traccia, eccezione Java, ANR, Scudo OOM) → crash.txt e giro fallito
 awk -f tests/emulatore/crash.awk "$OUT/logcat-full.txt" "$OUT/logcat-full.txt" > "$OUT/crash.txt" || true

@@ -206,6 +206,16 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - APK per il telefono dell'utente: `[apk]` o run_workflow `android-apk.yml`; link fisso release "anteprima".
 
 ## Lezioni sullo strato ui/ e sul telefono (10-11/10, tutto verificato sull'emulatore)
+- **17/10 barre orizzontali delle tab (sticky e non)**: dopo uno scorrimento il primo tap su una tab andava
+  perso (emulatore: 0 su 12). Due cause, corrette in `ScrollBox` di `ui/html.tsx` (solo Android, `overflow-x`):
+  1) lo scroller nativo resta "in corso" (coda del lancio, rimbalzo invisibile al bordo) e HorizontalScrollView
+  si prende il tocco → si ferma al bordo o sotto 0,15 dp/ms, solo per i lanci del dito (lo scrollTo smooth
+  della tab attiva di Il Mio Vibra non va fermato), `overScrollMode="never"`;
+  2) il tocco arriva alla barra (touchstart/touchend) ma non al pulsante (responder di RN dopo il gesto annullato
+  dal nativo) → tap di riserva: la barra riconosce il tap e lo consegna al Btn sotto il dito (`HScrollTapContext`).
+  Prova: `tests/emulatore/pr/08-sticky-tap.yaml` + `.sh` (run.sh esegue `<percorso>.sh` dopo il percorso),
+  `EXPO_PUBLIC_TEST_NO_FLINGSTOP=1` = comportamento di prima. Risultato: 23 tap su 24, percorsi admin/pr verdi
+  (run 39047119059). run.sh taglia il logcat oltre 90 MB (GitHub rifiuta file >100 MB).
 - **Classi**: NativeWind scarta dvh/env()/calc() → `viewportSizeStyle` (webStyle) le calcola; le classi
   `transition-*/duration-*/ease-*/delay-*` NON vanno a NativeWind (la sua interop mandava in loop il JS:
   "Scudo OOM" nel logcat e app uccisa, era il crash del dettaglio cliente) → `ui/cssTransition.ts` anima

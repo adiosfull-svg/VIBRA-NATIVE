@@ -1,5 +1,6 @@
 // Stesse opzioni di src/lib/query-client.js dell'app web.
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, focusManager } from '@tanstack/react-query';
+import { AppState, Platform } from 'react-native';
 import { diagQueries } from './testDiag';
 
 export const queryClient = new QueryClient({
@@ -16,6 +17,16 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Sul telefono il "focus della finestra" è il ritorno dell'app in primo piano (sul web React Query
+// usa già visibilitychange). Vale solo per le query con refetchOnWindowFocus: true, come nell'originale
+// (notifiche, Serate): l'app ricontrolla quando si torna dentro, quando la connessione realtime era chiusa.
+if (Platform.OS !== 'web') {
+  focusManager.setEventListener((handleFocus) => {
+    const sub = AppState.addEventListener('change', (state) => handleFocus(state === 'active'));
+    return () => sub.remove();
+  });
+}
 
 // diagnostica dell'emulatore: chiavi delle query avviate
 diagQueries(queryClient.getQueryCache());
