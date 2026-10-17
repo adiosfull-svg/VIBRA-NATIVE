@@ -259,9 +259,10 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - `AnimatePresence` (ui/motion) ora fa le uscite `exit` (anche mode="wait", initial={false}); toast con uscita.
 - Percorso `tests/emulatore/pr/09-dettaglio-apri-chiudi.yaml` (con `fluidita: si`). NB: sull'emulatore senza GPU
   gfxinfo dà il 100% di frame persi: non serve a confrontare animazioni brevi, servono i telefoni veri.
-- Già rotto PRIMA di questo branch (ccr-962ba42f @1269c89, verificato con app_ref): 04-dettaglio, 06-semine e a volte
-  02-clienti falliscono al primo passo perché la tab "I Miei Progressi" resta fuori schermo (barra non centrata,
-  log "VIBRA hscroll lancio x=0").
+- Unito ccr-962ba42f @d2e1119 (correzione della barra delle tab, e9581c1): giro emulatore 39050068064 tutto verde
+  (admin e pr, 09 compreso). Test Lab 39050065368 (Robo, S24 e Pixel 8 Pro): passato, nessun crash, frame persi
+  15,6% / 8,4% (mattina: 17,8% / 7,7%; percorsi Robo diversi, non confrontabili alla lettera); Robo non ha aperto
+  il dettaglio cliente.
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
