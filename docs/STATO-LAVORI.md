@@ -276,6 +276,15 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   15,6% / 8,4% (mattina: 17,8% / 7,7%; percorsi Robo diversi, non confrontabili alla lettera); Robo non ha aperto
   il dettaglio cliente.
 
+## I Miei Guadagni virtualizzata (17/10, branch `claude/guadagni-virtualizzati`)
+- `MieiGuadagniSerate.jsx`: prima tutte le righe montate (a blocchi che raddoppiavano) e ogni tasto negli input
+  ridisegnava la lista intera. Ora tab "guadagni" a finestra sullo scroll della pagina con
+  `usePageWindowVariable` (nuovo, `web/hooks/usePageWindow.js`: righe ad altezza variabile misurate con onLayout,
+  posizione assoluta, gap = space-y), tab "serate" con `useProgressiveList`; righe in `memo` con callback stabili.
+- Emulatore `tests/emulatore/pr/11-guadagni.yaml`: schermate identiche alla versione prima (app_ref e502de4).
+  Dopo `openLink` (che rimonta tutta l'app) la pillola della barra resta su Semine con la versione nuova (2 giri su 2;
+  la vecchia è su Il Mio): corsa nella MobileNavBar al rimontaggio, da vedere nel thread della barra.
+
 ## Comitive (17/10, branch `claude/comitive-funnel`)
 - Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
   (`new ResizeObserver` → ReferenceError, `el.addEventListener`, `e.target.closest`, `elementFromPoint`).
