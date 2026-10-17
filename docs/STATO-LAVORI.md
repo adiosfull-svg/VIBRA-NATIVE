@@ -10,6 +10,8 @@
 - Aggiornamento 15/10: il lavoro sulle prestazioni continua su **`ccr-962ba42f-zm78fv`** (da
   `claude/charming-franklin-gint2k` → `claude/serate-admin-optimization-4ro02f`): audit applicato, risultati e
   lezioni in docs/PIANO-PRESTAZIONI.md (gara del 15/10). Una nuova sessione parte da lì.
+- Aggiornamento 17/10: `claude/charming-franklin-gint2k` = ccr-962ba42f + strato ui dell'audit (F34, F25, F33) e
+  gara di Serate (PIANO-PRESTAZIONI, gara del 17/10). Da unire in ccr-962ba42f quando l'utente lo chiede.
 - Repo https://github.com/adiosfull-svg/VIBRA-NATIVE. Branch con TUTTO il lavoro (fino al 14/10): **`claude/amazing-babbage-bfbu65`**
   (catena awesome-tesla → ecstatic-dirac → practical-mccarthy → amazing-babbage; NON ancora unito a `main`).
   Una nuova sessione parte da qui (`git checkout -B <suo-branch> origin/claude/amazing-babbage-bfbu65`).
