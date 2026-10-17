@@ -44,7 +44,7 @@ function fmtDayMonYY(dateStr) {
 // assoluta separate dallo space-y-2 dell'originale. Tab "serate": righe ad altezza variabile (appunti
 // aperti) → montaggio progressivo (useProgressiveList). Righe in memo: digitando si ridisegna solo la
 // riga toccata.
-const OVERSCAN = 6;
+const OVERSCAN = 10; // ~10 righe (~760 dp) montate sopra e sotto lo schermo: gli scorrimenti veloci trovano le righe pronte
 const ROW_GAP = 8; // space-y-2
 const ROW_HEIGHT_GUESS = 50; // poi vale l'altezza misurata (onLayout)
 
