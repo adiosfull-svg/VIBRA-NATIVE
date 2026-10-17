@@ -20,11 +20,17 @@ appId: com.vibra.mobile
     timeout: 90000
 - waitForAnimationToEnd
 - takeScreenshot: comitive-00-clienti
-- scrollUntilVisible:
-    element: "Comitive"
-    direction: RIGHT
-    timeout: 15000
-    optional: true
+# la barra delle tab scorre in orizzontale: Comitive è l'ultima
+- swipe:
+    start: 90%, 16%
+    end: 10%, 16%
+    duration: 400
+- swipe:
+    start: 90%, 16%
+    end: 10%, 16%
+    duration: 400
+- waitForAnimationToEnd
+- takeScreenshot: comitive-00b-tab-scorse
 - tapOn: "Comitive"
 - extendedWaitUntil:
     visible: "Crea comitiva"
