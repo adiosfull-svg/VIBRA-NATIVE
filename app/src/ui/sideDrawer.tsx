@@ -6,7 +6,10 @@
 // doveva partire l'animazione (scatti, e con un AccountMenu per pagina se ne aprivano 5 insieme).
 // Ora: un solo pannello nel layout, montato in anticipo a app ferma e poi tenuto montato; aprire e
 // chiudere muove solo una shared value di Reanimated (thread UI), il contenuto non si ridisegna.
-// Da chiuso il pannello è `display: none` (fuori dal disegno e dai tocchi, invisibile a Maestro).
+// Da chiuso il pannello resta MONTATO fuori dallo schermo (translateX = ±larghezza, velo a opacità 0),
+// senza tocchi e nascosto all'accessibilità (e quindi a Maestro). Prima era `display: none`: in Fabric
+// un nodo `display: none` non ha viste native, quindi a ogni apertura Android ricreava tutte le viste
+// del menu e le immagini (logo VIBRA della sidebar) ripartivano da vuote: l'«esitazione» del logo.
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import { BackHandler, InteractionManager, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -38,7 +41,7 @@ function SideDrawerImpl({ name, open, onClose, side, width, backdropOpacity, clo
   const target = useRef(open ? 1 : 0);
   // contenuto montato in anticipo (o subito, se lo si apre prima)
   const [ready, setReady] = useState(open);
-  // visibile = aperto o in chiusura; a fine chiusura → display none
+  // visibile = aperto o in chiusura; a fine chiusura → nascosto (fuori schermo, senza tocchi)
   const [shown, setShown] = useState(open);
 
   useEffect(() => {
@@ -88,7 +91,12 @@ function SideDrawerImpl({ name, open, onClose, side, width, backdropOpacity, clo
 
   if (!ready) return null;
   return (
-    <View style={[StyleSheet.absoluteFill, styles.root, !shown && styles.hidden]} pointerEvents={open ? 'box-none' : 'none'}>
+    <View
+      style={[StyleSheet.absoluteFill, styles.root]}
+      pointerEvents={open ? 'box-none' : 'none'}
+      importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}
+      accessibilityElementsHidden={!shown}
+    >
       <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={closeLabel} />
       </Animated.View>
@@ -103,7 +111,6 @@ const styles = StyleSheet.create({
   // sopra a tutto il layout: su Android l'elevation (ombre della nav bar, pulsante Cerca) scavalca
   // l'ordine dei fratelli, quindi serve un'elevation più alta (§7 delle regole)
   root: { zIndex: 1000, elevation: 1000 },
-  hidden: { display: 'none' },
   backdrop: { backgroundColor: '#000000' },
   panel: { position: 'absolute', top: 0, bottom: 0 },
   left: { left: 0 },

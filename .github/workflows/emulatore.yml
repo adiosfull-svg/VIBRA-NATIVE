@@ -30,7 +30,7 @@ on:
         required: false
         default: ''
       gara:
-        description: 'si = gara nativa contro originale (tools/gara) invece dei percorsi Maestro'
+        description: 'si = gara nativa contro originale (tools/gara) invece dei percorsi Maestro; navbar = gara della barra in basso e del menu (video, tools/gara/navbar.mjs)'
         required: false
         default: ''
       traccia:
@@ -52,7 +52,7 @@ on:
 
 jobs:
   emulatore:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]') || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[fluidita]') || contains(github.event.head_commit.message, '[traccia]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[emu]') || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[gara-navbar]') || contains(github.event.head_commit.message, '[fluidita]') || contains(github.event.head_commit.message, '[traccia]')
     # a livello di job (i push senza [emu] non annullano niente); le esecuzioni a mano non si annullano
     concurrency:
       # la gara ha un gruppo suo: non annulla (e non è annullata da) un giro di percorsi Maestro
@@ -71,7 +71,9 @@ jobs:
       FLOWS: ${{ github.event.inputs.flows || format('tests/emulatore/{0}', matrix.utente) }}
       EMAIL: ${{ matrix.utente }}@vibra.local
       UTENTE: ${{ matrix.utente }}
-      GARA: ${{ (github.event.inputs.gara == 'si' || contains(github.event.head_commit.message, '[gara]')) && '1' || '' }}
+      GARA: ${{ (github.event.inputs.gara == 'si' || github.event.inputs.gara == 'navbar' || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[gara-navbar]')) && '1' || '' }}
+      # [gara-navbar]: solo la gara della barra in basso e del menu laterale (tests/gara/run.sh)
+      GARA_NAV: ${{ (github.event.inputs.gara == 'navbar' || contains(github.event.head_commit.message, '[gara-navbar]')) && '1' || '' }}
       # [fluidita]: animazioni attive + video + frame persi per percorso (tests/emulatore/run.sh)
       FLUID: ${{ (github.event.inputs.fluidita == 'si' || contains(github.event.head_commit.message, '[fluidita]')) && '1' || '' }}
       # [traccia]: traccia Perfetto di ogni percorso (tests/emulatore/run.sh)
@@ -111,6 +113,8 @@ jobs:
           cols=$($P -At -c "select string_agg(quote_ident(column_name), ',') from information_schema.columns where table_schema='public' and table_name='client' and column_name not in ('id','name')")
           $P -c "insert into client (name, $cols) select c.name || ' ' || g, $cols from client c, generate_series(1,9) g"
           # semine del PR (con note, recettività e stati diversi: le card della pagina Semine)
+          # logo della sidebar (AppSettings org_logo) come nell'app vera, per la gara del menu
+          $P -c "insert into app_settings (key, value) values ('org_logo', 'https://base44.app/api/apps/69de4f1f7f53d9f187d01392/files/mp/public/69de4f1f7f53d9f187d01392/d42bf9b16_VIBRAPERFETTO2.png')"
           $P -c "insert into semina (name, promoter_id, instagram, phone, eta, provenienza, notes, status, recettivita, display_order) select 'Semina ' || g, 'prom000000000000000001', 'semina.' || g, '+39 333 000 00' || lpad(g::text, 2, '0'), 18 + g % 10, (array['Napoli','Pozzuoli','Vomero','Posillipo'])[1 + g % 4], case when g % 3 = 0 then 'Nota di prova ' || g || ': da richiamare venerdì' end, (array['nuovo','contattato','interessato','convertito'])[1 + g % 4], 1 + g % 5, g from generate_series(1,12) g"
           curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
 
@@ -207,6 +211,7 @@ jobs:
           ls /tmp/gara-ref | head
           echo "GARA_REF=/tmp/gara-ref" >> "$GITHUB_ENV"
           (cd tools/gara && npm install --no-audit --no-fund --silent)
+          if [ "$GARA_NAV" = 1 ]; then command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -yq ffmpeg); python3 -c 'import numpy' || pip install numpy; fi
 
       # ── emulatore ──
       - name: KVM

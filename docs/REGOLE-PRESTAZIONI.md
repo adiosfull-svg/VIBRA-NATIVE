@@ -125,11 +125,19 @@ si montano solo le righe visibili più un margine (`overscan`).
   - contenuto in `memo` senza props che cambiano all'apertura: aprire/chiudere muove solo la shared value;
   - l'azione (`setSidebarOpen`) avvia l'animazione **prima** del setState (`registerDrawerAnimator`):
     anche se il commit è pesante (es. navigazione dalla sidebar) l'animazione non aspetta il JS;
-  - da chiuso: `display: none` (fuori dal disegno, dai tocchi e dall'albero di accessibilità);
+  - da chiuso resta MONTATO fuori schermo (translateX, velo a opacità 0, `pointerEvents: none`, nascosto
+    all'accessibilità). MAI `display: none` per cose che si riaprono: in Fabric un nodo `display: none` non ha
+    viste native, quindi ogni apertura le ricrea tutte e le immagini ripartono da vuote (il logo della
+    sidebar compariva in ritardo a ogni apertura);
   - tasto Indietro di Android gestito (`BackHandler`).
 - **Niente `<Modal>` di React Native per cose che si aprono spesso**: su Android crea una finestra nuova
   a ogni apertura e monta il contenuto nel momento in cui deve partire l'animazione. Va bene per dialog
   rari; per i dialog dell'app si usa il Portal di `@rn-primitives` (un solo `PortalHost` alla radice).
+- **Gesti continui (barre, trascinamenti) sul thread UI**: react-native-gesture-handler con callback worklet
+  (`useManualGesture`/`usePanGesture` + shared value di Reanimated), come la nav bar (`MobileNavBar.tsx`).
+  Il PanResponder vive sul thread JS: con il JS occupato il dito resta fermo. Al JS solo l'esito
+  (navigazione, vibrazione) con `scheduleOnRN`. Gli stati visivi (attivo, premuto) si leggono dalle shared
+  value nei componenti figli, senza setState a ogni tocco.
 - Durate e curve come l'originale (`ui/anim.ts`: `EASE_OUT` = cubic-bezier(0.22,1,0.36,1));
   apertura ~280 ms, chiusura ~220 ms.
 - Le transizioni CSS (`transition-*`, `duration-*`) NON passano da NativeWind (loop del JS):
