@@ -14,6 +14,7 @@ export function diagCount(name: string, detail?: string) {
   if (TEST_GARA) { garaActivity(true); garaLast = detail ? `${name}:${detail}` : name; }
   if (!TEST_DIAG) return;
   diagCounts[name] = (diagCounts[name] ?? 0) + 1;
+  if (navProbe) { const k = `${name}:${(detail ?? '').slice(0, 50)}`; navRenders[k] = (navRenders[k] ?? 0) + 1; }
   if (TEST_TRACE) console.log(`VIBRA trace ${++traceN} ${name} ${(detail ?? '').slice(0, 80)}`);
 }
 // ── Gara con l'originale (docs/PIANO-PRESTAZIONI.md, EXPO_PUBLIC_TEST_GARA=1) ──
@@ -240,8 +241,10 @@ export function useDiagWhy(label: string, values: Record<string, unknown>) {
 // (navigazione e commit di React finiti), frame = due frame dopo (la tab nuova è a schermo).
 const TEST_BUILD = !!process.env.EXPO_PUBLIC_TEST_LOGIN;
 let navProbe: { route: string; t: number } | null = null;
+// con EXPO_PUBLIC_TEST_DIAG=1: elementi ridisegnati durante il cambio di tab (i più frequenti)
+let navRenders: Record<string, number> = {};
 export function navProbeStart(route: string) {
-  if (TEST_BUILD) navProbe = { route, t: performance.now() };
+  if (TEST_BUILD) { navProbe = { route, t: performance.now() }; navRenders = {}; }
 }
 export function navProbeArrived(route: string) {
   const p = navProbe;
@@ -249,6 +252,9 @@ export function navProbeArrived(route: string) {
   navProbe = null;
   const js = performance.now() - p.t;
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    console.log(`VIBRA nav ${route} js=${Math.round(js)} frame=${Math.round(performance.now() - p.t)}`);
+    const ren = Object.entries(navRenders);
+    const tot = ren.reduce((a, [, v]) => a + v, 0);
+    const top = ren.sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => `${v}×${k}`).join(' | ');
+    console.log(`VIBRA nav ${route} js=${Math.round(js)} frame=${Math.round(performance.now() - p.t)}${TEST_DIAG ? ` render=${tot} ${top}` : ''}`);
   }));
 }
