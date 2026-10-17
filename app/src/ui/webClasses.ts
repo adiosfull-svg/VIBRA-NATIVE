@@ -20,12 +20,14 @@ export function expandGridTemplate(css: string): string {
     .trim().split(/\s+/).join('_');
 }
 
-/** grid-cols-[1fr_auto_120px] → colonne; null se contiene forme non gestite (repeat, minmax...). */
+/** grid-cols-[1fr_auto_120px] → colonne; null se contiene forme non gestite (repeat, minmax con massimo non fr...). */
 export function parseGridTemplate(v: string): GridTrack[] | null {
   const tracks: GridTrack[] = [];
   for (const t of v.split('_')) {
     let m: RegExpMatchArray | null;
     if ((m = t.match(/^(\d+(?:\.\d+)?)fr$/))) tracks.push({ fr: Number(m[1]) });
+    // minmax(0,1fr) (colonne laterali della barra delle Comitive): come 1fr, che qui può già stringersi
+    else if ((m = t.match(/^minmax\(\s*[\d.]+(?:px)?\s*,\s*(\d+(?:\.\d+)?)fr\s*\)$/))) tracks.push({ fr: Number(m[1]) });
     else if (t === 'auto' || t === 'min-content' || t === 'max-content') tracks.push({ auto: true });
     else if ((m = t.match(/^(\d+(?:\.\d+)?)(px|rem)$/))) tracks.push({ px: Number(m[1]) * (m[2] === 'rem' ? REM : 1) });
     else return null;
