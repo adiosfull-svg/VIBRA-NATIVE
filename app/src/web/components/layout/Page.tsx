@@ -164,6 +164,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
         contentContainerStyle={{ paddingBottom: 72 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         refreshControl={refreshControl}
+        {...(TEST_DIAG ? PAGE_DIAG : null)}
         {...props}
       >
         <OwnPathProvider>
@@ -177,4 +178,9 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   );
 });
 Page.displayName = 'Page';
+// build di test: la ScrollView della pagina che prende il tocco (a un pulsante non arriva il tap)
+const PAGE_DIAG = {
+  onResponderGrant: () => console.log('VIBRA pagina prende-il-tocco'),
+  onResponderTerminate: () => console.log('VIBRA pagina perde-il-tocco'),
+};
 export default Page;

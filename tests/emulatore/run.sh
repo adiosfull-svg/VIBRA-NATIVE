@@ -80,6 +80,8 @@ for f in $(ls "$OLDPWD"/${FLOWS:-tests/emulatore}/*.yaml 2>/dev/null || echo "$O
   if [ "${FLUID:-}" = 1 ]; then adb shell dumpsys gfxinfo $PKG reset > /dev/null 2>&1 || true; rec_start "$name"; fi
   if [ "${TRACE:-}" = 1 ]; then trace_start; fi
   maestro test -e EMAIL="${EMAIL:-admin@vibra.local}" "$f" --format junit --output "$OUT/$name.xml" > "$OUT/$name.log" 2>&1 || { status=1; echo "FALLITO $name"; }
+  # prova con adb dopo il percorso (es. 08-sticky-tap.sh: tocchi a tempo, impossibili con Maestro)
+  if [ -f "${f%.yaml}.sh" ]; then bash "${f%.yaml}.sh" "$OUT" > "$OUT/$name-sh.log" 2>&1 || true; fi
   if [ "${FLUID:-}" = 1 ]; then gfx_row "$name"; rec_stop "$name"; fi
   if [ "${TRACE:-}" = 1 ]; then trace_stop "$name"; fi
   adb exec-out uiautomator dump /dev/tty > "$OUT/$name-ui.xml" 2>/dev/null || true

@@ -5,6 +5,7 @@
 import { memo } from 'react';
 import { usePendingSelection } from '@/web/hooks/usePendingSelection';
 import { Btn, Div } from '@/ui/html';
+import { TEST_DIAG } from '@/lib/testDiag';
 
 const ACTIVE = 'bg-card text-foreground shadow-sm';
 const IDLE = 'text-muted-foreground hover:text-foreground';
@@ -27,8 +28,9 @@ function SubTabButtons({
           button
           key={key}
           ref={active === key ? activeRef : null}
-          onClick={() => select(key)}
+          onClick={() => { if (TEST_DIAG) console.log(`VIBRA subtab ${key}`); select(key); }}
           onPointerDown={onPointerDownFor?.(key)}
+          {...(TEST_DIAG ? { onLayout: (e) => { const l = e.nativeEvent.layout; console.log(`VIBRA subtab riquadro ${key} ${Math.round(l.x)},${Math.round(l.y)} ${Math.round(l.width)}x${Math.round(l.height)}`); }, onPressIn: () => console.log(`VIBRA subtab premuto ${key}`), onPressOut: () => console.log(`VIBRA subtab rilasciato ${key}`) } : null)}
           className={`cursor-pointer flex items-center gap-1.5 rounded-lg font-medium transition-all duration-200 ${buttonClassName} ${shown === key ? ACTIVE : IDLE}`}>
           {TabIcon && <TabIcon className={iconClassName} />}
           {label}
