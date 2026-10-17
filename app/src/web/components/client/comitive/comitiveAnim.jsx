@@ -6,15 +6,13 @@
 //   cm-drop-ring (anello al rilascio). Un solo orologio per tela: fermo durante pan/zoom/trascinamento
 //   (come .cm-paused) e quando la schermata non è a fuoco.
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import Animated, {
   Easing, Keyframe, useAnimatedProps, useAnimatedStyle, useFrameCallback, useSharedValue, withDelay, withTiming,
 } from 'react-native-reanimated';
-import { Circle, G, Path } from 'react-native-svg';
+import Svg, { G, Path } from 'react-native-svg';
 import { useScreenFocused } from '@/ui/fixedPortal';
 
-const ACircle = Animated.createAnimatedComponent(Circle);
-const AG = Animated.createAnimatedComponent(G);
 const APath = Animated.createAnimatedComponent(Path);
 
 const ClockCtx = createContext(null);
@@ -68,64 +66,108 @@ export function wireLut(w) {
   return { xs, ys };
 }
 
-function ParticleCircle({ lut, dur, delay, peak, r, fill, fillOpacity }) {
+/** #rrggbb + alfa → rgba() (fillOpacity dell'SVG sulle View). */
+function rgba(hex, a) {
+  if (hex === 'white') return `rgba(255,255,255,${a})`;
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+// PORT: particelle, anelli e battito sono View sopra l'Svg (solo transform/opacity sul thread UI): le prop
+// animate di react-native-svg ridisegnano tutta la tela a ogni frame (sull'emulatore ~800 ms per frame).
+function Dot({ r, color, a = 1, ring }) {
+  return (
+    <View
+      style={ring
+        ? { position: 'absolute', left: -r, top: -r, width: r * 2, height: r * 2, borderRadius: r, borderWidth: ring, borderColor: rgba(color, a) }
+        : { position: 'absolute', left: -r, top: -r, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: rgba(color, a) }}
+    />
+  );
+}
+
+function Particle({ lut, dur, delay, peak, dim, children }) {
   const t = useClock();
   const { xs, ys } = lut;
-  const props = useAnimatedProps(() => {
+  const k0 = dim ? 0.12 : 1;
+  const style = useAnimatedStyle(() => {
     const local = t.value - delay;
-    if (local < 0) return { cx: xs[0], cy: ys[0], opacity: 0 };
+    if (local < 0) return { opacity: 0, transform: [{ translateX: xs[0] }, { translateY: ys[0] }] };
     const p = (local % dur) / dur;
     const f = p * (xs.length - 1);
     const i = Math.min(Math.floor(f), xs.length - 2);
     const k = f - i;
     const op = p < 0.15 ? (p / 0.15) * peak : p > 0.85 ? ((1 - p) / 0.15) * peak : peak;
-    return { cx: xs[i] + (xs[i + 1] - xs[i]) * k, cy: ys[i] + (ys[i + 1] - ys[i]) * k, opacity: op };
-  }, [xs, ys, dur, delay, peak]);
-  return <ACircle r={r} fill={fill} fillOpacity={fillOpacity} animatedProps={props} />;
+    return {
+      opacity: op * k0,
+      transform: [{ translateX: xs[i] + (xs[i + 1] - xs[i]) * k }, { translateY: ys[i] + (ys[i + 1] - ys[i]) * k }],
+    };
+  }, [xs, ys, dur, delay, peak, k0]);
+  return <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, style]}>{children}</Animated.View>;
 }
 
 /** Le due particelle di un filo (stessi raggi, colori, durate e ritardi dell'originale). */
-export function WireParticles({ w, color, hot, idx }) {
+export function WireParticles({ w, color, hot, idx, dim }) {
   const lut = useMemo(() => wireLut(w), [w.d]); // eslint-disable-line react-hooks/exhaustive-deps
   const dur = hot ? 1.6 : 2.8;
   const delay = (idx * 0.55) % 3;
   const delay2 = (idx * 0.55 + 1.4) % 3;
   return (
     <>
-      <ParticleCircle lut={lut} dur={dur} delay={delay} peak={0.95} r={hot ? 6 : 5} fill={color} fillOpacity={0.22} />
-      <ParticleCircle lut={lut} dur={dur} delay={delay} peak={0.95} r={hot ? 2.6 : 2.1} fill={color} />
-      <ParticleCircle lut={lut} dur={dur} delay={delay} peak={0.95} r={hot ? 1.2 : 0.9} fill="white" fillOpacity={0.9} />
-      <ParticleCircle lut={lut} dur={dur} delay={delay2} peak={0.9} r={hot ? 3.6 : 2.8} fill="white" fillOpacity={0.14} />
-      <ParticleCircle lut={lut} dur={dur} delay={delay2} peak={0.9} r={hot ? 1.6 : 1.2} fill="white" fillOpacity={0.6} />
+      <Particle lut={lut} dur={dur} delay={delay} peak={0.95} dim={dim}>
+        <Dot r={hot ? 6 : 5} color={color} a={0.22} />
+        <Dot r={hot ? 2.6 : 2.1} color={color} />
+        <Dot r={hot ? 1.2 : 0.9} color="white" a={0.9} />
+      </Particle>
+      <Particle lut={lut} dur={dur} delay={delay2} peak={0.9} dim={dim}>
+        <Dot r={hot ? 3.6 : 2.8} color="white" a={0.14} />
+        <Dot r={hot ? 1.6 : 1.2} color="white" a={0.6} />
+      </Particle>
     </>
   );
 }
 
-/* ── cm-wire-flow: tratteggio che scorre ── */
-export function FlowPath({ period, ...rest }) {
+/* ── cm-wire-flow: tratteggio che scorre (Svg piccolo solo attorno al filo) ── */
+export function FlowPath({ period, w, ...rest }) {
   const t = useClock();
   const props = useAnimatedProps(() => ({ strokeDashoffset: 28 - ((t.value % period) / period) * 28 }), [period]);
-  return <APath {...rest} animatedProps={props} />;
+  const xs = [w.from.x, w.c1.x, w.c2.x, w.to.x];
+  const ys = [w.from.y, w.c1.y, w.c2.y, w.to.y];
+  const x = Math.floor(Math.min(...xs)) - 4;
+  const y = Math.floor(Math.min(...ys)) - 4;
+  const wd = Math.ceil(Math.max(...xs)) + 4 - x;
+  const ht = Math.ceil(Math.max(...ys)) + 4 - y;
+  return (
+    <Svg width={wd} height={ht} style={{ position: 'absolute', left: x, top: y }} pointerEvents="none">
+      <G transform={`translate(${-x} ${-y})`}>
+        <APath d={w.d} {...rest} animatedProps={props} />
+      </G>
+    </Svg>
+  );
 }
 
-/* ── cm-end-pulse: anello che si allarga e sfuma (ease-in-out) ── */
-export function PulseCircle({ period, ...rest }) {
+/* ── cm-end-pulse: anello r 3.5 → 8 e opacity .6 → .1 (ease-in-out, avanti e indietro) ── */
+export function PulseRing({ period, x, y, color }) {
   const t = useClock();
-  const props = useAnimatedProps(() => {
+  const style = useAnimatedStyle(() => {
     const p = (t.value % period) / period;
     const h = p < 0.5 ? p * 2 : (1 - p) * 2;
     const e = h < 0.5 ? 2 * h * h : 1 - Math.pow(-2 * h + 2, 2) / 2;
-    return { r: 3.5 + 4.5 * e, opacity: 0.6 - 0.5 * e };
-  }, [period]);
-  return <ACircle {...rest} animatedProps={props} />;
+    return { opacity: 0.6 - 0.5 * e, transform: [{ translateX: x }, { translateY: y }, { scale: 1 + (4.5 / 3.5) * e }] };
+  }, [period, x, y]);
+  return (
+    <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, style]}>
+      <Dot r={3.5} color={color} ring={1.2} />
+    </Animated.View>
+  );
 }
 
 /* ── cm-beat: 0/100% 1, 12% .35, 24% 1, 36% .5, 52% 1 (1.8s) ── */
 const BEAT_T = [0, 0.12, 0.24, 0.36, 0.52, 1];
 const BEAT_V = [1, 0.35, 1, 0.5, 1, 1];
-export function HeartbeatG({ children }) {
+/** Terminali dei fili non selezionati (cerchi fermi) con il battito sull'opacità del gruppo. */
+export function HeartbeatDots({ beats }) {
   const t = useClock();
-  const props = useAnimatedProps(() => {
+  const style = useAnimatedStyle(() => {
     const p = (t.value % 1.8) / 1.8;
     let i = 0;
     while (i < BEAT_T.length - 2 && p > BEAT_T[i + 1]) i++;
@@ -133,7 +175,16 @@ export function HeartbeatG({ children }) {
     const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     return { opacity: BEAT_V[i] + (BEAT_V[i + 1] - BEAT_V[i]) * e };
   });
-  return <AG animatedProps={props}>{children}</AG>;
+  return (
+    <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, style]}>
+      {beats.map((bt) => [bt.a, bt.b].map((p, i) => (
+        <View key={`${bt.key}-${i}`} style={{ position: 'absolute', left: p.x, top: p.y, opacity: bt.dim ? 0.12 : 1 }}>
+          <Dot r={5.5} color={bt.color} a={0.18} />
+          <Dot r={2.6} color={bt.color} />
+        </View>
+      )))}
+    </Animated.View>
+  );
 }
 
 /* ── cm-pop-in: 0% scale .3 opacity 0 · 55% scale 1.07 opacity 1 · 75% .97 · 100% 1 (560ms) ── */

@@ -2,14 +2,14 @@
 // PORT: <animateMotion>/<animate> (particelle sui fili) e keyframe CSS (cm-pop-in, cm-wire-flow, cm-end-pulse,
 // cm-beat) sul telefono sono rifatti in comitiveAnim (Reanimated, thread UI). Sul web restano statici.
 import React, { memo } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { MapPin, Star, ZoomIn, ZoomOut, Maximize2, Crosshair, Lock, Unlock, Target, MoveDiagonal2, BadgeCheck } from '@/ui/icons.generated';
 import ClientAvatar from '@/web/components/client/ClientAvatar';
 import {
   LINK_TYPES, SOURCE_META, NODE_W, NODE_H, sourceKey, initialsOf, zoneOf, fmtEuro, wireGeometry, tempWire,
   NODE_KINDS, kindOf,
 } from './comitiveUtils';
-import { WireClock, WireParticles, FlowPath, PulseCircle, HeartbeatG, PopIn } from './comitiveAnim';
+import { WireClock, WireParticles, FlowPath, PulseRing, HeartbeatDots, PopIn } from './comitiveAnim';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Circle, G, Line, Path, Rect, Svg, SvgText } from '@/ui/elements';
@@ -236,7 +236,9 @@ export const WiresLayer = memo(function WiresLayer({
   svgRef, edges, pos, heights, sizes = {}, selectedNodeId, selectedEdgeId, draggingId, linkDraft, paused = false,
 }) {
   const beats = [];
-  // PORT: sul telefono particelle solo fino a PARTICLE_MAX fili (5 cerchi animati per filo sul thread UI)
+  // PORT: sul telefono le parti animate (particelle, tratteggio che scorre, anelli, battito) vanno in `overlay`,
+  // View sopra l'Svg (vedi comitiveAnim). Particelle solo fino a PARTICLE_MAX fili.
+  const overlay = [];
   const particles = HOVER_NONE && edges.length <= PARTICLE_MAX;
   const wires = edges.map((e, idx) => {
     const a = pos[e.from];
@@ -252,11 +254,21 @@ export const WiresLayer = memo(function WiresLayer({
     const moving = !!draggingId && (e.from === draggingId || e.to === draggingId);
     const labelW = e.label ? Math.min(e.label.length * 5.6 + 20, 200) : 0;
     if (!hot) beats.push({ key: e.id, color, a: w.from, b: w.to, dim });
+    const flowNative = HOVER_NONE && goal && !moving;
+    if (flowNative) {
+      overlay.push(
+        <View key={`f-${e.id}`} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, opacity: dim ? 0.12 : 1 }}>
+          <FlowPath period={1.6} w={w} fill="none" stroke={color} strokeWidth={hot ? 2 : 1.5} strokeOpacity={hot ? 0.95 : 0.75} strokeLinecap="round" strokeDasharray="6 8" />
+        </View>
+      );
+    }
+    if (particles && !moving && !goal) overlay.push(<WireParticles key={`p-${e.id}`} w={w} color={color} hot={hot} idx={idx} dim={dim} />);
+    if (HOVER_NONE && hot) [w.from, w.to].forEach((p, i) => overlay.push(<PulseRing key={`r-${e.id}-${i}`} period={1.4} x={p.x} y={p.y} color={color} />));
     return (
       <G key={e.id} opacity={dim ? 0.12 : 1}>
         <Path d={w.d} fill="none" stroke={color} strokeWidth={hot ? 9 : 7} strokeOpacity={hot ? 0.08 : 0.045} strokeLinecap="round" />
         <Path d={w.d} fill="none" stroke={color} strokeWidth={hot ? 3.5 : 2.6} strokeOpacity={hot ? 0.2 : 0.11} strokeLinecap="round" />
-        <Path
+        {!flowNative && <Path
           d={w.d}
           fill="none"
           stroke={color}
@@ -264,12 +276,8 @@ export const WiresLayer = memo(function WiresLayer({
           strokeOpacity={goal ? (hot ? 0.95 : 0.75) : hot ? 0.8 : 0.5}
           strokeLinecap="round"
           strokeDasharray={goal ? '6 8' : undefined}
-          style={goal && !moving && !HOVER_NONE ? { animation: 'cm-wire-flow 1.6s linear infinite' } : undefined}
-        />
-        {/* PORT: cm-wire-flow sul telefono: tratteggio animato sopra (stesso tratto) */}
-        {HOVER_NONE && goal && !moving && (
-          <FlowPath period={1.6} d={w.d} fill="none" stroke={color} strokeWidth={hot ? 2 : 1.5} strokeOpacity={hot ? 0.95 : 0.75} strokeLinecap="round" strokeDasharray="6 8" />
-        )}
+          style={goal && !moving ? { animation: 'cm-wire-flow 1.6s linear infinite' } : undefined}
+        />}
         {goal && !e.label && (
           <G style={{ pointerEvents: 'none' }}>
             <Circle cx={w.mid.x} cy={w.mid.y} r={9} fill="#0A0D14" stroke={`${color}88`} strokeWidth={1} />
@@ -278,16 +286,13 @@ export const WiresLayer = memo(function WiresLayer({
           </G>
         )}
 
-        {/* PORT: particelle <animateMotion> dell'originale: sul telefono WireParticles, sul web assenti */}
-        {particles && !moving && !goal && <WireParticles w={w} color={color} hot={hot} idx={idx} />}
+        {/* PORT: particelle <animateMotion> dell'originale: sul telefono in overlay, sul web assenti */}
 
         {hot && [w.from, w.to].map((p, i) => (
           <G key={i}>
             <Circle cx={p.x} cy={p.y} r={5.5} fill={color} fillOpacity={0.2} />
             <Circle cx={p.x} cy={p.y} r={2.8} fill={color} />
-            {HOVER_NONE
-              ? <PulseCircle period={1.4} cx={p.x} cy={p.y} fill="none" stroke={color} strokeWidth={1.2} />
-              : <Circle cx={p.x} cy={p.y} r={3.5} fill="none" stroke={color} strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.4s ease-in-out infinite' }} />}
+            {!HOVER_NONE && <Circle cx={p.x} cy={p.y} r={3.5} fill="none" stroke={color} strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.4s ease-in-out infinite' }} />}
           </G>
         ))}
 
@@ -306,16 +311,16 @@ export const WiresLayer = memo(function WiresLayer({
   let temp = null;
   if (linkDraft && pos[linkDraft.from] && linkDraft.to) {
     const w = tempWire(pos[linkDraft.from], heights[linkDraft.from], linkDraft.side, linkDraft.to, sizes[linkDraft.from] || 1);
+    if (HOVER_NONE) {
+      overlay.push(<FlowPath key="t-flow" period={1.2} w={w} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" />);
+      overlay.push(<PulseRing key="t-ring" period={1.2} x={linkDraft.to.x} y={linkDraft.to.y} color="#f472b6" />);
+    }
     temp = (
       <G>
         <Path d={w.d} fill="none" stroke="#f472b6" strokeWidth={7} strokeOpacity={0.07} strokeLinecap="round" />
-        {HOVER_NONE
-          ? <FlowPath period={1.2} d={w.d} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" />
-          : <Path d={w.d} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" style={{ animation: 'cm-wire-flow 1.2s linear infinite' }} />}
+        {!HOVER_NONE && <Path d={w.d} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" style={{ animation: 'cm-wire-flow 1.2s linear infinite' }} />}
         <Circle cx={w.from.x} cy={w.from.y} r={3} fill="#f472b6" />
-        {HOVER_NONE
-          ? <PulseCircle period={1.2} cx={linkDraft.to.x} cy={linkDraft.to.y} fill="none" stroke="#f472b6" strokeWidth={1.2} />
-          : <Circle cx={linkDraft.to.x} cy={linkDraft.to.y} r={4} fill="none" stroke="#f472b6" strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.2s ease-in-out infinite' }} />}
+        {!HOVER_NONE && <Circle cx={linkDraft.to.x} cy={linkDraft.to.y} r={4} fill="none" stroke="#f472b6" strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.2s ease-in-out infinite' }} />}
       </G>
     );
   }
@@ -326,7 +331,7 @@ export const WiresLayer = memo(function WiresLayer({
   const content = (
     <>
       {wires}
-      <BeatGroup>
+      {!HOVER_NONE && <G className="cm-heartbeat" style={{ pointerEvents: 'none' }}>
         {beats.map((bt) => (
           <G key={bt.key} opacity={bt.dim ? 0.12 : 1}>
             <Circle cx={bt.a.x} cy={bt.a.y} r={5.5} fill={bt.color} fillOpacity={0.18} />
@@ -335,7 +340,7 @@ export const WiresLayer = memo(function WiresLayer({
             <Circle cx={bt.b.x} cy={bt.b.y} r={2.6} fill={bt.color} />
           </G>
         ))}
-      </BeatGroup>
+      </G>}
       {temp}
     </>
   );
@@ -345,17 +350,15 @@ export const WiresLayer = memo(function WiresLayer({
       <Svg ref={svgRef} width={box.w} height={box.h} style={{ position: 'absolute', left: box.x, top: box.y, pointerEvents: 'none' }}>
         <G transform={`translate(${-box.x} ${-box.y})`}>{content}</G>
       </Svg>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0 }}>
+        <HeartbeatDots beats={beats} />
+        {overlay}
+      </View>
     </WireClock>
   );
 });
 
 const PARTICLE_MAX = 60;
-
-/** cm-heartbeat: sul web la classe del keyframe CSS, sul telefono HeartbeatG (stesso battito). */
-function BeatGroup({ children }) {
-  if (HOVER_NONE) return <HeartbeatG>{children}</HeartbeatG>;
-  return <G className="cm-heartbeat" style={{ pointerEvents: 'none' }}>{children}</G>;
-}
 
 /** Riquadro (mondo) che contiene tutti i nodi e il filo in costruzione, con margine per curve ed etichette. */
 function svgBox(pos, linkDraft) {
