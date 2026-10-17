@@ -7,7 +7,7 @@ import { it } from 'date-fns/locale';
 import { Plus, Network, UsersRound, MapPin, ChevronRight, Loader2, X, Sparkles } from '@/ui/icons.generated';
 import ClientAvatar from '@/web/components/client/ClientAvatar';
 import ComitivaEditor from './ComitivaEditor';
-import { COMITIVA_COLORS, buildEdges, initialsOf, zoneOf, fmtEuro } from './comitiveUtils';
+import { COMITIVA_COLORS, buildEdges, initialsOf, zoneOf, fmtEuro, nodeFromMeta } from './comitiveUtils';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
@@ -42,16 +42,34 @@ export default function ComitiveTab({ clients = [], events = [], promoterId, onC
     refetchOnWindowFocus: false,
   });
 
+  // Paganti degli altri PR (solo nome/zona/promoter) e promoter Vibra: dal backend, campi minimi
+  const { data: directory = null, isLoading: directoryLoading } = useQuery({
+    queryKey: ['comitive-directory', promoterId],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getComitiveDirectory', { promoter_id: promoterId });
+      const d = res?.data ?? res;
+      return { clients: d?.clients || [], promoters: d?.promoters || [] };
+    },
+    enabled: !!promoterId,
+    staleTime: 10 * 60000,
+    refetchOnWindowFocus: false,
+  });
+
   const clientsById = useMemo(() => Object.fromEntries(clients.map((c) => [c.id, c])), [clients]);
 
   const cards = useMemo(() => comitive.map((cm) => {
-    const members = (cm.client_ids || []).map((id) => clientsById[id]).filter(Boolean);
+    const meta = cm.external_meta || {};
+    const members = [
+      ...(cm.client_ids || []).map((id) => clientsById[id]).filter(Boolean),
+      ...[...(cm.external_client_ids || []), ...(cm.promoter_ids || [])].filter((id) => meta[id]).map((id) => nodeFromMeta(id, meta[id])),
+    ];
     const edges = buildEdges(members, links);
     const zoneCount = {};
     members.forEach((m) => { const z = zoneOf(m); if (z) zoneCount[z] = (zoneCount[z] || 0) + 1; });
     const zones = Object.entries(zoneCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([z]) => z);
     const value = members.reduce((s, m) => s + (Number(m.cum_total_spent) || 0), 0);
-    return { cm, members, edges: edges.length, zones, value };
+    const goals = edges.filter((e) => e.type === 'obiettivo').length;
+    return { cm, members, edges: edges.length - goals, goals, zones, value };
   }), [comitive, clientsById, links]);
 
   const openRecord = comitive.find((c) => c.id === openId) || null;
@@ -155,7 +173,7 @@ export default function ComitiveTab({ clients = [], events = [], promoterId, onC
         )
       ) : (
         <Div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {cards.map(({ cm, members, edges, zones, value }) => {
+          {cards.map(({ cm, members, edges, goals, zones, value }) => {
             const color = cm.color || '#a78bfa';
             return (
               <Btn
@@ -169,7 +187,7 @@ export default function ComitiveTab({ clients = [], events = [], promoterId, onC
                   <Span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
                   <Div className="min-w-0 flex-1">
                     <P className="text-sm font-semibold text-slate-100 leading-tight [overflow-wrap:anywhere]">{cm.name}</P>
-                    <P className="text-[11px] text-slate-500 mt-0.5">{members.length} persone · {edges} legami{cm.updated_date ? ` · ${fmtUpd(cm.updated_date)}` : ''}</P>
+                    <P className="text-[11px] text-slate-500 mt-0.5">{members.length} persone · {edges} legami{goals ? ` · ${goals} da far conoscere` : ''}{cm.updated_date ? ` · ${fmtUpd(cm.updated_date)}` : ''}</P>
                   </Div>
                   <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
                 </Div>
@@ -209,6 +227,8 @@ export default function ComitiveTab({ clients = [], events = [], promoterId, onC
           groups={groups}
           events={events}
           promoterId={promoterId}
+          directory={directory}
+          directoryLoading={directoryLoading}
           onClose={() => setOpenId(null)}
           onDeleted={() => setOpenId(null)}
           onClientClick={onClientClick}

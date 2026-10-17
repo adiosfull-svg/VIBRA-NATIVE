@@ -126,3 +126,10 @@ test('webStyle: radial-gradient (web: CSS; telefono: experimental_backgroundImag
   // senza gradiente radiale backgroundSize & co. restano fuori
   assert.deepEqual(webStyle({ backgroundSize: 'cover' }, true).style, {});
 });
+
+test('color-mix in srgb (card delle Comitive)', () => {
+  assert.equal(cssColor('color-mix(in srgb, #38bdf8 14%, #161B26)'), 'rgba(27, 50, 67, 1)');
+  assert.equal(cssColor('color-mix(in srgb, #ffffff, #000000)'), 'rgba(128, 128, 128, 1)');
+  assert.deepEqual(webStyle({ border: '1px solid color-mix(in srgb, #c084fc 35%, #161B26)' }).style.borderColor, 'rgba(81, 64, 113, 1)');
+  assert.equal(cssColor('color-mix(in oklch, red, blue)'), undefined);
+});

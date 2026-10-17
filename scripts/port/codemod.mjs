@@ -239,7 +239,9 @@ export function transform(code, originalPath = '') {
         if (a.type !== 'JSXAttribute') { attrs.push(a); continue; }
         const n = attrName(a);
         // id negli SVG serve (fill="url(#grad)", clipPath...): si tiene; altrove non ha equivalente
-        // id: tenuto (document.getElementById / scrollIntoView, ui/domStyle); data-*, aria-* ecc. no
+        // id: tenuto (document.getElementById / scrollIntoView, ui/domStyle); aria-* ecc. no
+        // data-*: tenuti su Div, Btn e Path (ui/domData: closest/getAttribute/elementFromPoint anche sul telefono)
+        if (/^data-/.test(n) && ['Div', 'Btn', 'Path'].includes(name)) { attrs.push(a); continue; }
         if (DROP_ATTR.test(n)) continue;
         // touch/pointer/mouse/wheel: supportati da Div e Btn (ui/gestures.ts), rimossi altrove
         if (GESTURE_ATTR.test(n) && !['Div', 'Btn'].includes(name)) { removedGestures.push(n); continue; }

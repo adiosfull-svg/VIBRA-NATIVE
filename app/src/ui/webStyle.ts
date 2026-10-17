@@ -60,7 +60,36 @@ export function cssColor(input: unknown): string | undefined {
     return hslToHex(Number(m[1]), Number(m[2]), Number(m[3]), alphaOf(m[4]));
   }
   if (v === 'currentColor' || v === 'inherit' || v === 'initial') return undefined;
+  if (v.startsWith('color-mix(')) return colorMix(v);
   return v; // #hex, rgb(a), nomi: già validi in RN
+}
+
+/** color-mix(in srgb, #a P%, #b) → rgba (RN non lo conosce: colore non valido = nessuno sfondo/bordo). */
+function colorMix(v: string): string | undefined {
+  const m = v.match(/^color-mix\(\s*in\s+srgb\s*,\s*(.+?)(?:\s+([\d.]+)%)?\s*,\s*(.+?)(?:\s+([\d.]+)%)?\s*\)$/i);
+  if (!m) return undefined;
+  const a = rgbaOf(cssColor(m[1]));
+  const b = rgbaOf(cssColor(m[3]));
+  if (!a || !b) return undefined;
+  let p = m[2] != null ? Number(m[2]) / 100 : m[4] != null ? 1 - Number(m[4]) / 100 : 0.5;
+  p = Math.max(0, Math.min(1, p));
+  const mix = (i: number) => a[i] * p + b[i] * (1 - p);
+  return `rgba(${Math.round(mix(0))}, ${Math.round(mix(1))}, ${Math.round(mix(2))}, ${Math.round(mix(3) * 1000) / 1000})`;
+}
+function rgbaOf(c: string | undefined): [number, number, number, number] | null {
+  if (!c) return null;
+  let m: RegExpMatchArray | null;
+  if ((m = c.match(/^#([0-9a-f]{3,8})$/i))) {
+    let h = m[1];
+    if (h.length === 3 || h.length === 4) h = [...h].map((x) => x + x).join('');
+    if (h.length !== 6 && h.length !== 8) return null;
+    const n = (i: number) => parseInt(h.slice(i, i + 2), 16);
+    return [n(0), n(2), n(4), h.length === 8 ? n(6) / 255 : 1];
+  }
+  if ((m = c.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)\s*(?:[,/]\s*([\d.]+))?\s*\)$/i))) {
+    return [Number(m[1]), Number(m[2]), Number(m[3]), m[4] != null ? Number(m[4]) : 1];
+  }
+  return null;
 }
 
 /** Dimensioni della finestra per vh/vw (aggiornate da html.tsx con Dimensions). */

@@ -6,6 +6,7 @@
 import { useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
 import { webStyle } from './webStyle';
+import { registerData, withDomData, type DataAttrs } from './domData';
 
 type NativeNode = { setNativeProps?: (p: object) => void; style?: unknown };
 
@@ -60,27 +61,28 @@ export function withDomStyle<T>(node: T): T {
   if (!n.scrollIntoView) {
     try { Object.defineProperty(n, 'scrollIntoView', { value: (o?: ScrollOpts) => scrollIntoViewImpl?.(n, o), configurable: true }); } catch { /* non estendibile */ }
   }
-  // el.querySelector(...) del codice web: sul telefono non ci sono selettori CSS (nessun elemento
-  // trovato, il codice web lo gestisce già), prima era un TypeError che fermava la pagina (Promoter)
-  const q = n as { querySelector?: unknown; querySelectorAll?: unknown };
-  if (!q.querySelector) {
-    try {
-      Object.defineProperty(n, 'querySelector', { value: () => null, configurable: true });
-      Object.defineProperty(n, 'querySelectorAll', { value: () => [], configurable: true });
-    } catch { /* non estendibile */ }
-  }
+  // el.querySelector(...), closest, getAttribute del codice web: attributi data-* registrati (ui/domData).
+  // Prima querySelector era un TypeError che fermava la pagina (Promoter).
+  withDomData(n);
   return node;
 }
 
 type AnyRef<T> = ((node: T | null) => void) | { current: T | null } | null | undefined;
 
 /** ref che aggiunge `style` all'istanza e la passa al ref originale (stabile finché questo non cambia);
- *  con `id` registra l'elemento per document.getElementById (telefono). */
-export function useDomStyleRef<T>(outer: AnyRef<T>, id?: string) {
+ *  con `id` registra l'elemento per document.getElementById (telefono); `data`: attributi data-* (ui/domData). */
+export function useDomStyleRef<T>(outer: AnyRef<T>, id?: string, data?: DataAttrs | null) {
   const last = useRef<T | null>(null);
+  const dataRef = useRef(data);
+  // attributi cambiati senza cambio di istanza (es. data-drag-payload che sparisce): aggiornati al render
+  if (dataRef.current !== data) {
+    dataRef.current = data;
+    if (last.current && Platform.OS !== 'web') registerData(last.current as object, data ?? null);
+  }
   return useCallback((node: T | null) => {
     withDomStyle(node);
     if (id && Platform.OS !== 'web') registerId(id, node, last.current);
+    if (Platform.OS !== 'web') registerData(node as object | null, dataRef.current ?? null, last.current as object | null);
     last.current = node;
     if (typeof outer === 'function') outer(node);
     else if (outer) outer.current = node;

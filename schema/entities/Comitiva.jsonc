@@ -2,7 +2,7 @@
   "name": "Comitiva",
   "properties": {
     "client_ids": {
-      "description": "ID dei paganti inseriti nella comitiva",
+      "description": "ID dei propri paganti inseriti nella comitiva",
       "items": {
         "type": "string"
       },
@@ -12,6 +12,18 @@
       "default": "#a78bfa",
       "description": "Colore hex della comitiva",
       "type": "string"
+    },
+    "external_client_ids": {
+      "description": "ID dei paganti di ALTRI promoter inseriti nella comitiva (solo nome/zona visibili)",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "external_meta": {
+      "additionalProperties": true,
+      "description": "Istantanea minima dei nodi esterni: { [id]: { kind: 'ext'|'promoter', name, residenza_key, promoter_id, photo_url } }. Niente dati personali (rating, spese, presenze).",
+      "type": "object"
     },
     "group_ids": {
       "description": "ID dei Gruppi (ClientGroup) importati nella comitiva",
@@ -30,18 +42,31 @@
     },
     "positions": {
       "additionalProperties": true,
-      "description": "Posizioni delle card sull'editor: { [client_id]: { x, y } }",
+      "description": "Posizioni delle card sull'editor: { [node_id]: { x, y } }",
       "type": "object"
     },
     "promoter_id": {
       "description": "ID del promoter proprietario della comitiva",
       "type": "string"
+    },
+    "promoter_ids": {
+      "description": "ID dei Promoter Vibra inseriti nella comitiva",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "sizes": {
+      "additionalProperties": true,
+      "description": "Dimensione (importanza nella comitiva) delle card: { [node_id]: scala } con scala tra 0.7 e 1.6 (1 = normale)",
+      "type": "object"
     }
   },
   "required": [
     "promoter_id",
     "name"
   ],
+  "type": "object",
   "rls": {
     "create": {
       "$or": [
@@ -103,6 +128,5 @@
         }
       ]
     }
-  },
-  "type": "object"
+  }
 }

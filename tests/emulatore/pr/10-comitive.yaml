@@ -1,0 +1,74 @@
+# PR: tab Comitive di Clienti. Crea una comitiva, l'editor (tela) si apre, si aggiungono due paganti,
+# si torna alla lista e si riapre la comitiva dalla card (era il crash segnalato il 17/10).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-00-clienti
+- scrollUntilVisible:
+    element: "Comitive"
+    direction: RIGHT
+    timeout: 15000
+    optional: true
+- tapOn: "Comitive"
+- extendedWaitUntil:
+    visible: "Crea comitiva"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-01-tab
+- tapOn: "Crea comitiva"
+- tapOn: "Dai un nome alla comitiva.*"
+- inputText: "Prova emulatore"
+- hideKeyboard
+- tapOn: "Crea e apri"
+- extendedWaitUntil:
+    visible: "Aggiungi persone"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-02-editor-vuoto
+# due paganti dalla barra laterale (pulsante +)
+- tapOn:
+    text: "Aggiungi"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Aggiungi"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: comitive-03-aggiunti
+- back
+- waitForAnimationToEnd
+- takeScreenshot: comitive-04-dopo-indietro
+# la card della comitiva nella lista: riapre l'editor
+- tapOn: "Prova emulatore"
+- extendedWaitUntil:
+    visible: "Prova emulatore"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: comitive-05-riaperta
+# trascinamento della tela (pan) e pinch: non deve chiudere l'app
+- swipe:
+    start: 60%, 60%
+    end: 30%, 45%
+    duration: 500
+- waitForAnimationToEnd
+- takeScreenshot: comitive-06-pan
+- back
+- waitForAnimationToEnd
+- takeScreenshot: comitive-07-chiusa

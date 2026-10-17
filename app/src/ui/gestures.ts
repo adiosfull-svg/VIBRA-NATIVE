@@ -3,7 +3,9 @@
 //  - onTouchStart/Move/End: eventi touch di RN con la forma del web (touches[i].clientX/Y,
 //    target/currentTarget, preventDefault/stopPropagation); onTouchCancel ricade su onTouchEnd
 //    (sul telefono un tocco che diventa scroll finisce con cancel)
-//  - onPointerDown/Move/Up: dagli stessi eventi touch (clientX/Y del dito)
+//  - onPointerDown/Move/Up: dagli stessi eventi touch, uno per dito (pointerId = identifier + 1, clientX/Y
+//    di quel dito): con due dita arrivano due pointerdown come nel browser (pinch della tela delle Comitive)
+//  - e.target/currentTarget: istanze native con closest/getAttribute (attributi data-*, ui/domData)
 //  - onMouseEnter/Move/Down/Up/Leave: emulati come fa il browser del telefono dopo un tap:
 //    sull'elemento toccato mousemove/mouseenter/mousedown/mouseup, e mouseleave su quelli
 //    toccati prima quando il tap cade altrove (serve HoverRoot attorno all'app)
@@ -15,6 +17,7 @@
 import { diagTime, TEST_DIAG } from '../lib/testDiag';
 import { useRef } from 'react';
 import { Platform, type GestureResponderEvent } from 'react-native';
+import { withDomData } from './domData';
 
 type AnyFn = (e: any) => void;
 type Handlers = Partial<Record<(typeof ALL)[number], AnyFn>>;
@@ -62,13 +65,29 @@ export function webTouchEvent(e: GestureResponderEvent, type: string) {
     clientX: first.clientX, clientY: first.clientY, pageX: first.pageX, pageY: first.pageY,
     button: 0, buttons: type.endsWith('up') || type.endsWith('end') ? 0 : 1, pointerType: 'touch', pointerId: 1, isPrimary: true,
     shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
-    target: e.target, currentTarget: e.currentTarget, nativeEvent: e.nativeEvent,
+    target: withDomData(e.target), currentTarget: withDomData(e.currentTarget), nativeEvent: e.nativeEvent,
     get defaultPrevented() { return e.isDefaultPrevented?.() ?? false; },
     preventDefault: () => e.preventDefault?.(),
     stopPropagation: () => e.stopPropagation?.(),
     persist: () => {},
   };
 }
+
+/** Eventi pointer del web per un evento touch: uno per dito ('changed': dita appena posate/alzate, 'all': tutte). */
+export function webPointerEvents(e: GestureResponderEvent, type: string, which: 'changed' | 'all') {
+  const n = e.nativeEvent as unknown as { touches?: NativeTouch[]; changedTouches?: NativeTouch[] };
+  const list = (which === 'all' ? n.touches : n.changedTouches) ?? [];
+  const base = webTouchEvent(e, type);
+  if (list.length <= 1) {
+    const t = list[0];
+    return [t ? { ...base, ...pointerAt(t) } : base];
+  }
+  return list.map((t) => ({ ...base, ...pointerAt(t) }));
+}
+const pointerAt = (t: NativeTouch) => ({
+  clientX: t.pageX, clientY: t.pageY, pageX: t.pageX, pageY: t.pageY, screenX: t.pageX, screenY: t.pageY,
+  pointerId: (Number(t.identifier) || 0) + 1, isPrimary: !t.identifier,
+});
 
 // ── hover emulato ──────────────────────────────────────────────────────────
 type HoverEntry = { current: Handlers };
@@ -115,14 +134,14 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
     out.onTouchStart = (e: GestureResponderEvent) => {
       start.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
       ref.current.onTouchStart?.(webTouchEvent(e, 'touchstart'));
-      ref.current.onPointerDown?.(webTouchEvent(e, 'pointerdown'));
+      if (ref.current.onPointerDown) for (const pe of webPointerEvents(e, 'pointerdown', 'changed')) ref.current.onPointerDown?.(pe);
     };
   }
   if (h.onTouchMove || h.onPointerMove || starts) {
     out.onTouchMove = (e: GestureResponderEvent) => {
       const t0 = TEST_DIAG ? Date.now() : 0;
       ref.current.onTouchMove?.(webTouchEvent(e, 'touchmove'));
-      ref.current.onPointerMove?.(webTouchEvent(e, 'pointermove'));
+      if (ref.current.onPointerMove) for (const pe of webPointerEvents(e, 'pointermove', 'all')) ref.current.onPointerMove?.(pe);
       if (starts) toWindow(e, ['pointermove', 'touchmove']);
       if (TEST_DIAG) diagTime('gesti-move', Date.now() - t0);
     };
@@ -130,7 +149,7 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
   if (h.onTouchEnd || h.onPointerUp || hasMouse || starts) {
     out.onTouchEnd = (e: GestureResponderEvent) => {
       ref.current.onTouchEnd?.(webTouchEvent(e, 'touchend'));
-      ref.current.onPointerUp?.(webTouchEvent(e, 'pointerup'));
+      if (ref.current.onPointerUp) for (const pe of webPointerEvents(e, 'pointerup', 'changed')) ref.current.onPointerUp?.(pe);
       if (starts) toWindow(e, ['pointerup', 'touchend']);
       const s = start.current;
       const { pageX, pageY } = e.nativeEvent;
@@ -148,7 +167,8 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
   if (h.onTouchCancel || h.onTouchEnd || h.onPointerCancel || h.onPointerUp || starts) {
     out.onTouchCancel = (e: GestureResponderEvent) => {
       (ref.current.onTouchCancel ?? ref.current.onTouchEnd)?.(webTouchEvent(e, 'touchcancel'));
-      (ref.current.onPointerCancel ?? ref.current.onPointerUp)?.(webTouchEvent(e, 'pointercancel'));
+      const onCancel = ref.current.onPointerCancel ?? ref.current.onPointerUp;
+      if (onCancel) for (const pe of webPointerEvents(e, 'pointercancel', 'changed')) onCancel(pe);
       if (starts) toWindow(e, ['pointercancel', 'touchcancel']);
     };
   }

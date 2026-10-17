@@ -9,8 +9,52 @@ export const LINK_TYPES = {
   serata: { key: 'serata', label: 'Conosciuti in serata', short: 'In serata', color: '#f472b6', hint: 'Hanno legato a una serata Vibra' },
   coppia: { key: 'coppia', label: 'Coppia', short: 'Coppia', color: '#f87171', hint: 'Stanno insieme' },
   altro: { key: 'altro', label: 'Altro', short: 'Altro', color: '#94a3b8', hint: 'Colleghi, parenti, ...' },
+  obiettivo: { key: 'obiettivo', label: 'Da far conoscere', short: 'Obiettivo', color: '#fbbf24', hint: 'Devo fargli fare amicizia', goal: true },
+  equilibrio: { key: 'equilibrio', label: 'Equilibrio promoter', short: 'Equilibrio', color: '#c084fc', hint: 'Legame tra un promoter Vibra e il pagante', promoterOnly: true },
 };
-export const MANUAL_LINK_TYPES = ['amici', 'serata', 'coppia', 'altro'];
+export const MANUAL_LINK_TYPES = ['amici', 'serata', 'coppia', 'altro', 'obiettivo', 'equilibrio'];
+/** Legami che contano come amicizia già fatta (per l'Analisi Intelligente e i contatori). */
+export const FRIEND_LINK_TYPES = ['presentato', 'amici', 'serata', 'coppia', 'altro', 'equilibrio'];
+
+/* ── Tipi di nodo: pagante proprio, pagante di un altro PR, promoter Vibra ── */
+export const NODE_KINDS = {
+  own: { key: 'own' },
+  ext: { key: 'ext', label: 'Pagante di un altro PR', color: '#38bdf8' },
+  promoter: { key: 'promoter', label: 'Promoter Vibra', color: '#c084fc' },
+};
+/** I nodi esterni portano _kind ('ext' | 'promoter'); i propri paganti no. */
+export const kindOf = (n) => n?._kind || 'own';
+/** Nodo esterno costruito dall'istantanea salvata nella comitiva (o dalla directory). Solo nome/zona/promoter. */
+export function nodeFromMeta(id, m = {}) {
+  const isPromoter = m.kind === 'promoter';
+  return {
+    id,
+    _kind: isPromoter ? 'promoter' : 'ext',
+    name: m.name || (isPromoter ? 'Promoter' : 'Pagante'),
+    residenza_key: isPromoter ? '' : m.residenza_key || '',
+    promoter_id: isPromoter ? '' : m.promoter_id || '',
+    photo_url: isPromoter ? m.photo_url || '' : '',
+  };
+}
+
+/* Importanza nella comitiva = dimensione della card */
+export const SIZE_MIN = 0.7;
+export const SIZE_MAX = 1.6;
+export const SIZE_STEP = 0.15;
+export const SIZE_PRESETS = [
+  { key: 'sm', label: 'Marginale', scale: 0.8 },
+  { key: 'md', label: 'Normale', scale: 1 },
+  { key: 'lg', label: 'Importante', scale: 1.25 },
+  { key: 'xl', label: 'Centrale', scale: 1.5 },
+];
+export const clampSize = (s) => Math.round(Math.max(SIZE_MIN, Math.min(SIZE_MAX, Number(s) || 1)) * 100) / 100;
+export const importanceLabel = (s) => {
+  const v = Number(s) || 1;
+  if (v >= 1.4) return 'Centrale';
+  if (v >= 1.12) return 'Importante';
+  if (v <= 0.88) return 'Marginale';
+  return 'Normale';
+};
 
 export const SOURCE_META = {
   instagram: { label: 'Conosciuto su Instagram', short: 'Instagram', color: '#f472b6' },
@@ -59,11 +103,12 @@ export function buildEdges(members, links) {
 export const NODE_W = 220;
 export const NODE_H = 150;
 
-/** Punto di aggancio sul bordo della card (centro del lato). */
-export function sidePoint(p, h, side) {
-  const hh = (h || NODE_H) / 2;
-  if (side === 'left') return { x: p.x - NODE_W / 2, y: p.y };
-  if (side === 'right') return { x: p.x + NODE_W / 2, y: p.y };
+/** Punto di aggancio sul bordo della card (centro del lato). s = scala della card. */
+export function sidePoint(p, h, side, s = 1) {
+  const hh = ((h || NODE_H) * s) / 2;
+  const hw = (NODE_W * s) / 2;
+  if (side === 'left') return { x: p.x - hw, y: p.y };
+  if (side === 'right') return { x: p.x + hw, y: p.y };
   if (side === 'top') return { x: p.x, y: p.y - hh };
   return { x: p.x, y: p.y + hh };
 }
@@ -94,10 +139,10 @@ function curve(from, fs, to, ts) {
  * Filo tra due card (centri a, b). Preferenza orizzontale: esce dal lato destro/sinistro;
  * solo se le card sono quasi incolonnate usa alto/basso.
  */
-export function wireGeometry(a, b, ha, hb) {
+export function wireGeometry(a, b, ha, hb, sa = 1, sb = 1) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
-  const horizontal = Math.abs(dx) > NODE_W * 0.7 || Math.abs(dx) >= Math.abs(dy);
+  const horizontal = Math.abs(dx) > NODE_W * 0.7 * Math.max(sa, sb) || Math.abs(dx) >= Math.abs(dy);
   let fs;
   let ts;
   if (horizontal) {
@@ -107,12 +152,12 @@ export function wireGeometry(a, b, ha, hb) {
     fs = dy >= 0 ? 'bottom' : 'top';
     ts = dy >= 0 ? 'top' : 'bottom';
   }
-  return curve(sidePoint(a, ha, fs), fs, sidePoint(b, hb, ts), ts);
+  return curve(sidePoint(a, ha, fs, sa), fs, sidePoint(b, hb, ts, sb), ts);
 }
 
 /** Filo provvisorio mentre trascini da una maniglia. */
-export function tempWire(a, ha, side, target) {
-  return curve(sidePoint(a, ha, side), side, target, 'free');
+export function tempWire(a, ha, side, target, s = 1) {
+  return curve(sidePoint(a, ha, side, s), side, target, 'free');
 }
 
 /* ── Comitive (componenti connesse) e disposizione orizzontale ── */
