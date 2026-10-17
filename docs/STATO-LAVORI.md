@@ -236,6 +236,20 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   04-dettaglio, 05-tab-ritorno, 06-semine. Tutti PASSATI sull'ultimo commit. Dati di prova: 450 clienti +
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
+## Comitive (17/10, branch `claude/comitive-funnel`)
+- Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
+  (`new ResizeObserver` → ReferenceError, `el.addEventListener`, `e.target.closest`, `elementFromPoint`).
+  Riconvertite le 4 parti dall'originale del 16/10 (paganti di altri PR e promoter con
+  `getComitiveDirectory`, ammessa in modalità prova perché legge soltanto; dimensione delle card; ecc.).
+- Strato ui: `ui/domData.ts` = attributi data-* su Div (web: dataSet; telefono: registro sull'istanza con
+  closest/getAttribute/setAttribute/querySelectorAll, `document.elementFromPoint` tra gli elementi con
+  attributi). Il codemod ora TIENE data-* su Div/Btn/Path (i file convertiti prima non li hanno: riconvertire
+  quando serve, es. ClientSerateMenu/menu del tasto lungo). `ui/gestures`: un pointer per dito (pinch).
+  Shim: ResizeObserver, matchMedia('(pointer: coarse)') vero. webStyle: color-mix(in srgb).
+- Sul telefono restano senza animazione: particelle sui fili (animateMotion), keyframe cm-*.
+  Fili: Svg dimensionato sui nodi (react-native-svg non disegna fuori dal riquadro). Tocco sui fili: distanza
+  dalla curva (PORT in ComitivaEditor). Emulatore: `tests/emulatore/pr/10-comitive.yaml`.
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
