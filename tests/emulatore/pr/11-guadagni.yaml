@@ -1,0 +1,77 @@
+# PR: I Miei Guadagni (lista virtualizzata, righe con due campi) e Le Mie Serate (montaggio progressivo,
+# appunti che si aprono): scorrimento fino in fondo e ritorno, modifica di una percentuale.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- openLink: vibra://il-mio-vibra?tab=guadagni
+- extendedWaitUntil:
+    visible: "Guadagno totale"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: guadagni-01
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd
+- takeScreenshot: guadagni-02
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: guadagni-fondo
+- repeat:
+    times: 14
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 80%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: guadagni-su
+- tapOn:
+    text: "10"
+    index: 0
+- inputText: "5"
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: guadagni-modifica
+- assertNotVisible: "Si è verificato un errore"
+- openLink: vibra://il-mio-vibra?tab=serate
+- extendedWaitUntil:
+    visible: "tavoli"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: serate-01
+- tapOn:
+    text: "tavoli"
+    index: 0
+- waitForAnimationToEnd
+- takeScreenshot: serate-appunti
+- repeat:
+    times: 12
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: serate-fondo
+- assertNotVisible: "Si è verificato un errore"
