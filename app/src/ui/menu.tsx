@@ -15,6 +15,7 @@ import { useLabelControl } from './labelControl';
 import { usePendingSelection } from '../web/hooks/usePendingSelection';
 import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
+import { EnterLayer } from './enterView';
 import { IconClassContext } from './icon';
 import { Check, ChevronDown, ChevronRight } from './icons.generated';
 import { Text, TextClassContext } from './text';
@@ -33,6 +34,7 @@ export const DropdownMenuSub = DropdownPrimitive.Sub;
 export function DropdownMenuContent({ className, children, align = 'center', sideOffset = 4, side }: WithChildren & { align?: 'start' | 'center' | 'end'; sideOffset?: number; side?: 'top' | 'bottom' }) {
   return (
     <DropdownPrimitive.Portal>
+      <EnterLayer slide={-8}>
       <DropdownPrimitive.Overlay style={StyleSheet.absoluteFill}>
         <DropdownPrimitive.Content align={align} side={side} sideOffset={sideOffset}
           className={cn('z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-md', className)}>
@@ -41,6 +43,7 @@ export function DropdownMenuContent({ className, children, align = 'center', sid
           </TextClassContext.Provider>
         </DropdownPrimitive.Content>
       </DropdownPrimitive.Overlay>
+      </EnterLayer>
     </DropdownPrimitive.Portal>
   );
 }
@@ -86,12 +89,14 @@ export function PopoverTrigger({ children, asChild = true }: { children?: ReactN
 export function PopoverContent({ className, children, align = 'center', sideOffset = 4, side }: WithChildren & { align?: 'start' | 'center' | 'end'; sideOffset?: number; side?: 'top' | 'bottom' }) {
   return (
     <PopoverPrimitive.Portal>
+      <EnterLayer slide={-8}>
       <PopoverPrimitive.Overlay style={StyleSheet.absoluteFill}>
         <PopoverPrimitive.Content align={align} side={side} sideOffset={sideOffset}
           className={cn('z-50 w-72 rounded-md border border-border bg-popover p-4 shadow-md', className)}>
           <TextClassContext.Provider value="text-popover-foreground">{children}</TextClassContext.Provider>
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Overlay>
+      </EnterLayer>
     </PopoverPrimitive.Portal>
   );
 }
@@ -177,11 +182,13 @@ export function SelectValue({ placeholder, className }: { placeholder?: string; 
 export function SelectContent({ className, children }: WithChildren) {
   return (
     <SelectPrimitive.Portal>
+      <EnterLayer slide={-8}>
       <SelectPrimitive.Overlay style={StyleSheet.absoluteFill}>
         <SelectPrimitive.Content className={cn('z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover shadow-md', className)}>
           <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
         </SelectPrimitive.Content>
       </SelectPrimitive.Overlay>
+      </EnterLayer>
     </SelectPrimitive.Portal>
   );
 }
@@ -251,7 +258,10 @@ export function Switch({ checked, onCheckedChange, disabled, className }: { chec
   return (
     <SwitchPrimitive.Root checked={checked} onCheckedChange={onCheckedChange} disabled={disabled}
       className={cn('h-5 w-9 shrink-0 flex-row items-center rounded-full border-2 border-transparent shadow-sm', checked ? 'bg-primary' : 'bg-input', disabled && 'opacity-50', className)}>
-      <SwitchPrimitive.Thumb className={cn('h-4 w-4 rounded-full bg-background shadow-lg', checked ? 'translate-x-4' : 'translate-x-0')} />
+      {/* Div (non la View di rn-primitives): transition-transform dell'originale, il pallino scorre invece di saltare */}
+      <SwitchPrimitive.Thumb asChild>
+        <Div className={cn('h-4 w-4 rounded-full bg-background shadow-lg transition-transform', checked ? 'translate-x-4' : 'translate-x-0')} />
+      </SwitchPrimitive.Thumb>
     </SwitchPrimitive.Root>
   );
 }

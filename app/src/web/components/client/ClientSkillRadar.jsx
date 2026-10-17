@@ -6,6 +6,7 @@ import { Gauge } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 
 import { Div, Span } from '@/ui/html';
+import { win as webWindow } from '@/web/shims/dom';
 
 /**
  * Calcola i 5 skill score (1–99) per un cliente rispetto a tutti gli altri.
@@ -235,6 +236,7 @@ export default function ClientSkillRadar({ client, allClients, allAttendances, a
     const from = { ...animatedRef.current };
     const target = skills;
     let raf;
+    let idle = null;
     const step = (ts) => {
       if (!start) start = ts;
       const progress = Math.min((ts - start) / duration, 1);
@@ -248,8 +250,10 @@ export default function ClientSkillRadar({ client, allClients, allAttendances, a
       });
       if (progress < 1) raf = requestAnimationFrame(step);
     };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    // PORT: il conteggio (un render a frame per 700 ms) parte a fine animazione d'apertura del dettaglio,
+    // non durante (sul telefono requestIdleCallback aspetta le animazioni in corso: web/shims/dom)
+    idle = (webWindow.requestIdleCallback ?? ((cb) => setTimeout(cb, 1)))(() => { raf = requestAnimationFrame(step); }, { timeout: 400 });
+    return () => { (webWindow.cancelIdleCallback ?? clearTimeout)(idle); cancelAnimationFrame(raf); };
   }, [client.id, skills.aggregazione, skills.presenze, skills.costanza, skills.spesaMedia, skills.spesaTotale]);
 
   const data = [

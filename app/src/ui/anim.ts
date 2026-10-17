@@ -26,3 +26,18 @@ export function usePresence(open: boolean, inMs = 160, outMs = 140, easingIn = E
   }, [open, mounted, progress, inMs, outMs, easingIn, easingOut]);
   return { progress, mounted };
 }
+
+/**
+ * Entrata dei contenuti in un Portal (dialog, popover, menu): `animate-in fade-in-0 zoom-in-95 /
+ * slide-in-from-top-2` di shadcn. Il componente si monta all'apertura, quindi l'animazione parte al montaggio
+ * (driver nativo). L'uscita resta immediata: rn-primitives smonta il contenuto alla chiusura.
+ */
+export function useEnterProgress(ms: number) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const a = Animated.timing(v, { toValue: 1, duration: ms, easing: Easing.bezier(0, 0, 0.2, 1), useNativeDriver: true });
+    a.start();
+    return () => a.stop();
+  }, [v, ms]);
+  return v;
+}

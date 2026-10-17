@@ -1,0 +1,43 @@
+# PR: animazioni di apertura e chiusura del dettaglio cliente (popup con dissolvenza e scale-95) e del
+# menu "Status pagante" dentro il dettaglio. Con fluidita=si: frame persi del percorso in fluidita.md e video.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - tapOn: "Sofia Colombo"
+      - extendedWaitUntil:
+          visible: "Skill del cliente"
+          timeout: 60000
+      - waitForAnimationToEnd
+      - tapOn: "Chiudi"
+      - waitForAnimationToEnd
+- tapOn: "Sofia Colombo"
+- extendedWaitUntil:
+    visible: "Skill del cliente"
+    timeout: 60000
+- waitForAnimationToEnd
+- tapOn: "Attivo"
+- waitForAnimationToEnd
+- takeScreenshot: dettaglio-status-aperto
+- pressKey: back
+- waitForAnimationToEnd
+- tapOn: "Chiudi"
+- waitForAnimationToEnd
+- takeScreenshot: dettaglio-chiuso

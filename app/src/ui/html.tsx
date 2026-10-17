@@ -23,7 +23,7 @@ import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
 import { expandGridTemplate, normalizeClasses, nativeClasses, parseGridTemplate, radiusFromClasses, spacingPx, type Gradient, type Grid, type GridTrack } from './webClasses';
 import { cssViewport, viewportSizeStyle, webStyle, type WebStyleResult } from './webStyle';
 import { initialWindowMetrics } from 'react-native-safe-area-context';
-import { classOpacity, transitionSpec, useCssTransition } from './cssTransition';
+import { classOpacity, classTransform, transitionSpec, useCssTransition } from './cssTransition';
 import { useDomStyleRef } from './domStyle';
 
 // Controllo all'avvio: la patch di react-native-css-interop (app/patches, applicata da npm install)
@@ -1074,7 +1074,9 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const blurStyle = blur?.css && Platform.OS === 'web' ? ({ backdropFilter: blur.css, WebkitBackdropFilter: blur.css } as unknown as ViewStyle) : null;
   // transizioni CSS (style.transition / classi transition-*) sul telefono: opacità, sfondo, blur
   const trSpec = Platform.OS === 'web' ? null : transitionSpec(className, (style as { transition?: unknown } | undefined)?.transition);
-  const tr = useCssTransition(trSpec, rnStyle?.opacity ?? classOpacity(rest), rnStyle?.backgroundColor, blur && Platform.OS !== 'web' ? blur.px : 0);
+  // trasformazioni delle classi (scale-95, rotate-180...) animate solo se lo style non ne dà una sua
+  const trTransform = trSpec?.transform && rnStyle?.transform == null && !animatedStyle ? classTransform(rest) : null;
+  const tr = useCssTransition(trSpec, rnStyle?.opacity ?? classOpacity(rest), rnStyle?.backgroundColor, blur && Platform.OS !== 'web' ? blur.px : 0, trTransform);
   const inPortal = useContext(InPortalContext);
   // position: fixed (relativo allo schermo): portale alla radice (le View di RN-web creano contesti
   // di sovrapposizione, z-50 non uscirebbe dalla pagina) e sul web anche position: fixed vero

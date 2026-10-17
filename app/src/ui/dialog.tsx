@@ -13,6 +13,7 @@ import { cn } from './cn';
 import { Div } from './html';
 import { X } from './icons.generated';
 import { Text } from './text';
+import { EnterLayer, EnterZoom } from './enterView';
 
 type WithChildren = { className?: string; children?: ReactNode };
 
@@ -47,6 +48,9 @@ function useMaxHeight(popup?: boolean) {
   return popup ? height - 112 - insets.top - insets.bottom : height - 32;
 }
 
+/** contenitore dello zoom d'entrata: largo quanto il Content, centra la finestra come prima */
+const ZOOM_BOX: ViewStyle = { width: '100%', alignItems: 'center' };
+
 /** <Dialog modal={false}>: niente velo scuro dietro (come Radix), il resto uguale. */
 const ModalContext = createContext(true);
 
@@ -78,8 +82,10 @@ export function DialogContent({ className, children, hideCloseButton, popup, sty
   const ownBackground = !!style && Object.keys(style).some((k) => /^background/.test(k));
   return (
     <DialogPrimitive.Portal>
+      <EnterLayer>
       <DialogPrimitive.Overlay style={StyleSheet.absoluteFill} className={cn('flex items-center justify-center', modal ? 'bg-black/80' : 'bg-transparent')}>
         <DialogPrimitive.Content style={{ width: '100%', alignItems: 'center' }}>
+          <EnterZoom style={ZOOM_BOX}>
           <Div className={cn(CONTENT_BASE, popup && POPUP_CLASSES, className)} style={[{ maxHeight }, style]}>
             {ownBackground ? null : <Div className="absolute inset-0"><RadialGlow /></Div>}
             {children}
@@ -89,8 +95,10 @@ export function DialogContent({ className, children, hideCloseButton, popup, sty
               </DialogPrimitive.Close>
             )}
           </Div>
+          </EnterZoom>
         </DialogPrimitive.Content>
       </DialogPrimitive.Overlay>
+      </EnterLayer>
     </DialogPrimitive.Portal>
   );
 }
@@ -111,14 +119,18 @@ export function AlertDialogContent({ className, children }: WithChildren) {
   const maxHeight = useMaxHeight(false);
   return (
     <AlertDialogPrimitive.Portal>
+      <EnterLayer>
       <AlertDialogPrimitive.Overlay style={StyleSheet.absoluteFill} className="flex items-center justify-center bg-black/80 px-3">
+        <EnterZoom style={ZOOM_BOX}>
         <AlertDialogPrimitive.Content style={{ maxHeight }} className="relative w-full max-w-lg overflow-hidden rounded-lg border border-border bg-background shadow-lg">
           <RadialGlow />
           <ScrollView bounces={false}>
             <Div className={cn('gap-4 p-6', className)}>{children}</Div>
           </ScrollView>
         </AlertDialogPrimitive.Content>
+        </EnterZoom>
       </AlertDialogPrimitive.Overlay>
+      </EnterLayer>
     </AlertDialogPrimitive.Portal>
   );
 }

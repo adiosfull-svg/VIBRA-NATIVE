@@ -1,5 +1,6 @@
 // Port di src/components/client/ClientDetailDialog.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { Animated, Easing, Platform } from 'react-native';
 import { createPortal } from '@/web/shims/react-dom';
 import CachedImage from '@/web/components/shared/CachedImage';
 // Dialog sostituito con overlay custom (stesso pattern di AttendanceHubDialog):
@@ -59,6 +60,24 @@ const tooltipStyle = {
 
 const DAY_LABELS = { 5: 'Venerdì', 6: 'Sabato', 0: 'Domenica' };
 
+// PORT: popup animato sul driver nativo (telefono), stessa curva e durata di transition duration-200
+const NATIVE_POPUP = Platform.OS !== 'web';
+const POPUP_EASE = Easing.bezier(0.4, 0, 0.2, 1);
+const popupStyles = new WeakMap();
+function popupStyle(v) {
+  let st = popupStyles.get(v);
+  if (!st) {
+    st = {
+      overlay: { opacity: v },
+      panel: { opacity: v, transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] },
+    };
+    popupStyles.set(v, st);
+  }
+  return st;
+}
+const popupOverlayStyle = (v) => popupStyle(v).overlay;
+const popupPanelStyle = (v) => popupStyle(v).panel;
+
 export default function ClientDetailDialog({ open, onOpenChange, client, attendances = [], events = [], badges = [], allClients = [], groups = [], onClientUpdated, onClientDetail, onBack, embeddedInDialog = false, closeRef }) {
   // Animazione apertura/uscita: gestiamo l'open internamente così l'overlay resta
   // montato durante il fade-out (transition-opacity 200ms) e notifichiamo il
@@ -77,21 +96,33 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
       const t = setTimeout(() => setChartTier(0), 300);
       return () => clearTimeout(t);
     }
-    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura, i grafici due frame dopo
-    // (prima tutto nello stesso commit del tocco sulla riga: nessun riscontro finché non era tutto montato)
+    // PORT: header, info e KPI al primo frame insieme all'animazione d'apertura, i grafici a animazione finita
+    // (requestIdleCallback sul telefono aspetta le animazioni in corso). Prima due frame dopo: il montaggio dei
+    // grafici cadeva a metà della dissolvenza e la faceva scattare.
     setChartTier(1);
-    let r2 = 0;
-    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setChartTier(4)); });
-    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
+    const idle = (webWindow.requestIdleCallback ?? ((cb) => setTimeout(cb, 1)))(() => setChartTier(4), { timeout: 400 });
+    return () => (webWindow.cancelIdleCallback ?? clearTimeout)(idle);
   }, [internalOpen]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
-  useEffect(() => { setInternalOpen(open); }, [open]);
+  // PORT: sul telefono dissolvenza e scale-95 del popup con un Animated.Value sul driver nativo, avviato
+  // nel gestore del tocco PRIMA del setState. Con le classi la chiusura partiva solo dopo il ridisegno
+  // dell'intero dettaglio (grafici compresi) e lo scale-95 non era animato: il popup scattava a 95% e poi
+  // sfumava. Lo stato interno (popover da chiudere, grafici) si aggiorna al giro dopo, a animazione partita.
+  const shown = useRef(new Animated.Value(0)).current;
+  const animateShown = (v) => Animated.timing(shown, { toValue: v ? 1 : 0, duration: 200, easing: POPUP_EASE, useNativeDriver: true }).start();
+  useEffect(() => {
+    if (open && NATIVE_POPUP) animateShown(true);
+    setInternalOpen(open);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const handleOpenChange = (v) => {
-    if (v) { setInternalOpen(true); onOpenChange?.(true); return; }
-    setInternalOpen(false);
+    if (v) { if (NATIVE_POPUP) animateShown(true); setInternalOpen(true); onOpenChange?.(true); return; }
+    if (NATIVE_POPUP) { animateShown(false); setTimeout(() => setInternalOpen(false), 0); }
+    else setInternalOpen(false);
     clearTimeout(closeTimer.current);
     closeTimer.current = setTimeout(() => onOpenChange?.(false), 220);
   };
+  const overlayAnim = NATIVE_POPUP ? popupOverlayStyle(shown) : undefined;
+  const panelAnim = NATIVE_POPUP ? popupPanelStyle(shown) : undefined;
   // Ref sempre aggiornato alla closure corrente di handleOpenChange, così
   // l'handler popstate (back Android) può chiamarla con il fade-out di 220ms
   // invece di chiudere di netto bypassando l'animazione di uscita.
@@ -419,10 +450,13 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
       <Div
         style={{ transform: 'translateZ(0)' }}
         // PORT: classe di transizione sempre presente. Toglierla da aperto cambiava il tipo dell'elemento
-        // (ui/html: AnimatedBox → View, rimontato): lo sfondo compariva di colpo e spariva di colpo in chiusura
-        className={`fixed inset-0 bg-black/80 touch-none transition-opacity duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0'}`}
+        // (ui/html: AnimatedBox → View, rimontato): lo sfondo compariva di colpo e spariva di colpo in chiusura.
+        // Sul telefono l'opacità la dà overlayAnim (sopra).
+        animatedStyle={overlayAnim}
+        className={NATIVE_POPUP ? 'fixed inset-0 bg-black/80 touch-none' : `fixed inset-0 bg-black/80 touch-none transition-opacity duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0'}`}
         onPointerDown={(e) => { if (e.target === e.currentTarget) handleOpenChange(false); }} />
-      <Div className={`relative w-full max-sm:w-[calc(100%-1.5rem)] max-sm:rounded-2xl max-sm:max-h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-full bg-gradient-to-b from-background to-background/95 border border-border/50 shadow-lg flex flex-col overflow-hidden [will-change:transform,opacity] [backface-visibility:hidden] transition-[transform,opacity] duration-200 sm:max-w-2xl sm:max-h-[90vh] sm:rounded-2xl ${internalOpen ? 'opacity-100' : 'opacity-0 scale-95'}`}>
+      <Div className={`relative w-full max-sm:w-[calc(100%-1.5rem)] max-sm:rounded-2xl max-sm:max-h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:h-full bg-gradient-to-b from-background to-background/95 border border-border/50 shadow-lg flex flex-col overflow-hidden [will-change:transform,opacity] [backface-visibility:hidden] sm:max-w-2xl sm:max-h-[90vh] sm:rounded-2xl ${NATIVE_POPUP ? '' : `transition-[transform,opacity] duration-200 ${internalOpen ? 'opacity-100' : 'opacity-0 scale-95'}`}`}
+        animatedStyle={panelAnim}>
         <TestCut id="dialog">{/* PORT: bisezione sull'emulatore (lib/testDiag) */}
         {/* Header persistente */}
         <Div className="shrink-0 border-b border-border/40 bg-gradient-to-r from-secondary/15 to-transparent px-4 py-3 flex flex-col gap-2">

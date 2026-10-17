@@ -8,7 +8,7 @@
 //  - localStorage → memoria + AsyncStorage (caricato all'avvio)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
-import { BackHandler, Dimensions, Keyboard, Linking, PixelRatio, Platform, Share } from 'react-native';
+import { BackHandler, Dimensions, InteractionManager, Keyboard, Linking, PixelRatio, Platform, Share } from 'react-native';
 import { blobToBase64, saveBase64File } from './files';
 import { pageScroll } from './pageScroll';
 import { windowTouchSink } from '../../ui/gestures';
@@ -224,6 +224,37 @@ const visualViewport = {
   removeEventListener(type: string, fn: AnyFn) { vvListeners[type]?.delete(fn); },
 };
 
+
+// requestIdleCallback: "quando il browser è libero" = a fine animazioni e tocchi in corso
+// (InteractionManager), con il timeout dell'originale come limite. Prima era un setTimeout di 1 ms:
+// grafici (DeferredChart) e lavori "rimandati" partivano in mezzo all'animazione d'apertura.
+type IdleHandle = { done: boolean; task?: { cancel: () => void }; timer?: ReturnType<typeof setTimeout> };
+function requestIdle(cb: AnyFn, opts?: { timeout?: number }): IdleHandle {
+  const h: IdleHandle = { done: false };
+  const run = (didTimeout: boolean) => {
+    if (h.done) return;
+    h.done = true;
+    h.task?.cancel();
+    if (h.timer) clearTimeout(h.timer);
+    cb({ didTimeout, timeRemaining: () => 50 });
+  };
+  h.task = InteractionManager.runAfterInteractions(() => { h.timer = setTimeout(() => run(false), 0); });
+  if (opts?.timeout) {
+    // a fine timeout comunque, ma non prima che l'animazione d'apertura più lunga (~300 ms) sia finita
+    const ms = Math.max(opts.timeout, 320);
+    const t = setTimeout(() => run(true), ms);
+    const prev = h.task;
+    h.task = { cancel: () => { prev.cancel(); clearTimeout(t); } };
+  }
+  return h;
+}
+function cancelIdle(h: IdleHandle | undefined) {
+  if (!h || h.done) return;
+  h.done = true;
+  h.task?.cancel();
+  if (h.timer) clearTimeout(h.timer);
+}
+
 export const win = {
   addEventListener: addListener(winEvents),
   removeEventListener: removeListener(winEvents),
@@ -243,8 +274,8 @@ export const win = {
   history,
   location: { href: '', pathname: '/', search: '', hash: '', origin: '', reload() {} },
   open: (url?: string) => { if (url) Linking.openURL(url).catch(() => {}); return null; },
-  requestIdleCallback: (cb: AnyFn) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 50 }), 1),
-  cancelIdleCallback: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+  requestIdleCallback: requestIdle,
+  cancelIdleCallback: cancelIdle,
   requestAnimationFrame: (cb: FrameRequestCallback) => requestAnimationFrame(cb),
   cancelAnimationFrame: (id: number) => cancelAnimationFrame(id),
   setTimeout, clearTimeout, setInterval, clearInterval,
