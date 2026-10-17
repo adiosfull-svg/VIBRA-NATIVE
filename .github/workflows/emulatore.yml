@@ -244,5 +244,8 @@ jobs:
           echo "run ${{ github.run_id }} — utente ${{ matrix.utente }} — commit ${{ github.sha }} — app_ref ${{ github.event.inputs.app_ref || 'head' }} — $(date -u)" > INFO.txt
           git add -A
           git commit -qm "Risultati emulatore: run ${{ github.run_id }} ${{ matrix.utente }} (${GITHUB_SHA::7})"
-          # un branch per run e utente + l'ultimo per utente
-          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/emulatore-risultati-${{ matrix.utente }} HEAD:refs/heads/emulatore-risultati-${{ github.run_id }}-${{ matrix.utente }}
+          # un branch per run e utente + l'ultimo per utente; push separati: con più giri in parallelo
+          # l'aggiornamento dell'"ultimo" può fallire e prima si perdevano anche i risultati del giro
+          R="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git push -fq "$R" HEAD:refs/heads/emulatore-risultati-${{ github.run_id }}-${{ matrix.utente }}
+          for i in 1 2 3; do git push -fq "$R" HEAD:refs/heads/emulatore-risultati-${{ matrix.utente }} && break; sleep $((i * 5)); done || true

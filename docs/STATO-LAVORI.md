@@ -237,10 +237,14 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   12 semine (create nel workflow). I flussi pr lanciati a mano falliscono anche per admin (normale).
 
 ## PROSSIMO PASSO
-- **Crash nativo (14/10): non ripetuto.** I due giri completi di verifica sul commit 6bfd611 (38499030579,
-  38499032795; pr e admin) sono passati senza crash dell'app (`Fatal signal` nel giro 38499032795 = SIGILL di
-  `googlequicksearchbox`, app di sistema, all'avvio dell'emulatore; le righe "app died" = Maestro che chiude l'app
-  tra un percorso e l'altro). fastIntl resta. Se ricapita: cercare `Fatal signal` con pid di `com.vibra.mobile`.
+- **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
+  solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
+  (b) 14/10, due SIGSEGV identici all'avvio dentro GWP-ASan (`android_unsafe_frame_pointer_chase` ←
+  `GuardedPoolAllocator::deallocate` ← libhermesvm, giri 38497270069 e 38596753210), sparito dopo
+  `plugins/withGwpAsanOff.js` (c9827f4): 0 crash in ~80 giri dopo e in 6 giri di ripetizione del 17/10 su c2ae595;
+  (c) 14/10, NumberFormatException `calc(100% + 16px)` in RNSVG (Academy, corretto). Gli altri "Fatal" sono app di
+  sistema (googlequicksearchbox, Gmail). Da ora `tests/emulatore/crash.awk` cerca i crash dell'app nel logcat:
+  se ce n'è uno il giro risulta fallito, `crash.txt` con la traccia nel branch dei risultati, `crash: N` in esito.txt.
 - **Misura del giro 38499126870** (02-clienti): nei frame lunghi (1-3,6 s) il corpo di Div pesa 100-670 ms e Text
   <110 ms per battito (es. 827 div/535 text/358 btn: frame 3600 ms, corpi 433 ms) → ~15-35%: il grosso è
   React + jsx di NativeWind (react-native-css-interop) + commit di Fabric. Prossima misura: tempo nel wrapper
