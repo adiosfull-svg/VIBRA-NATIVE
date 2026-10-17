@@ -1,5 +1,5 @@
 // Tab principali con la barra di navigazione dell'app web (MobileNavBar).
-import { diagMark, garaPreloadEnd, garaPreloadStart } from '../../../lib/testDiag';
+import { diagMark, garaPreloadEnd, garaPreloadStart, navProbeMark } from '../../../lib/testDiag';
 import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
 import { Tabs, router, useNavigation } from 'expo-router';
@@ -60,6 +60,7 @@ function usePreloadTabs() {
 
 export default function TabsLayout() {
   diagMark('layout tab');
+  navProbeMark('tab');
   usePreloadTabs();
   return (
     <Tabs

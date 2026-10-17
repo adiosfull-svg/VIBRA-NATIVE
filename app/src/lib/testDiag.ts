@@ -243,8 +243,13 @@ const TEST_BUILD = !!process.env.EXPO_PUBLIC_TEST_LOGIN;
 let navProbe: { route: string; t: number } | null = null;
 // con EXPO_PUBLIC_TEST_DIAG=1: elementi ridisegnati durante il cambio di tab (i più frequenti)
 let navRenders: Record<string, number> = {};
+let navMarks: string[] = [];
 export function navProbeStart(route: string) {
-  if (TEST_BUILD) { navProbe = { route, t: performance.now() }; navRenders = {}; }
+  if (TEST_BUILD) { navProbe = { route, t: performance.now() }; navRenders = {}; navMarks = []; }
+}
+/** Tappa intermedia del cambio di tab (ms dal rilascio), stampata nella riga "VIBRA nav". */
+export function navProbeMark(label: string) {
+  if (navProbe && navMarks.length < 30) navMarks.push(`${label}@${Math.round(performance.now() - navProbe.t)}`);
 }
 export function navProbeArrived(route: string) {
   const p = navProbe;
@@ -255,6 +260,6 @@ export function navProbeArrived(route: string) {
     const ren = Object.entries(navRenders);
     const tot = ren.reduce((a, [, v]) => a + v, 0);
     const top = ren.sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => `${v}×${k}`).join(' | ');
-    console.log(`VIBRA nav ${route} js=${Math.round(js)} frame=${Math.round(performance.now() - p.t)}${TEST_DIAG ? ` render=${tot} ${top}` : ''}`);
+    console.log(`VIBRA nav ${route} js=${Math.round(js)} frame=${Math.round(performance.now() - p.t)}${TEST_DIAG ? ` render=${tot} ${top}` : ''} tappe: ${navMarks.join(' ')}`);
   }));
 }

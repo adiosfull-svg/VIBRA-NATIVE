@@ -1,7 +1,7 @@
 // Port di src/components/layout/Sidebar.jsx (versione mobile: pannello sinistro w-64 a comparsa).
 import { Image } from 'expo-image';
-import { memo, useCallback, useRef } from 'react';
-import { ScrollView } from 'react-native';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { InteractionManager, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess, type RouteName } from '../../../lib/useRoleAccess';
 import { cn } from '../../../ui/cn';
@@ -14,7 +14,7 @@ import {
 } from '../../../ui/icons.generated';
 import { useAppSetting } from '../../hooks/useAppSetting';
 import { useVibraLogo } from '../../hooks/useVibraLogo';
-import { useLayoutUI, useLayoutUIActions } from '../../lib/layoutUI';
+import { useLayoutUIActions, useLayoutUIOpen } from '../../lib/layoutUI';
 import { useCurrentLocation, useNavigate } from '../../router';
 
 type Item = { label: string; icon: React.ComponentType<any>; path: string; routeName?: RouteName };
@@ -49,7 +49,8 @@ const WIDTH = 256; // w-64
 // Pannello unico nel layout (ui/sideDrawer): il contenuto è in memo e non dipende da `open`, così
 // aprire e chiudere non lo ridisegna (docs/REGOLE-PRESTAZIONI.md §5).
 export default function Sidebar() {
-  const { sidebarOpen: open, setSidebarOpen } = useLayoutUI();
+  const open = useLayoutUIOpen('sidebarOpen');
+  const { setSidebarOpen } = useLayoutUIActions();
   const close = useCallback(() => setSidebarOpen(false), [setSidebarOpen]);
   return (
     <SideDrawer name="sidebar" open={open} onClose={close} side="left" width={WIDTH} backdropOpacity={0.6}>
@@ -58,16 +59,23 @@ export default function Sidebar() {
   );
 }
 
-// Il corpo segue il percorso corrente solo da aperto: da chiuso (display: none) ogni navigazione lo
-// ridisegnava per intero (13 voci con icona) dentro il tempo di apertura della pagina nuova. Il percorso
-// letto da chiuso resta quello di prima; all'apertura la lista si allinea se nel frattempo è cambiato
-// (un disegno, durante l'animazione sul thread UI).
+// Il corpo segue il percorso corrente da aperto e, da chiuso, solo a app ferma dopo la navigazione: prima
+// ogni navigazione lo ridisegnava per intero (13 voci con icona) dentro il tempo di apertura della pagina
+// nuova; poi lo si allineava all'apertura, ma quel ridisegno cadeva sull'animazione del pannello. Ora alla
+// prossima apertura la lista è già giusta e aprire non ridisegna nulla.
 type Location = ReturnType<typeof useCurrentLocation>;
+const SIDEBAR_SYNC_DELAY_MS = 600;
 const SidebarBody = memo(function SidebarBody({ open }: { open: boolean }) {
   const live = useCurrentLocation(); // layout: segue tutti i percorsi
-  const shown = useRef(live);
-  if (open) shown.current = live;
-  return <SidebarList location={shown.current} />;
+  const [shown, setShown] = useState(live);
+  if (open && shown !== live) setShown(live);
+  useEffect(() => {
+    if (open || shown === live) return;
+    let task: { cancel: () => void } | null = null;
+    const t = setTimeout(() => { task = InteractionManager.runAfterInteractions(() => setShown(live)); }, SIDEBAR_SYNC_DELAY_MS);
+    return () => { clearTimeout(t); task?.cancel(); };
+  }, [open, live, shown]);
+  return <SidebarList location={shown} />;
 });
 
 const SidebarList = memo(function SidebarList({ location }: { location: Location }) {

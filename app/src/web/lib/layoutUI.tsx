@@ -19,6 +19,12 @@ type LayoutUI = LayoutUIState & LayoutUIActions;
 
 const StateCtx = createContext<LayoutUIState | null>(null);
 const ActionsCtx = createContext<LayoutUIActions | null>(null);
+// un contesto per valore: aprire la sidebar non ridisegna la nav bar (ricerca) né il menu account
+const OpenCtx = {
+  accountMenuOpen: createContext(false),
+  sidebarOpen: createContext(false),
+  searchOpen: createContext(false),
+};
 
 export type DrawerName = 'sidebar' | 'account';
 const animators: Partial<Record<DrawerName, (open: boolean) => void>> = {};
@@ -49,7 +55,13 @@ export function LayoutUIProvider({ children }: { children: ReactNode }) {
   const state = useMemo(() => ({ accountMenuOpen, sidebarOpen, searchOpen }), [accountMenuOpen, sidebarOpen, searchOpen]);
   return (
     <ActionsCtx.Provider value={actions}>
-      <StateCtx.Provider value={state}>{children}</StateCtx.Provider>
+      <OpenCtx.accountMenuOpen.Provider value={accountMenuOpen}>
+        <OpenCtx.sidebarOpen.Provider value={sidebarOpen}>
+          <OpenCtx.searchOpen.Provider value={searchOpen}>
+            <StateCtx.Provider value={state}>{children}</StateCtx.Provider>
+          </OpenCtx.searchOpen.Provider>
+        </OpenCtx.sidebarOpen.Provider>
+      </OpenCtx.accountMenuOpen.Provider>
     </ActionsCtx.Provider>
   );
 }
@@ -67,4 +79,9 @@ export function useLayoutUI(): LayoutUI {
   const actions = useContext(ActionsCtx);
   if (!state || !actions) throw new Error('useLayoutUI va usato dentro <LayoutUIProvider>');
   return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+}
+
+/** Un solo valore aperto/chiuso: chi lo usa si ridisegna solo quando cambia quello (pannelli, nav bar). */
+export function useLayoutUIOpen(key: keyof LayoutUIState): boolean {
+  return useContext(OpenCtx[key]);
 }

@@ -16,7 +16,7 @@ import { SideDrawer } from '../../../ui/sideDrawer';
 import { Btn, Div, P, Span } from '../../../ui/html';
 import { BookOpen, Eye, FileBarChart, Instagram, Loader2, LogOut, Settings, Settings2, ShieldCheck, Trash2, Unlink, X } from '../../../ui/icons.generated';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/menu';
-import { useLayoutUI, useLayoutUIActions } from '../../lib/layoutUI';
+import { useLayoutUIActions, useLayoutUIOpen } from '../../lib/layoutUI';
 import { useNavigate } from '../../router';
 import DeleteAccountDialog from '../shared/DeleteAccountDialog';
 
@@ -62,7 +62,8 @@ export default function AccountMenuButton() {
 
 /** Pannello unico (nel layout dell'app). */
 export function AccountMenuPanel() {
-  const { accountMenuOpen: open, setAccountMenuOpen } = useLayoutUI();
+  const open = useLayoutUIOpen('accountMenuOpen');
+  const { setAccountMenuOpen } = useLayoutUIActions();
   const [showDelete, setShowDelete] = useState(false);
   const { width } = useWindowDimensions();
   const panelWidth = Math.min(288, width);

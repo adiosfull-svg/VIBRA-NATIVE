@@ -4,6 +4,7 @@ import { router, useGlobalSearchParams, useLocalSearchParams, usePathname, useRo
 import { useScreenNavigation, type ScreenNav } from './screenNavigation';
 import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Btn } from '../ui/html';
+import { navProbeMark } from '../lib/testDiag';
 
 type NavigateOpts = { replace?: boolean; state?: unknown };
 
@@ -56,6 +57,7 @@ let currentLoc: Loc = { pathname: '/', params: {} };
 const locListeners = new Set<() => void>();
 
 export function LocationPublisher() {
+  navProbeMark('percorso');
   const pathname = usePathname();
   const params = useGlobalSearchParams();
   // durante il render (prima delle pagine, che stanno sotto nel layout): leggono già il valore nuovo

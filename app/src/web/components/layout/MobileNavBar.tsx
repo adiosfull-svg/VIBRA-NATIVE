@@ -25,13 +25,13 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
-import { navProbeArrived, navProbeStart } from '../../../lib/testDiag';
+import { navProbeArrived, navProbeMark, navProbeStart } from '../../../lib/testDiag';
 import { Div } from '../../../ui/html';
 import { ContactRound, Instagram, LayoutGrid, Search, Send, Sprout } from '../../../ui/icons.generated';
 import { THEME } from '../../../ui/palette.generated';
 import { Text } from '../../../ui/text';
 import { useVibraLogo } from '../../hooks/useVibraLogo';
-import { useLayoutUI } from '../../lib/layoutUI';
+import { useLayoutUIActions, useLayoutUIOpen } from '../../lib/layoutUI';
 
 type NavItem = { route: string; icon: React.ComponentType<any> | null; label: string };
 
@@ -175,12 +175,14 @@ const NavIcon = memo(function NavIcon({ item, index, initialActive, shared, logo
  * fuori dalle tab nessuna voce è attiva e si naviga col router.
  */
 export default function MobileNavBar({ state, navigation }: Partial<BottomTabBarProps>) {
+  navProbeMark('barra');
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAdmin, isSuper4 } = useRoleAccess();
   const { logoDataUrl } = useVibraLogo();
-  const { searchOpen, setSearchOpen } = useLayoutUI();
+  const searchOpen = useLayoutUIOpen('searchOpen');
+  const { setSearchOpen } = useLayoutUIActions();
   const NAV_ITEMS = isAdmin || isSuper4 ? ADMIN_NAV_ITEMS : LIMITED_NAV_ITEMS;
   const count = NAV_ITEMS.length;
 
@@ -286,7 +288,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
       if (longPress.current) clearTimeout(longPress.current);
       longPress.current = null;
       const item = items.current[idx];
-      if (item) { navProbeStart(item.route); goRef.current(item); }
+      if (item) { navProbeStart(item.route); goRef.current(item); navProbeMark('navigate'); setTimeout(() => navProbeMark('timeout0'), 0); }
       // rete di sicurezza: navigazione rifiutata o verso la voce già attiva → pillola a riposo
       if (settle.current) clearTimeout(settle.current);
       settle.current = setTimeout(() => { settle.current = null; syncTo(restRef.current, true); }, 1500);
