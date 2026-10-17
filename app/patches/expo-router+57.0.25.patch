@@ -1,3 +1,23 @@
+diff --git a/node_modules/expo-router/build/layouts/StackClient.js b/node_modules/expo-router/build/layouts/StackClient.js
+index a8bc993..29ecc4f 100644
+--- a/node_modules/expo-router/build/layouts/StackClient.js
++++ b/node_modules/expo-router/build/layouts/StackClient.js
+@@ -153,6 +153,15 @@ const stackRouterOverride = (original) => {
+                                 }
+                                 routes.push(r);
+                             }
++                            // VIBRA: route precaricata (non ancora in routes): il ciclo non la trova e il NAVIGATE
++                            // con pop (link vibra://…) restava sulla pagina corrente. Va aggiunta in cima.
++                            if (routes[routes.length - 1]?.key !== route.key) {
++                                routes.push({
++                                    ...route,
++                                    path: action.payload.path !== undefined ? action.payload.path : route.path,
++                                    params,
++                                });
++                            }
+                         }
+                         else {
+                             // START FORK
 diff --git a/node_modules/expo-router/build/react-navigation/routers/StackRouter.js b/node_modules/expo-router/build/react-navigation/routers/StackRouter.js
 index ee2ac7a..5072690 100644
 --- a/node_modules/expo-router/build/react-navigation/routers/StackRouter.js
