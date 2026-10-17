@@ -167,6 +167,22 @@ function brokeWord(lines: { text: string }[]): boolean {
   return false;
 }
 
+// Sul telefono le classi hover:/focus:/active: (proprie o ereditate dal pulsante, es. hover:text-foreground)
+// non si passano al testo: NativeWind gli aggiunge un onPress vuoto e il testo diventa premibile, così il
+// tocco sulla scritta di un pulsante finiva al testo e il pulsante non lo riceveva mai. In CSS il clic
+// sulla scritta arriva al pulsante; hover e focus su un testo non esistono al tocco.
+const PSEUDO_CLASS = /(^|\s)(?:[\w-]+:)*(?:hover|focus|focus-visible|focus-within|active):\S+/g;
+const nativeClassCache = new Map<string, string>();
+function nativeTextClass(merged: string): string {
+  if (Platform.OS === 'web' || !merged.includes(':')) return merged;
+  let v = nativeClassCache.get(merged);
+  if (v === undefined) {
+    v = /(^|\s|:)(hover|focus|focus-visible|focus-within|active):/.test(merged) ? merged.replace(PSEUDO_CLASS, '').trim() : merged;
+    nativeClassCache.set(merged, v);
+  }
+  return v;
+}
+
 export function Text(p: AppTextProps) {
   if (!TEST_DIAG) return TextImpl(p);
   const t = performance.now();
@@ -203,7 +219,7 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
     <RNText
       {...props}
       numberOfLines={numberOfLines ?? (truncate ? 1 : clamp || undefined)}
-      className={merged}
+      className={nativeTextClass(merged)}
       // il peso è già nel file del font: fontWeight lo raddoppierebbe su Android
       style={[...textStyle, minWord]}
       onTextLayout={word || (mcProbe && flatText) ? (e) => {
@@ -233,7 +249,7 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
       {text}
       {/* contenitore larghissimo: il testo prende la sua larghezza naturale, non quella della cella */}
       <View pointerEvents="none" style={MEASURE}>
-        <RNText className={merged} numberOfLines={1} style={textStyle}
+        <RNText className={nativeTextClass(merged)} numberOfLines={1} style={textStyle}
           onLayout={(e) => setWordWidth({ word, width: Math.ceil(e.nativeEvent.layout.width) })}>{word}</RNText>
       </View>
     </>
