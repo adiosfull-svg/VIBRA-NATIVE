@@ -15,8 +15,16 @@ adb shell pm list packages | grep -iE "chrome|webview" > "$OUT/browser.txt" || t
 adb shell getprop ro.build.fingerprint >> "$OUT/browser.txt" || true
 adb logcat -v epoch > "$OUT/logcat-full.txt" 2>&1 &
 LOGCAT=$!
-node tools/gara/gara.mjs "${UTENTE:-admin}" "tests/gara/${UTENTE:-admin}.txt" "$OUT" > "$OUT/gara.log" 2>&1
-echo "esito: $?" > "$OUT/esito.txt"
+if [ "${GARA_NAV:-}" = 1 ]; then
+  # gara della barra in basso e del menu laterale (video + analisi frame per frame)
+  node tools/gara/navbar.mjs "${UTENTE:-admin}" "$OUT" > "$OUT/gara.log" 2>&1
+  python3 tools/gara/navbar_analisi.py "$OUT" >> "$OUT/gara.log" 2>&1
+  echo "esito: $?" > "$OUT/esito.txt"
+  cp "$OUT/navbar.md" "$OUT/gara.md" 2>/dev/null || true
+else
+  node tools/gara/gara.mjs "${UTENTE:-admin}" "tests/gara/${UTENTE:-admin}.txt" "$OUT" > "$OUT/gara.log" 2>&1
+  echo "esito: $?" > "$OUT/esito.txt"
+fi
 kill $LOGCAT $SERVE 2>/dev/null
 grep -E "ReactNativeJS|AndroidRuntime|FATAL|VIBRA" "$OUT/logcat-full.txt" > "$OUT/logcat-app.txt" || true
 cat "$OUT/gara.md" 2>/dev/null || tail -50 "$OUT/gara.log"
