@@ -1,0 +1,26 @@
+# PR (vale anche per admin): barra delle tab di Clienti. Il percorso apre Clienti; la prova vera è in
+# 08-sticky-tap.sh (eseguito da run.sh subito dopo): lancio orizzontale della barra, attesa breve, tap su
+# una tab, e conta dei tap arrivati (riga "VIBRA subtab" nel logcat) → out/sticky-tap.md.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE"
+    timeout: 180000
+- waitForAnimationToEnd
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible:
+      text: ".*Parco Paganti.*"
+    timeout: 90000
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: sticky-tap-inizio

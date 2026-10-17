@@ -767,20 +767,67 @@ function domScrollRef(view: ScrollView, offset: { x: number; y: number }) {
   });
 }
 
+// Android, scorrimento orizzontale (barre delle tab, chip): finché lo scroller nativo non ha finito,
+// HorizontalScrollView si prende il tocco (lo usa per fermare lo scorrimento) e il pulsante sotto il
+// dito non riceve il tap. Lo scroller resta "in corso" ben oltre il movimento visibile: la coda lenta
+// del lancio (sub-pixel) e, al bordo sinistro, un rimbalzo invisibile di mezza larghezza (fling di RN
+// con overX). Risultato: dopo uno scorrimento il primo tap su una tab andava perso. Qui lo scroller si
+// ferma (scrollTo senza animazione = abortAnimation) appena il contenuto arriva a un bordo o rallenta
+// sotto FLING_STOP_SPEED; niente effetto di bordo (overScrollMode never: anche sul web un div interno
+// non lo mostra). Prova: tests/emulatore/pr/08-sticky-tap.
+const FLING_STOP = Platform.OS === 'android' && process.env.EXPO_PUBLIC_TEST_NO_FLINGSTOP !== '1';
+const FLING_STOP_SPEED = 0.15; // dp/ms: da qui al termine il contenuto si sposta solo di pochi dp
+
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
   axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void; ref?: Ref<unknown>;
 }) {
   const offset = useRef({ x: 0, y: 0 }).current;
+  const viewRef = useRef<ScrollView | null>(null);
+  const fling = useRef({ on: false, x: 0, t: 0, max: 0, last: 0 }).current;
+  const flingStop = FLING_STOP && axis === 'x';
   const setRef = useCallback((view: ScrollView | null) => {
+    viewRef.current = view;
     const value = view ? domScrollRef(view, offset) : null;
     if (typeof ref === 'function') ref(value);
     else if (ref) (ref as { current: unknown }).current = value;
   }, [ref, offset]);
+  const stopAt = useCallback((x: number) => { fling.on = false; viewRef.current?.scrollTo({ x, y: 0, animated: false }); }, [fling]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    offset.x = e.nativeEvent.contentOffset.x;
-    offset.y = e.nativeEvent.contentOffset.y;
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    offset.x = contentOffset.x;
+    offset.y = contentOffset.y;
+    if (TEST_DIAG) fling.last = performance.now();
+    const max = Math.max(0, contentSize.width - layoutMeasurement.width);
+    fling.max = max;
+    if (flingStop && fling.on) {
+      const t = (e.nativeEvent as { timestamp?: number }).timestamp ?? performance.now();
+      const x = contentOffset.x;
+      const speed = fling.t && t > fling.t ? Math.abs(x - fling.x) / (t - fling.t) : Infinity;
+      const dir = Math.sign(x - fling.x);
+      fling.x = x;
+      fling.t = t;
+      if (x <= 0.5 || x >= max - 0.5 || speed < FLING_STOP_SPEED) {
+        // posizione dell'evento più il tratto percorso nel frattempo (qualche dp: niente salto indietro)
+        stopAt(x <= 0.5 ? 0 : x >= max - 0.5 ? max : Math.min(max, Math.max(0, x + dir * Math.min(speed * 32, 6))));
+      }
+    }
     webScrollHandler(onScroll)?.(e);
-  }, [onScroll, offset]);
+  }, [onScroll, offset, fling, flingStop, stopAt]);
+  // lancio che parte già a un bordo (dito rilasciato con il contenuto fermo al bordo): nessun evento di
+  // scroll arriverà, lo scroller va fermato subito. A fine lancio (posizione ferma da qualche frame)
+  // si ferma comunque ciò che resta dello scroller.
+  const onMomentumScrollBegin = useCallback(() => {
+    fling.on = true;
+    fling.t = 0;
+    if (offset.x <= 0.5) stopAt(0);
+    else if (offset.x >= fling.max - 0.5) stopAt(fling.max);
+  }, [fling, offset, stopAt]);
+  const onMomentumScrollEnd = useCallback(() => { if (fling.on) stopAt(offset.x); }, [fling, offset, stopAt]);
+  const { onTouchStart } = props;
+  const diagTouchStart = useCallback((e: GestureResponderEvent) => {
+    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0}`);
+    onTouchStart?.(e);
+  }, [fling, onTouchStart]);
   const outer: string[] = [];
   const inner: string[] = [];
   for (const c of box.split(/\s+/)) {
@@ -803,6 +850,10 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
       style={outerStyle}
       contentContainerStyle={innerStyle}
       onScroll={handleScroll}
+      onMomentumScrollBegin={flingStop ? onMomentumScrollBegin : undefined}
+      onMomentumScrollEnd={flingStop ? onMomentumScrollEnd : undefined}
+      onTouchStart={TEST_DIAG && axis === 'x' ? diagTouchStart : onTouchStart}
+      overScrollMode={flingStop ? 'never' : undefined}
       scrollEventThrottle={16}
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"

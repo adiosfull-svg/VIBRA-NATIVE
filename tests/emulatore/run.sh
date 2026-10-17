@@ -80,6 +80,8 @@ for f in $(ls "$OLDPWD"/${FLOWS:-tests/emulatore}/*.yaml 2>/dev/null || echo "$O
   if [ "${FLUID:-}" = 1 ]; then adb shell dumpsys gfxinfo $PKG reset > /dev/null 2>&1 || true; rec_start "$name"; fi
   if [ "${TRACE:-}" = 1 ]; then trace_start; fi
   maestro test -e EMAIL="${EMAIL:-admin@vibra.local}" "$f" --format junit --output "$OUT/$name.xml" > "$OUT/$name.log" 2>&1 || { status=1; echo "FALLITO $name"; }
+  # prova con adb dopo il percorso (es. 08-sticky-tap.sh: tocchi a tempo, impossibili con Maestro)
+  if [ -f "${f%.yaml}.sh" ]; then bash "${f%.yaml}.sh" "$OUT" > "$OUT/$name-sh.log" 2>&1 || true; fi
   if [ "${FLUID:-}" = 1 ]; then gfx_row "$name"; rec_stop "$name"; fi
   if [ "${TRACE:-}" = 1 ]; then trace_stop "$name"; fi
   adb exec-out uiautomator dump /dev/tty > "$OUT/$name-ui.xml" 2>/dev/null || true
@@ -89,5 +91,9 @@ cd "$OLDPWD"
 kill $LOGCAT 2>/dev/null
 grep -E "ReactNativeJS|AndroidRuntime|FATAL|ExceptionsManager|VIBRA" "$OUT/logcat-full.txt" > "$OUT/logcat-app.txt" || true
 cp -r ~/.maestro/tests "$OUT/maestro-debug" 2>/dev/null || true
-echo "esito: $status" > "$OUT/esito.txt"
+# crash dell'app (segnale nativo con traccia, eccezione Java, ANR, Scudo OOM) → crash.txt e giro fallito
+awk -f tests/emulatore/crash.awk "$OUT/logcat-full.txt" "$OUT/logcat-full.txt" > "$OUT/crash.txt" || true
+crash=$(grep -cE "Fatal signal|FATAL EXCEPTION|ANR in|Scudo OOM" "$OUT/crash.txt")
+if [ "$crash" != 0 ]; then status=1; echo "CRASH DELL'APP: vedi crash.txt"; head -40 "$OUT/crash.txt"; else rm -f "$OUT/crash.txt"; fi
+printf 'esito: %s\ncrash: %s\n' "$status" "$crash" > "$OUT/esito.txt"
 exit 0
