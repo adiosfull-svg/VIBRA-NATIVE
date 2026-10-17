@@ -771,6 +771,8 @@ const FLING_STOP_SPEED = 0.15; // dp/ms: da qui al termine il contenuto si spost
 type TapTarget = { view: { current: any }; press: { current: (() => void) | null } };
 const HScrollTapContext = createContext<Set<TapTarget> | null>(null);
 let lastBtnPress = 0;
+/** build di test: istante (performance.now) dell'ultimo touchstart/touchend su una barra orizzontale */
+export const hscrollDiag = { start: 0, end: 0 };
 let lastFallback = 0;
 const TAP_SLOP = 10; // dp
 const TAP_MAX_MS = 600;
@@ -872,12 +874,13 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
   } : null), [tapTargets, touch, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel]);
   const diagTouchStart = useCallback((e: GestureResponderEvent) => {
     const n = e.nativeEvent;
+    hscrollDiag.start = performance.now();
     console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0} x=${Math.round(offset.x)} page=${Math.round(n.pageX)},${Math.round(n.pageY)} loc=${Math.round(n.locationX)},${Math.round(n.locationY)} target=${(n.target as any)?.__nativeTag ?? (n.target as any)?._nativeTag ?? n.target}`);
     (tapHandlers?.onTouchStart ?? onTouchStart)?.(e);
   }, [fling, offset, onTouchStart, tapHandlers]);
   // build di test: cosa succede al tocco (fine, annullato dal nativo, la ScrollView prende il tocco)
   const diag = useMemo(() => (TEST_DIAG && axis === 'x' ? {
-    onTouchEnd: (e: GestureResponderEvent) => { console.log('VIBRA hscroll fine-tocco'); (tapHandlers?.onTouchEnd ?? onTouchEnd)?.(e); },
+    onTouchEnd: (e: GestureResponderEvent) => { hscrollDiag.end = performance.now(); console.log(`VIBRA hscroll fine-tocco durata=${Math.round(hscrollDiag.end - hscrollDiag.start)}ms`); (tapHandlers?.onTouchEnd ?? onTouchEnd)?.(e); },
     onTouchCancel: (e: GestureResponderEvent) => { console.log('VIBRA hscroll tocco-annullato'); (tapHandlers?.onTouchCancel ?? onTouchCancel)?.(e); },
     onResponderGrant: () => console.log('VIBRA hscroll prende-il-tocco'),
     onResponderTerminate: () => console.log('VIBRA hscroll perde-il-tocco'),

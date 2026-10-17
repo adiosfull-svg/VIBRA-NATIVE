@@ -12,14 +12,16 @@ center() {
     sed -E 's/.*bounds="\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]".*/\1 \2 \3 \4/' |
     awk '{ printf "%d %d", ($1+$3)/2, ($2+$4)/2 }'
 }
-taps() { adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -cE "VIBRA subtab [a-z_]+\s*$"; }
+taps() { adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -cE "VIBRA subtab [a-z_-]+ dopo="; }
 UI=$(dump)
 read -r _ Y <<< "$(center 'Parco Paganti' "$UI")"
 if [ -z "${Y:-}" ]; then echo "barra non trovata" > "$REPORT"; exit 0; fi
 L=$((W * 12 / 100)); R=$((W * 88 / 100))
 # posizioni delle tab con la barra ferma ai due bordi (scorrimenti lenti, poi attesa)
 adb shell input swipe $L $Y $R $Y 600; sleep 3
-read -r XS _ <<< "$(center 'Gruppi' "$(dump)")"
+UI0=$(dump)
+read -r XS _ <<< "$(center 'Gruppi' "$UI0")"
+read -r XP _ <<< "$(center 'Parco Paganti' "$UI0")"
 adb shell input swipe $R $Y $L $Y 600; sleep 3
 read -r XE _ <<< "$(center 'Growth' "$(dump)")"
 printf '# Tap sulla barra delle tab dopo un lancio (%s)\n\nBarra a y=%s; tab Gruppi a x=%s (barra all'"'"'inizio), Growth a x=%s (barra alla fine).\nAttesa = pausa nello script tra la fine del lancio e il tap (più ~0,2-0,5 s di avvio di `input`).\n\n| attesa | verso | tap arrivato |\n|---|---|---|\n' "${UTENTE:-}" "$Y" "$XS" "$XE" > "$REPORT"
@@ -38,6 +40,16 @@ for round in 1 2; do
       if [ "$after" -gt "$before" ]; then ok=$((ok + 1)); r=sì; else r=NO; fi
       echo "| ${d}s | $verso | $r |" >> "$REPORT"
     done
+  done
+done
+# controllo: tap senza scorrimento prima (barra ferma all'inizio)
+adb shell input swipe $L $Y $R $Y 600; sleep 3
+adb shell log -t ReactNativeJS "VIBRA prova controllo senza-lancio"
+for i in 1 2 3 4; do
+  for x in $XP $XS; do
+    before=$(taps); adb shell input tap $x $Y; sleep 2.5; after=$(taps)
+    tot=$((tot + 1)); if [ "$after" -gt "$before" ]; then ok=$((ok + 1)); r=sì; else r=NO; fi
+    echo "| controllo | fermo | $r |" >> "$REPORT"
   done
 done
 printf '\nTap arrivati: %s su %s\n\nRighe dell'"'"'app (tocchi sulla barra e tab scelte):\n\n```\n' "$ok" "$tot" >> "$REPORT"
