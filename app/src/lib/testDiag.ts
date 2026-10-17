@@ -244,7 +244,14 @@ let navProbe: { route: string; t: number } | null = null;
 // con EXPO_PUBLIC_TEST_DIAG=1: elementi ridisegnati durante il cambio di tab (i più frequenti)
 let navRenders: Record<string, number> = {};
 let navMarks: string[] = [];
+// build col profilo JS (EXPO_PUBLIC_TEST_PROFILE=1): segno riconoscibile nei campioni (tools/profilo/analizza.py)
+const TEST_PROFILE = process.env.EXPO_PUBLIC_TEST_PROFILE === '1';
+function VIBRA_MARCA_NAV() {
+  const t = performance.now();
+  while (performance.now() - t < 4) { /* attesa attiva: la funzione compare nei campioni */ }
+}
 export function navProbeStart(route: string) {
+  if (TEST_PROFILE) VIBRA_MARCA_NAV();
   if (TEST_BUILD) { navProbe = { route, t: performance.now() }; navRenders = {}; navMarks = []; }
 }
 /** Tappa intermedia del cambio di tab (ms dal rilascio), stampata nella riga "VIBRA nav". */

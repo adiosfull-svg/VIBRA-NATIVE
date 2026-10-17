@@ -84,6 +84,14 @@ for f in $(ls "$OLDPWD"/${FLOWS:-tests/emulatore}/*.yaml 2>/dev/null || echo "$O
   if [ -f "${f%.yaml}.sh" ]; then bash "${f%.yaml}.sh" "$OUT" > "$OUT/$name-sh.log" 2>&1 || true; fi
   if [ "${FLUID:-}" = 1 ]; then gfx_row "$name"; rec_stop "$name"; fi
   if [ "${TRACE:-}" = 1 ]; then trace_stop "$name"; fi
+  # JSPROF=1 (profilo_js): campioni del thread JS dall'avvio dell'app a qui (plugins/withJsProfiler.js)
+  if [ "${JSPROF:-}" = 1 ]; then
+    mkdir -p "$OUT/profili"
+    adb shell am broadcast -a com.vibra.mobile.PROFILO_JS -p $PKG > /dev/null
+    sleep 5
+    adb pull /sdcard/Android/data/$PKG/files/js-profilo.json "$OUT/profili/$name.json" > /dev/null 2>&1 || echo "profilo JS di $name non scaricato"
+    python3 "$OLDPWD/tools/profilo/analizza.py" "$OUT/profili/$name.json" "$name" >> "$OUT/profili.md" 2>&1 || true
+  fi
   adb exec-out uiautomator dump /dev/tty > "$OUT/$name-ui.xml" 2>/dev/null || true
   adb exec-out screencap -p > "$OUT/screens/$name-fine.png" || true
 done
