@@ -813,7 +813,8 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
   const onMomentumScrollEnd = useCallback(() => { if (fling.on) stopAt(offset.x); }, [fling, offset, stopAt]);
   const { onTouchStart } = props;
   const diagTouchStart = useCallback((e: GestureResponderEvent) => {
-    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0} x=${Math.round(offset.x)}`);
+    const n = e.nativeEvent;
+    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0} x=${Math.round(offset.x)} page=${Math.round(n.pageX)},${Math.round(n.pageY)} loc=${Math.round(n.locationX)},${Math.round(n.locationY)} target=${(n.target as any)?.__nativeTag ?? (n.target as any)?._nativeTag ?? n.target}`);
     onTouchStart?.(e);
   }, [fling, offset, onTouchStart]);
   // build di test: cosa succede al tocco (fine, annullato dal nativo, la ScrollView prende il tocco)

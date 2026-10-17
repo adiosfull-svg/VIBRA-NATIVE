@@ -12,7 +12,7 @@ center() {
     sed -E 's/.*bounds="\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]".*/\1 \2 \3 \4/' |
     awk '{ printf "%d %d", ($1+$3)/2, ($2+$4)/2 }'
 }
-taps() { adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -c "VIBRA subtab"; }
+taps() { adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -cE "VIBRA subtab [a-z_]+\s*$"; }
 UI=$(dump)
 read -r _ Y <<< "$(center 'Parco Paganti' "$UI")"
 if [ -z "${Y:-}" ]; then echo "barra non trovata" > "$REPORT"; exit 0; fi

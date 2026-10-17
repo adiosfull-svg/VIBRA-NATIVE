@@ -30,7 +30,7 @@ function SubTabButtons({
           ref={active === key ? activeRef : null}
           onClick={() => { if (TEST_DIAG) console.log(`VIBRA subtab ${key}`); select(key); }}
           onPointerDown={onPointerDownFor?.(key)}
-          {...(TEST_DIAG ? { onPressIn: () => console.log(`VIBRA subtab premuto ${key}`), onPressOut: () => console.log(`VIBRA subtab rilasciato ${key}`) } : null)}
+          {...(TEST_DIAG ? { onLayout: (e) => { const l = e.nativeEvent.layout; console.log(`VIBRA subtab riquadro ${key} ${Math.round(l.x)},${Math.round(l.y)} ${Math.round(l.width)}x${Math.round(l.height)}`); }, onPressIn: () => console.log(`VIBRA subtab premuto ${key}`), onPressOut: () => console.log(`VIBRA subtab rilasciato ${key}`) } : null)}
           className={`cursor-pointer flex items-center gap-1.5 rounded-lg font-medium transition-all duration-200 ${buttonClassName} ${shown === key ? ACTIVE : IDLE}`}>
           {TabIcon && <TabIcon className={iconClassName} />}
           {label}
