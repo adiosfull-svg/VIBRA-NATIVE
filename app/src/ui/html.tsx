@@ -6,7 +6,7 @@ import { cssInterop } from 'nativewind';
 import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
-import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
+import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
@@ -1213,6 +1213,11 @@ function BtnPressable({ classes, ownStyle: baseStyle, children, onPressIn, onPre
   return <Pressable {...p} className={classes} style={ownStyle}>{children}</Pressable>;
 }
 
+function assignRef(r: Ref<unknown> | undefined, v: unknown) {
+  if (typeof r === 'function') r(v);
+  else if (r) (r as { current: unknown }).current = v;
+}
+
 /** Pulsante dentro una barra orizzontale (HScrollTapContext): si registra per il tap di riserva. */
 function useHScrollTap(targets: Set<TapTarget> | null, onPress: PressableProps['onPress'], outerRef: Ref<unknown> | undefined) {
   const view = useRef<any>(null);
@@ -1224,12 +1229,15 @@ function useHScrollTap(targets: Set<TapTarget> | null, onPress: PressableProps['
     targets.add(t);
     return () => { targets.delete(t); };
   }, [targets]);
-  // dipende dal ref esterno come un ref normale: React lo richiama quando cambia (es. ref della tab attiva)
-  const ref = useCallback((v: unknown) => {
-    view.current = v;
-    if (typeof outerRef === 'function') outerRef(v);
-    else if (outerRef) (outerRef as { current: unknown }).current = v;
-  }, [outerRef]);
+  // ref stabile (un ref a funzione nuovo a ogni disegno fa richiamare a React il ref esterno a ogni
+  // disegno: con ref esterni che aggiornano lo stato era un ciclo infinito); il ref esterno riceve la
+  // vista al montaggio e quando cambia (es. ref della tab attiva), come un ref normale
+  const ref = useCallback((v: unknown) => { view.current = v; }, []);
+  useLayoutEffect(() => {
+    if (!targets) return undefined;
+    assignRef(outerRef, view.current);
+    return () => assignRef(outerRef, null);
+  }, [targets, outerRef]);
   const onPressRef = useRef(onPress);
   onPressRef.current = onPress;
   const handle = useCallback((e: GestureResponderEvent) => { lastBtnPress = performance.now(); onPressRef.current?.(e); }, []);
