@@ -790,7 +790,7 @@ function deliverTap(targets: Set<TapTarget>, x: number, y: number, since: number
         t.press.current?.();
       });
     }
-  }, 150);
+  }, 50);
 }
 
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {

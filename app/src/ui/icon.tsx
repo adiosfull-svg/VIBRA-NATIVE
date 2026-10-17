@@ -50,8 +50,10 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
   // contenitore e centro con flex, senza percentuali
   if (wrap) centerVertically(outer, Number(height));
   const single = Platform.OS !== 'web' && node.length > 1 && fill === 'none' && opaque(color) ? combinedD(node) : null;
+  // pointerEvents none: sul web il clic sull'icona arriva al pulsante che la contiene; su Android il
+  // tocco che cadeva sull'Svg non arrivava al Pressable genitore (tab della barra con icona: tocco perso)
   const svg = (
-    <Svg width={width} height={height} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth}
+    <Svg pointerEvents="none" width={width} height={height} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth}
       strokeLinecap="round" strokeLinejoin="round" style={wrap ? inner : style}>
       {single ? <Path d={single} /> : node.map(([tag, attrs], i) => {
         const El = ELEMENTS[tag];
@@ -61,8 +63,8 @@ function SvgIcon({ node, width = 24, height = 24, color = 'currentColor', fill =
       })}
     </Svg>
   );
-  if (anim) return <Animated.View style={[outer, anim]}>{svg}</Animated.View>;
-  return wrap ? <View style={outer}>{svg}</View> : svg;
+  if (anim) return <Animated.View pointerEvents="none" style={[outer, anim]}>{svg}</Animated.View>;
+  return wrap ? <View pointerEvents="none" style={outer}>{svg}</View> : svg;
 }
 
 function centerVertically(o: Record<string, unknown>, h: number) {
