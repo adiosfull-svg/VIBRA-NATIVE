@@ -21,16 +21,23 @@ appId: com.vibra.mobile
 - waitForAnimationToEnd
 - takeScreenshot: comitive-00-clienti
 # la barra delle tab scorre in orizzontale: Comitive è l'ultima
-- repeat:
-    while:
-      notVisible: "Comitive"
-    times: 5
-    commands:
-      - swipe:
-          start: 90%, 16%
-          end: 10%, 16%
-          duration: 400
-      - waitForAnimationToEnd
+# Comitive è nella gerarchia anche fuori schermo: scorrere fino in fondo (4 volte) prima del tocco
+- swipe:
+    start: 90%, 16%
+    end: 10%, 16%
+    duration: 400
+- swipe:
+    start: 90%, 16%
+    end: 10%, 16%
+    duration: 400
+- swipe:
+    start: 90%, 16%
+    end: 10%, 16%
+    duration: 400
+- swipe:
+    start: 90%, 16%
+    end: 10%, 16%
+    duration: 400
 - waitForAnimationToEnd
 - takeScreenshot: comitive-00b-tab-scorse
 - tapOn: "Comitive"
