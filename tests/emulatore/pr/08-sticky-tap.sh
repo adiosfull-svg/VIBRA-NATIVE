@@ -30,6 +30,7 @@ for round in 1 2; do
       if [ "$verso" = inizio ]; then from=$L; to=$R; x=$XS; else from=$R; to=$L; x=$XE; fi
       [ -z "$x" ] && continue
       before=$(taps)
+      adb shell log -t ReactNativeJS "VIBRA prova attesa=$d verso=$verso"
       adb shell "input swipe $from $Y $to $Y 70; sleep $d; input tap $x $Y"
       sleep 2.5
       after=$(taps)
@@ -40,6 +41,6 @@ for round in 1 2; do
   done
 done
 printf '\nTap arrivati: %s su %s\n\nRighe dell'"'"'app (tocchi sulla barra e tab scelte):\n\n```\n' "$ok" "$tot" >> "$REPORT"
-adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -E "VIBRA (hscroll|subtab)" | tail -80 >> "$REPORT"
+adb logcat -d -s ReactNativeJS:* 2>/dev/null | grep -E "VIBRA (hscroll|subtab|prova|pagina)" | tail -600 >> "$REPORT"
 echo '```' >> "$REPORT"
 cat "$REPORT"

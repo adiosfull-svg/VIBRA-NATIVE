@@ -774,7 +774,11 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
     if (typeof ref === 'function') ref(value);
     else if (ref) (ref as { current: unknown }).current = value;
   }, [ref, offset]);
-  const stopAt = useCallback((x: number) => { fling.on = false; viewRef.current?.scrollTo({ x, y: 0, animated: false }); }, [fling]);
+  const stopAt = useCallback((x: number) => {
+    if (TEST_DIAG) console.log(`VIBRA hscroll ferma x=${Math.round(x)}`);
+    fling.on = false;
+    viewRef.current?.scrollTo({ x, y: 0, animated: false });
+  }, [fling]);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
     offset.x = contentOffset.x;
@@ -800,6 +804,7 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
   // scroll arriverà, lo scroller va fermato subito. A fine lancio (posizione ferma da qualche frame)
   // si ferma comunque ciò che resta dello scroller.
   const onMomentumScrollBegin = useCallback(() => {
+    if (TEST_DIAG) console.log(`VIBRA hscroll lancio x=${Math.round(offset.x)}`);
     fling.on = true;
     fling.t = 0;
     if (offset.x <= 0.5) stopAt(0);
@@ -808,9 +813,16 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
   const onMomentumScrollEnd = useCallback(() => { if (fling.on) stopAt(offset.x); }, [fling, offset, stopAt]);
   const { onTouchStart } = props;
   const diagTouchStart = useCallback((e: GestureResponderEvent) => {
-    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0}`);
+    console.log(`VIBRA hscroll tocco dopo=${fling.last ? Math.round(performance.now() - fling.last) : -1}ms lancio=${fling.on ? 1 : 0} x=${Math.round(offset.x)}`);
     onTouchStart?.(e);
-  }, [fling, onTouchStart]);
+  }, [fling, offset, onTouchStart]);
+  // build di test: cosa succede al tocco (fine, annullato dal nativo, la ScrollView prende il tocco)
+  const diag = useMemo(() => (TEST_DIAG && axis === 'x' ? {
+    onTouchEnd: () => console.log('VIBRA hscroll fine-tocco'),
+    onTouchCancel: () => console.log('VIBRA hscroll tocco-annullato'),
+    onResponderGrant: () => console.log('VIBRA hscroll prende-il-tocco'),
+    onResponderTerminate: () => console.log('VIBRA hscroll perde-il-tocco'),
+  } : null), [axis]);
   const outer: string[] = [];
   const inner: string[] = [];
   for (const c of box.split(/\s+/)) {
@@ -836,6 +848,7 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
       onMomentumScrollBegin={flingStop ? onMomentumScrollBegin : undefined}
       onMomentumScrollEnd={flingStop ? onMomentumScrollEnd : undefined}
       onTouchStart={TEST_DIAG && axis === 'x' ? diagTouchStart : onTouchStart}
+      {...diag}
       overScrollMode={flingStop ? 'never' : undefined}
       scrollEventThrottle={16}
       nestedScrollEnabled
