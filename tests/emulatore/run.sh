@@ -89,5 +89,9 @@ cd "$OLDPWD"
 kill $LOGCAT 2>/dev/null
 grep -E "ReactNativeJS|AndroidRuntime|FATAL|ExceptionsManager|VIBRA" "$OUT/logcat-full.txt" > "$OUT/logcat-app.txt" || true
 cp -r ~/.maestro/tests "$OUT/maestro-debug" 2>/dev/null || true
-echo "esito: $status" > "$OUT/esito.txt"
+# crash dell'app (segnale nativo con traccia, eccezione Java, ANR, Scudo OOM) → crash.txt e giro fallito
+awk -f tests/emulatore/crash.awk "$OUT/logcat-full.txt" "$OUT/logcat-full.txt" > "$OUT/crash.txt" || true
+crash=$(grep -cE "Fatal signal|FATAL EXCEPTION|ANR in|Scudo OOM" "$OUT/crash.txt")
+if [ "$crash" != 0 ]; then status=1; echo "CRASH DELL'APP: vedi crash.txt"; head -40 "$OUT/crash.txt"; else rm -f "$OUT/crash.txt"; fi
+printf 'esito: %s\ncrash: %s\n' "$status" "$crash" > "$OUT/esito.txt"
 exit 0
