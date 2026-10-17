@@ -2,8 +2,9 @@
 //   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay }}>
 // Proprietà animate: opacity, x, y, scale, rotate (numeri), anche a keyframe ([0, 1, 0]) e con
 // repeat: Infinity; width/height in px o %. height/width 'auto' non sono animabili in RN: l'elemento compare alla sua
-// misura naturale. AnimatePresence rende i figli (le animazioni di uscita non sono replicate).
-import { Children, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+// misura naturale. AnimatePresence tiene montati i figli motion che escono finché non finisce la loro
+// animazione `exit` (opacity/x/y/scale/rotate; height/width di uscita non si animano).
+import { Children, cloneElement, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { Animated, Dimensions, Easing, type LayoutChangeEvent } from 'react-native';
 import { Btn, Div, Span } from './html';
 import { Img } from './elements';
@@ -58,7 +59,7 @@ function withoutEntryLift(from: Record<string, any> | undefined, to: Record<stri
   return [f, t];
 }
 
-function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0) {
+function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0, onDone?: () => void) {
   const [rawFrom, rawTo] = withoutEntryLift(typeof initial === 'object' ? initial : undefined, typeof animate === 'object' ? animate : undefined);
   const pct = new Set(PCT_KEYS.filter((k) => isPct(rawFrom?.[k]) || isPct(rawTo?.[k])));
   const from = numeric(rawFrom);
@@ -114,9 +115,9 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
       lastTarget[k] = n;
       anims.push(Animated.timing(values[k], { toValue: n, duration, delay, easing: easing(transition?.ease), useNativeDriver: false }));
     }
-    if (!anims.length) return;
+    if (!anims.length) { onDone?.(); return; }
     const all = Animated.parallel(anims);
-    all.start();
+    all.start(({ finished }) => { if (finished) onDone?.(); });
     return () => all.stop();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetKey]);
@@ -138,11 +139,21 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
 }
 
 function make(Comp: React.ComponentType<any>, direct = false) {
-  return function MotionComponent({ initial, animate, exit: _e, transition, whileTap: _t, whileHover: _h, layout: _l, layoutId: _li, variants: _v, style, className, children, ...rest }: MotionProps) {
+  function MotionComponent({ initial: initial0, animate: animate0, exit, transition: transition0, whileTap: _t, whileHover: _h, layout: _l, layoutId: _li, variants: _v, style, className, children, __exitDone, ...rest }: MotionProps) {
+    // dentro <AnimatePresence initial={false}>: i figli già presenti al primo disegno non fanno l'entrata
+    const presenceInitial = useContext(PresenceInitialContext);
+    const mountInitial = useRef(presenceInitial ? initial0 : false).current;
+    const initial = mountInitial;
+    // in uscita (AnimatePresence): verso `exit`, poi AnimatePresence lo smonta
+    const exiting = typeof __exitDone === 'function' && exit && typeof exit === 'object';
+    const { transition: exitTransition, ...exitTarget } = exiting ? (exit as Record<string, any>) : ({} as Record<string, any>);
+    const animate = exiting ? withoutAutoSize(typeof animate0 === 'object' ? animate0 : undefined, exitTarget) : animate0;
+    const transition = exiting ? (exitTransition ?? transition0) : transition0;
     // x/y in %: serve la larghezza dell'elemento (misurata una volta, poi solo se cambia)
     const usesPct = PCT_KEYS.some((k) => isPct((typeof initial === 'object' ? initial : undefined)?.[k]) || isPct((typeof animate === 'object' ? animate : undefined)?.[k]));
     const [width, setWidth] = useState(0);
-    const animated = useMotion(initial, animate, transition, width);
+    const animated = useMotion(initial, animate, transition, width, exiting ? (__exitDone as () => void) : undefined);
+    if (exiting) (rest as { pointerEvents?: string }).pointerEvents = 'none';
     const ownLayout = (rest as { onLayout?: (e: LayoutChangeEvent) => void }).onLayout;
     const onLayout = usesPct
       ? (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; setWidth((w) => (Math.abs(w - nw) < 0.5 ? w : nw)); ownLayout?.(e); }
@@ -150,20 +161,61 @@ function make(Comp: React.ComponentType<any>, direct = false) {
     // Div: lo stile animato va sull'elemento stesso (posizione assoluta, h-full, flex-1 restano suoi)
     if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} onLayout={onLayout}>{children}</Comp>;
     return (
-      <Animated.View style={animated} onLayout={usesPct ? onLayout : undefined}>
+      <Animated.View style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
         <Comp className={className} style={style} {...rest}>{children}</Comp>
       </Animated.View>
     );
-  };
+  }
+  (MotionComponent as { motionExit?: boolean }).motionExit = true;
+  return MotionComponent;
 }
+
+/**
+ * Arrivo dell'uscita: width/height solo se l'elemento li animava già in px/% ('auto' non è animabile: resta
+ * la sua misura finché l'elemento sparisce a fine dissolvenza).
+ */
+function withoutAutoSize(animate: Record<string, any> | undefined, exit: Record<string, any>) {
+  const out: Record<string, any> = { ...animate, ...exit };
+  for (const k of SIZE_KEYS) if (out[k] !== undefined && sizeOf(animate?.[k]) == null) delete out[k];
+  return out;
+}
+
+const PresenceInitialContext = createContext(true);
 
 export const motion = {
   div: make(Div, true), section: make(Div, true), li: make(Div, true), ul: make(Div, true), header: make(Div, true),
   span: make(Span), p: make(Span), button: make(Btn), img: make(Img),
 };
 
-export function AnimatePresence({ children }: { children?: ReactNode; mode?: string; initial?: boolean }) {
-  return <>{useMemo(() => Children.toArray(children), [children])}</>;
+type Exiting = { el: ReactElement; index: number };
+const canExit = (el: ReactNode): el is ReactElement => isValidElement(el)
+  && !!(el.type as { motionExit?: boolean }).motionExit
+  && typeof (el.props as { exit?: unknown }).exit === 'object';
+
+export function AnimatePresence({ children, mode, initial = true }: { children?: ReactNode; mode?: string; initial?: boolean }) {
+  const current = useMemo(() => Children.toArray(children), [children]);
+  const prev = useRef<ReactNode[]>(current);
+  const exiting = useRef(new Map<string, Exiting>()).current;
+  const [, setTick] = useState(0);
+  const firstRender = useRef(true);
+  // figli usciti in questo disegno: restano montati in uscita (stesso posto di prima)
+  const keys = new Set(current.map((c) => (isValidElement(c) ? String(c.key) : '')));
+  prev.current.forEach((c, index) => {
+    if (!canExit(c)) return;
+    const k = String(c.key);
+    if (!keys.has(k) && !exiting.has(k)) exiting.set(k, { el: c, index });
+  });
+  for (const k of [...exiting.keys()]) if (keys.has(k)) exiting.delete(k); // rientrato
+  useLayoutEffect(() => { prev.current = current; firstRender.current = false; });
+  const done = (k: string) => { if (exiting.delete(k)) setTick((t) => t + 1); };
+  // mode="wait": il nuovo figlio entra dopo l'uscita del vecchio, come framer-motion
+  let out: ReactNode[] = mode === 'wait' && exiting.size ? [] : [...current];
+  for (const [k, { el, index }] of exiting) {
+    const ghost = cloneElement(el as ReactElement<Record<string, unknown>>, { key: k, __exitDone: () => done(k) });
+    out.splice(Math.min(index, out.length), 0, ghost);
+  }
+  // sempre lo stesso albero (Provider): cambiarlo dopo il primo disegno rimonterebbe i figli
+  return <PresenceInitialContext.Provider value={!(firstRender.current && !initial)}>{out}</PresenceInitialContext.Provider>;
 }
 // nel DOM non crea elementi: per griglie e space-y i figli sono figli del contenitore (cssChildren)
 (AnimatePresence as { cssTransparent?: boolean }).cssTransparent = true;
