@@ -1,0 +1,44 @@
+args: [-p, com.vibra.mobile, -c, android.intent.category.LAUNCHER, 1]
+ arg: "-p"
+ arg: "com.vibra.mobile"
+ arg: "-c"
+ arg: "android.intent.category.LAUNCHER"
+ arg: "1"
+data="com.vibra.mobile"
+data="android.intent.category.LAUNCHER"
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+[navbar] eventi registrati [
+  'originale: pillola non trovata sullo schermo (vedi navbar-originale-inizio.png)'
+]
+[rawvideo @ 0x563c62706280] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 1082 >= 1082
+# Gara barra in basso e menu — utente admin
+
+Stesso emulatore, stessi tocchi (adb), video con «Mostra tocchi»: tempi in ms dal frame in cui compare il tocco (più basso = meglio). Mediana, tra parentesi il peggiore.
+
+| misura | nativa | originale |
+|---|---|---|
+| tocco → la pillola parte (tocchi lenti) | 0 (506) | – |
+| tocco → la pillola arriva (tocchi lenti) | 0 (506) | – |
+| tocco → la pagina cambia (tocchi lenti) | 1440 (2509) | – |
+| frame al secondo della pillola in corsa | – | – |
+| tocco → la pillola parte (tocchi veloci di fila) | 2532 (2532) | – |
+| tocco → la pillola arriva (tocchi veloci di fila) | 2532 (2532) | – |
+| tocco → la pagina cambia (tocchi veloci di fila) | 886 (886) | – |
+| trascinamento: pillola dietro al dito | 368 (368) | – |
+| trascinamento: spostamenti della pillola al secondo | 1 (1) | – |
+| menu, 1ª apertura: tocco → il menu si muove | – | – |
+| menu, 1ª apertura: tocco → menu completo | 0 (0) | – |
+| menu, 1ª apertura: tocco → logo del menu fermo e visibile | 0 (0) | – |
+| menu, 2ª apertura: tocco → il menu si muove | – | – |
+| menu, 2ª apertura: tocco → menu completo | – | – |
+| menu, 2ª apertura: tocco → logo del menu fermo e visibile | – | – |
+
+nativa: 630 frame nel video (12.4 al secondo in media), scostamento orologio 2.37 s
+- frame disegnati dal sistema: 78 (1.5 al secondo) nel livello com.vibra.mobile/com.vibra.mobile.MainActivity#131
+- frame disegnati dal sistema: 4 (0.1 al secondo) nel livello StatusBar#92
+- tocchi non visti: 6 (lento, lento, lento, lento, veloce, menu)
+
+## Note
+- originale: pillola non trovata sullo schermo (vedi navbar-originale-inizio.png)
+
+Righe complete in navbar.json; video in video/.
