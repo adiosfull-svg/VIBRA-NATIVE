@@ -249,6 +249,11 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Sul telefono restano senza animazione: particelle sui fili (animateMotion), keyframe cm-*.
   Fili: Svg dimensionato sui nodi (react-native-svg non disegna fuori dal riquadro). Tocco sui fili: distanza
   dalla curva (PORT in ComitivaEditor). Emulatore: `tests/emulatore/pr/10-comitive.yaml`.
+- Secondo crash (nativo) appena c'è un filo: il Path di aggancio ha `pointerEvents: 'stroke'` e RNSVG su Android
+  va in IllegalArgumentException (`No enum constant ...STROKE`). `ui/elements` Path ora passa a react-native-svg
+  solo auto/none/box-none/box-only. webClasses: `minmax(0,1fr)` nei grid-template (TopBar dell'editor).
+  Verifica 17/10: giro 39049796947 (crea, riapre, filo "Amici", pannello card, pan) senza crash; la versione
+  vecchia (eef7cd4, giro 39049798881) va in errore JS al primo tocco sulla card (onPointerDown).
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
