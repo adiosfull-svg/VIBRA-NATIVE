@@ -138,6 +138,12 @@
     NB: il job dell'emulatore risulta verde anche con un flow fallito: guardare `esito.txt` nel branch dei risultati.
   - confronti: dopo il login il mouse va a (0,0) (prima restava sopra la pagina e attivava `group-hover`).
     Il titolo dell'header troncato sul web è normale (adjustsFontSizeToFit funziona solo sul telefono).
+  - Barra in basso e menu laterale (17/10, thread "Navbar e logo del menu"): il menu laterale non usa più
+    `display: none` (Fabric ricreava tutte le viste e ricaricava le immagini a ogni apertura: il logo VIBRA
+    compariva ~1 s dopo il pannello); resta montato fuori schermo. MobileNavBar: tocchi e trascinamento sul
+    thread UI con RNGH `useManualGesture` + Reanimated (pillola, scala e colore delle icone come le transizioni
+    CSS dell'originale); al JS arriva solo l'esito (`scheduleOnRN`). Verifica: video della gara navbar (logo
+    visibile in ogni frame dell'apertura), flow pr 05-tab-ritorno e 07-menu-laterali superati (run 39049187912).
 
 ## Fluidità (12/10) — regole in `docs/REGOLE-PRESTAZIONI.md`
 - Menu laterali (burger e ingranaggio): erano `<Modal>` montati all'apertura e il menu account era nell'header
@@ -204,6 +210,14 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   (l'ultima prima di un blocco dice dove).
 - Concorrenza a livello di job in entrambi i workflow (i push senza tag non annullano build in corso).
 - APK per il telefono dell'utente: `[apk]` o run_workflow `android-apk.yml`; link fisso release "anteprima".
+- Gara barra in basso e menu (17/10): input `gara: navbar` (anche `app_ref`). `tools/gara/navbar.mjs` fa gli
+  stessi tocchi adb su nativa e originale (Chrome, :5173) e registra il video dal lato host (`adb emu
+  screenrecord`, ~13 fps; quello del telefono dà ~3 fps); `tools/gara/navbar_analisi.py` → `navbar.md`.
+  Limite: con swangle l'emulatore disegna ~1,5 frame/s sia per la nativa sia per Chrome, quindi i ms sono
+  dominati dall'emulatore. Serve per vedere cosa compare frame per frame (es. il logo del menu), non per
+  misurare la fluidità: quella si giudica sui telefoni veri.
+- Il logcat completo esce compresso (`logcat-full.txt.gz`) con `logcat-rumorosi.txt` (tag più frequenti):
+  oltre 100 MB il push dei risultati falliva e il giro non lasciava nulla.
 
 ## Lezioni sullo strato ui/ e sul telefono (10-11/10, tutto verificato sull'emulatore)
 - **Classi**: NativeWind scarta dvh/env()/calc() → `viewportSizeStyle` (webStyle) le calcola; le classi
