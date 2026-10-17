@@ -160,7 +160,8 @@ def analizza(app):
             if mv is not None:
                 riga['menu_si_muove_ms'] = round((T[mv] - t_tap) * 1000)
     fps = (n - 1) / (T[-1] - T[0]) if n > 1 else 0
-    return {'righe': righe, 'frame': n, 'fps_video': round(fps, 1), 'scostamento_s': round(float(off), 3)}
+    return {'righe': righe, 'frame': n, 'fps_video': round(fps, 1), 'scostamento_s': round(float(off), 3),
+            'livelli': app.get('livelli', [])}
 
 
 ris = {'utente': dati.get('utente'), 'app': {}, 'note': dati.get('note', [])}
@@ -212,6 +213,8 @@ for k in (1, 2):
 for nome, a in ris['app'].items():
     L.append('')
     L.append(f"{nome}: {a['frame']} frame nel video ({a['fps_video']} al secondo in media), scostamento orologio {a['scostamento_s']} s")
+    for lv in a.get('livelli', [])[:2]:
+        L.append(f"- frame disegnati dal sistema: {lv['frame']} ({lv['al_secondo']} al secondo) nel livello {lv['nome'][:80]}")
     persi = [r for r in a['righe'] if 'errore' in r]
     if persi:
         L.append(f"- tocchi non visti: {len(persi)} ({', '.join(r['kind'] for r in persi)})")

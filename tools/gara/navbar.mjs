@@ -9,6 +9,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 
 const [utente = 'pr', OUT = 'out'] = process.argv.slice(2);
 mkdirSync(`${OUT}/video`, { recursive: true });
@@ -48,27 +49,53 @@ function findPill() {
 }
 
 // ── registrazione ──
+// Prima scelta: registrazione dell'EMULATORE (lato host, frame a intervalli regolari): screenrecord sul
+// telefono emulato passa da un display virtuale e un codificatore software e dava ~3 frame al secondo.
 let rec = null;
+let host = false;
+let ext = 'webm';
 function startRec(nome) {
-  sh(`rm -f /sdcard/nav-${nome}.mp4`);
-  rec = spawn('adb', ['shell', 'screenrecord', '--bit-rate', '3000000', '--size', `${Math.round(W * SCALA)}x${Math.round(H * SCALA)}`, `/sdcard/nav-${nome}.mp4`]);
+  const size = `${Math.round(W * SCALA)}x${Math.round(H * SCALA)}`;
+  try {
+    const r = adb('emu', 'screenrecord', 'start', '--fps', '30', '--size', size, '--bit-rate', '6000000', resolve(OUT, 'video', `nav-${nome}.webm`));
+    host = !/KO|unknown|error/i.test(r);
+  } catch (e) { host = false; note.push(`registrazione dell'emulatore non disponibile: ${String(e).slice(0, 120)}`); }
+  if (!host) {
+    ext = 'mp4';
+    sh(`rm -f /sdcard/nav-${nome}.mp4`);
+    rec = spawn('adb', ['shell', 'screenrecord', '--bit-rate', '3000000', '--size', size, `/sdcard/nav-${nome}.mp4`]);
+  } else ext = 'webm';
   return Date.now();
 }
 async function stopRec(nome) {
+  if (host) {
+    adb('emu', 'screenrecord', 'stop');
+    await sleep(4000);
+    return;
+  }
   sh('pkill -INT screenrecord || true');
   await new Promise((r) => { rec.on('exit', r); setTimeout(r, 5000); });
   await sleep(1500);
   adb('pull', `/sdcard/nav-${nome}.mp4`, `${OUT}/video/nav-${nome}.mp4`);
 }
+// frame davvero disegnati sullo schermo (SurfaceFlinger) durante la sequenza, per livello
+function timestats() {
+  const dump = sh('dumpsys SurfaceFlinger --timestats -dump');
+  sh('dumpsys SurfaceFlinger --timestats -disable');
+  return dump.split(/layerName = /).slice(1).map((b) => ({ nome: b.split('\n')[0].trim(), frame: Number(b.match(/totalFrames = (\d+)/)?.[1] ?? 0) }))
+    .sort((x, y) => y.frame - x.frame).slice(0, 4);
+}
 
 // ── la sequenza, identica per le due app ──
 // voci della barra: 0 Semine/Dashboard, 1 Weekend, 2 Clienti, 3 Cerca, 4 Il Mio (si parte da Il Mio)
 async function sequenza(nome, burger) {
+  writeFileSync(`${OUT}/navbar-${nome}-inizio.png`, adbBuf('exec-out', 'screencap', '-p'));
   const pill = findPill();
-  if (!pill) { note.push(`${nome}: pillola non trovata sullo schermo`); return null; }
+  if (!pill) { note.push(`${nome}: pillola non trovata sullo schermo (vedi navbar-${nome}-inizio.png)`); return null; }
   const y = pill.y;
   const xs = [0, 1, 2, 3, 4].map((i) => Math.round((W * (i + 0.5)) / 5));
   const eventi = [];
+  sh('dumpsys SurfaceFlinger --timestats -enable -clear');
   const t0 = startRec(nome);
   await sleep(2500);
   const at = () => (Date.now() - t0) / 1000;
@@ -98,8 +125,10 @@ async function sequenza(nome, burger) {
       await sleep(2200);
     }
   } else note.push(`${nome}: pulsante del menu non trovato`);
+  const durata = at();
   await stopRec(nome);
-  return { nome, scala: SCALA, W, H, dens: DENS, barra: { y, xs, pill }, eventi, video: `video/nav-${nome}.mp4` };
+  const livelli = timestats().map((l) => ({ ...l, al_secondo: Math.round((l.frame / durata) * 10) / 10 }));
+  return { nome, scala: SCALA, W, H, dens: DENS, barra: { y, xs, pill }, eventi, livelli, video: `video/nav-${nome}.${ext}` };
 }
 
 function burgerNativa() {
