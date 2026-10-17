@@ -32,6 +32,7 @@ import { THEME } from '../../../ui/palette.generated';
 import { Text } from '../../../ui/text';
 import { useVibraLogo } from '../../hooks/useVibraLogo';
 import { useLayoutUIActions, useLayoutUIOpen } from '../../lib/layoutUI';
+import { mountedTabs, pendingTab, resyncShownTab, shownTab } from '../../../ui/vibraTabs';
 
 type NavItem = { route: string; icon: React.ComponentType<any> | null; label: string };
 
@@ -208,6 +209,12 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   const moved = useSharedValue(false);
   const highlighted = useSharedValue(-1);
   const radialCount = useSharedValue(0);
+  // voce della barra → indice della tab nel navigatore (ui/vibraTabs), -1 se non è una tab o fuori dalle tab
+  const itemTab = useSharedValue<number[]>([]);
+  const tabKey = state ? NAV_ITEMS.map((i) => state.routes.findIndex((r) => r.name === i.route)).join(',') : '';
+  useEffect(() => { itemTab.value = tabKey ? tabKey.split(',').map(Number) : []; }, [tabKey, itemTab]);
+  // velo sul vetro mentre la sfocatura insegue la pagina nuova (il bersaglio del blur lo cambia il JS)
+  const veil = useSharedValue(0);
   const shared = useMemo<NavShared>(() => ({ visual, dragIdx }), [visual, dragIdx]);
   // stato iniziale delle icone (costante: le voci poi seguono le shared value senza ridisegnarsi)
   const initialRest = useRef(restIndex).current;
@@ -227,6 +234,10 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
     pillX.value = animate && !wasHidden ? withTiming(i * w, { duration: PILL_MS, easing: PILL_EASE }) : i * w;
   }, [mode, itemW, visual, pillX]);
   useEffect(() => { syncTo(restIndex); }, [restIndex, syncTo]);
+  const fadeVeil = useCallback(() => {
+    if (veil.value === 0) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => { veil.value = withTiming(0, { duration: 150 }); }));
+  }, [veil]);
   useEffect(() => { navProbeArrived(activeRoute); }, [activeRoute]);
   // larghezza nota (o cambiata): pillola al suo posto senza animazione
   useEffect(() => {
@@ -291,7 +302,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
       if (item) { navProbeStart(item.route); goRef.current(item); navProbeMark('navigate'); setTimeout(() => navProbeMark('timeout0'), 0); }
       // rete di sicurezza: navigazione rifiutata o verso la voce già attiva → pillola a riposo
       if (settle.current) clearTimeout(settle.current);
-      settle.current = setTimeout(() => { settle.current = null; syncTo(restRef.current, true); }, 1500);
+      settle.current = setTimeout(() => { settle.current = null; syncTo(restRef.current, true); resyncShownTab(); fadeVeil(); }, 1500);
     },
     radialRelease(anchor: number, best: number) {
       setRadial(null);
@@ -392,6 +403,13 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
         visual.value = idx;
         // dopo un trascinamento la pillola è sotto il dito: la si centra sulla voce
         if (moved.value) pillX.value = withTiming(idx * w, { duration: PILL_MS, easing: PILL_EASE });
+        // la pagina cambia qui, nello stesso frame (ui/vibraTabs), se è una tab già montata; il JS naviga dopo
+        const ti = idx < itemTab.value.length ? itemTab.value[idx] : -1;
+        if (ti >= 0 && (mountedTabs.value & (1 << ti)) !== 0 && shownTab.value !== ti) {
+          shownTab.value = ti;
+          pendingTab.value = ti;
+          veil.value = 1;
+        }
         scheduleOnRN(js.release, idx);
       }
       GestureStateManager.deactivate(e.handlerTag);
@@ -419,6 +437,9 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
   }));
 
   const blurTarget = usePageBlurTarget();
+  // il blur ha il bersaglio nuovo: il velo sparisce dopo due frame (il tempo di disegnarlo)
+  useEffect(() => { fadeVeil(); }, [blurTarget, fadeVeil]);
+  const veilStyle = useAnimatedStyle(() => ({ opacity: veil.value * 0.8 }));
   const radialOptions = radial ? RADIAL_MENUS[NAV_ITEMS[radial.anchorIndex].route] ?? [] : [];
   const offsets = getRadialOffsets(radialOptions.length);
 
@@ -427,6 +448,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
       {/* Vetro: blur(6px) saturate(160%) + bg-background/30 + border-t */}
       {/* su Android sfoca la pagina in primo piano (ui/pageLayers); blur(6px) → intensità 24 come backdrop-blur */}
       <NativeBlur intensity={24} target={blurTarget} />
+      <Animated.View pointerEvents="none" style={[styles.veil, veilStyle]} />
       {/* sopra la riga per l'ordine CSS degli elementi posizionati: non deve prendersi i tocchi */}
       <Div pointerEvents="none" className="absolute inset-0 border-t border-border bg-background/30" />
 
@@ -478,6 +500,7 @@ const styles = StyleSheet.create({
   row: { height: BAR_HEIGHT, width: '100%', maxWidth: 512, alignSelf: 'center', flexDirection: 'row', alignItems: 'center' },
   item: { flex: 1, minHeight: BAR_HEIGHT, minWidth: 44, alignItems: 'center', justifyContent: 'center', gap: 2 },
   pill: { position: 'absolute', top: 5, left: 0, height: 50, alignItems: 'center', justifyContent: 'center' },
+  veil: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: THEME.background },
   pillShape: {
     width: 75, height: 46, borderRadius: 23,
     backgroundColor: `${PRIMARY}8c`, // primary / 0.55
