@@ -770,22 +770,24 @@ const FLING_STOP_SPEED = 0.15; // dp/ms: da qui al termine il contenuto si spost
 type TapTarget = { view: { current: any }; press: { current: (() => void) | null } };
 const HScrollTapContext = createContext<Set<TapTarget> | null>(null);
 let lastBtnPress = 0;
+let lastFallback = 0;
 const TAP_SLOP = 10; // dp
 const TAP_MAX_MS = 600;
 
 function deliverTap(targets: Set<TapTarget>, x: number, y: number, since: number) {
-  // dopo il rilascio: se il pulsante ha ricevuto il tap (onPress) nel frattempo non si fa niente
-  requestAnimationFrame(() => {
+  // dopo il rilascio: se un pulsante ha ricevuto il tocco (onPressIn/onPress) nel frattempo non si fa
+  // niente; i suoi eventi possono arrivare anche qualche frame dopo il touchend della barra
+  setTimeout(() => {
     if (lastBtnPress >= since) return;
     for (const t of targets) {
       t.view.current?.measure?.((_x: number, _y: number, w: number, h: number, px: number, py: number) => {
         if (lastBtnPress >= since || !(x >= px && x <= px + w && y >= py && y <= py + h)) return;
         if (TEST_DIAG) console.log('VIBRA hscroll tap-di-riserva');
-        lastBtnPress = performance.now();
+        lastBtnPress = lastFallback = performance.now();
         t.press.current?.();
       });
     }
-  });
+  }, 150);
 }
 
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
@@ -793,7 +795,7 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
 }) {
   const offset = useRef({ x: 0, y: 0 }).current;
   const viewRef = useRef<ScrollView | null>(null);
-  const fling = useRef({ on: false, x: 0, t: 0, max: 0, last: 0 }).current;
+  const fling = useRef({ on: false, x: 0, t: 0, max: 0, last: 0, drag: false }).current;
   const flingStop = FLING_STOP && axis === 'x';
   const setRef = useCallback((view: ScrollView | null) => {
     viewRef.current = view;
@@ -830,7 +832,12 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
   // lancio che parte già a un bordo (dito rilasciato con il contenuto fermo al bordo): nessun evento di
   // scroll arriverà, lo scroller va fermato subito. A fine lancio (posizione ferma da qualche frame)
   // si ferma comunque ciò che resta dello scroller.
+  // solo i lanci del dito: uno scorrimento animato della pagina (scrollTo smooth, es. tab attiva al
+  // centro) emette gli stessi eventi e non va fermato
+  const onScrollEndDrag = useCallback(() => { fling.drag = true; }, [fling]);
   const onMomentumScrollBegin = useCallback(() => {
+    if (!fling.drag) return;
+    fling.drag = false;
     if (TEST_DIAG) console.log(`VIBRA hscroll lancio x=${Math.round(offset.x)}`);
     fling.on = true;
     fling.t = 0;
@@ -896,6 +903,7 @@ function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit
       style={outerStyle}
       contentContainerStyle={innerStyle}
       onScroll={handleScroll}
+      onScrollEndDrag={flingStop ? onScrollEndDrag : undefined}
       onMomentumScrollBegin={flingStop ? onMomentumScrollBegin : undefined}
       onMomentumScrollEnd={flingStop ? onMomentumScrollEnd : undefined}
       {...tapHandlers}
@@ -1240,8 +1248,14 @@ function useHScrollTap(targets: Set<TapTarget> | null, onPress: PressableProps['
   }, [targets, outerRef]);
   const onPressRef = useRef(onPress);
   onPressRef.current = onPress;
-  const handle = useCallback((e: GestureResponderEvent) => { lastBtnPress = performance.now(); onPressRef.current?.(e); }, []);
-  return targets ? { ref, onPress: handle } : null;
+  const handle = useCallback((e: GestureResponderEvent) => {
+    // lo stesso tocco già consegnato dal tap di riserva (eventi del pulsante arrivati in ritardo)
+    if (performance.now() - lastFallback < 300) return;
+    lastBtnPress = performance.now();
+    onPressRef.current?.(e);
+  }, []);
+  const onPressIn = useCallback(() => { lastBtnPress = performance.now(); }, []);
+  return targets ? { ref, onPress: handle, onPressIn } : null;
 }
 
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
@@ -1316,7 +1330,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       onLayout={min.onLayout}
       accessibilityRole={Platform.OS === 'web' ? undefined : 'button'}
       {...props}
-      {...(tap ? { ref: tap.ref } : null)}
+      {...(tap ? { ref: tap.ref, onPressIn: (e: GestureResponderEvent) => { tap.onPressIn(); (props as PressableProps).onPressIn?.(e); } } : null)}
       {...gestures}
       disabled={disabled}
       onPress={handlePress}
