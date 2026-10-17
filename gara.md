@@ -1,0 +1,31 @@
+# Gara barra in basso e menu — utente pr
+
+Stesso emulatore, stessi tocchi (adb), video con «Mostra tocchi»: tempi in ms dal frame in cui compare il tocco (più basso = meglio). Mediana, tra parentesi il peggiore.
+
+| misura | nativa | originale |
+|---|---|---|
+| tocco → la pillola parte (tocchi lenti) | 796 (1134) | 1666 (2051) |
+| tocco → la pillola arriva (tocchi lenti) | 1430 (2015) | – |
+| tocco → la pagina cambia (tocchi lenti) | 1308 (2108) | 1094 (1094) |
+| frame al secondo della pillola in corsa | 11 (12) | – |
+| tocco → la pillola parte (tocchi veloci di fila) | 266 (266) | – |
+| tocco → la pillola arriva (tocchi veloci di fila) | 1515 (1515) | – |
+| tocco → la pagina cambia (tocchi veloci di fila) | 266 (266) | – |
+| trascinamento: pillola dietro al dito | 654 (654) | 299 (299) |
+| trascinamento: spostamenti della pillola al secondo | 0 (0) | 0 (0) |
+| menu, 1ª apertura: tocco → il menu si muove | – | 76 (76) |
+| menu, 1ª apertura: tocco → menu completo | 35 (35) | 918 (918) |
+| menu, 1ª apertura: tocco → logo del menu fermo e visibile | 35 (35) | 918 (918) |
+| menu, 2ª apertura: tocco → il menu si muove | – | – |
+| menu, 2ª apertura: tocco → menu completo | 45 (45) | 58 (58) |
+| menu, 2ª apertura: tocco → logo del menu fermo e visibile | 45 (45) | 58 (58) |
+
+nativa: 540 frame nel video (12.0 al secondo in media), scostamento orologio 0.0 s
+- frame disegnati dal sistema: 77 (1.7 al secondo) nel livello com.vibra.mobile/com.vibra.mobile.MainActivity#139
+- frame disegnati dal sistema: 11 (0.2 al secondo) nel livello StatusBar#91
+
+originale: 563 frame nel video (13.3 al secondo in media), scostamento orologio 0.0 s
+- frame disegnati dal sistema: 43 (1 al secondo) nel livello com.android.chrome/ChromeChildSurface#175
+- frame disegnati dal sistema: 10 (0.2 al secondo) nel livello com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity#165
+
+Righe complete in navbar.json; video in video/.
