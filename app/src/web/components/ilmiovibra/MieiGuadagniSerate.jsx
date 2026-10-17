@@ -1,6 +1,6 @@
 // Port di src/components/ilmiovibra/MieiGuadagniSerate.jsx (convertito da scripts/port/codemod.mjs).
 import { invalidateFullTables } from '@/web/lib/query-client';
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, memo } from 'react';
 import { motion } from '@/ui/motion';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,8 @@ import { Euro, ChevronUp, NotebookPen, Check, Search, X } from '@/ui/icons.gener
 import { calcTables } from '@/legacy/utils/tables';
 import { useAllVenueLogos } from '@/web/hooks/useAllVenueLogos';
 import { getDow, validDayKey } from '@/legacy/utils/dateUtils';
+import { usePageWindowVariable } from '@/web/hooks/usePageWindow';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 
 
 
@@ -35,25 +37,27 @@ function fmtDayMonYY(dateStr) {
   return `${+k.slice(8, 10)} ${MON_IT[+k.slice(5, 7) - 1]} ${k.slice(2, 4)}`;
 }
 
-// Mostra le righe a blocchi: le prime subito, il resto DOPO le animazioni di ingresso (che restano
-// quelle originali). I blocchi RADDOPPIANO (24 → 72 → 144 → 288 → 576...): ogni passo ri-renderizza anche le
-// righe già presenti, quindi con un passo fisso il lavoro totale crescerebbe in modo quadratico;
-// raddoppiando bastano ~5 passi anche con 1000+ righe. Prima venivano renderizzate TUTTE insieme
-// (centinaia di righe con input, loghi e note) nel primo render del tab.
-function useProgressiveCount(total, initial = 24, step = 48, startDelay = 520) {
-  const ssr = typeof window === 'undefined';
-  const [count, setCount] = useState(ssr ? Infinity : initial);
-  useEffect(() => {
-    if (ssr || count >= total) return;
-    if (count <= initial) {
-      const t = setTimeout(() => setCount(c => c + Math.max(step, c)), startDelay);
-      return () => clearTimeout(t);
-    }
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setCount(c => c + Math.max(step, c))); });
-    return () => { cancelAnimationFrame(raf1); if (raf2) cancelAnimationFrame(raf2); };
-  }, [count, total, ssr, initial, step, startDelay]);
-  return count;
+// PORT: lista virtualizzata. L'originale disegna tutte le righe; qui (prima a blocchi che raddoppiavano
+// fino a montarle TUTTE, centinaia con due input ciascuna) ogni tasto premuto in un input ridisegnava
+// l'intera lista. Tab "guadagni": finestra sullo scroll della pagina (usePageWindowVariable: righe
+// quasi tutte alte uguali, ma quella "virtuale" con "PR: €..." può andare a capo), righe in posizione
+// assoluta separate dallo space-y-2 dell'originale. Tab "serate": righe ad altezza variabile (appunti
+// aperti) → montaggio progressivo (useProgressiveList). Righe in memo: digitando si ridisegna solo la
+// riga toccata.
+const OVERSCAN = 6;
+const ROW_GAP = 8; // space-y-2
+const ROW_HEIGHT_GUESS = 50; // poi vale l'altezza misurata (onLayout)
+
+function displayValueOf(att, edit, field) {
+  if (edit && edit[field] !== undefined) return edit[field];
+  return field === 'pct' ? (att.guadagno_pct ?? '') : (att.guadagno_fuori_mano ?? '');
+}
+
+function guadagnoOf(att, edit, isFounder) {
+  const pct = parseFloat(displayValueOf(att, edit, 'pct')) || 0;
+  const fuori = parseFloat(displayValueOf(att, edit, 'fuori')) || 0;
+  if (isFounder) return pct + fuori;
+  return (pct / 100) * (att.revenue || 0) + fuori;
 }
 
 export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false, userRole = null }) {
@@ -282,16 +286,14 @@ export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false,
     if (!q) return enriched;
     return enriched.filter((_, i) => searchIndex[i].includes(q));
   }, [enriched, q, searchIndex]);
-  const shownCount = useProgressiveCount(filtered.length);
-  const rowsToRender = q ? filtered : (shownCount >= filtered.length ? filtered : filtered.slice(0, shownCount));
+  const onlySerate = tab === 'serate';
 
-  const getDisplayValue = (att, field) => {
-    const dbValue = field === 'pct' ? (att.guadagno_pct ?? '') : (att.guadagno_fuori_mano ?? '');
-    if (editing[att.id] && editing[att.id][field] !== undefined) {
-      return editing[att.id][field];
-    }
-    return dbValue;
-  };
+  // Tab "guadagni": finestra sulle righe
+  const rowKeys = useMemo(() => (onlySerate ? EMPTY_ARR : filtered.map(r => r.att.id)), [filtered, onlySerate]);
+  const win = usePageWindowVariable(rowKeys, ROW_HEIGHT_GUESS, OVERSCAN, ROW_GAP);
+  // Tab "serate": righe montate man mano che la fine della lista si avvicina
+  const serateList = useProgressiveList(onlySerate ? filtered.length : 0, { initial: 15, step: 20 });
+
 
   const handleInputChange = (att, field, value) => {
     setEditing(prev => ({
@@ -327,18 +329,7 @@ export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false,
     }
   };
 
-  const calcGuadagno = (att) => {
-    const pctRaw = getDisplayValue(att, 'pct');
-    const fuoriRaw = getDisplayValue(att, 'fuori');
-    const pct = parseFloat(pctRaw) || 0;
-    const fuori = parseFloat(fuoriRaw) || 0;
-    if (isFounder) {
-      return pct + fuori;
-    } else {
-      const base = (pct / 100) * (att.revenue || 0);
-      return base + fuori;
-    }
-  };
+  const calcGuadagno = (att) => guadagnoOf(att, editing[att.id], isFounder);
 
   // Fatturato TOTALE della serata (da event.total_revenue) — lookup O(1)
   const getEventTotalRevenue = (eventId) => eventsById.get(eventId)?.total_revenue || 0;
@@ -350,8 +341,6 @@ export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false,
 
   const totalPrometerRevenue = useMemo(() => filtered.reduce((s, { att }) => s + (att.revenue || 0), 0), [filtered]);
 
-  // Per "Le mie serate", mostro solo il fatturato senza calcoli
-  const onlySerate = tab === 'serate';
   // Solo admin/super4 vedono il fatturato totale della serata
   const canSeeTotalRevenue = userRole === 'admin' || userRole === 'super4';
 
@@ -362,6 +351,18 @@ export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false,
     if (!logo.logoUrl) return null;
     return { url: logo.logoUrl, zoom: logo.zoom };
   };
+
+  // Callback stabili per le righe in memo: chiamano sempre le ultime versioni (che leggono lo stato
+  // di questo render, come nell'originale)
+  const latest = useRef(null);
+  latest.current = { handleInputFocus, handleInputBlur, handleInputChange, toggleNote, handleNoteChange };
+  const handlers = useMemo(() => ({
+    focus: (att, field, v) => latest.current.handleInputFocus(att, field, v),
+    blur: (att, field, dbValue) => latest.current.handleInputBlur(att, field, dbValue),
+    change: (att, field, v) => latest.current.handleInputChange(att, field, v),
+    toggleNote: (attId, note) => latest.current.toggleNote(attId, note),
+    noteChange: (attId, v, att) => latest.current.handleNoteChange(attId, v, att),
+  }), []);
 
   return (
     <Div className="space-y-5">
@@ -464,168 +465,55 @@ export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false,
               </Div>
             )}
 
-            {rowsToRender.map(({ att, ev, dateLabel }) => {
-              const revenue = att.revenue || 0;
-              const dow = getDow(ev.date);
-              const tables = calcTables(revenue, dow, ev.table_threshold);
-              const guadagno = calcGuadagno(att);
-              const pct = getDisplayValue(att, 'pct');
-              const fuoriMano = getDisplayValue(att, 'fuori');
-              const hasPct = (parseFloat(pct) || 0) > 0;
-              const hasFuori = (parseFloat(fuoriMano) || 0) > 0;
-              const isEditing = !!editing[att.id];
-
-              if (onlySerate) {
-                if (att._isVirtual) return null; // Le serate virtuali non hanno note, nascondo nel tab serate
-                const logo = getVenueLogo(ev.venue);
-                const isNoteOpen = !!expandedNotes[att.id];
-                const noteVal = noteTexts[att.id] !== undefined ? noteTexts[att.id] : (att.notes || '');
-                return (
-                  <Div key={att.id} className="relative overflow-hidden rounded-2xl bg-card border border-white/[0.06]" style={{ boxShadow: '0 2px 12px -4px rgba(0,0,0,0.3)' }}>
-                    <Btn
-                      className="px-3 py-2.5 grid items-center gap-2 cursor-pointer active:bg-secondary/20"
-                      style={{ gridTemplateColumns: '1fr 64px 48px 48px 28px' }}
-                      onClick={() => toggleNote(att.id, att.notes)}
-                    >
-                      <Div className="min-w-0 flex items-center gap-1.5">
-                        {logo && (
-                          <Div style={{ width: 22, height: 22, overflow: 'hidden', flexShrink: 0 }} className="rounded flex items-center justify-center">
-                            <Img src={logo.url} alt={ev.venue} style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${logo.zoom})`, transformOrigin: 'center' }} />
-                          </Div>
-                        )}
-                        <Div className="min-w-0">
-                          <P className="font-semibold text-xs truncate leading-tight">{ev.name}</P>
-                          <P className="text-[10px] text-muted-foreground leading-tight">
-                            {dateLabel}
-                          </P>
-                        </Div>
-                      </Div>
-                      <Div className="text-right">
-                        <P className="text-xs font-bold text-primary">€{revenue.toLocaleString('it-IT')}</P>
-                      </Div>
-                      <Div className="text-right">
-                        <P className="text-xs font-bold text-muted-foreground">{tables}</P>
-                        <P className="text-[9px] text-muted-foreground">tavoli</P>
-                      </Div>
-                      <Div className="text-right">
-                        <P className="text-[10px] text-muted-foreground truncate">{ev.venue || '—'}</P>
-                      </Div>
-                      <Div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${isNoteOpen ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}>
-                        {isNoteOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <NotebookPen className="w-3.5 h-3.5" />}
-                      </Div>
-                    </Btn>
-                    {isNoteOpen && (
-                      <Div className="border-t border-white/[0.06] px-3 py-3 space-y-2">
-                        <P className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold flex items-center gap-1">
-                          <NotebookPen className="w-3 h-3" /> I miei appunti per questa serata
-                        </P>
-                        <HtmlTextarea
-                          value={noteVal}
-                          onClick={e => e.stopPropagation()}
-                          onChange={e => handleNoteChange(att.id, e.target.value, att)}
-                          placeholder="Lista clienti, aneddoti, note personali sulla serata..."
-                          rows={12}
-                          className="w-full bg-secondary/40 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                        <Div className="flex justify-end items-center gap-2">
-                          {savingNote[att.id] && (
-                            <Span className="text-[10px] text-muted-foreground">Salvataggio...</Span>
-                          )}
-                          {!savingNote[att.id] && noteTexts[att.id] !== undefined && (
-                            <Span className="text-[10px] text-green-400 flex items-center gap-1"><Check className="w-3 h-3" /> Salvato</Span>
-                          )}
-                        </Div>
-                      </Div>
-                    )}
-                  </Div>
-                );
-              }
-
-              // Tab "guadagni"
-              const logo = getVenueLogo(ev.venue);
-              const isVirtual = !!att._isVirtual;
-              const prTotForEvent = prRevenueByEvent[ev.id] || 0;
-              return (
-                <Div
-                   key={att.id}
-                   className={`relative overflow-hidden rounded-2xl px-3 py-2.5 grid items-center gap-1.5 ${isVirtual ? 'border border-primary/30 bg-primary/5' : 'bg-card border border-white/[0.06]'}`}
-                     style={{ boxShadow: '0 2px 12px -4px rgba(0,0,0,0.3)', gridTemplateColumns: canSeeTotalRevenue ? '1fr 52px 52px 52px 52px 52px' : '1fr 52px 52px 52px 52px' }}
-                 >
-                  <Div className="min-w-0 flex items-center gap-1.5">
-                    {logo && (
-                      <Div style={{ width: 22, height: 22, overflow: 'hidden', flexShrink: 0 }} className="rounded flex items-center justify-center">
-                        <Img src={logo.url} alt={ev.venue} style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${logo.zoom})`, transformOrigin: 'center' }} />
-                      </Div>
-                    )}
-                    <Div className="min-w-0">
-                      <P className="font-semibold text-xs truncate leading-tight">{ev.name}</P>
-                      <P className="text-[10px] text-muted-foreground leading-tight">
-                        {ev.date ? format(parseISO(ev.date), 'd MMM yy', { locale: it }) : ''}
-                        {isVirtual && <Span className="ml-1 text-primary/70">PR: €{prTotForEvent.toLocaleString('it-IT')}</Span>}
-                      </P>
-                    </Div>
-                  </Div>
-
-                  {/* Fatturato Totale - solo admin/super4 */}
-                  {canSeeTotalRevenue && (
-                    <Div className="text-right">
-                      <P className="text-xs font-bold text-muted-foreground">€{getEventTotalRevenue(ev.id).toLocaleString('it-IT')}</P>
-                    </Div>
-                  )}
-
-                  {/* Mio Fatturato */}
-                  <Div className="text-right">
-                    {isVirtual
-                      ? <P className="text-xs font-bold text-muted-foreground/50">€0</P>
-                      : <P className="text-xs font-bold text-primary">€{revenue.toLocaleString('it-IT')}</P>
-                    }
-                  </Div>
-
-                  {/* % / Guadagno input */}
-                  <Div className="flex items-center">
-                    <HtmlInput
-                      type="number"
-                      min="0"
-                      max={isFounder ? undefined : 100}
-                      step="0.01"
-                      placeholder="0"
-                      value={pct}
-                      onFocus={() => handleInputFocus(att, 'pct', pct)}
-                      onBlur={() => handleInputBlur(att, 'pct', att.guadagno_pct ?? 0)}
-                      onChange={e => handleInputChange(att, 'pct', e.target.value)}
-                      className="w-full bg-secondary/40 border border-border rounded px-1 py-1 text-[11px] text-center focus:outline-none focus:ring-1 focus:ring-primary"
+            {onlySerate ? (
+              <>
+                {filtered.slice(0, serateList.count).map(({ att, ev, dateLabel }) => {
+                  if (att._isVirtual) return null; // Le serate virtuali non hanno note, nascondo nel tab serate
+                  const logo = getVenueLogo(ev.venue);
+                  return (
+                    <SerataRow
+                      key={att.id}
+                      att={att}
+                      ev={ev}
+                      dateLabel={dateLabel}
+                      logoUrl={logo?.url}
+                      logoZoom={logo?.zoom}
+                      isNoteOpen={!!expandedNotes[att.id]}
+                      noteText={noteTexts[att.id]}
+                      saving={!!savingNote[att.id]}
+                      handlers={handlers}
                     />
-                  </Div>
-
-                  {/* Fuori mano input */}
-                  <Div className="flex items-center">
-                    <HtmlInput
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0"
-                      value={fuoriMano}
-                      onFocus={() => handleInputFocus(att, 'fuori', fuoriMano)}
-                      onBlur={() => handleInputBlur(att, 'fuori', att.guadagno_fuori_mano ?? 0)}
-                      onChange={e => handleInputChange(att, 'fuori', e.target.value)}
-                      className="w-full bg-secondary/40 border border-border rounded px-1 py-1 text-[11px] text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                  );
+                })}
+                <Div ref={serateList.sentinelRef} style={{ position: 'absolute', bottom: 0, left: 0, height: 0 }} />
+              </>
+            ) : (
+              <Div ref={win.containerRef} style={{ position: 'relative', height: win.total }}>
+                {filtered.slice(win.start, win.end).map(({ att, ev, dateLabel }, i) => {
+                  const idx = win.start + i;
+                  const logo = getVenueLogo(ev.venue);
+                  return (
+                    <GuadagnoRow
+                      key={att.id}
+                      top={win.offsets[idx]}
+                      onMeasure={win.onItemLayout}
+                      att={att}
+                      ev={ev}
+                      dateLabel={dateLabel}
+                      logoUrl={logo?.url}
+                      logoZoom={logo?.zoom}
+                      edit={editing[att.id]}
+                      saved={!!savedFeedback[att.id]}
+                      isFounder={isFounder}
+                      canSeeTotalRevenue={canSeeTotalRevenue}
+                      prTotForEvent={prRevenueByEvent[ev.id] || 0}
+                      eventTotalRevenue={getEventTotalRevenue(ev.id)}
+                      handlers={handlers}
                     />
-                  </Div>
-
-                  {/* Guadagno finale */}
-                  <Div className="text-right">
-                    {(hasPct || hasFuori) ? (
-                      <Div className="flex items-center justify-end gap-1">
-                        {savedFeedback[att.id] && <Check className="w-3 h-3 text-green-400 shrink-0" />}
-                        <P className="text-xs font-bold text-green-400">€{guadagno.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</P>
-                      </Div>
-                    ) : (
-                      <P className="text-xs text-muted-foreground">—</P>
-                    )}
-                  </Div>
-                </Div>
-              );
-            })}
+                  );
+                })}
+              </Div>
+            )}
           </Div>
         </Div>
       )}
@@ -633,3 +521,160 @@ export default function MieiGuadagniSerate({ promoterId, tab, isFounder = false,
     </Div>
   );
 }
+// Riga del tab "Le mie serate" (markup dell'originale)
+const SerataRow = memo(function SerataRow({ att, ev, dateLabel, logoUrl, logoZoom, isNoteOpen, noteText, saving, handlers }) {
+  const revenue = att.revenue || 0;
+  const tables = calcTables(revenue, getDow(ev.date), ev.table_threshold);
+  const noteVal = noteText !== undefined ? noteText : (att.notes || '');
+  return (
+    <Div className="relative overflow-hidden rounded-2xl bg-card border border-white/[0.06]" style={{ boxShadow: '0 2px 12px -4px rgba(0,0,0,0.3)' }}>
+      <Btn
+        className="px-3 py-2.5 grid items-center gap-2 cursor-pointer active:bg-secondary/20"
+        style={{ gridTemplateColumns: '1fr 64px 48px 48px 28px' }}
+        onClick={() => handlers.toggleNote(att.id, att.notes)}
+      >
+        <Div className="min-w-0 flex items-center gap-1.5">
+          {logoUrl && (
+            <Div style={{ width: 22, height: 22, overflow: 'hidden', flexShrink: 0 }} className="rounded flex items-center justify-center">
+              <Img src={logoUrl} alt={ev.venue} style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${logoZoom})`, transformOrigin: 'center' }} />
+            </Div>
+          )}
+          <Div className="min-w-0">
+            <P className="font-semibold text-xs truncate leading-tight">{ev.name}</P>
+            <P className="text-[10px] text-muted-foreground leading-tight">
+              {dateLabel}
+            </P>
+          </Div>
+        </Div>
+        <Div className="text-right">
+          <P className="text-xs font-bold text-primary">€{revenue.toLocaleString('it-IT')}</P>
+        </Div>
+        <Div className="text-right">
+          <P className="text-xs font-bold text-muted-foreground">{tables}</P>
+          <P className="text-[9px] text-muted-foreground">tavoli</P>
+        </Div>
+        <Div className="text-right">
+          <P className="text-[10px] text-muted-foreground truncate">{ev.venue || '—'}</P>
+        </Div>
+        <Div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${isNoteOpen ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}>
+          {isNoteOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <NotebookPen className="w-3.5 h-3.5" />}
+        </Div>
+      </Btn>
+      {isNoteOpen && (
+        <Div className="border-t border-white/[0.06] px-3 py-3 space-y-2">
+          <P className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold flex items-center gap-1">
+            <NotebookPen className="w-3 h-3" /> I miei appunti per questa serata
+          </P>
+          <HtmlTextarea
+            value={noteVal}
+            onClick={e => e.stopPropagation()}
+            onChange={e => handlers.noteChange(att.id, e.target.value, att)}
+            placeholder="Lista clienti, aneddoti, note personali sulla serata..."
+            rows={12}
+            className="w-full bg-secondary/40 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <Div className="flex justify-end items-center gap-2">
+            {saving && (
+              <Span className="text-[10px] text-muted-foreground">Salvataggio...</Span>
+            )}
+            {!saving && noteText !== undefined && (
+              <Span className="text-[10px] text-green-400 flex items-center gap-1"><Check className="w-3 h-3" /> Salvato</Span>
+            )}
+          </Div>
+        </Div>
+      )}
+    </Div>
+  );
+});
+
+// Riga del tab "I miei guadagni" (markup dell'originale), in posizione assoluta nella finestra
+const GuadagnoRow = memo(function GuadagnoRow({ top, onMeasure, att, ev, dateLabel, logoUrl, logoZoom, edit, saved, isFounder, canSeeTotalRevenue, prTotForEvent, eventTotalRevenue, handlers }) {
+  const revenue = att.revenue || 0;
+  const guadagno = guadagnoOf(att, edit, isFounder);
+  const pct = displayValueOf(att, edit, 'pct');
+  const fuoriMano = displayValueOf(att, edit, 'fuori');
+  const hasPct = (parseFloat(pct) || 0) > 0;
+  const hasFuori = (parseFloat(fuoriMano) || 0) > 0;
+  const isVirtual = !!att._isVirtual;
+  return (
+    <Div style={{ position: 'absolute', top, left: 0, right: 0 }} onLayout={e => onMeasure(att.id, e)}>
+      <Div
+        className={`relative overflow-hidden rounded-2xl px-3 py-2.5 grid items-center gap-1.5 ${isVirtual ? 'border border-primary/30 bg-primary/5' : 'bg-card border border-white/[0.06]'}`}
+        style={{ boxShadow: '0 2px 12px -4px rgba(0,0,0,0.3)', gridTemplateColumns: canSeeTotalRevenue ? '1fr 52px 52px 52px 52px 52px' : '1fr 52px 52px 52px 52px' }}
+      >
+        <Div className="min-w-0 flex items-center gap-1.5">
+          {logoUrl && (
+            <Div style={{ width: 22, height: 22, overflow: 'hidden', flexShrink: 0 }} className="rounded flex items-center justify-center">
+              <Img src={logoUrl} alt={ev.venue} style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${logoZoom})`, transformOrigin: 'center' }} />
+            </Div>
+          )}
+          <Div className="min-w-0">
+            <P className="font-semibold text-xs truncate leading-tight">{ev.name}</P>
+            <P className="text-[10px] text-muted-foreground leading-tight">
+              {dateLabel}
+              {isVirtual && <Span className="ml-1 text-primary/70">PR: €{prTotForEvent.toLocaleString('it-IT')}</Span>}
+            </P>
+          </Div>
+        </Div>
+
+        {/* Fatturato Totale - solo admin/super4 */}
+        {canSeeTotalRevenue && (
+          <Div className="text-right">
+            <P className="text-xs font-bold text-muted-foreground">€{eventTotalRevenue.toLocaleString('it-IT')}</P>
+          </Div>
+        )}
+
+        {/* Mio Fatturato */}
+        <Div className="text-right">
+          {isVirtual
+            ? <P className="text-xs font-bold text-muted-foreground/50">€0</P>
+            : <P className="text-xs font-bold text-primary">€{revenue.toLocaleString('it-IT')}</P>
+          }
+        </Div>
+
+        {/* % / Guadagno input */}
+        <Div className="flex items-center">
+          <HtmlInput
+            type="number"
+            min="0"
+            max={isFounder ? undefined : 100}
+            step="0.01"
+            placeholder="0"
+            value={pct}
+            onFocus={() => handlers.focus(att, 'pct', pct)}
+            onBlur={() => handlers.blur(att, 'pct', att.guadagno_pct ?? 0)}
+            onChange={e => handlers.change(att, 'pct', e.target.value)}
+            className="w-full bg-secondary/40 border border-border rounded px-1 py-1 text-[11px] text-center focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Div>
+
+        {/* Fuori mano input */}
+        <Div className="flex items-center">
+          <HtmlInput
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0"
+            value={fuoriMano}
+            onFocus={() => handlers.focus(att, 'fuori', fuoriMano)}
+            onBlur={() => handlers.blur(att, 'fuori', att.guadagno_fuori_mano ?? 0)}
+            onChange={e => handlers.change(att, 'fuori', e.target.value)}
+            className="w-full bg-secondary/40 border border-border rounded px-1 py-1 text-[11px] text-center focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Div>
+
+        {/* Guadagno finale */}
+        <Div className="text-right">
+          {(hasPct || hasFuori) ? (
+            <Div className="flex items-center justify-end gap-1">
+              {saved && <Check className="w-3 h-3 text-green-400 shrink-0" />}
+              <P className="text-xs font-bold text-green-400">€{guadagno.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</P>
+            </Div>
+          ) : (
+            <P className="text-xs text-muted-foreground">—</P>
+          )}
+        </Div>
+      </Div>
+    </Div>
+  );
+});
