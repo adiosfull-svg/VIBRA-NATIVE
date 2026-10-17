@@ -11,6 +11,11 @@ export function triggerStatsRecompute(qc) {
   base44.functions.invoke('recomputeCumulativeStats', {})
     .then(() => {
       qc.refetchQueries({ queryKey: ['promoters'] });
+      // I campi cum_* dei clienti (visite, rating, ultima presenza) sono appena
+      // stati ricalcolati sul server: senza questo refetch la lista clienti li
+      // mostrava vecchi fino alla scadenza dello staleTime (10 min) o della
+      // cache persistita (30 min).
+      qc.invalidateQueries({ queryKey: ['clients'] });
     })
     .catch(() => {});
 }

@@ -1,8 +1,8 @@
 // Port di src/hooks/useNotifications.jsx (stessa API).
 // PORT: nell'originale l'header (con la campanella) è montato una volta sola in AppLayout; qui ogni
 // pagina ha il suo header, e ogni pagina montata (5 tab precaricate + stack) aveva il suo osservatore con
-// polling e subscription realtime: a ogni apertura di pagina la campanella nuova rifaceva le due richieste
-// (dati "stale" dopo 60 s) e la pagina non era "pronta" finché non tornavano. Ora polling, refetch al
+// refetch e subscription realtime: a ogni apertura di pagina la campanella nuova rifaceva le due richieste
+// (dati "stale" dopo 60 s) e la pagina non era "pronta" finché non tornavano. Ora refetch al
 // focus e subscription stanno in UN solo punto (useNotificationsPolling, layout dell'app); le campanelle
 // leggono la cache senza richieste proprie (docs/REGOLE-PRESTAZIONI.md §2).
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,7 +41,7 @@ function notificationsQueryOptions(user) {
   };
 }
 
-/** Un solo osservatore per tutta l'app (layout): polling, refetch al focus e subscription realtime. */
+/** Un solo osservatore per tutta l'app (layout): refetch al focus e subscription realtime. */
 export function useNotificationsPolling() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -59,7 +59,11 @@ export function useNotificationsPolling() {
   }, [user, queryClient]);
   useQuery({
     ...notificationsQueryOptions(user),
-    refetchInterval: 2 * 60 * 1000, // polling ogni 2 minuti
+    // Solo realtime: niente polling periodico (come l'originale dal 16/10). Gli
+    // aggiornamenti arrivano dalla subscription. Resta un solo controllo quando si
+    // torna nell'app (focus, collegato ad AppState in lib/queryClient.ts): con il
+    // telefono bloccato o l'app in background la connessione realtime si chiude e le
+    // notifiche arrivate nel frattempo non generano eventi.
     refetchOnWindowFocus: true,
   });
 }
@@ -139,8 +143,8 @@ export function useNotifications() {
     },
     // Non invalidare: un refetch immediato dopo il deleteMany può incappare nel
     // lag di read-after-write del DB e restituire le notifiche appena cancellate
-    // (effetto "flash e riappaiono"). La cache resta [] (ottimistica); il
-    // polling (2min) e gli eventi realtime future riconciliano naturalmente.
+    // (effetto "flash e riappaiono"). La cache resta [] (ottimistica); gli
+    // eventi realtime futuri e il ritorno nell'app riconciliano naturalmente.
     onSettled: () => updateCache(() => []),
   });
 
