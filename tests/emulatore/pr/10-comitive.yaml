@@ -79,22 +79,31 @@ appId: com.vibra.mobile
 - tapOn:
     text: "Amici"
     optional: true
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
 - takeScreenshot: comitive-05c-filo
+# particelle sui fili: due foto a distanza, devono essere in punti diversi
+- waitForAnimationToEnd:
+    timeout: 700
+- takeScreenshot: comitive-05c2-particelle
 # tocco sulla prima card: pannello della card
 - tapOn:
     point: 22%, 53%
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
 - takeScreenshot: comitive-05d-pannello
 - back
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
 # trascinamento della tela (pan): non deve chiudere l'app
 - swipe:
     start: 60%, 60%
     end: 30%, 45%
     duration: 500
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
 - takeScreenshot: comitive-06-pan
 - back
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
 - takeScreenshot: comitive-07-chiusa

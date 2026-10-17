@@ -131,6 +131,8 @@ function curve(from, fs, to, ts) {
     d: `M ${from.x} ${from.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${to.x} ${to.y}`,
     from,
     to,
+    c1, // PORT: punti di controllo per le particelle del telefono (comitiveAnim)
+    c2,
     mid: bezierMid(from, c1, c2, to),
   };
 }

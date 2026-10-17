@@ -1,7 +1,6 @@
 // Port di src/components/client/comitive/ComitivaCanvasParts.jsx (convertito da scripts/port/codemod.mjs).
-// PORT: <animateMotion>/<animate> (particelle che scorrono sui fili) non hanno equivalente in react-native-svg:
-// tolti (erano gruppi con opacity 0 animata, senza animazione restano invisibili). Le animazioni CSS
-// (cm-pop-in, cm-wire-flow, cm-end-pulse) non ci sono: card e fili compaiono senza animazione.
+// PORT: <animateMotion>/<animate> (particelle sui fili) e keyframe CSS (cm-pop-in, cm-wire-flow, cm-end-pulse,
+// cm-beat) sul telefono sono rifatti in comitiveAnim (Reanimated, thread UI). Sul web restano statici.
 import React, { memo } from 'react';
 import { Platform } from 'react-native';
 import { MapPin, Star, ZoomIn, ZoomOut, Maximize2, Crosshair, Lock, Unlock, Target, MoveDiagonal2, BadgeCheck } from '@/ui/icons.generated';
@@ -10,6 +9,7 @@ import {
   LINK_TYPES, SOURCE_META, NODE_W, NODE_H, sourceKey, initialsOf, zoneOf, fmtEuro, wireGeometry, tempWire,
   NODE_KINDS, kindOf,
 } from './comitiveUtils';
+import { WireClock, WireParticles, FlowPath, PulseCircle, HeartbeatG, PopIn } from './comitiveAnim';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Circle, G, Line, Path, Rect, Svg, SvgText } from '@/ui/elements';
@@ -51,6 +51,7 @@ export const ComitivaNode = memo(function ComitivaNode({
     >
       {/* data-client-id: stesso menu cliente della lista Clienti (tasto destro / pressione prolungata, ClientSerateMenu).
           data-no-multiselect: qui la pressione lunga non attiva la selezione multipla della lista dietro. */}
+      <PopIn entering={entering}>
       <Div
         data-client-id={own ? client.id : undefined}
         data-client-name={own ? client.name || '' : undefined}
@@ -58,7 +59,8 @@ export const ComitivaNode = memo(function ComitivaNode({
         className="relative rounded-2xl transition-[box-shadow,border-color] duration-200 [-webkit-touch-callout:none]"
         style={{
           // Nascita della card (appena aggiunta): parte piccola, rimbalza e si assesta
-          animation: entering ? 'cm-pop-in 560ms cubic-bezier(.2,.9,.3,1.1) both' : undefined,
+          // PORT: sul telefono la fa PopIn (attorno a questo Div)
+          animation: entering && !HOVER_NONE ? 'cm-pop-in 560ms cubic-bezier(.2,.9,.3,1.1) both' : undefined,
           minHeight: NODE_H - 10,
           background: selected ? 'linear-gradient(135deg, #1E2535, #242B3D)' : 'linear-gradient(135deg, #141820, #1A1F2E)',
           border: selected
@@ -179,6 +181,7 @@ export const ComitivaNode = memo(function ComitivaNode({
         </Div>
         </>)}
       </Div>
+      </PopIn>
 
       {/* Maniglia d'angolo: trascina per ingrandire / rimpicciolire (importanza nella comitiva) */}
       {!locked && (
@@ -230,9 +233,11 @@ export const ComitivaNode = memo(function ComitivaNode({
 
 /* ───────────────────────── Fili (memo: non si ridisegnano su pan/zoom) ───────────────────────── */
 export const WiresLayer = memo(function WiresLayer({
-  svgRef, edges, pos, heights, sizes = {}, selectedNodeId, selectedEdgeId, draggingId, linkDraft,
+  svgRef, edges, pos, heights, sizes = {}, selectedNodeId, selectedEdgeId, draggingId, linkDraft, paused = false,
 }) {
   const beats = [];
+  // PORT: sul telefono particelle solo fino a PARTICLE_MAX fili (5 cerchi animati per filo sul thread UI)
+  const particles = HOVER_NONE && edges.length <= PARTICLE_MAX;
   const wires = edges.map((e, idx) => {
     const a = pos[e.from];
     const b = pos[e.to];
@@ -259,8 +264,12 @@ export const WiresLayer = memo(function WiresLayer({
           strokeOpacity={goal ? (hot ? 0.95 : 0.75) : hot ? 0.8 : 0.5}
           strokeLinecap="round"
           strokeDasharray={goal ? '6 8' : undefined}
-          style={goal && !moving ? { animation: 'cm-wire-flow 1.6s linear infinite' } : undefined}
+          style={goal && !moving && !HOVER_NONE ? { animation: 'cm-wire-flow 1.6s linear infinite' } : undefined}
         />
+        {/* PORT: cm-wire-flow sul telefono: tratteggio animato sopra (stesso tratto) */}
+        {HOVER_NONE && goal && !moving && (
+          <FlowPath period={1.6} d={w.d} fill="none" stroke={color} strokeWidth={hot ? 2 : 1.5} strokeOpacity={hot ? 0.95 : 0.75} strokeLinecap="round" strokeDasharray="6 8" />
+        )}
         {goal && !e.label && (
           <G style={{ pointerEvents: 'none' }}>
             <Circle cx={w.mid.x} cy={w.mid.y} r={9} fill="#0A0D14" stroke={`${color}88`} strokeWidth={1} />
@@ -269,13 +278,16 @@ export const WiresLayer = memo(function WiresLayer({
           </G>
         )}
 
-        {/* PORT: particelle <animateMotion> dell'originale tolte (vedi in cima) */}
+        {/* PORT: particelle <animateMotion> dell'originale: sul telefono WireParticles, sul web assenti */}
+        {particles && !moving && !goal && <WireParticles w={w} color={color} hot={hot} idx={idx} />}
 
         {hot && [w.from, w.to].map((p, i) => (
           <G key={i}>
             <Circle cx={p.x} cy={p.y} r={5.5} fill={color} fillOpacity={0.2} />
             <Circle cx={p.x} cy={p.y} r={2.8} fill={color} />
-            <Circle cx={p.x} cy={p.y} r={3.5} fill="none" stroke={color} strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.4s ease-in-out infinite' }} />
+            {HOVER_NONE
+              ? <PulseCircle period={1.4} cx={p.x} cy={p.y} fill="none" stroke={color} strokeWidth={1.2} />
+              : <Circle cx={p.x} cy={p.y} r={3.5} fill="none" stroke={color} strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.4s ease-in-out infinite' }} />}
           </G>
         ))}
 
@@ -297,9 +309,13 @@ export const WiresLayer = memo(function WiresLayer({
     temp = (
       <G>
         <Path d={w.d} fill="none" stroke="#f472b6" strokeWidth={7} strokeOpacity={0.07} strokeLinecap="round" />
-        <Path d={w.d} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" style={{ animation: 'cm-wire-flow 1.2s linear infinite' }} />
+        {HOVER_NONE
+          ? <FlowPath period={1.2} d={w.d} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" />
+          : <Path d={w.d} fill="none" stroke="#f472b6" strokeWidth={1.4} strokeOpacity={0.7} strokeDasharray="6 8" style={{ animation: 'cm-wire-flow 1.2s linear infinite' }} />}
         <Circle cx={w.from.x} cy={w.from.y} r={3} fill="#f472b6" />
-        <Circle cx={linkDraft.to.x} cy={linkDraft.to.y} r={4} fill="none" stroke="#f472b6" strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.2s ease-in-out infinite' }} />
+        {HOVER_NONE
+          ? <PulseCircle period={1.2} cx={linkDraft.to.x} cy={linkDraft.to.y} fill="none" stroke="#f472b6" strokeWidth={1.2} />
+          : <Circle cx={linkDraft.to.x} cy={linkDraft.to.y} r={4} fill="none" stroke="#f472b6" strokeWidth={1.2} style={{ animation: 'cm-end-pulse 1.2s ease-in-out infinite' }} />}
       </G>
     );
   }
@@ -310,7 +326,7 @@ export const WiresLayer = memo(function WiresLayer({
   const content = (
     <>
       {wires}
-      <G className="cm-heartbeat" style={{ pointerEvents: 'none' }}>
+      <BeatGroup>
         {beats.map((bt) => (
           <G key={bt.key} opacity={bt.dim ? 0.12 : 1}>
             <Circle cx={bt.a.x} cy={bt.a.y} r={5.5} fill={bt.color} fillOpacity={0.18} />
@@ -319,17 +335,27 @@ export const WiresLayer = memo(function WiresLayer({
             <Circle cx={bt.b.x} cy={bt.b.y} r={2.6} fill={bt.color} />
           </G>
         ))}
-      </G>
+      </BeatGroup>
       {temp}
     </>
   );
   if (!box) return <Svg ref={svgRef} className="absolute left-0 top-0 overflow-visible" width="1" height="1" style={{ pointerEvents: 'none' }}>{content}</Svg>;
   return (
-    <Svg ref={svgRef} width={box.w} height={box.h} style={{ position: 'absolute', left: box.x, top: box.y, pointerEvents: 'none' }}>
-      <G transform={`translate(${-box.x} ${-box.y})`}>{content}</G>
-    </Svg>
+    <WireClock paused={paused}>
+      <Svg ref={svgRef} width={box.w} height={box.h} style={{ position: 'absolute', left: box.x, top: box.y, pointerEvents: 'none' }}>
+        <G transform={`translate(${-box.x} ${-box.y})`}>{content}</G>
+      </Svg>
+    </WireClock>
   );
 });
+
+const PARTICLE_MAX = 60;
+
+/** cm-heartbeat: sul web la classe del keyframe CSS, sul telefono HeartbeatG (stesso battito). */
+function BeatGroup({ children }) {
+  if (HOVER_NONE) return <HeartbeatG>{children}</HeartbeatG>;
+  return <G className="cm-heartbeat" style={{ pointerEvents: 'none' }}>{children}</G>;
+}
 
 /** Riquadro (mondo) che contiene tutti i nodi e il filo in costruzione, con margine per curve ed etichette. */
 function svgBox(pos, linkDraft) {

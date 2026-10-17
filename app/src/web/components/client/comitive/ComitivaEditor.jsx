@@ -1,7 +1,7 @@
 // Port di src/components/client/comitive/ComitivaEditor.jsx (convertito da scripts/port/codemod.mjs).
-// PORT: <style> dell'originale (keyframe cm-* e .cm-list-dragging) tolto: sul telefono le card e l'etichetta
-// trascinata compaiono senza animazione. Gesti sul telefono: data-*/closest/elementFromPoint da ui/domData,
-// pinch dai pointer per dito di ui/gestures, ResizeObserver dallo shim del DOM.
+// PORT: <style> dell'originale (keyframe cm-* e .cm-list-dragging) tolto: sul telefono le stesse animazioni
+// le fa comitiveAnim (Reanimated: GhostAnim, DropRing, listDragHighlight; fili e card in ComitivaCanvasParts).
+// Gesti sul telefono: data-*/closest/elementFromPoint da ui/domData, pinch dai pointer per dito di ui/gestures, ResizeObserver dallo shim del DOM.
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { createPortal } from '@/web/shims/react-dom';
@@ -25,6 +25,7 @@ import {
   kindOf, nodeFromMeta,
 } from './comitiveUtils';
 import { ComitivaNode, WiresLayer, CanvasControls, CanvasMinimap } from './ComitivaCanvasParts';
+import { GhostAnim, DropRing, DROP_EASE, EASE_OUT_CSS, listDragHighlight } from './comitiveAnim';
 
 import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
@@ -223,6 +224,7 @@ function PeopleSidebar({
       // Evidenzia chi sto trascinando, scurisce gli altri nomi (classi CSS, nessun re-render della lista)
       s.item.setAttribute('data-active-drag', '1');
       el.classList.add('cm-list-dragging');
+      listDragHighlight(el, s.item, true);
       setGhost({ x: s.x, y: s.y, label: s.label, phase: 'drag' });
       dragStateRef.current?.(true);
     };
@@ -262,6 +264,7 @@ function PeopleSidebar({
       if (!st.dragging) return;
       st.item.removeAttribute('data-active-drag');
       el.classList.remove('cm-list-dragging');
+      listDragHighlight(el, st.item, false);
       const ok = e.type === 'touchend' ? !!dropRef.current?.(st.payload, st.x, st.y) : false;
       // L'etichetta "atterra" sul foglio (o torna indietro se rilasciata fuori), poi la barra si richiude
       setGhost((g) => (g ? { ...g, x: st.x, y: st.y, phase: ok ? 'land' : 'back' } : g));
@@ -318,12 +321,13 @@ function PeopleSidebar({
       <Btn className={`md:hidden absolute inset-0 z-30 bg-black/50 transition-opacity duration-200 ${hidden ? 'opacity-0 pointer-events-none' : ''}`} onClick={onClose} />
       {ghost && createPortal(
         <Div className="fixed z-[9500] pointer-events-none" style={{ left: ghost.x, top: ghost.y, transform: 'translate(-50%, -125%)' }}>
+          <GhostAnim phase={ghost.phase}>
           <Div
             className="flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-2xl text-xs font-semibold text-white max-w-[240px]"
             style={{
               background: 'linear-gradient(135deg, #7C3AED, #551A8E)',
               boxShadow: '0 10px 34px rgba(124,58,237,0.6), 0 0 0 1px rgba(255,255,255,0.15) inset',
-              animation: ghost.phase === 'land'
+              animation: Platform.OS !== 'web' ? undefined : ghost.phase === 'land'
                 ? 'cm-ghost-land 320ms cubic-bezier(.4,0,.2,1) forwards'
                 : ghost.phase === 'back' ? 'cm-ghost-back 260ms ease-in forwards' : 'cm-ghost-pick 160ms ease-out',
             }}
@@ -331,6 +335,7 @@ function PeopleSidebar({
             <Span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold shrink-0">{initialsOf(ghost.label)}</Span>
             <Span className="truncate">{ghost.label || 'Rilascia sul foglio'}</Span>
           </Div>
+          </GhostAnim>
         </Div>,
         webDocument.body
       )}
@@ -1412,6 +1417,7 @@ export default function ComitivaEditor({
               selectedEdgeId={selectedEdgeId}
               draggingId={draggingId}
               linkDraft={linkDraft}
+              paused={interacting}
             />
             {members.map((c) => {
               const p = pos[c.id];
@@ -1440,8 +1446,18 @@ export default function ComitivaEditor({
 
           {dropFx && (
             <Div key={dropFx.k} className="absolute z-10 pointer-events-none" style={{ left: dropFx.x, top: dropFx.y }}>
-              <Span className="absolute w-24 h-24 rounded-full" style={{ left: 0, top: 0, border: '2px solid rgba(167,139,250,.9)', boxShadow: '0 0 24px rgba(124,58,237,.6)', animation: 'cm-drop-ring 650ms cubic-bezier(.2,.7,.3,1) forwards' }} />
-              <Span className="absolute w-10 h-10 rounded-full" style={{ left: 0, top: 0, background: 'radial-gradient(circle, rgba(167,139,250,.55), transparent 70%)', animation: 'cm-drop-ring 500ms ease-out 60ms both' }} />
+              {Platform.OS !== 'web' ? (
+                <>
+                  {/* PORT: cm-drop-ring con Reanimated (alone radiale → cerchio pieno sfumato) */}
+                  <DropRing size={96} duration={650} easing={DROP_EASE} style={{ borderWidth: 2, borderColor: 'rgba(167,139,250,.9)', boxShadow: '0 0 24px rgba(124,58,237,.6)' }} />
+                  <DropRing size={40} duration={500} delay={60} easing={EASE_OUT_CSS} style={{ backgroundColor: 'rgba(167,139,250,.35)' }} />
+                </>
+              ) : (
+                <>
+                  <Span className="absolute w-24 h-24 rounded-full" style={{ left: 0, top: 0, border: '2px solid rgba(167,139,250,.9)', boxShadow: '0 0 24px rgba(124,58,237,.6)', animation: 'cm-drop-ring 650ms cubic-bezier(.2,.7,.3,1) forwards' }} />
+                  <Span className="absolute w-10 h-10 rounded-full" style={{ left: 0, top: 0, background: 'radial-gradient(circle, rgba(167,139,250,.55), transparent 70%)', animation: 'cm-drop-ring 500ms ease-out 60ms both' }} />
+                </>
+              )}
             </Div>
           )}
 
