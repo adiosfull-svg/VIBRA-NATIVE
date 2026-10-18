@@ -66,6 +66,9 @@ si montano solo le righe visibili più un margine (`overscan`).
 |---|---|
 | Lista che scorre con la **pagina** (Clienti, Da ricontattare, classifiche) | `web/hooks/usePageWindow` (vedi `VirtualizedClientList.jsx`, `RecontactList.jsx`, `ClientGrowthLeague.jsx`) |
 | Lista in un **riquadro con scroll proprio** (`max-h-* overflow-y-auto`: selettori, dropdown, ricerche) | `ui/windowedList.tsx` → `<WindowedList>` (es. `ClientSourceDisplay.jsx`) |
+| Lista o **griglia** con la pagina, righe ad **altezza variabile** (card) | `web/components/shared/PageWindowList.jsx` (`columns`, `gap`, `apiRef.scrollToItem` al posto di `scrollIntoView`; `entering` per non rifare le animazioni d'entrata) |
+| Riquadro con scroll proprio, righe ad altezza variabile | `ui/windowedList.tsx` → `<WindowedListVariable>` (con `maxHeight`, o senza per riempire il genitore) |
+| Striscia **orizzontale** di card a larghezza fissa | `web/hooks/useStripWindow.js` (spaziatori prima e dopo) |
 | Pagina che è solo una lista enorme | `FlatList` con `getItemLayout`, `initialNumToRender` ~10, `windowSize` 5-7, `removeClippedSubviews` |
 
 - Righe ad **altezza fissa** e nota (misurata sull'originale): niente misure a runtime.
@@ -73,6 +76,7 @@ si montano solo le righe visibili più un margine (`overscan`).
 - Il componente riga in **`memo`**, con props stabili (callback con `useCallback`, oggetti in `useMemo`).
 - Liste brevi di risultati di ricerca: tenere lo `slice(0, N)` dell'originale.
 - Quando l'originale virtualizzava, la conversione virtualizza **sempre** (stesse altezze, stesso overscan).
+- Le `SelectContent` lunghe sul telefono scorrono (ScrollView in `ui/menu.tsx`): niente `max-h` che le taglia.
 - Cercare le liste da controllare: `.map(` su array di dati (clienti, presenze, eventi, promoter) senza
   `slice` → se possono essere lunghe, virtualizzare.
 
