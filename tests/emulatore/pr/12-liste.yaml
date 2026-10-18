@@ -1,0 +1,153 @@
+# PR: liste virtualizzate (thread "liste non virtualizzate"): griglia delle Semine (60 semine) fino in
+# fondo e ritorno, striscia delle semine nel Weekend scorsa di lato, Target "Di sempre" → "Mostra tutti".
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+# ── Semine: griglia a 2 colonne virtualizzata ──
+- tapOn: "Semine"
+- extendedWaitUntil:
+    visible: "Semina \\d+"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: liste-semine-01
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd
+- takeScreenshot: liste-semine-02
+- repeat:
+    times: 14
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: liste-semine-fondo
+- repeat:
+    times: 20
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 80%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: liste-semine-su
+- assertNotVisible: "Si è verificato un errore"
+# ── Weekend: striscia orizzontale delle semine (finestra con spaziatori) ──
+- tapOn: "Weekend"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Vedi tutte"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: liste-striscia-01
+# la striscia sta poco sotto "Vedi tutte" (al centro dello schermo): trascinamenti lunghi verso sinistra
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 92%, 61%
+          end: 4%, 61%
+          duration: 250
+- waitForAnimationToEnd
+- takeScreenshot: liste-striscia-02
+- assertVisible: "Semina \\d+"
+- assertNotVisible: "Si è verificato un errore"
+# ── Target: "Di sempre" e "Mostra tutti" (righe virtualizzate sullo scroll della pagina), solo se i dati
+# di prova danno abbastanza clienti al locale ──
+- scrollUntilVisible:
+    element: "Target"
+    direction: UP
+    timeout: 30000
+- tapOn: "Target"
+- extendedWaitUntil:
+    visible: "Di sempre"
+    timeout: 30000
+- tapOn: "Di sempre"
+- waitForAnimationToEnd
+- takeScreenshot: liste-target-01
+- runFlow:
+    when:
+      visible: "Mostra tutti \\(\\d+\\)"
+    commands:
+      - tapOn:
+          text: "Mostra tutti \\(\\d+\\)"
+          index: 0
+      - waitForAnimationToEnd
+      - repeat:
+          times: 8
+          commands:
+            - swipe:
+                start: 50%, 80%
+                end: 50%, 20%
+                duration: 300
+      - waitForAnimationToEnd
+      - takeScreenshot: liste-target-02
+- assertNotVisible: "Si è verificato un errore"
+# ── Costanza Clienti con "Tutti" (Clienti analytics), se ci sono presenze ──
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible:
+      text: ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Costanza Clienti|Nessun dato di presenza disponibile"
+    direction: DOWN
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "Top 25"
+    commands:
+      - tapOn:
+          text: "Tutti"
+          rightOf: "Top 25"
+      - waitForAnimationToEnd
+      - takeScreenshot: liste-costanza-01
+      - repeat:
+          times: 10
+          commands:
+            - swipe:
+                start: 50%, 80%
+                end: 50%, 20%
+                duration: 300
+      - waitForAnimationToEnd
+      - takeScreenshot: liste-costanza-02
+- takeScreenshot: liste-costanza-fine
+- assertNotVisible: "Si è verificato un errore"
+# ── Achievement (card in PageWindowList sul telefono) ──
+- openLink: vibra://il-mio-vibra?tab=achievements
+- extendedWaitUntil:
+    visible: "Primo cliente|Rete in crescita|Diecimila"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: liste-achievement-01
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: liste-achievement-02
+- assertNotVisible: "Si è verificato un errore"

@@ -62,6 +62,7 @@ import SubTabButtons from '@/web/components/shared/SubTabButtons';
 import { useBackTab } from '@/web/hooks/useBackTab';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 import { useDragScroll } from '@/web/hooks/useDragScroll';
+import { useStripWindow } from '@/web/hooks/useStripWindow';
 
 import { win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
@@ -80,6 +81,7 @@ const FALLBACK = { visits: 0, fri: 0, sat: 0, sun: 0, extra: 0, totalSpent: 0, a
 
 // PORT: default stabile dei gruppi (ClientSerateMenu è in memo)
 const EMPTY_GROUPS = [];
+const SEMINA_STRIDE = 148; // SeminaCard compact: w-[140px] + gap-2
 
 // Funzione con identità stabile che chiama sempre l'ultima versione
 function useStableHandler(fn) {
@@ -550,6 +552,7 @@ export default function Programmazione() {
     onBulkAddToGroup, onBulkCreateGroup, onBulkSetReminders, onBulkAddToSerata,
   }), [selectedIds, selectMode, toggleSelect, clearSelection, selectAll, selectedClients, clients, groups, mergedUpcomingDates, onBulkAddToGroup, onBulkCreateGroup, onBulkSetReminders, onBulkAddToSerata]);
   const activeSemine = useMemo(() => semine.filter(s => !s.is_off), [semine]);
+  const semineStrip = useStripWindow(activeSemine.length, SEMINA_STRIDE);
 
   // Logica standardizzata di scroll al cambio tab (vedi useStickyTabScroll).
   const { scrollToTab } = useStickyTabScroll(stuck, tabsScrollRef);
@@ -710,10 +713,15 @@ export default function Programmazione() {
             {semine.length === 0 ? (
               <P className="text-xs text-muted-foreground text-center py-4">Tieni premuto (mobile) o tasto destro (desktop) per incollare un contatto IG/TikTok.</P>
             ) : (
-              <Div ref={semineDrag.ref} {...semineDrag.handlers} className="flex gap-2 overflow-x-auto pb-3 no-scrollbar cursor-grab active:cursor-grabbing select-none">
-                {activeSemine.map((s) => (
+              <Div ref={semineDrag.ref} {...semineDrag.handlers} onScroll={semineStrip.onScroll} className="flex gap-2 overflow-x-auto pb-3 no-scrollbar cursor-grab active:cursor-grabbing select-none">
+                {/* PORT: card montate solo nella parte visibile della striscia (+ margine): le semine
+                    attive possono essere centinaia, ognuna con foto (REGOLE-PRESTAZIONI §3).
+                    Spaziatori larghi quanto le card saltate (w-[140px] + gap-2). */}
+                {semineStrip.start > 0 && <Div className="shrink-0" style={{ width: semineStrip.start * SEMINA_STRIDE - 8 }} />}
+                {activeSemine.slice(semineStrip.start, semineStrip.end).map((s) => (
                   <SeminaCard key={s.id} semina={s} compact onDelete={handleDeleteSemina} onEdit={setEditSemina} />
                 ))}
+                {semineStrip.end < activeSemine.length && <Div className="shrink-0" style={{ width: (activeSemine.length - semineStrip.end) * SEMINA_STRIDE - 8 }} />}
               </Div>
             )}
           </Div>

@@ -1,4 +1,5 @@
 // Port di src/pages/Promoter.jsx (convertito da scripts/port/codemod.mjs).
+import PageWindowList from '@/web/components/shared/PageWindowList';
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -37,6 +38,7 @@ import { useBackTab } from '@/web/hooks/useBackTab';
 import { storage as webStorage, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, Span } from '@/ui/html';
 
+const keyOfPromoter = (p) => p.id;
 // PORT: default stabili (un `= []` nuovo a ogni render invalidava il memo delle card durante il caricamento)
 const EMPTY = [];
 
@@ -544,6 +546,28 @@ export default function Promoter() {
                   </Droppable>
                 </DragDropContext>
               ) : (
+                isMobile ? (
+                  // PORT: sul telefono (una colonna) card virtualizzate sullo scroll della pagina
+                  // (PageWindowList): ogni PromoterCardMobile ha foto, aggregati e grafico; le card che
+                  // arrivano scorrendo non rifanno dash-fade-up. REGOLE-PRESTAZIONI §3
+                  <PageWindowList items={sortedPromoters} keyOf={keyOfPromoter} estimate={220} gap={16} overscan={3}
+                    renderItem={(p, index, entering) => (
+                      <Div key={p.id} className={`${entering ? 'dash-fade-up ' : ''}promoter-card-row`} style={entering ? { animationDelay: `${Math.min(index * 0.04, 0.5)}s` } : undefined}>
+                        <PromoterCardMobile
+                          promoter={p}
+                          attendances={attsByPromoter.get(p.id) ?? EMPTY}
+                          events={events}
+                          eventsMap={eventsMap}
+                          clients={clients}
+                          achievements={achievements}
+                          promoterAchievements={promoterAchievements}
+                          promoterRanks={promoterRanks}
+                          onEdit={() => { setEditing(p); setDialogOpen(true); }}
+                          onGoals={canManageGoals(p) ? () => setGoalsPromoter(p) : undefined}
+                        />
+                      </Div>
+                    )} />
+                ) : (
                 <Div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sortedPromoters.map((p, index) => (
                     <Div key={p.id} className="dash-fade-up promoter-card-row" style={{ animationDelay: `${Math.min(index * 0.04, 0.5)}s` }}>
@@ -577,6 +601,7 @@ export default function Promoter() {
                     </Div>
                   ))}
                 </Div>
+                )
               )}
 
               {/* Sezione PR Inattivi */}

@@ -1,5 +1,6 @@
 // Port di src/components/admin/CreditUsageDashboard.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useMemo } from 'react';
+import { WindowedListVariable } from '@/ui/windowedList';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
 import { Button } from '@/ui/button';
@@ -9,6 +10,7 @@ import { it } from 'date-fns/locale';
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
 
+const keyOfHour = (h) => h.key;
 const FEATURE_LABELS = {
   sync_ig_ai: 'AI DM Instagram',
   ai_suggestions: 'Analisi Intelligente',
@@ -244,16 +246,16 @@ export default function CreditUsageDashboard() {
                 Estrazioni DM Instagram (per ora)
               </H>
               <Div className="rounded-lg border border-border/50 overflow-hidden">
-                <Div className="max-h-72 overflow-y-auto client-table-scrollbar">
-                  {igHourly.map((h, i) => (
+                {/* PORT: una riga per ora per 7/30/90 giorni (centinaia): virtualizzate nel riquadro
+                    max-h-72 (WindowedListVariable, REGOLE-PRESTAZIONI §3) */}
+                <WindowedListVariable items={igHourly} keyOf={keyOfHour} estimate={33} maxHeight={288} overscan={8} renderItem={(h, i) => (
                     <Div key={h.key} className={`flex items-center gap-3 px-3 py-2 text-xs ${i !== igHourly.length - 1 ? 'border-b border-border/30' : ''} hover:bg-secondary/20 transition-colors`}>
                       <Span className="text-muted-foreground shrink-0 tabular-nums w-28">{format(h.date, "dd MMM HH:mm", { locale: it })}</Span>
                       <Span className="font-semibold text-foreground tabular-nums">{h.conversations}</Span>
                       <Span className="text-muted-foreground shrink-0">{h.conversations === 1 ? 'conversazione' : 'conversazioni'}</Span>
                       <Span className="text-muted-foreground/60 shrink-0 tabular-nums ml-auto">{h.calls} chiamate · {h.credits} crediti</Span>
                     </Div>
-                  ))}
-                </Div>
+                  )} />
               </Div>
             </Div>
           )}

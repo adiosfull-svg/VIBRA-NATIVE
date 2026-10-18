@@ -41,8 +41,11 @@ import { Btn, Div, P, Span } from '@/ui/html';
 import { Circle, Defs, Path, Rect, Stop, Svg, SvgLinearGradient } from '@/ui/elements';
 
 import { TestCut } from '@/lib/testDiag';
+import { WindowedListVariable } from '@/ui/windowedList';
 import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 
+// key stabile della riga dello storico (l'originale usava l'indice)
+const keyOfHistory = (a, i) => a.id ?? String(i);
 const BADGE_LEGEND = [
   { icon: '🏅', label: 'Fedeltà', desc: 'Più presenze' },
   { icon: '💰', label: 'Rendita', desc: 'Più spesa nel tempo' },
@@ -149,6 +152,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
     return { ...a, event: ev };
   }).filter(x => x.event?.date).sort((a, b) => a.event.date.localeCompare(b.event.date)), [ca, eventsById]);
 
+  const historyRows = useMemo(() => [...enriched].reverse(), [enriched]);
   const totalSpent = enriched.reduce((s, a) => s + (a.revenue || 0), 0);
   const avgSpent = enriched.length > 0 ? Math.round(totalSpent / enriched.length) : 0;
 
@@ -916,9 +920,11 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
             <Div className="px-4 py-3 border-b border-border/40 bg-gradient-to-r from-secondary/10 to-transparent">
               <SectionHeader icon={History} title="Storico Presenze" color="#a78bfa" />
             </Div>
-            <Div className="divide-y divide-border/50 max-h-60 overflow-y-auto overscroll-y-contain">
-              {[...enriched].reverse().map((a, i) => (
-                <Div key={i} className="flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 text-xs min-h-9">
+            {/* PORT: storico virtualizzato nel riquadro max-h-60 (WindowedListVariable): un cliente
+                abituale ha anche 100+ presenze, montate tutte all'apertura del dettaglio. divide-y →
+                bordo sopra ogni riga tranne la prima. */}
+            <WindowedListVariable items={historyRows} keyOf={keyOfHistory} estimate={37} maxHeight={240} overscan={8} renderItem={(a, i) => (
+                <Div className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 text-xs min-h-9${i > 0 ? ' border-t border-border/50' : ''}`}>
                   <Span className="text-muted-foreground w-20 sm:w-24 shrink-0 whitespace-nowrap">{format(parseISO(a.event.date), 'd MMM yyyy', { locale: it })}</Span>
                   <Span className="flex-1 truncate text-foreground/80">{a.event.name}</Span>
                   {a.event.venue && <Span className="text-muted-foreground shrink-0 hidden sm:inline">{a.event.venue}</Span>}
@@ -927,8 +933,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, attenda
                   </Span>
                   <Span className="font-bold text-primary shrink-0">€{(a.revenue || 0).toLocaleString('it-IT')}</Span>
                 </Div>
-              ))}
-            </Div>
+              )} />
           </Div>
         )}
 

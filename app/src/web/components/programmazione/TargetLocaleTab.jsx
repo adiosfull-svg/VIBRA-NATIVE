@@ -1,4 +1,5 @@
 // Port di src/components/programmazione/TargetLocaleTab.jsx (convertito da scripts/port/codemod.mjs).
+import PageWindowList from '@/web/components/shared/PageWindowList';
 import React, { useMemo, useState } from 'react';
 import { motion } from '@/ui/motion';
 import { Target, MapPin, Star, Instagram, ChevronDown } from '@/ui/icons.generated';
@@ -14,6 +15,7 @@ import { Btn, Div, P, Span } from '@/ui/html';
 import { A, Img } from '@/ui/elements';
 
 // Ordine di visualizzazione: Venerdì, Sabato, Domenica
+const keyOfRow = (r) => r.client.id;
 const DAY_ORDER = [5, 6, 0];
 const DAY_LABELS = { 5: 'Venerdì', 6: 'Sabato', 0: 'Domenica' };
 // Alias logo (stesso mapping di useUpcomingSerate)
@@ -178,7 +180,10 @@ export default function TargetLocaleTab({ clients, upcomingDates, attendances = 
               </P>
             ) : (
               <Div className="px-4 py-1">
-                {shown.map(({ client: c, recent, alltime }, i) => {
+                {/* PORT: "Mostra tutti" (centinaia di clienti con foto in "Di sempre") virtualizzato sullo
+                    scroll della pagina (PageWindowList, REGOLE-PRESTAZIONI §3); l'anteprima resta com'è */}
+                {(expanded ? (render) => <PageWindowList items={rows} keyOf={keyOfRow} estimate={54} overscan={8} renderItem={render} />
+                  : (render) => shown.map(render))(({ client: c, recent, alltime }, i) => {
                   const count = mode === 'recent' ? recent : alltime;
                   const color = RANK_COLOR(i);
                   const phoneClean = c.phone?.replace(/[^0-9]/g, '');

@@ -299,6 +299,21 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Dopo `openLink` (che rimonta tutta l'app) la pillola della barra resta su Semine con la versione nuova (2 giri su 2;
   la vecchia è su Il Mio): corsa nella MobileNavBar al rimontaggio, da vedere nel thread della barra.
 
+## Altre liste virtualizzate (18/10, branch `claude/liste-virtualizzate`)
+- Nuovi strumenti (REGOLE §3): `PageWindowList`, `WindowedListVariable`, `useStripWindow`; Select del telefono scorrevoli.
+- Virtualizzate: griglie Semine (telefono), striscia Semine del weekend in Programmazione, heatmap Costanza,
+  Target "Mostra tutti", Promoter (telefono, non in modalità manuale), Achievement (telefono), SettingsDatabase
+  (eventi, categorie, clienti, achievement, ranghi), storico in ClientDetailDialog, EventCompareDialog,
+  CreditUsageDashboard (ore IG), EmojiPicker, conversazioni di ChatStrategica.
+- Sul telefono le card Semine eliminate spariscono senza dissolvenza (niente AnimatePresence nella griglia a finestra).
+- Emulatore: `pr/12-liste.yaml`, `admin/06-promoter.yaml`; il seed ha 60 semine. Target e Costanza non si possono
+  provare con i dati sintetici (0 clienti per locale, nessun dato costanza).
+- Achievement era già molto lento sull'emulatore prima (swipe 4×~800 s con cc7842b); con la finestra 4×~300 s.
+  Da capire la causa (animazioni continue delle card?).
+- Restano da fare: tabella eventi di ReportPreview, conversazione di InstagramDMsTab, chip mobile di SeminaSidebar,
+  ClientFamilyTreeMobile, MapBottomBar, sidebar di ComitivaEditor, SmartBatchImport/AttendanceHub, grafici
+  "Tutti" di ClientiAnalytics, limite di EventCompareReport.
+
 ## Comitive (17/10, branch `claude/comitive-funnel`)
 - Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
   (`new ResizeObserver` → ReferenceError, `el.addEventListener`, `e.target.closest`, `elementFromPoint`).

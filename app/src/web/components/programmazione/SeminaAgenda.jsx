@@ -1,5 +1,6 @@
 // Port di src/components/programmazione/SeminaAgenda.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useWindowDimensions } from 'react-native';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { Instagram, Plus, Sparkles, Search, X, Layers, Split } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
@@ -8,6 +9,7 @@ import SeminaCard from '@/web/components/programmazione/SeminaCard';
 import SeminaSidebar from '@/web/components/programmazione/SeminaSidebar';
 import SeminaExtractionStatus from '@/web/components/programmazione/SeminaExtractionStatus';
 import SeminaInfoTile from '@/web/components/programmazione/SeminaInfoTile';
+import PageWindowList from '@/web/components/shared/PageWindowList';
 import { useStickySentinel } from '@/web/hooks/useStickySentinel';
 import { useSetStickyHeader } from '@/web/lib/stickyHeaderContext';
 
@@ -17,6 +19,8 @@ import { HtmlInput } from '@/ui/elements';
 
 const SORT_STORAGE_KEY = 'semina_sort_v2';
 const VIEW_STORAGE_KEY = 'semina_view_mode';
+const SM = 640; // breakpoint sm di Tailwind
+const keyOfSemina = (s) => s.id;
 
 function sortSemine(semine, sortBy) {
   const arr = [...semine];
@@ -172,6 +176,12 @@ export default function SeminaAgenda({
   }, [viewMode]);
 
   const gridRef = useRef(null);
+  // PORT: sul telefono (sotto sm, griglia a 2 colonne) le card sono virtualizzate (PageWindowList,
+  // REGOLE-PRESTAZIONI §3): centinaia di SeminaCard con foto montate tutte insieme. Sopra sm resta la
+  // griglia auto-fill dell'originale. La sidebar desktop (hidden sotto sm) non si monta.
+  const phone = useWindowDimensions().width < SM;
+  const activeListRef = useRef(null);
+  const inactiveListRef = useRef(null);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -179,6 +189,13 @@ export default function SeminaAgenda({
     let retries = 0;
 
     const scrollToCard = () => {
+      if (phone) {
+        // card forse non montata: scroll calcolato sulle righe della lista
+        if (activeListRef.current?.scrollToItem(selectedId)) return;
+        if (inactiveListRef.current?.scrollToItem(selectedId)) return;
+        if (retries++ < 10) requestAnimationFrame(scrollToCard);
+        return;
+      }
       if (!gridRef.current) return;
 
       const el = gridRef.current.querySelector(
@@ -197,15 +214,15 @@ export default function SeminaAgenda({
     };
 
     requestAnimationFrame(scrollToCard);
-  }, [selectedId]);
+  }, [selectedId, phone]);
 
   const emptyDesc =
     'Tieni premuto (mobile) o tasto destro (desktop) su quest’area per incollare un contatto IG/TikTok, oppure usa il pulsante Aggiungi Semina.';
 
-  const renderCard = (s, i) => (
+  const renderCard = (s, i, entering = true) => (
     <motion.div
       key={s.id}
-      initial={{ opacity: 0, y: 14 }}
+      initial={entering ? { opacity: 0, y: 14 } : false}
       animate={{ opacity: 1, y: 0 }}
       exit={{
         opacity: 0,
@@ -385,14 +402,16 @@ export default function SeminaAgenda({
             transition={{ duration: 0.4 }}
             className="sm:w-60 sm:shrink-0"
           >
-            <SeminaSidebar
-              semine={sorted}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              layout="desktop"
-            />
+            {!phone && (
+              <SeminaSidebar
+                semine={sorted}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                layout="desktop"
+              />
+            )}
           </motion.div>
 
           {/* Sidebar mobile (chips orizzontali) */}
@@ -409,21 +428,27 @@ export default function SeminaAgenda({
 
           {/* Griglia card */}
           <Div ref={gridRef} className="flex-1 min-w-0">
-            {viewMode === 'unified' ? (
+            {viewMode === 'unified' ? (phone ? (
+              <PageWindowList apiRef={activeListRef} items={sorted} keyOf={keyOfSemina} renderItem={renderCard}
+                columns={2} gap={12} estimate={260} rowClassName={gridClass} />
+            ) : (
               <Div className={gridClass}>
                 <AnimatePresence>
                   {sorted.map(renderCard)}
                 </AnimatePresence>
               </Div>
-            ) : (
+            )) : (
               <>
-                {activeSemine.length > 0 && (
+                {activeSemine.length > 0 && (phone ? (
+                  <PageWindowList apiRef={activeListRef} items={activeSemine} keyOf={keyOfSemina} renderItem={renderCard}
+                    columns={2} gap={12} estimate={260} rowClassName={gridClass} />
+                ) : (
                   <Div className={gridClass}>
                     <AnimatePresence>
                       {activeSemine.map(renderCard)}
                     </AnimatePresence>
                   </Div>
-                )}
+                ))}
 
                 {inactiveSemine.length > 0 && (
                   <>
@@ -438,11 +463,16 @@ export default function SeminaAgenda({
                       <Div className="flex-1 h-px bg-zinc-500/20" />
                     </Div>
 
-                    <Div className={gridClass}>
-                      <AnimatePresence>
-                        {inactiveSemine.map(renderCard)}
-                      </AnimatePresence>
-                    </Div>
+                    {phone ? (
+                      <PageWindowList apiRef={inactiveListRef} items={inactiveSemine} keyOf={keyOfSemina} renderItem={renderCard}
+                        columns={2} gap={12} estimate={260} rowClassName={gridClass} />
+                    ) : (
+                      <Div className={gridClass}>
+                        <AnimatePresence>
+                          {inactiveSemine.map(renderCard)}
+                        </AnimatePresence>
+                      </Div>
+                    )}
                   </>
                 )}
               </>

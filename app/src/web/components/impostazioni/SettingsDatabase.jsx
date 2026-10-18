@@ -1,5 +1,5 @@
 // Port di src/components/impostazioni/SettingsDatabase.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/lib/base44';
 import { Database, ChevronDown, ChevronRight, Trash2, Search, AlertTriangle, RefreshCw, Trophy } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
@@ -17,6 +17,10 @@ import {
 } from '@/ui/dialog';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+import { WindowedListVariable } from '@/ui/windowedList';
+import PageWindowList from '@/web/components/shared/PageWindowList';
+
+const keyOfRecord = (r) => r.id;
 
 // ─── Categoria: EventAttendance ─────────────────────────────────────────────
 
@@ -27,9 +31,8 @@ function AttendanceCategory({ events, promoters }) {
   const [loadingEvent, setLoadingEvent] = useState(null);
   const [toDelete, setToDelete] = useState(null);
 
-  const filteredEvents = events.filter(e =>
-    !search || e.name?.toLowerCase().includes(search.toLowerCase()) || e.date?.includes(search)
-  );
+  const filteredEvents = useMemo(() => events.filter(e =>
+    !search || e.name?.toLowerCase().includes(search.toLowerCase()) || e.date?.includes(search)), [events, search]);
 
   const loadAttendances = async (eventId) => {
     if (attendances[eventId]) return;
@@ -66,7 +69,9 @@ function AttendanceCategory({ events, promoters }) {
         <Input placeholder="Cerca serata..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
       </Div>
       <Div className="space-y-1">
-        {filteredEvents.map(ev => {
+        {/* PORT: fino a 500 serate (righe che si aprono: altezza variabile), virtualizzate sullo scroll
+            della pagina (PageWindowList) */}
+        <PageWindowList items={filteredEvents} keyOf={keyOfRecord} estimate={38} gap={4} overscan={8} renderItem={ev => {
           const isOpen = expandedEvent === ev.id;
           const rows = attendances[ev.id] || [];
           return (
@@ -112,7 +117,7 @@ function AttendanceCategory({ events, promoters }) {
               )}
             </Div>
           );
-        })}
+        }} />
       </Div>
       <DeleteConfirmDialog open={!!toDelete} onCancel={() => setToDelete(null)} onConfirm={handleDelete}
         label={`presenza di ${toDelete ? getPromoterName(toDelete.promoter_id) : ''}`} />
@@ -126,9 +131,8 @@ function EventsCategory({ events, onEventsChange }) {
   const [search, setSearch] = useState('');
   const [toDelete, setToDelete] = useState(null);
 
-  const filteredEvents = events.filter(e =>
-    !search || e.name?.toLowerCase().includes(search.toLowerCase()) || e.date?.includes(search) || e.venue?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredEvents = useMemo(() => events.filter(e =>
+    !search || e.name?.toLowerCase().includes(search.toLowerCase()) || e.date?.includes(search) || e.venue?.toLowerCase().includes(search.toLowerCase())), [events, search]);
 
   const handleDelete = async () => {
     await base44.entities.Event.delete(toDelete.id);
@@ -143,7 +147,8 @@ function EventsCategory({ events, onEventsChange }) {
         <Input placeholder="Cerca evento..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
       </Div>
       <Div className="space-y-1">
-        {filteredEvents.map(ev => (
+        {/* PORT: fino a 500 serate, virtualizzate sullo scroll della pagina (PageWindowList) */}
+        <PageWindowList items={filteredEvents} keyOf={keyOfRecord} estimate={53} gap={4} overscan={8} renderItem={ev => (
           <Div key={ev.id} className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border/50 hover:bg-secondary/20">
             <Div className="flex-1 min-w-0">
               <P className="text-xs font-medium">{ev.date} — {ev.name}</P>
@@ -159,7 +164,7 @@ function EventsCategory({ events, onEventsChange }) {
               </Btn>
             </Div>
           </Div>
-        ))}
+        )} />
         {filteredEvents.length === 0 && <P className="text-[11px] text-muted-foreground text-center py-4">Nessun risultato</P>}
       </Div>
       <DeleteConfirmDialog open={!!toDelete} onCancel={() => setToDelete(null)} onConfirm={handleDelete}
@@ -193,9 +198,8 @@ function ClientsCategory({ promoters }) {
 
   const getPromoterName = (id) => promoters.find(p => p.id === id)?.name || id || '—';
 
-  const filtered = clients.filter(c =>
-    !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search) || c.instagram?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => clients.filter(c =>
+    !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search) || c.instagram?.toLowerCase().includes(search.toLowerCase())), [clients, search]);
 
   return (
     <Div>
@@ -216,25 +220,26 @@ function ClientsCategory({ promoters }) {
               className="p-1.5 rounded hover:bg-secondary text-muted-foreground"><RefreshCw className="w-3.5 h-3.5" /></Btn>
           </Div>
           <P className="text-[10px] text-muted-foreground mb-2">{filtered.length} clienti</P>
-          <Div className="space-y-1 max-h-96 overflow-y-auto">
-            {filtered.map(c => (
-              <Div key={c.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:bg-secondary/20">
-                <Div className="flex-1 min-w-0">
-                  <P className="text-xs font-medium">{c.name}</P>
-                  <P className="text-[10px] text-muted-foreground font-mono">{c.id} · PR: {getPromoterName(c.promoter_id)}</P>
-                </Div>
-                <Div className="flex items-center gap-2 shrink-0">
-                  {c.phone && <Span className="text-[10px] text-muted-foreground">{c.phone}</Span>}
-                  <Btn
-                    button
-                    onClick={() => setToDelete(c)}
-                    className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Btn>
-                </Div>
+          {/* PORT: righe nel riquadro max-h-96 virtualizzate (WindowedListVariable, REGOLE-PRESTAZIONI §3) */}
+          {filtered.length > 0 && (
+            <WindowedListVariable items={filtered} keyOf={keyOfRecord} estimate={50} gap={4} maxHeight={384} renderItem={(c) => (
+              <Div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:bg-secondary/20">
+                  <Div className="flex-1 min-w-0">
+                    <P className="text-xs font-medium">{c.name}</P>
+                    <P className="text-[10px] text-muted-foreground font-mono">{c.id} · PR: {getPromoterName(c.promoter_id)}</P>
+                  </Div>
+                  <Div className="flex items-center gap-2 shrink-0">
+                    {c.phone && <Span className="text-[10px] text-muted-foreground">{c.phone}</Span>}
+                    <Btn
+                      button
+                      onClick={() => setToDelete(c)}
+                      className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Btn>
+                  </Div>
               </Div>
-            ))}
-          </Div>
+            )} />
+          )}
         </>
       )}
       <DeleteConfirmDialog open={!!toDelete} onCancel={() => setToDelete(null)} onConfirm={handleDelete}
@@ -319,12 +324,11 @@ function AchievementsCategory({ promoters }) {
   const getPromoterName = (id) => promoters.find(p => p.id === id)?.name || id || '—';
   const getAchievementTitle = (id) => achievements.find(a => a.id === id)?.title || id || '—';
 
-  const filtered = records.filter(r =>
+  const filtered = useMemo(() => records.filter(r =>
     !search ||
     getPromoterName(r.promoter_id).toLowerCase().includes(search.toLowerCase()) ||
     getAchievementTitle(r.achievement_id).toLowerCase().includes(search.toLowerCase()) ||
-    r.achievement_key?.toLowerCase().includes(search.toLowerCase())
-  );
+    r.achievement_key?.toLowerCase().includes(search.toLowerCase())), [records, search, promoters, achievements]);
 
   return (
     <Div>
@@ -345,24 +349,25 @@ function AchievementsCategory({ promoters }) {
               className="p-1.5 rounded hover:bg-secondary text-muted-foreground"><RefreshCw className="w-3.5 h-3.5" /></Btn>
           </Div>
           <P className="text-[10px] text-muted-foreground mb-2">{filtered.length} record</P>
-          <Div className="space-y-1 max-h-96 overflow-y-auto">
-            {filtered.map(r => (
-              <Div key={r.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:bg-secondary/20">
-                <Div className="flex-1 min-w-0">
-                  <P className="text-xs font-medium">{getPromoterName(r.promoter_id)}</P>
-                  <P className="text-[10px] text-muted-foreground">🏆 {getAchievementTitle(r.achievement_id)} · {r.achievement_key}</P>
-                  <P className="text-[10px] text-muted-foreground/50 font-mono">{r.id} · {r.unlocked_at?.slice(0, 10)}</P>
-                </Div>
-                <Btn
-                  button
-                  onClick={() => setToDelete(r)}
-                  className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Btn>
+          {/* PORT: righe nel riquadro max-h-96 virtualizzate (WindowedListVariable, REGOLE-PRESTAZIONI §3) */}
+          {filtered.length > 0 && (
+            <WindowedListVariable items={filtered} keyOf={keyOfRecord} estimate={50} gap={4} maxHeight={384} renderItem={(r) => (
+              <Div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:bg-secondary/20">
+                  <Div className="flex-1 min-w-0">
+                    <P className="text-xs font-medium">{getPromoterName(r.promoter_id)}</P>
+                    <P className="text-[10px] text-muted-foreground">🏆 {getAchievementTitle(r.achievement_id)} · {r.achievement_key}</P>
+                    <P className="text-[10px] text-muted-foreground/50 font-mono">{r.id} · {r.unlocked_at?.slice(0, 10)}</P>
+                  </Div>
+                  <Btn
+                    button
+                    onClick={() => setToDelete(r)}
+                    className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Btn>
               </Div>
-            ))}
-            {filtered.length === 0 && <P className="text-[11px] text-muted-foreground text-center py-4">Nessun risultato</P>}
-          </Div>
+            )} />
+          )}
+          {filtered.length === 0 && <P className="text-[11px] text-muted-foreground text-center py-4">Nessun risultato</P>}
         </>
       )}
       <DeleteConfirmDialog open={!!toDelete} onCancel={() => setToDelete(null)} onConfirm={handleDelete}
@@ -396,11 +401,10 @@ function RankCategory({ promoters }) {
 
   const getPromoterName = (id) => promoters.find(p => p.id === id)?.name || id || '—';
 
-  const filtered = records.filter(r =>
+  const filtered = useMemo(() => records.filter(r =>
     !search ||
     getPromoterName(r.promoter_id).toLowerCase().includes(search.toLowerCase()) ||
-    r.rank_key?.toLowerCase().includes(search.toLowerCase())
-  );
+    r.rank_key?.toLowerCase().includes(search.toLowerCase())), [records, search, promoters]);
 
   return (
     <Div>
@@ -421,24 +425,25 @@ function RankCategory({ promoters }) {
               className="p-1.5 rounded hover:bg-secondary text-muted-foreground"><RefreshCw className="w-3.5 h-3.5" /></Btn>
           </Div>
           <P className="text-[10px] text-muted-foreground mb-2">{filtered.length} record</P>
-          <Div className="space-y-1 max-h-96 overflow-y-auto">
-            {filtered.map(r => (
-              <Div key={r.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:bg-secondary/20">
-                <Div className="flex-1 min-w-0">
-                  <P className="text-xs font-medium">{getPromoterName(r.promoter_id)}</P>
-                  <P className="text-[10px] text-muted-foreground">🏅 {r.rank_key}</P>
-                  <P className="text-[10px] text-muted-foreground/50 font-mono">{r.id} · {r.updated_date?.slice(0, 10)}</P>
-                </Div>
-                <Btn
-                  button
-                  onClick={() => setToDelete(r)}
-                  className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Btn>
+          {/* PORT: righe nel riquadro max-h-96 virtualizzate (WindowedListVariable, REGOLE-PRESTAZIONI §3) */}
+          {filtered.length > 0 && (
+            <WindowedListVariable items={filtered} keyOf={keyOfRecord} estimate={50} gap={4} maxHeight={384} renderItem={(r) => (
+              <Div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:bg-secondary/20">
+                  <Div className="flex-1 min-w-0">
+                    <P className="text-xs font-medium">{getPromoterName(r.promoter_id)}</P>
+                    <P className="text-[10px] text-muted-foreground">🏅 {r.rank_key}</P>
+                    <P className="text-[10px] text-muted-foreground/50 font-mono">{r.id} · {r.updated_date?.slice(0, 10)}</P>
+                  </Div>
+                  <Btn
+                    button
+                    onClick={() => setToDelete(r)}
+                    className="p-1 rounded hover:bg-destructive/20 text-destructive transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Btn>
               </Div>
-            ))}
-            {filtered.length === 0 && <P className="text-[11px] text-muted-foreground text-center py-4">Nessun risultato</P>}
-          </Div>
+            )} />
+          )}
+          {filtered.length === 0 && <P className="text-[11px] text-muted-foreground text-center py-4">Nessun risultato</P>}
         </>
       )}
       <DeleteConfirmDialog open={!!toDelete} onCancel={() => setToDelete(null)} onConfirm={handleDelete}

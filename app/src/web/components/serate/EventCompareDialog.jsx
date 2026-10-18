@@ -1,5 +1,5 @@
 // Port di src/components/serate/EventCompareDialog.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Input } from '@/ui/input';
 import { Search, BarChart3, Grid3X3, Users, Hash } from '@/ui/icons.generated';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';
@@ -13,6 +13,7 @@ import { getEventDow } from '@/legacy/utils/dateUtils';
 import { useOverlay } from '@/web/lib/overlayStackContext';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+import { WindowedListVariable } from '@/ui/windowedList';
 
 const COLORS = [
   'hsl(275 72% 52%)', 'hsl(200 70% 50%)', 'hsl(150 60% 45%)',
@@ -30,6 +31,8 @@ const tooltipStyle = {
 
 
 // Cerca una serata per nome, venue o data (supporta formato italiano gg/mm, gg/mm/aaaa, gg mm aaaa, ecc.)
+const keyOfEvent = (ev) => ev.id;
+
 function matchesSearch(ev, q) {
   if (!q.trim()) return true;
   const s = q.toLowerCase().trim();
@@ -59,7 +62,8 @@ export default function EventCompareDialog({ open, onOpenChange, events, attenda
     );
   };
 
-  const sortedEvents = [...events].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(b.date) - new Date(a.date)), [events]);
+  const shownEvents = useMemo(() => sortedEvents.filter(ev => matchesSearch(ev, search)), [sortedEvents, search]);
 
   const selectedEvents = sortedEvents.filter(e => selectedIds.includes(e.id));
 
@@ -116,8 +120,10 @@ export default function EventCompareDialog({ open, onOpenChange, events, attenda
                 className="pl-8 h-8 text-sm"
               />
             </Div>
-            <Div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
-              {sortedEvents.filter(ev => matchesSearch(ev, search)).map((ev) => {
+            {/* PORT: elenco virtualizzato (tutte le serate di tutte le stagioni, centinaia) nel riquadro
+                max-h-48 (WindowedListVariable: i nomi lunghi vanno a capo), REGOLE-PRESTAZIONI §3 */}
+            <Div className="border border-border rounded-lg">
+              <WindowedListVariable items={shownEvents} keyOf={keyOfEvent} estimate={38} gap={4} maxHeight={190} padding={8} renderItem={(ev) => {
                 const isSelected = selectedIds.includes(ev.id);
                 return (
                   <Btn
@@ -137,7 +143,7 @@ export default function EventCompareDialog({ open, onOpenChange, events, attenda
                     </Span>
                   </Btn>
                 );
-              })}
+              }} />
             </Div>
             {selectedIds.length > 0 && (
               <Btn
