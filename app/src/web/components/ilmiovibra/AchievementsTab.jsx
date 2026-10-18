@@ -1,6 +1,8 @@
 // Port di src/components/ilmiovibra/AchievementsTab.jsx (convertito da scripts/port/codemod.mjs).
 import { STALE_FULL_TABLE, GC_FULL_TABLE } from '@/web/lib/query-client';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { useWindowDimensions } from 'react-native';
+import PageWindowList from '@/web/components/shared/PageWindowList';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/lib/base44';
@@ -26,6 +28,8 @@ import CachedImage from '@/web/components/shared/CachedImage';
 import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
+
+const keyOfAch = (a) => a.id;
 
 // ─── Calcola data di sblocco stimata dallo storico ──────────────────────────
 // Per ogni achievement, trova la data della "n-esima" attendance/client
@@ -173,13 +177,13 @@ function computeSmartOrder(achievements, autoUnlocked) {
 
 // ─── AchievementCard ─────────────────────────────────────────────────────────
 
-function AchievementCard({ achievement, progress, isUnlocked, unlockDate, delay = 0 }) {
+function AchievementCard({ achievement, progress, isUnlocked, unlockDate, delay = 0, entering = true }) {
   const rarity = achievement.rarity || 'bronzo';
   const colors = RARITY_COLORS[rarity] || RARITY_COLORS.bronzo;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={entering ? { opacity: 0, y: 10 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay }}
       className={`relative rounded-2xl border p-4 flex flex-col gap-3 transition-all ${
@@ -464,6 +468,9 @@ export default function AchievementsTab({ promoter, isActive, isVisible, promote
     );
   }, [sorted, searchQuery]);
 
+  const phone = useWindowDimensions().width < 640; // sotto sm: griglia a una colonna
+  const listApis = useRef({});
+
   // Scroll all'achievement evidenziato.
   // Aspetta che: 1) il tab sia visibile (isVisible), 2) i dati siano caricati (sorted.length > 0),
   // poi scrolla con window.scrollTo per posizionare l'elemento al centro dello schermo.
@@ -471,6 +478,10 @@ export default function AchievementsTab({ promoter, isActive, isVisible, promote
     if (!highlightId || !isVisible || sorted.length === 0) return;
     // Un solo tentativo dopo un breve delay per permettere al browser di fare il layout
     const t = setTimeout(() => {
+      if (phone) {
+        for (const api of Object.values(listApis.current)) if (api.scrollToItem(highlightId)) return;
+        return;
+      }
       const el = webDocument.getElementById(`achievement-${highlightId}`);
       if (!el) return;
       const rect = el.getBoundingClientRect();
@@ -478,7 +489,7 @@ export default function AchievementsTab({ promoter, isActive, isVisible, promote
       webWindow.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
     }, 150);
     return () => clearTimeout(t);
-  }, [highlightId, scrollTrigger, isVisible, sorted.length]);
+  }, [highlightId, scrollTrigger, isVisible, sorted.length, phone]);
 
   // Ordine fisso: bronzo → leggenda (ascendente)
   const displayOrder = [...RARITY_ORDER].reverse(); // ['bronzo', 'argento', 'oro', 'platino', 'master', 'leggenda']
@@ -594,8 +605,8 @@ export default function AchievementsTab({ promoter, isActive, isVisible, promote
             className="space-y-3"
           >
             <SectionHeader icon={Trophy} title={RARITY_LABELS[rarity]} color={RARITY_HEX[rarity] || '#a78bfa'} />
-            <Div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {items.map((a, aIdx) => (
+            {(() => {
+              const renderAch = (a, aIdx, entering = true) => (
                 <Div
                   key={a.id}
                   id={`achievement-${a.id}`}
@@ -606,10 +617,22 @@ export default function AchievementsTab({ promoter, isActive, isVisible, promote
                     progress={getFamilyProgress(a, achievements, stats)}
                     unlockDate={autoUnlocked.has(a.id) ? unlockDates[a.id] : null}
                     delay={rIdx * 0.06 + aIdx * 0.04}
+                    entering={entering}
                   />
                 </Div>
-              ))}
-            </Div>
+              );
+              // PORT: sul telefono (una colonna) card virtualizzate sullo scroll della pagina
+              // (PageWindowList, REGOLE-PRESTAZIONI §3); l'achievement evidenziato si raggiunge con
+              // scrollToItem anche se la sua card non è montata
+              return phone ? (
+                <PageWindowList apiRef={(api) => { if (api) listApis.current[rarity] = api; else delete listApis.current[rarity]; }}
+                  items={items} keyOf={keyOfAch} renderItem={renderAch} estimate={150} gap={12} overscan={3} />
+              ) : (
+                <Div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {items.map((a, aIdx) => renderAch(a, aIdx))}
+                </Div>
+              );
+            })()}
           </motion.div>
         );
       })}
