@@ -138,6 +138,17 @@ si montano solo le righe visibili più un margine (`overscan`).
   Il PanResponder vive sul thread JS: con il JS occupato il dito resta fermo. Al JS solo l'esito
   (navigazione, vibrazione) con `scheduleOnRN`. Gli stati visivi (attivo, premuto) si leggono dalle shared
   value nei componenti figli, senza setState a ogni tocco.
+- **Cambio di tab: `ui/vibraTabs.tsx`** (al posto del Tabs di expo-router). Le tab montate restano attaccate,
+  quella visibile a posto e le altre fuori schermo (translateX in un contenitore `overflow: hidden`); quale si
+  vede lo dice la shared value `shownTab`, che la barra in basso cambia sul thread UI al rilascio del dito, prima
+  che il JS navighi. Motivo (profilo Hermes, `profilo_js: si`): col JS il cambio costava 50-450 ms di render, quasi
+  tutto propagazione dei contesti di navigazione in tutte le tab precaricate; un consumer "barriera" non serve
+  (React riscende comunque). Una scena che si monta col focus scrive `shownTab` con `runOnUISync` PRIMA dello
+  stile iniziale: la scrittura normale dal JS è asincrona e l'aggiornamento di una vista non ancora montata si
+  perde (pagina vuota con la sola barra).
+- **Flag di Reanimated `ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS`** (`app/package.json`, `reanimated.staticFeatureFlags`):
+  transform e opacity animati vanno dritti alla vista senza commit dello ShadowTree (menu e barra non aspettano
+  i commit di React). Conseguenza: lo stile iniziale di una vista animata deve essere già giusto al primo render.
 - Durate e curve come l'originale (`ui/anim.ts`: `EASE_OUT` = cubic-bezier(0.22,1,0.36,1));
   apertura ~280 ms, chiusura ~220 ms.
 - Le transizioni CSS (`transition-*`, `duration-*`) NON passano da NativeWind (loop del JS):
@@ -173,6 +184,9 @@ si montano solo le righe visibili più un margine (`overscan`).
 
 - Emulatore (vedi STATO-LAVORI, sezione EMULATORE): nel logcat "VIBRA diag battito" con `ritardo=`
   (JS bloccato), `EXPO_PUBLIC_TEST_TRACE=1` per vedere cosa si ridisegna quando.
+- Profilo del thread JS: input `profilo_js: si` del workflow dell'emulatore (campionatore di Hermes, anche in
+  release); `out/profili/*.json` e `profili.md` con le funzioni più costose nei 600 ms dopo ogni tocco sulla barra
+  (`tools/profilo/analizza.py`). Nelle build di test "VIBRA nav <tab> js=.. frame=.." nel logcat.
 - Ogni correzione di fluidità ha il suo percorso Maestro in `tests/emulatore/` (es.
   `pr/05-tab-ritorno.yaml`, `pr/07-menu-laterali.yaml`).
 

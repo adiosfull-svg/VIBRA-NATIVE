@@ -144,6 +144,11 @@
     thread UI con RNGH `useManualGesture` + Reanimated (pillola, scala e colore delle icone come le transizioni
     CSS dell'originale); al JS arriva solo l'esito (`scheduleOnRN`). Verifica: video della gara navbar (logo
     visibile in ogni frame dell'apertura), flow pr 05-tab-ritorno e 07-menu-laterali superati (run 39049187912).
+  - Secondo giro (17/10, dopo la prova dell'APK: menu che lagga, barra non fluida al trascinamento, cambio pagina
+    non fulmineo): flag Reanimated `ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS`; contesti separati per i pannelli aperti
+    (`useLayoutUIOpen`: aprire il menu non ridisegna la barra); contenuto del menu laterale aggiornato solo da
+    fermo; navigatore delle tab proprio (`ui/vibraTabs.tsx`, cambio pagina sul thread UI al rilascio del dito,
+    velo sul vetro finché il blur insegue). Percorso `tests/emulatore/fluidita-nav/`. Strumento `profilo_js: si`.
 
 ## Fluidità (12/10) — regole in `docs/REGOLE-PRESTAZIONI.md`
 - Menu laterali (burger e ingranaggio): erano `<Modal>` montati all'apertura e il menu account era nell'header

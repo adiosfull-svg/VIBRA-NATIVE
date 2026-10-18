@@ -1,8 +1,11 @@
-// Tab principali con la barra di navigazione dell'app web (MobileNavBar).
-import { diagMark, garaPreloadEnd, garaPreloadStart } from '../../../lib/testDiag';
+// Tab principali con la barra di navigazione dell'app web (MobileNavBar). Navigatore: ui/vibraTabs
+// (la barra cambia la pagina sul thread UI, senza aspettare il JS).
+import { diagMark, garaPreloadEnd, garaPreloadStart, navProbeMark } from '../../../lib/testDiag';
 import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
-import { Tabs, router, useNavigation } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
+import { VibraTabs as Tabs } from '../../../ui/vibraTabs';
+import type { BottomTabBarProps } from 'expo-router/tabs';
 import MobileNavBar from '../../../web/components/layout/MobileNavBar';
 import { THEME } from '../../../ui/palette.generated';
 import { useRoleAccess } from '../../../lib/useRoleAccess';
@@ -60,10 +63,11 @@ function usePreloadTabs() {
 
 export default function TabsLayout() {
   diagMark('layout tab');
+  navProbeMark('tab');
   usePreloadTabs();
   return (
     <Tabs
-      tabBar={(props) => <MobileNavBar {...props} />}
+      tabBar={(props: BottomTabBarProps) => <MobileNavBar {...props} />}
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: THEME.background } }}
     >
       <Tabs.Screen name="index" />

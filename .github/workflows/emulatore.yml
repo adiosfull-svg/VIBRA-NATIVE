@@ -41,6 +41,10 @@ on:
         description: 'si = animazioni attive, video di ogni percorso e frame persi (dumpsys gfxinfo) in fluidita.md'
         required: false
         default: ''
+      profilo_js:
+        description: 'si = profilo del thread JS (campionatore di Hermes) di ogni percorso: out/profili/*.json e profili.md'
+        required: false
+        default: ''
   push:
     paths:
       - 'app/**'
@@ -78,6 +82,8 @@ jobs:
       FLUID: ${{ (github.event.inputs.fluidita == 'si' || contains(github.event.head_commit.message, '[fluidita]')) && '1' || '' }}
       # [traccia]: traccia Perfetto di ogni percorso (tests/emulatore/run.sh)
       TRACE: ${{ (github.event.inputs.traccia == 'si' || contains(github.event.head_commit.message, '[traccia]')) && '1' || '' }}
+      # profilo_js: campionatore di Hermes (plugins/withJsProfiler.js), bundle non minificato (nomi delle funzioni)
+      JSPROF: ${{ github.event.inputs.profilo_js == 'si' && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -135,6 +141,7 @@ jobs:
           # gara: solo la sonda leggera (la diagnostica completa rallenterebbe la nativa)
           # fluidità: senza la diagnostica (battito e misure costano frame), come l'APK vero
           if [ "$GARA" = 1 ]; then echo EXPO_PUBLIC_TEST_GARA=1 >> .env; elif [ "$FLUID" != 1 ] && [ "$TRACE" != 1 ]; then echo EXPO_PUBLIC_TEST_DIAG=1 >> .env; fi
+          if [ "$JSPROF" = 1 ]; then echo EXPO_PUBLIC_TEST_PROFILE=1 >> .env; fi
           echo "${{ github.event.inputs.extra_env }}" | tr ';' '\n' | grep '=' >> .env || true
           cat .env
 
@@ -146,7 +153,9 @@ jobs:
         working-directory: app
         run: |
           # solo ciò che entra nella parte nativa (le variabili EXPO_PUBLIC_ finiscono nel bundle JS)
-          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID" "trace=$TRACE") | sha256sum | cut -c1-16)
+          # + i flag statici di Reanimated in package.json (compilati nel C++), solo se ci sono
+          rea=$(node -p "JSON.stringify(require('./package.json').reanimated ?? '')")
+          h=$( (cat package-lock.json app.json $(find patches assets plugins -type f 2>/dev/null | sort); echo cleartext-v1 "fluid=$FLUID" "trace=$TRACE"; [ -z "$JSPROF" ] || echo "jsprof=1"; [ "$rea" = '""' ] || echo "reanimated=$rea") | sha256sum | cut -c1-16)
           echo "key=apk-x86_64-$h" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache/restore@v4
@@ -168,6 +177,7 @@ jobs:
           CI: 1
           # fluidità: durata dei frame nel logcat (VIBRA_FRAMES, plugins/withFrameMetrics.js)
           VIBRA_FRAME_METRICS: ${{ env.FLUID }}
+          VIBRA_JS_PROFILE: ${{ env.JSPROF }}
 
       - name: Compila APK (x86_64)
         if: steps.apkcache.outputs.cache-hit != 'true'
@@ -183,12 +193,13 @@ jobs:
           path: app/apk-cache
           key: ${{ steps.native.outputs.key }}
 
+      # (anche dopo una build completa col profilo JS: bundle non minificato, nomi delle funzioni nei campioni)
       - name: Solo JS nell'APK in cache
-        if: steps.apkcache.outputs.cache-hit == 'true'
+        if: steps.apkcache.outputs.cache-hit == 'true' || env.JSPROF == '1'
         working-directory: app
         run: |
           mkdir -p /tmp/emb/res /tmp/swap/assets
-          npx expo export:embed --platform android --dev false --minify true --entry-file node_modules/expo-router/entry.js \
+          npx expo export:embed --platform android --dev false --minify $([ "$JSPROF" = 1 ] && echo false || echo true) --entry-file node_modules/expo-router/entry.js \
             --bundle-output /tmp/emb/index.android.bundle --assets-dest /tmp/emb/res
           node_modules/hermes-compiler/hermesc/linux64-bin/hermesc -emit-binary -O -w -out /tmp/swap/assets/index.android.bundle /tmp/emb/index.android.bundle
           cp apk-cache/app-release.apk /tmp/js.apk
