@@ -56,21 +56,24 @@ appId: com.vibra.mobile
 - scrollUntilVisible:
     element: "Vedi tutte"
     direction: DOWN
+    centerElement: true
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: liste-striscia-01
+# la striscia sta poco sotto "Vedi tutte" (al centro dello schermo): trascinamenti lunghi verso sinistra
 - repeat:
-    times: 6
+    times: 8
     commands:
       - swipe:
-          from: "Semina \\d+"
-          direction: LEFT
-          duration: 300
+          start: 92%, 61%
+          end: 4%, 61%
+          duration: 250
 - waitForAnimationToEnd
 - takeScreenshot: liste-striscia-02
 - assertVisible: "Semina \\d+"
 - assertNotVisible: "Si è verificato un errore"
-# ── Target: "Di sempre" e "Mostra tutti" (righe virtualizzate sullo scroll della pagina) ──
+# ── Target: "Di sempre" e "Mostra tutti" (righe virtualizzate sullo scroll della pagina), solo se i dati
+# di prova danno abbastanza clienti al locale ──
 - scrollUntilVisible:
     element: "Target"
     direction: UP
@@ -81,19 +84,70 @@ appId: com.vibra.mobile
     timeout: 30000
 - tapOn: "Di sempre"
 - waitForAnimationToEnd
-- tapOn:
-    text: "Mostra tutti \\(\\d+\\)"
-    index: 0
-- waitForAnimationToEnd
 - takeScreenshot: liste-target-01
+- runFlow:
+    when:
+      visible: "Mostra tutti \\(\\d+\\)"
+    commands:
+      - tapOn:
+          text: "Mostra tutti \\(\\d+\\)"
+          index: 0
+      - waitForAnimationToEnd
+      - repeat:
+          times: 8
+          commands:
+            - swipe:
+                start: 50%, 80%
+                end: 50%, 20%
+                duration: 300
+      - waitForAnimationToEnd
+      - takeScreenshot: liste-target-02
+- assertNotVisible: "Si è verificato un errore"
+# ── Costanza Clienti con "Tutti" (Clienti analytics), se ci sono presenze ──
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible:
+      text: ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Costanza Clienti|Nessun dato di presenza disponibile"
+    direction: DOWN
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "Top 25"
+    commands:
+      - tapOn:
+          text: "Tutti"
+          rightOf: "Top 25"
+      - waitForAnimationToEnd
+      - takeScreenshot: liste-costanza-01
+      - repeat:
+          times: 10
+          commands:
+            - swipe:
+                start: 50%, 80%
+                end: 50%, 20%
+                duration: 300
+      - waitForAnimationToEnd
+      - takeScreenshot: liste-costanza-02
+- takeScreenshot: liste-costanza-fine
+- assertNotVisible: "Si è verificato un errore"
+# ── Achievement (card in PageWindowList sul telefono) ──
+- openLink: vibra://il-mio-vibra?tab=achievements
+- extendedWaitUntil:
+    visible: "Primo cliente|Rete in crescita|Diecimila"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: liste-achievement-01
 - repeat:
-    times: 8
+    times: 4
     commands:
       - swipe:
           start: 50%, 80%
           end: 50%, 20%
           duration: 300
 - waitForAnimationToEnd
-- runFlow: ../sub/sistema.yaml
-- takeScreenshot: liste-target-02
+- takeScreenshot: liste-achievement-02
 - assertNotVisible: "Si è verificato un errore"
