@@ -1,0 +1,45 @@
+# Admin: liste virtualizzate (thread "liste non virtualizzate"): Costanza Clienti con "Tutti" (righe sullo
+# scroll della pagina) in Clienti analytics.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible:
+      text: ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Costanza Clienti"
+    direction: DOWN
+    timeout: 60000
+- scrollUntilVisible:
+    element: "Top 25"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: "Tutti"
+    rightOf: "Top 25"
+- waitForAnimationToEnd
+- takeScreenshot: liste-costanza-01
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: liste-costanza-02
+- assertNotVisible: "Si è verificato un errore"

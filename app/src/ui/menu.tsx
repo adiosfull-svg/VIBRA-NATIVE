@@ -8,7 +8,7 @@ import * as SelectPrimitive from '@rn-primitives/select';
 import * as SwitchPrimitive from '@rn-primitives/switch';
 import * as TabsPrimitive from '@rn-primitives/tabs';
 import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
 import { resolveDataState } from './dataState';
 import { useLabelControl } from './labelControl';
@@ -185,7 +185,15 @@ export function SelectContent({ className, children }: WithChildren) {
       <EnterLayer slide={-8}>
       <SelectPrimitive.Overlay style={StyleSheet.absoluteFill}>
         <SelectPrimitive.Content className={cn('z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover shadow-md', className)}>
-          <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+          {Platform.OS === 'web' ? (
+            <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+          ) : (
+            // sul telefono il Viewport di rn-primitives è un Fragment: senza ScrollView le voci oltre
+            // max-h-96 (elenchi di promoter, serate, clienti) restavano tagliate e irraggiungibili
+            <ScrollView style={{ flexGrow: 0, flexShrink: 1 }} contentContainerClassName="p-1" nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator>
+              {children}
+            </ScrollView>
+          )}
         </SelectPrimitive.Content>
       </SelectPrimitive.Overlay>
       </EnterLayer>

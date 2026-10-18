@@ -7,6 +7,7 @@ import { useOverlay } from '@/web/lib/overlayStackContext';
 import { lockScroll } from '@/web/lib/scrollLock';
 
 import { Btn, Div, Span } from '@/ui/html';
+import { PageWindowOffContext } from '@/web/components/shared/PageWindowList';
 
 import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 
@@ -134,7 +135,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
                     </Div>
                   )}
                   <Div className="min-h-full flex flex-col justify-center">
-                    {children}
+                    <PageWindowOffContext.Provider value>{children}</PageWindowOffContext.Provider>
                   </Div>
                 </Div>
               ) : (
@@ -164,7 +165,7 @@ const ChartFullscreen = React.forwardRef(function ChartFullscreen({ title, child
                       </Div>
                     )}
                     <Div className={`${scrollable ? 'min-h-full' : 'h-full'} flex flex-col justify-center`}>
-                      {cloneElement(children, { fullscreen: true, scrollable })}
+                      <PageWindowOffContext.Provider value>{cloneElement(children, { fullscreen: true, scrollable })}</PageWindowOffContext.Provider>
                     </Div>
                   </Div>
                 </Div>

@@ -1,0 +1,99 @@
+# PR: liste virtualizzate (thread "liste non virtualizzate"): griglia delle Semine (60 semine) fino in
+# fondo e ritorno, striscia delle semine nel Weekend scorsa di lato, Target "Di sempre" → "Mostra tutti".
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+# ── Semine: griglia a 2 colonne virtualizzata ──
+- tapOn: "Semine"
+- extendedWaitUntil:
+    visible: "Semina \\d+"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: liste-semine-01
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd
+- takeScreenshot: liste-semine-02
+- repeat:
+    times: 14
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: liste-semine-fondo
+- repeat:
+    times: 20
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 80%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: liste-semine-su
+- assertNotVisible: "Si è verificato un errore"
+# ── Weekend: striscia orizzontale delle semine (finestra con spaziatori) ──
+- tapOn: "Weekend"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Vedi tutte"
+    direction: DOWN
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: liste-striscia-01
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          from: "Semina \\d+"
+          direction: LEFT
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: liste-striscia-02
+- assertVisible: "Semina \\d+"
+- assertNotVisible: "Si è verificato un errore"
+# ── Target: "Di sempre" e "Mostra tutti" (righe virtualizzate sullo scroll della pagina) ──
+- scrollUntilVisible:
+    element: "Target"
+    direction: UP
+    timeout: 30000
+- tapOn: "Target"
+- extendedWaitUntil:
+    visible: "Di sempre"
+    timeout: 30000
+- tapOn: "Di sempre"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Mostra tutti \\(\\d+\\)"
+    index: 0
+- waitForAnimationToEnd
+- takeScreenshot: liste-target-01
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: liste-target-02
+- assertNotVisible: "Si è verificato un errore"

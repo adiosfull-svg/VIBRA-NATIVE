@@ -8,10 +8,12 @@ import { Activity } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 import ChartFullscreen from '@/web/components/charts/ChartFullscreen';
 
+import PageWindowList from '@/web/components/shared/PageWindowList';
 import { Btn, Div, P, Span } from '@/ui/html';
 
 import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
 
+const keyOfClient = (c) => c.id;
 const CELL_SIZE = 28; // px per cella
 const MONTH_LABEL_W = 140;
 
@@ -244,11 +246,15 @@ export default function ClientCostanzaChart({ clients, attendances, events, prom
             </Div>
 
             {/* Righe clienti */}
-            {topClients.map((client, cIdx) => (
+            {/* PORT: righe virtualizzate sullo scroll della pagina (PageWindowList): con "Tutti" erano
+                centinaia di clienti × tutti i mesi = migliaia di celle premibili (REGOLE-PRESTAZIONI §3).
+                Le righe che entrano scorrendo non rifanno l'animazione d'entrata. */}
+            <PageWindowList items={topClients} keyOf={keyOfClient} estimate={CELL_SIZE + 2} overscan={8}
+              renderItem={(client, cIdx, entering) => (
               <Div
                 key={client.id}
-                className="flex items-center mb-1 heatmap-row-in"
-                style={{ animationDelay: `${cIdx * 25}ms` }}
+                className={`flex items-center mb-1${entering ? ' heatmap-row-in' : ''}`}
+                style={entering ? { animationDelay: `${cIdx * 25}ms` } : undefined}
               >
                 {/* Nome cliente */}
                 <Div
@@ -305,7 +311,7 @@ export default function ClientCostanzaChart({ clients, attendances, events, prom
                   );
                 })}
               </Div>
-            ))}
+            )} />
           </Div>
         </Div>
 

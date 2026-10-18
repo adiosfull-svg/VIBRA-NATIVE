@@ -1,10 +1,12 @@
 // Port di src/components/impostazioni/EmojiPicker.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
+import { WindowedListVariable } from '@/ui/windowedList';
 import { doc as webDocument } from '@/web/shims/dom';
 import { Btn, Div } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
 
+const keyOfEmojiRow = (row, i) => `${i}:${row.join('')}`;
 const EMOJI_CATEGORIES = [
   { label: 'Smileys', emojis: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'] },
   { label: 'Gesti', emojis: ['👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁','👅','👄','💋','🩸'] },
@@ -98,6 +100,11 @@ export default function EmojiPicker({ onSelect, onClose }) {
   }, [search]);
 
   const displayEmojis = filtered || EMOJI_CATEGORIES[activeCategory]?.emojis || [];
+  const emojiRows = useMemo(() => {
+    const rows = [];
+    for (let i = 0; i < displayEmojis.length; i += 8) rows.push(displayEmojis.slice(i, i + 8));
+    return rows;
+  }, [displayEmojis]);
 
   return (
     <Div ref={containerRef} className="rounded-xl border border-border bg-card shadow-xl overflow-hidden w-72">
@@ -133,24 +140,24 @@ export default function EmojiPicker({ onSelect, onClose }) {
       )}
 
       {/* Emoji grid */}
-      <Div className="grid grid-cols-8 gap-0.5 p-2 max-h-48 overflow-y-auto">
-        {displayEmojis.map((em, i) => (
-          <Btn
-            button
-            key={i}
-            onClick={() => { onSelect(em); onClose(); }}
-            className="w-8 h-8 text-lg flex items-center justify-center rounded-lg hover:bg-secondary/60 transition-colors"
-            accessibilityLabel={EMOJI_KEYWORDS[em] || em}
-          >
-            {em}
-          </Btn>
-        ))}
-        {filtered && filtered.length === 0 && (
-          <Div className="col-span-8 py-4 text-center text-xs text-muted-foreground">
-            Nessun risultato
+      {/* PORT: griglia virtualizzata a righe di 8 (WindowedListVariable): senza risultati la ricerca
+          mostra TUTTE le emoji (~800 pulsanti montati insieme). REGOLE-PRESTAZIONI §3 */}
+      <WindowedListVariable items={emojiRows} keyOf={keyOfEmojiRow} estimate={32} gap={2} maxHeight={192} padding={8} overscan={4}
+        renderItem={(row) => (
+          <Div className="grid grid-cols-8 gap-0.5">
+            {row.map((em, j) => (
+              <Btn
+                button
+                key={j}
+                onClick={() => { onSelect(em); onClose(); }}
+                className="w-8 h-8 text-lg flex items-center justify-center rounded-lg hover:bg-secondary/60 transition-colors"
+                accessibilityLabel={EMOJI_KEYWORDS[em] || em}
+              >
+                {em}
+              </Btn>
+            ))}
           </Div>
-        )}
-      </Div>
+        )} />
     </Div>
   );
 }

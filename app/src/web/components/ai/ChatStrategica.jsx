@@ -2,6 +2,7 @@
 // Markdown: react-markdown → ui/markdown.tsx (stesso aspetto: preflight + varianti [&>p]:...).
 import React, { useState, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { WindowedListVariable } from '@/ui/windowedList';
 import { base44 } from '@/lib/base44';
 import { Send, Mic, MicOff, Plus, ChevronLeft, Loader2, MessageSquare, Trash2, Pencil, Check, X, ImagePlus, BookOpen, XCircle, ArrowLeft, Menu, PanelLeft, Sparkles } from '@/ui/icons.generated';
 import VibraAvatar from '@/web/components/ai/VibraAvatar';
@@ -19,6 +20,8 @@ import { storage as webStorage, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlInput, HtmlTextarea, Img } from '@/ui/elements';
 
+const keyOfConv = (c) => c.id;
+const CONV_LIST_PADDING = { x: 8, top: 0, bottom: 12 }; // px-2 pb-3
 const BASE_URL = 'https://media.base44.com/images/public/69de4f1f7f53d9f187d01392/';
 const SLIDES = [
   { id: 1,  file: 'bec294e5e_1.png',   module: 'Le Pubbliche Relazioni', title: 'Cosa sono? Lavoro ed Investimento' },
@@ -775,17 +778,21 @@ export default function ChatStrategica({ promoters, events, attendances, onExit 
           <Plus className="w-4 h-4" /> Nuova chat
         </Btn>
       </Div>
-      <Div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
-        {loadingConvs ? (
-          <Div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Div>
-        ) : conversations.length === 0 ? (
-          <Div className="px-4 py-6 text-center"><MessageSquare className="w-7 h-7 text-muted-foreground/30 mx-auto mb-2" /><P className="text-xs text-muted-foreground">Nessuna conversazione</P></Div>
-        ) : (
-          conversations.map(conv => (
-            <ConvItem key={conv.id} conv={conv} isActive={activeConvId === conv.id} onOpen={openConversation} onDelete={(id) => setDeleteConfirm(id)} onRename={renameConversation} />
-          ))
-        )}
-      </Div>
+      {/* PORT: conversazioni (crescono senza limite) virtualizzate nel riquadro flex-1
+          (WindowedListVariable che misura la sua altezza), REGOLE-PRESTAZIONI §3 */}
+      {loadingConvs || conversations.length === 0 ? (
+        <Div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
+          {loadingConvs ? (
+            <Div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Div>
+          ) : (
+            <Div className="px-4 py-6 text-center"><MessageSquare className="w-7 h-7 text-muted-foreground/30 mx-auto mb-2" /><P className="text-xs text-muted-foreground">Nessuna conversazione</P></Div>
+          )}
+        </Div>
+      ) : (
+        <WindowedListVariable items={conversations} keyOf={keyOfConv} estimate={40} gap={2} padding={CONV_LIST_PADDING} overscan={8} renderItem={conv => (
+          <ConvItem conv={conv} isActive={activeConvId === conv.id} onOpen={openConversation} onDelete={(id) => setDeleteConfirm(id)} onRename={renameConversation} />
+        )} />
+      )}
     </>
   );
 
@@ -923,17 +930,21 @@ export default function ChatStrategica({ promoters, events, attendances, onExit 
                   <Plus className="w-4 h-4" /> Nuova chat
                 </Btn>
               </Div>
-              <Div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
-                {loadingConvs ? (
-                  <Div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Div>
-                ) : conversations.length === 0 ? (
-                  <Div className="px-4 py-6 text-center"><MessageSquare className="w-7 h-7 text-muted-foreground/30 mx-auto mb-2" /><P className="text-xs text-muted-foreground">Nessuna conversazione</P></Div>
-                ) : (
-                  conversations.map(conv => (
-                    <ConvItem key={conv.id} conv={conv} isActive={activeConvId === conv.id} onOpen={openConversation} onDelete={(id) => setDeleteConfirm(id)} onRename={renameConversation} />
-                  ))
-                )}
-              </Div>
+              {/* PORT: conversazioni (crescono senza limite) virtualizzate nel riquadro flex-1
+                  (WindowedListVariable che misura la sua altezza), REGOLE-PRESTAZIONI §3 */}
+              {loadingConvs || conversations.length === 0 ? (
+                <Div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
+                  {loadingConvs ? (
+                    <Div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></Div>
+                  ) : (
+                    <Div className="px-4 py-6 text-center"><MessageSquare className="w-7 h-7 text-muted-foreground/30 mx-auto mb-2" /><P className="text-xs text-muted-foreground">Nessuna conversazione</P></Div>
+                  )}
+                </Div>
+              ) : (
+                <WindowedListVariable items={conversations} keyOf={keyOfConv} estimate={40} gap={2} padding={CONV_LIST_PADDING} overscan={8} renderItem={conv => (
+                  <ConvItem conv={conv} isActive={activeConvId === conv.id} onOpen={openConversation} onDelete={(id) => setDeleteConfirm(id)} onRename={renameConversation} />
+                )} />
+              )}
             </Div>
           </Div>
         )}
