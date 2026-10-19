@@ -1236,14 +1236,21 @@ function hasBoxyChild(children: ReactNode): boolean {
 type TextLikeProps = AppTextProps & { onPress?: () => void; style?: any };
 
 function textLike(defaultProps: Partial<TextLikeProps> = {}, inline = false) {
-  return function TextLike({ className, children, style, onPress, ...props }: TextLikeProps) {
+  return function TextLike({ className, children, style, onPress, ...props0 }: TextLikeProps) {
+    // data-* (data-client-id del nome nel planner): come in Div, sul web dataSet, sul telefono sull'istanza
+    const [dataAttrs, props1] = splitDataProps(props0);
+    const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
+    const domRef = useDomStyleRef(nativeData ? (props1 as { ref?: never }).ref : undefined, undefined, nativeData);
     const boxy = BOXY.test(className ?? '') || hasBoxyChild(children);
     const inlineBox = useInlineBox(inline && !boxy ? className : 'block');
     if (boxy) {
+      const data = dataAttrs ?? {};
       return onPress
-        ? <Btn className={className} style={style} onClick={onPress} {...(props as object)}>{children}</Btn>
-        : <Div className={className} style={style} {...(props as object)}>{children}</Div>;
+        ? <Btn className={className} style={style} onClick={onPress} {...(props1 as object)} {...data}>{children}</Btn>
+        : <Div className={className} style={style} {...(props1 as object)} {...data}>{children}</Div>;
     }
+    const props = !dataAttrs ? props1
+      : Platform.OS === 'web' ? { ...props1, dataSet: toDataSet(dataAttrs) } : { ...props1, ref: domRef };
     // testo nascosto per la larghezza ("hidden sm:inline": le etichette dei pulsanti sul desktop):
     // sul telefono non c'è niente da disegnare (come il ramo nascosto di Div)
     if (Platform.OS !== 'web' && className && hiddenAtWidth(className, cssViewport.width)) return null;
