@@ -26,6 +26,7 @@ function makeTarget(name: string) {
       map.get(type)!.add(fn);
     },
     remove(type: string, fn: AnyFn) { map.get(type)?.delete(fn); },
+    has(type: string) { return (map.get(type)?.size ?? 0) > 0; },
     emit(type: string, event: Record<string, unknown> = {}) {
       const e = { type, target: name, preventDefault() {}, stopPropagation() {}, ...event };
       map.get(type)?.forEach((fn) => fn(e));
@@ -36,6 +37,20 @@ const winEvents = makeTarget('window');
 const docEvents = makeTarget('document');
 // move/up di un tocco partito su un elemento arrivano anche qui (ui/gestures), come nel browser
 windowTouchSink.emit = (type, event) => { winEvents.emit(type, event); docEvents.emit(type, event); };
+windowTouchSink.has = (type) => winEvents.has(type) || docEvents.has(type);
+// 'click' in cattura (addEventListener('click', fn, true)): li chiama Btn prima del proprio onClick (ui/gestures
+// clickBlocked). I 'click' senza cattura restano senza eventi come prima (i "tocco fuori" usano touchstart).
+windowTouchSink.clickCapture = (event) => {
+  if (!winEvents.has(CLICK_CAPTURE) && !docEvents.has(CLICK_CAPTURE)) return false;
+  let stopped = false;
+  const e = {
+    ...event, type: 'click',
+    preventDefault() { stopped = true; }, stopPropagation() { stopped = true; }, stopImmediatePropagation() { stopped = true; },
+  };
+  winEvents.emit(CLICK_CAPTURE, e);
+  if (!stopped) docEvents.emit(CLICK_CAPTURE, e);
+  return stopped;
+};
 
 Dimensions.addEventListener('change', () => {
   winEvents.emit('resize');
@@ -73,11 +88,15 @@ function scrollToArgs(a: unknown, b?: unknown): [number, boolean] {
   return [Number(b ?? 0), false];
 }
 
+const CLICK_CAPTURE = 'click:capture';
+type ListenerOpts = boolean | { capture?: boolean } | undefined;
+const listenerType = (type: string, opts: ListenerOpts) =>
+  type === 'click' && (opts === true || (typeof opts === 'object' && opts?.capture)) ? CLICK_CAPTURE : type;
 function addListener(target: ReturnType<typeof makeTarget>) {
-  return (type: string, fn: AnyFn) => (type === 'scroll' ? pageScroll.on(fn) : target.add(type, fn));
+  return (type: string, fn: AnyFn, opts?: ListenerOpts) => (type === 'scroll' ? pageScroll.on(fn) : target.add(listenerType(type, opts), fn));
 }
 function removeListener(target: ReturnType<typeof makeTarget>) {
-  return (type: string, fn: AnyFn) => (type === 'scroll' ? pageScroll.off(fn) : target.remove(type, fn));
+  return (type: string, fn: AnyFn, opts?: ListenerOpts) => (type === 'scroll' ? pageScroll.off(fn) : target.remove(listenerType(type, opts), fn));
 }
 
 // ── localStorage ────────────────────────────────────────────────────────────

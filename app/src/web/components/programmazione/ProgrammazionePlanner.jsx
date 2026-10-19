@@ -61,6 +61,7 @@ export default function ProgrammazionePlanner({ plan, onRemove, onNoteChange, cl
 
   return (
     <Div
+      data-prospetto-root
       className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card"
       style={{ boxShadow: '0 4px 24px -6px rgba(96,165,250,0.10)' }}>
       <Div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl opacity-50" style={{ background: 'linear-gradient(90deg, transparent, #60a5fa, transparent)' }} />
@@ -158,6 +159,9 @@ export default function ProgrammazionePlanner({ plan, onRemove, onNoteChange, cl
                            className="!w-7 !h-7 !text-[10px] ring-1 ring-white/10"
                          />
                          <Span
+                           data-client-id={c.id}
+                           data-client-name={c.name}
+                           data-semina={semina ? '1' : '0'}
                            onPress={handleNameClick}
                            className="text-sm font-medium break-words leading-tight flex-1 min-w-0 cursor-pointer hover:text-blue-300 hover:underline transition-colors"
                            accessibilityLabel={semina ? 'Tocca per modificare la semina · Tieni premuto / tasto destro per spostare' : 'Tocca per aprire il dettaglio · Tieni premuto / tasto destro per spostare o copiare in altra serata'}>

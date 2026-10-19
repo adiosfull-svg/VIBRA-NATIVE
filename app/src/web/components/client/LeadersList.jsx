@@ -135,6 +135,9 @@ export default function LeadersList({ leaders, events = [], sortBy = 'impact', o
         return (
           <SwipeableRow key={c.id} rightLabel="Sentito" onSwipeRight={() => markAsContacted(c.id)} onSwipeLeft={() => { const p = c.phone?.replace(/[^0-9]/g, ''); if (p) { const a = webDocument.createElement('a'); a.href = `https://wa.me/${p}`; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.click(); } }} hasPhone={!!c.phone} disabled={selectMode}>
             <Btn
+              data-client-id={c.id}
+              data-client-name={c.name}
+              data-ig={c.instagram || ''}
               onClick={(e) => {
                 if (selectMode) { toggleSelect?.(c); return; }
                 if (e?.ctrlKey || e?.metaKey) { e.preventDefault(); toggleSelect?.(c); return; }

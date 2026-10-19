@@ -27,6 +27,8 @@ export default function ActivePromotersPopup({ open, onClose, promoters }) {
           {active.map(p => (
             <Btn
               key={p.id}
+              data-promoter-id={p.id}
+              data-promoter-name={p.name}
               className="flex flex-col items-center gap-1.5 cursor-pointer"
               onClick={() => handleClick(p.id)}>
               <Div className="w-14 h-14 rounded-full bg-secondary border border-border overflow-hidden shrink-0">

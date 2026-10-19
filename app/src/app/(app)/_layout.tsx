@@ -6,15 +6,23 @@ import MobileNavBar from '../../web/components/layout/MobileNavBar';
 import Sidebar from '../../web/components/layout/Sidebar';
 import { AccountMenuPanel } from '../../web/components/layout/AccountMenu';
 import VibraSearch from '../../web/components/shared/VibraSearch';
+import PromoterContextMenu from '../../web/components/promoter/PromoterContextMenu';
+import VenueLogosPreloader from '../../web/components/shared/VenueLogosPreloader';
+import ClientPhotosPreloader from '../../web/components/shared/ClientPhotosPreloader';
+import SeminaPhotosPreloader from '../../web/components/shared/SeminaPhotosPreloader';
+import PromoterPhotosPreloader from '../../web/components/shared/PromoterPhotosPreloader';
 import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
-import { LayoutUIProvider } from '../../web/lib/layoutUI';
+import { LayoutUIProvider, useLayoutUIActions, useLayoutUIOpen } from '../../web/lib/layoutUI';
+import { useSwipeToOpenSidebar } from '../../web/hooks/useSwipeToOpenSidebar';
 import { THEME } from '../../ui/palette.generated';
-import { Platform, StyleSheet, View } from 'react-native';
+import { InteractionManager, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FixedHost } from '../../ui/fixedPortal';
-import { LocationPublisher } from '../../web/router';
-import { useEffect } from 'react';
+import { LocationPublisher, useNavigate } from '../../web/router';
+import { usePushNavigation } from '../../web/hooks/usePushNotifications';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
 import { useNotificationsPolling } from '../../web/hooks/useNotifications';
@@ -45,6 +53,7 @@ function SystemBarsFill() {
 
 const styles = StyleSheet.create({
   bar: { position: 'absolute', left: 0, right: 0, backgroundColor: THEME.background },
+  fill: { flex: 1 },
 });
 
 // Notifiche: un solo osservatore con polling e subscription per tutta l'app (come l'header unico
@@ -52,6 +61,52 @@ const styles = StyleSheet.create({
 function NotificationsPoller() {
   useNotificationsPolling();
   return null;
+}
+
+// Tocco su una notifica push → pagina della notifica (evento 'vibra-navigate' di AppLayout.jsx)
+function PushNavigation() {
+  usePushNavigation(useNavigate());
+  return null;
+}
+
+// Swipe dal bordo sinistro → menu laterale (useSwipeToOpenSidebar in AppLayout.jsx), gesto RNGH sul thread
+// UI attorno alle pagine. I figli sono elementi stabili: aprire/chiudere il menu ridisegna solo questo.
+function SwipeToOpenSidebar({ children }: { children: ReactNode }) {
+  const { setSidebarOpen } = useLayoutUIActions();
+  const sidebarOpen = useLayoutUIOpen('sidebarOpen');
+  const open = useCallback(() => setSidebarOpen(true), [setSidebarOpen]);
+  const gesture = useSwipeToOpenSidebar(open, !sidebarOpen);
+  if (Platform.OS === 'web') return <>{children}</>;
+  return (
+    <GestureHandlerRootView style={styles.fill}>
+      <GestureDetector gesture={gesture}>
+        <View style={styles.fill} collapsable={false}>{children}</View>
+      </GestureDetector>
+    </GestureHandlerRootView>
+  );
+}
+
+// Precaricamento delle foto (loghi dei locali, clienti, semine, promoter) come in AppLayout.jsx, senza pesare
+// sull'avvio: montati dopo la prima schermata, a app ferma; le query hanno le stesse chiavi delle pagine
+// (se le tab precaricate le hanno già chieste non partono di nuovo) e le immagini vanno in una coda a
+// concorrenza limitata (ui/imageCache, queueImagePrefetch).
+const PHOTO_PRELOAD_DELAY_MS = 2500;
+function PhotosPreloaders() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let task: { cancel: () => void } | null = null;
+    const t = setTimeout(() => { task = InteractionManager.runAfterInteractions(() => setReady(true)); }, PHOTO_PRELOAD_DELAY_MS);
+    return () => { clearTimeout(t); task?.cancel(); };
+  }, []);
+  if (!ready) return null;
+  return (
+    <>
+      <VenueLogosPreloader />
+      <ClientPhotosPreloader />
+      <SeminaPhotosPreloader />
+      <PromoterPhotosPreloader />
+    </>
+  );
 }
 
 // Calcolatrice globale: resta attiva su tutte le rotte finché non la chiudi (come AppLayout.jsx).
@@ -93,12 +148,18 @@ export default function AppLayout() {
       <FixedHost>
       <LocationPublisher />
       <NotificationsPoller />
+      <PushNavigation />
+      <PhotosPreloaders />
+      <SwipeToOpenSidebar>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
+      {/* Menu del promoter (tasto lungo su qualsiasi [data-promoter-id]), attivo in tutta l'app */}
+      <PromoterContextMenu />
       {/* Calcolatrice globale — persiste su tutte le rotte */}
       <GlobalCalcolatrice />
+      </SwipeToOpenSidebar>
       </FixedHost>
       {/* pannelli laterali: uno solo per tutta l'app, montati in anticipo (ui/sideDrawer); per ultimi,
           così il velo copre tutto (anche il pulsante Cerca flottante e la calcolatrice) */}

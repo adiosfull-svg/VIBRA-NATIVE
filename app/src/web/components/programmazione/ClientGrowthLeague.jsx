@@ -221,6 +221,8 @@ export default function ClientGrowthLeague({ rows, onContact, onDetail, search =
                   return (
                     <Tr
                       key={r.client.id}
+                      data-client-id={r.client.id}
+                      data-client-name={r.client.name}
                       className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer`}
                       style={isSel(r.client.id) ? { backgroundColor: 'rgba(139, 92, 246, 0.18)' } : undefined}
                       onClick={(e) => handleRowClick(e, r.client)}>

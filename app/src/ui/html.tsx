@@ -16,7 +16,7 @@ import { themeColor } from './colors';
 import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickyBlurTooTallContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
-import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
+import { clickBlocked, markButtonPressIn, splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, hasBreakableText, MinContentProbeContext, type MinContentProbe, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
@@ -895,6 +895,34 @@ function deliverTap(targets: Set<TapTarget>, x: number, y: number, since: number
   }, 50);
 }
 
+// Stili del riquadro esterno (posizione e misure) da dare al contenitore animato di un Div che scorre.
+const OUTER_KEYS = new Set([
+  'position', 'top', 'left', 'right', 'bottom', 'start', 'end', 'zIndex', 'elevation',
+  'width', 'minWidth', 'maxWidth', 'height', 'minHeight', 'maxHeight',
+  'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical', 'marginStart', 'marginEnd',
+  'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'alignSelf',
+]);
+function splitOuterBox(flat: Record<string, any>): [Record<string, any>, Record<string, any>] {
+  const outer: Record<string, any> = {};
+  const inner: Record<string, any> = {};
+  for (const k in flat) (OUTER_KEYS.has(k) ? outer : inner)[k] = flat[k];
+  // lo ScrollView riempie il contenitore: si restringe sotto max-height, si allunga se l'altezza è data
+  const sized = outer.height != null || (outer.position === 'absolute' && outer.top != null && outer.bottom != null);
+  inner.flexShrink = 1;
+  if (sized) inner.flexGrow = 1;
+  return [outer, inner];
+}
+
+// Classi del riquadro esterno (posizione, misure, margini, flex) per lo stesso contenitore animato.
+const OUTER_CLASS = /^-?(absolute|relative|static|sticky|inset-|top-|left-|right-|bottom-|start-|end-|z-|w-|min-w-|max-w-|h-|min-h-|max-h-|size-|m[trblxyse]?-|flex-1$|flex-auto$|flex-initial$|flex-none$|grow|shrink|basis-|self-)/;
+function splitOuterClasses(box: string): [{ classes: string; sized: boolean }, string] {
+  const outer: string[] = [];
+  const inner: string[] = [];
+  for (const c of box.split(/\s+/)) if (c) (OUTER_CLASS.test(c) ? outer : inner).push(c);
+  const sized = outer.some((c) => /^(h-|size-|inset-0$|inset-y-|flex-1$)/.test(c)) || (outer.some((c) => /^top-/.test(c)) && outer.some((c) => /^bottom-/.test(c)));
+  return [{ classes: outer.join(' '), sized }, inner.join(' ')];
+}
+
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
   axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void; ref?: Ref<unknown>;
 }) {
@@ -1143,9 +1171,12 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const elementId = (props0 as { id?: string }).id;
   const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
   const domRef = useDomStyleRef((props0 as { ref?: never }).ref, elementId, nativeData);
-  const props1 = (props0 as { ref?: unknown }).ref || elementId || nativeData ? { ...props0, ref: domRef } : props0;
+  // con attributi sul telefono la View non va appiattita (Fabric): il tocco deve poterla avere come
+  // target (closest('[data-x]') dei menu della pressione lunga, ui/rootTouch)
+  const props1 = (props0 as { ref?: unknown }).ref || elementId || nativeData
+    ? (nativeData ? { ...props0, ref: domRef, collapsable: false } : { ...props0, ref: domRef }) : props0;
   const props = dataAttrs && Platform.OS === 'web' ? { ...props1, dataSet: toDataSet(dataAttrs) } : props1;
-  const gestures = useWebGestures(handlers);
+  const gestures = useWebGestures(handlers, true);
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);
   const layout = useContext(FlexParentContext);
@@ -1226,7 +1257,21 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
         {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
       </ScrollBox>
     );
-    return animatedStyle ? <Animated.View style={animatedStyle}>{scroll}</Animated.View> : scroll;
+    if (!animatedStyle) return scroll;
+    // animazione (motion, menu-pop-in...) su un riquadro che scorre: il contenitore animato prende il posto e
+    // le misure del riquadro (position/top/left, larghezza, max-height, margini, flex: sia dallo style sia
+    // dalle classi, `fixed` → absolute, w-[248px], z-...) e lo ScrollView lo riempie. Prima il contenitore restava in flusso con misura 0 e il riquadro `fixed` (assoluto) ci stava
+    // fuori: si vedeva (Android non ritaglia i figli) ma non riceveva tocchi né accessibilità (menu del promoter).
+    const [outer, inner] = splitOuterBox(flat);
+    const [outerCls, innerCls] = splitOuterClasses(box);
+    if (outerCls.sized) inner.flexGrow = 1;
+    const scrollOuter = (
+      <ScrollBox {...props} {...gestures} axis={axis} box={innerCls} style={inner} onLayout={min.onLayout}>
+        {nativeBlur}
+        {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
+      </ScrollBox>
+    );
+    return <AnimatedBox className={outerCls.classes} style={[outer, animatedStyle]}>{scrollOuter}</AnimatedBox>;
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
@@ -1276,14 +1321,21 @@ function hasBoxyChild(children: ReactNode): boolean {
 type TextLikeProps = AppTextProps & { onPress?: () => void; style?: any };
 
 function textLike(defaultProps: Partial<TextLikeProps> = {}, inline = false) {
-  return function TextLike({ className, children, style, onPress, ...props }: TextLikeProps) {
+  return function TextLike({ className, children, style, onPress, ...props0 }: TextLikeProps) {
+    // data-* (data-client-id del nome nel planner): come in Div, sul web dataSet, sul telefono sull'istanza
+    const [dataAttrs, props1] = splitDataProps(props0);
+    const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
+    const domRef = useDomStyleRef(nativeData ? (props1 as { ref?: never }).ref : undefined, undefined, nativeData);
     const boxy = BOXY.test(className ?? '') || hasBoxyChild(children);
     const inlineBox = useInlineBox(inline && !boxy ? className : 'block');
     if (boxy) {
+      const data = dataAttrs ?? {};
       return onPress
-        ? <Btn className={className} style={style} onClick={onPress} {...(props as object)}>{children}</Btn>
-        : <Div className={className} style={style} {...(props as object)}>{children}</Div>;
+        ? <Btn className={className} style={style} onClick={onPress} {...(props1 as object)} {...data}>{children}</Btn>
+        : <Div className={className} style={style} {...(props1 as object)} {...data}>{children}</Div>;
     }
+    const props = !dataAttrs ? props1
+      : Platform.OS === 'web' ? { ...props1, dataSet: toDataSet(dataAttrs) } : { ...props1, ref: domRef };
     // testo nascosto per la larghezza ("hidden sm:inline": le etichette dei pulsanti sul desktop):
     // sul telefono non c'è niente da disegnare (come il ramo nascosto di Div)
     if (Platform.OS !== 'web' && className && hiddenAtWidth(className, cssViewport.width)) return null;
@@ -1349,14 +1401,14 @@ function btnStates(box: string): BtnStates {
 }
 
 /** Pressable del pulsante: sul telefono, con classi statiche già viste, senza NativeWind (ui/classStyleCache). */
-function BtnPressable({ classes, ownStyle: baseStyle0, disabledStyle, activeStyle, children, onPressIn, onPressOut, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; disabledStyle?: ViewStyle | null; activeStyle?: ViewStyle | null; children?: ReactNode }) {
+function BtnPressable({ classes, ownStyle: baseStyle0, disabledStyle, activeStyle, children, onPressIn, onPressOut, isButton, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; disabledStyle?: ViewStyle | null; activeStyle?: ViewStyle | null; children?: ReactNode; isButton?: boolean }) {
   // Stato "premuto" qui e non in Btn: i figli arrivano già creati e React salta il loro ridisegno (prima ogni
   // tocco ridisegnava due volte tutto il contenuto del pulsante). Con className, NativeWind sul web ignora
   // uno style passato come funzione: per questo è a mano.
   const [pressed, setPressed] = useState(false);
   const p = {
     ...rest,
-    onPressIn: (e: GestureResponderEvent) => { setPressed(true); onPressIn?.(e); },
+    onPressIn: (e: GestureResponderEvent) => { if (isButton) markButtonPressIn(); setPressed(true); onPressIn?.(e); },
     onPressOut: (e: GestureResponderEvent) => { setPressed(false); onPressOut?.(e); },
   };
   // disabled: subito dopo lo stile delle classi (vince su opacity-50 come in NativeWind), active: in fondo
@@ -1416,11 +1468,19 @@ function useHScrollTap(targets: Set<TapTarget> | null, onPress: PressableProps['
 
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
   diagCount('btn', className);
-  const [handlers, props] = splitGestureProps(all);
+  const [handlers, props00] = splitGestureProps(all);
+  // data-* (data-promoter-id delle card...): come in Div, sul web dataSet, sul telefono sull'istanza
+  const [dataAttrs, props01] = splitDataProps(props00);
+  const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
+  const domRef = useDomStyleRef(nativeData ? (props01 as { ref?: never }).ref : undefined, undefined, nativeData);
+  const props = !dataAttrs ? props01
+    : Platform.OS === 'web' ? { ...props01, dataSet: toDataSet(dataAttrs) } : { ...props01, ref: domRef };
   const gestures = useWebGestures(handlers);
   const form = useForm();
   const gridCell = useContext(GridCellContext);
-  const press = onPress ?? onClick;
+  const press0 = onPress ?? onClick;
+  // listener 'click' di document in cattura (es. il tap che chiude la pressione lunga dei menu, ui/rootTouch)
+  const press: typeof press0 = press0 && Platform.OS !== 'web' ? (e) => { if (!clickBlocked(e)) press0(e); } : press0;
   const handlePress0: PressableProps['onPress'] = type === 'submit' && form
     ? (e) => { press?.(e); form.submit(); }
     : press;
@@ -1491,6 +1551,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       {...gestures}
       disabled={disabled}
       onPress={handlePress}
+      isButton={button}
       classes={cn(states ? states.base : box, disabled && 'opacity-50')}
       disabledStyle={disabled ? states?.disabled : null}
       activeStyle={states?.active}

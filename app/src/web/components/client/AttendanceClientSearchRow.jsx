@@ -554,6 +554,8 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                                   {m.is_leader && <Star className="w-2.5 h-2.5 text-yellow-400 shrink-0" fill="currentColor" />}
                                   <Btn
                                     button
+                                    data-client-id={m.id}
+                                    data-client-name={m.name}
                                     onClick={() => onClientDetail?.(m)}
                                     className="truncate hover:text-primary hover:underline transition-colors text-left"
                                     accessibilityLabel="Apri dettaglio cliente · tasto destro per menu serate">
@@ -635,6 +637,8 @@ export default function ClientSearchRow({ clients, groups, existingClientIds, pr
                               <ClientAvatar client={m} size="xs" initials={m.name?.charAt(0)?.toUpperCase() || '?'} />
                               <Btn
                                 button
+                                data-client-id={m.id}
+                                data-client-name={m.name}
                                 onClick={() => onClientDetail?.(m)}
                                 className={`flex-1 text-left truncate hover:text-primary hover:underline transition-colors ${excluded ? 'line-through text-muted-foreground' : ''}`}
                                 accessibilityLabel="Apri dettaglio cliente · tasto destro per menu serate">

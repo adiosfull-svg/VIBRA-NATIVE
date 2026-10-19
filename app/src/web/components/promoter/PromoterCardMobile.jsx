@@ -74,7 +74,9 @@ function PromoterCardMobile({ promoter, attendances, events, eventsMap, onEdit, 
     <Btn
       className="relative rounded-xl bg-card border border-border p-3 active:border-primary/30 transition-all cursor-pointer space-y-2.5"
       onClick={() => navigate(`/promoter/${promoter.id}`)}
-      onPointerDown={() => preloadPage('/promoter/:id')}>
+      onPointerDown={() => preloadPage('/promoter/:id')}
+      data-promoter-id={promoter.id}
+      data-promoter-name={promoter.name}>
       <Div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl opacity-50"
         style={{ background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)' }} />
       {/* Riga 1: avatar + nome + azioni */}

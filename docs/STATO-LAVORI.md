@@ -380,6 +380,54 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   sezioni admin dashboard/promoter/serate/locali/consolle/impostazioni e formazione sono allineate),
   da guardare con `probe.mjs` e `scrollid`.
 
+## Cornice dell'app: funzioni mancanti (19/10, branch `claude/cornice-mancante`)
+- **Menu del promoter col tasto lungo** (PromoterContextMenu + Info rapide + Ultime serate), montato nel layout
+  `(app)/_layout.tsx`, attivo su ogni `[data-promoter-id]` (rimessi in PromoterCard, PromoterCardMobile,
+  ActivePromotersPopup, LiveRankingWidget). Strato ui: i tocchi della radice arrivano ai listener touch di
+  window/document (`hoverRootProps` → `rootTouch` in `ui/gestures.ts`; prima `touchstart` non arrivava MAI a
+  document, quindi nessun menu della pressione lunga globale poteva partire, nemmeno ClientSerateMenu),
+  `touches[i].target`, `click` in cattura di document chiamati da Btn prima dell'onClick (`clickBlocked`,
+  il click guard dei menu), Btn registra i data-* come Div, Div con data-* non appiattita.
+  Sul telefono il Pressable fa il click al rilascio anche dopo una pressione lunga: il menu lo ferma finché è aperto.
+- **ClientSerateMenu**: `data-no-multiselect` come l'originale (card dell'editor Comitive: solo menu).
+- **Swipe dal bordo sinistro** (`web/hooks/useSwipeToOpenSidebar.ts`): gesto manuale RNGH sul thread UI attorno
+  alle pagine (`(app)/_layout.tsx`), stesse soglie dell'originale (zona 5-35%, fuori dai 100 px in basso,
+  > 50 px e più orizzontale che verticale), apertura con l'animazione di ui/sideDrawer. Con i listener su
+  document non funzionava: su Android lo ScrollView della pagina prende il tocco al primo scarto verticale di
+  8 dp e a JS arriva touchcancel. Il gesto prende il tocco a 12 dp verso destra (gli scroll orizzontali nativi
+  lo prendono prima, a 8 dp: restano loro); pulsanti, `<div>` con gesti propri e grafici uPlot lo bloccano dal
+  JS (`touchBlockSink` in ui/gestures).
+- **Scorrimento veloce col pollice** (`ui/fastScroll.tsx`, uno per Page): posizione da `useScrollOffset`,
+  trascinamento con gesto RNGH + `scrollTo` di Reanimated, tutto sul thread UI.
+- **Precaricamento delle foto** (Client/Semina/PromoterPhotosPreloader, VenueLogosPreloader) nel layout dopo
+  2,5 s + InteractionManager; `queueImagePrefetch` (ui/imageCache): coda a concorrenza 4, priorità, max 150
+  immagini in memoria poi solo disco (come preloadImages dell'originale). `legacy preloadImages` usa la coda.
+- **Notifiche push**: parte client pronta (`web/hooks/usePushNotifications.ts`, expo-notifications installato,
+  voce "Attiva/Disattiva notifiche Push" nel menu account, tocco sulla notifica → `action_url`), SPENTA finché
+  manca il projectId EAS (`EXPO_PUBLIC_EAS_PROJECT_ID`). Il server Base44 invia solo web push (VAPID:
+  `dispatchPushOnNotification`, `sendPushNotification`). Per le push sul telefono servono: progetto EAS +
+  credenziali FCM (google-services.json) e APNs, e lato Base44 l'invio ai token `expo:` salvati in
+  PushSubscription (API push di Expo) — decisione dell'utente, Base44 non toccato.
+- **ui/html, Div che scorre con animazione** (menu-pop-in, motion): il contenitore animato prende posizione e
+  misure (stile e classi: `fixed`, `w-[248px]`, `z-...`), lo ScrollView lo riempie. Prima il contenitore era
+  0 di altezza: il menu si vedeva ma non riceveva tocchi né compariva a Maestro (vale anche per
+  ClientSerateMenu e SeminaPasteMenu).
+- Percorsi emulatore: `admin/07-menu-promoter`, `pr/13-swipe-menu`, `pr/14-fast-scroll`. Corsa completa su
+  c5d47b6 (run 39275181161): admin tutti verdi, pr 01-11 verdi; la corsa pr è stata fermata dal limite di 75
+  min durante 12-liste (10-comitive ~22 min e 12-liste ~41 min anche prima di questo lavoro), quindi 12, 13 e
+  14 a parte sullo stesso commit: 39287139437, 39287143146, 39287147841, verdi. Il limite del job non basta
+  più per tutti i percorsi pr in una corsa sola.
+- **data-client-id ovunque come l'originale** (menu serate col tasto lungo da tutte le liste): data-client-id/name
+  (+ data-semina, data-ig, data-is-off, data-phone sulle semine) in ClientRowCard, ClientTableRow, LeadersList,
+  ClientGroupsBox, AttendanceClientSearchRow, AttendanceHubDialog, SmartBatchImport, AIConsoleBox,
+  ProgrammazionePlanner, ClientFUTCard, ClientGrowthLeague, WeeklySuggestionBox, RecontactList, TargetLocaleTab,
+  SeminaCard; data-prospetto-root (ProgrammazionePlanner) e data-bulk-actions (BulkActions). Strato ui: data-*
+  anche su Tr e sui testi (Span/P). ClientSerateMenu: il click del Pressable al rilascio dopo la pressione
+  lunga è fermato (apriva il dettaglio sopra il menu o toglieva la selezione multipla appena attivata).
+  Percorso `pr/15-menu-serate-cliente` (pressione di 0,8 s → menu serate; pressione lunga → selezione multipla).
+  Emulatore: pr/15 verde (run 39305896309), pr/02-clienti (39294865927) e pr/06-semine (39302128335) verdi.
+
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
@@ -412,7 +460,7 @@ emulatore: commit con `[gara]`, risultati in gara.md nel branch emulatore-risult
 2. Pagine: tutte convertite (restano fuori AccessoApp, ingresso della PWA, e OAuthConsent, non collegata).
    Da rifinire: editor delle Comitive sul telefono (Impostazioni app e Academy confrontate il 19/10).
 3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
-4. Notifiche push (expo-notifications al posto del web push).
+4. Notifiche push: parte client fatta (19/10, spenta); servono credenziali FCM/APNs + EAS e l'invio lato Base44.
 5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
 
 ## Differenze note (accettate)

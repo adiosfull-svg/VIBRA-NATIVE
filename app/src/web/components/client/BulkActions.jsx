@@ -205,6 +205,7 @@ export default function BulkActions() {
   return createPortal(
     <>
       <Div
+        data-bulk-actions
         className="fixed left-1/2 -translate-x-1/2 bottom-24 sm:bottom-10 z-40 flex items-center gap-0 sm:gap-1.5 rounded-2xl border border-violet-500/30 bg-popover/95 backdrop-blur-md px-2 sm:px-3 py-1.5 sm:py-2"
         style={{ boxShadow: '0 8px 32px -4px rgba(167,139,250,0.4)' }}>
         <Span className="text-sm font-semibold text-violet-300 px-1 sm:px-2 whitespace-nowrap">{count} sel.</Span>

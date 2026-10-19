@@ -92,6 +92,13 @@ export function A({ href, children, className, onClick, target: _t, rel: _r, sty
 // allarga (come in CSS quando le celle non vanno a capo, es. whitespace-nowrap: di solito è
 // dentro un overflow-x-auto). Le colonne che in CSS andrebbero a capo qui non si stringono.
 type CellProps = { className?: string; children?: ReactNode; colSpan?: number; rowSpan?: number; style?: object; onClick?: (e?: any) => void };
+/** data-* di una riga (data-client-id dei menu del tasto lungo): passati a Div/Btn, che li registrano */
+type DataProps = { [k: `data-${string}`]: string | number | boolean | null | undefined };
+function dataPropsOf(props: object): DataProps | null {
+  let out: DataProps | null = null;
+  for (const k in props) if (k.startsWith('data-')) (out ??= {})[k as `data-${string}`] = (props as DataProps)[k as `data-${string}`];
+  return out;
+}
 
 type TableLayout = { widths: number[] | null; report: (col: number, width: number) => void };
 const TableContext = createContext<TableLayout | null>(null);
@@ -147,7 +154,8 @@ export const Thead = ({ className, children, ref }: { className?: string; childr
 export const Tbody = Thead;
 export const Tfoot = Thead;
 
-export function Tr({ className, children, onClick, style }: CellProps) {
+export function Tr({ className, children, onClick, style, ...rest }: CellProps & DataProps) {
+  const data = dataPropsOf(rest);
   // indice di colonna di ogni cella (colSpan compreso), anche se la cella è dentro un altro componente
   let col = 0;
   const cells = Children.toArray(children).map((child) => {
@@ -158,8 +166,8 @@ export function Tr({ className, children, onClick, style }: CellProps) {
   });
   // le celle di una riga sono alte uguali (contenuto centrato in verticale nella cella)
   return onClick
-    ? <Btn className={cn('flex flex-row items-stretch', className)} onClick={onClick} style={style}>{cells}</Btn>
-    : <Div className={cn('flex flex-row items-stretch', className)} style={style}>{cells}</Div>;
+    ? <Btn className={cn('flex flex-row items-stretch', className)} onClick={onClick} style={style} {...data}>{cells}</Btn>
+    : <Div className={cn('flex flex-row items-stretch', className)} style={style} {...data}>{cells}</Div>;
 }
 
 /** text-align della cella: allinea anche i blocchi in linea (inline-flex...) come in CSS. */

@@ -1,0 +1,71 @@
+# Admin: menu del promoter col tasto lungo (PromoterContextMenu, globale nel layout) su una card della
+# lista Promoter: si apre senza aprire anche il dettaglio, Info rapide e Ultime serate si aprono, il tasto
+# Indietro chiude prima il sottomenu e poi il menu, "Vai al dettaglio" apre la pagina del promoter.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://promoter
+- extendedWaitUntil:
+    visible: "Marco Esposito|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- longPressOn: "Marco Esposito"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- takeScreenshot: menu-promoter-1-aperto
+# il rilascio della pressione lunga non ha aperto il dettaglio: la lista è ancora qui
+- assertVisible: "Aggiungi promoter"
+- assertNotVisible: ".*Tavoli Chiusi per Categoria.*"
+# Info rapide (6a voce)
+- tapOn: "Info rapide"
+- extendedWaitUntil:
+    visible: "Info rapide · .*"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-2-info-rapide
+- pressKey: back
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- takeScreenshot: menu-promoter-3-indietro-menu
+- tapOn: "Ultime serate"
+- extendedWaitUntil:
+    visible: "Ultime serate · .*"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-4-ultime-serate
+- pressKey: back
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Vai al dettaglio"
+- takeScreenshot: menu-promoter-5-chiuso
+- assertVisible: "Aggiungi promoter"
+# di nuovo il menu, "Vai al dettaglio" (1a voce) → pagina del promoter
+- longPressOn: "Marco Esposito"
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- tapOn: "Vai al dettaglio"
+- extendedWaitUntil:
+    visible:
+      text: ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-6-dettaglio
+- assertNotVisible: "Si è verificato un errore"
