@@ -810,6 +810,24 @@ function deliverTap(targets: Set<TapTarget>, x: number, y: number, since: number
   }, 50);
 }
 
+// Stili del riquadro esterno (posizione e misure) da dare al contenitore animato di un Div che scorre.
+const OUTER_KEYS = new Set([
+  'position', 'top', 'left', 'right', 'bottom', 'start', 'end', 'zIndex', 'elevation',
+  'width', 'minWidth', 'maxWidth', 'height', 'minHeight', 'maxHeight',
+  'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical', 'marginStart', 'marginEnd',
+  'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'alignSelf',
+]);
+function splitOuterBox(flat: Record<string, any>): [Record<string, any>, Record<string, any>] {
+  const outer: Record<string, any> = {};
+  const inner: Record<string, any> = {};
+  for (const k in flat) (OUTER_KEYS.has(k) ? outer : inner)[k] = flat[k];
+  // lo ScrollView riempie il contenitore: si restringe sotto max-height, si allunga se l'altezza è data
+  const sized = outer.height != null || (outer.position === 'absolute' && outer.top != null && outer.bottom != null);
+  inner.flexShrink = 1;
+  if (sized) inner.flexGrow = 1;
+  return [outer, inner];
+}
+
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
   axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void; ref?: Ref<unknown>;
 }) {
@@ -1144,7 +1162,19 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
         {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
       </ScrollBox>
     );
-    return animatedStyle ? <Animated.View style={animatedStyle}>{scroll}</Animated.View> : scroll;
+    if (!animatedStyle) return scroll;
+    // animazione (motion, menu-pop-in...) su un riquadro che scorre: il contenitore animato prende il posto e
+    // le misure del riquadro (position/top/left, larghezza, max-height, margini, flex) e lo ScrollView lo
+    // riempie. Prima il contenitore restava in flusso con misura 0 e il riquadro `fixed` (assoluto) ci stava
+    // fuori: si vedeva (Android non ritaglia i figli) ma non riceveva tocchi né accessibilità (menu del promoter).
+    const [outer, inner] = splitOuterBox(flat);
+    const scrollOuter = (
+      <ScrollBox {...props} {...gestures} axis={axis} box={box} style={inner} onLayout={min.onLayout}>
+        {nativeBlur}
+        {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
+      </ScrollBox>
+    );
+    return <Animated.View style={[outer, animatedStyle]}>{scrollOuter}</Animated.View>;
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;

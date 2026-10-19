@@ -14,6 +14,7 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { lastButtonPressInAt } from '../../ui/gestures';
+import { TEST_DIAG } from '../../lib/testDiag';
 import { doc as webDocument, win as webWindow } from '../shims/dom';
 
 const SWIPE_START_MIN_PCT = 0.05; // 5% dal bordo sinistro
@@ -38,8 +39,13 @@ export function useSwipeToOpenSidebar(onOpen: () => void) {
       if (pct < SWIPE_START_MIN_PCT || pct > SWIPE_START_MAX_PCT) return;
       start.x = t.clientX; start.y = t.clientY; start.t = Date.now(); start.target = t.target ?? e.target ?? null;
       start.active = true;
+      if (TEST_DIAG) console.log(`VIBRA swipe inizio x=${Math.round(t.clientX)} y=${Math.round(t.clientY)}`);
     };
     const onTouchEnd = (e: TouchEv) => {
+      if (TEST_DIAG && start.active) {
+        const t = e.changedTouches[0];
+        console.log(`VIBRA swipe fine dx=${Math.round((t?.clientX ?? 0) - start.x)} dy=${Math.round((t?.clientY ?? 0) - start.y)} owner=${!!e.gestureOwner} btn=${lastButtonPressInAt() >= start.t - 30} gesto=${!!start.target?.closest?.('[data-vibra-gesture]')}`);
+      }
       if (!start.active) return;
       start.active = false;
       if (e.gestureOwner) return;
@@ -53,7 +59,10 @@ export function useSwipeToOpenSidebar(onOpen: () => void) {
       if (start.target?.closest?.('[data-vibra-gesture]')) return;
       onOpen();
     };
-    const onTouchCancel = () => { start.active = false; };
+    const onTouchCancel = () => {
+      if (TEST_DIAG && start.active) console.log('VIBRA swipe annullato (touchcancel)');
+      start.active = false;
+    };
     webDocument.addEventListener('touchstart', onTouchStart);
     webDocument.addEventListener('touchend', onTouchEnd);
     webDocument.addEventListener('touchcancel', onTouchCancel);
