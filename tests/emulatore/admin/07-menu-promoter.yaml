@@ -1,6 +1,8 @@
 # Admin: menu del promoter col tasto lungo (PromoterContextMenu, globale nel layout) su una card della
-# lista Promoter: si apre senza aprire anche il dettaglio, Info rapide e Ultime serate si aprono e il
-# tasto Indietro chiude prima il sottomenu e poi il menu.
+# lista Promoter: si apre senza aprire anche il dettaglio, Info rapide e Ultime serate si aprono, il tasto
+# Indietro chiude prima il sottomenu e poi il menu, "Vai al dettaglio" apre la pagina del promoter.
+# NB: Maestro non vede le voci del menu nell'albero (vedi STATO-LAVORI): si toccano per posizione
+# (il menu si apre dove si preme, sotto il nome di "Marco Esposito") e si controllano gli screenshot.
 appId: com.vibra.mobile
 ---
 - launchApp
@@ -20,37 +22,47 @@ appId: com.vibra.mobile
     timeout: 90000
 - waitForAnimationToEnd
 - longPressOn: "Marco Esposito"
-- extendedWaitUntil:
-    visible: "Vai al dettaglio"
-    timeout: 10000
 - waitForAnimationToEnd
-- assertVisible: "Copia telefono"
-- assertVisible: "Ultime serate"
-- takeScreenshot: menu-promoter-aperto
-- tapOn: "Info rapide"
-- extendedWaitUntil:
-    visible: "Info rapide · .*"
-    timeout: 30000
-- waitForAnimationToEnd
-- takeScreenshot: menu-promoter-info-rapide
-- pressKey: back
-- extendedWaitUntil:
-    visible: "Vai al dettaglio"
-    timeout: 10000
-- tapOn: "Ultime serate"
-- extendedWaitUntil:
-    visible: "Ultime serate · .*"
-    timeout: 30000
-- waitForAnimationToEnd
-- takeScreenshot: menu-promoter-ultime-serate
-- pressKey: back
-- extendedWaitUntil:
-    visible: "Vai al dettaglio"
-    timeout: 10000
-- pressKey: back
-- waitForAnimationToEnd
-- assertNotVisible: "Vai al dettaglio"
+- takeScreenshot: menu-promoter-1-aperto
 # il rilascio della pressione lunga non ha aperto il dettaglio: la lista è ancora qui
-- assertVisible: "Marco Esposito"
-- takeScreenshot: menu-promoter-chiuso
+- assertVisible: "Aggiungi promoter"
+- assertNotVisible: ".*Tavoli Chiusi per Categoria.*"
+# Info rapide (6a voce)
+- tapOn:
+    point: "54%,55%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 4000
+    optional: true
+- takeScreenshot: menu-promoter-2-info-rapide
+- pressKey: back
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-3-indietro-menu
+# Ultime serate (7a voce)
+- tapOn:
+    point: "54%,58%"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 4000
+    optional: true
+- takeScreenshot: menu-promoter-4-ultime-serate
+- pressKey: back
+- waitForAnimationToEnd
+- pressKey: back
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-5-chiuso
+- assertVisible: "Aggiungi promoter"
+# di nuovo il menu, "Vai al dettaglio" (1a voce) → pagina del promoter
+- longPressOn: "Marco Esposito"
+- waitForAnimationToEnd
+- tapOn:
+    point: "54%,37%"
+- extendedWaitUntil:
+    visible:
+      text: ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-6-dettaglio
 - assertNotVisible: "Si è verificato un errore"
