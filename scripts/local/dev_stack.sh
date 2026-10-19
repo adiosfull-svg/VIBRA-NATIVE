@@ -61,5 +61,13 @@ echo $! > "$DATA/postgrest.pid"
 PSQL_ARGS=$(printf '["-h","%s","-p","%s","-U","postgres","-d","postgres"]' "$SOCK" "$PORT")
 JWT_SECRET=$JWT_SECRET PSQL_ARGS=$PSQL_ARGS nohup node gateway.mjs > "$DATA/gateway.log" 2>&1 &
 echo $! > "$DATA/gateway.pid"
-sleep 2
-curl -sf http://127.0.0.1:54321/rest/v1/ >/dev/null && echo "stack pronto su http://127.0.0.1:54321 (login: admin@vibra.local / pr@vibra.local, password: vibra)"
+# attende che gateway e PostgREST rispondano (fino a 60 s): prima un solo tentativo dopo 2 s, e sui runner
+# lenti PostgREST non era ancora pronto (curl -f → exit 22, "Stack locale di prova" fallito nei giri pr)
+for i in $(seq 120); do
+  curl -sf http://127.0.0.1:54321/rest/v1/ >/dev/null && break
+  if [ "$i" = 120 ]; then
+    echo "lo stack non risponde dopo 60 s"; tail -n 20 "$DATA/postgrest.log" "$DATA/gateway.log"; exit 22
+  fi
+  sleep 0.5
+done
+echo "stack pronto su http://127.0.0.1:54321 (login: admin@vibra.local / pr@vibra.local, password: vibra)"
