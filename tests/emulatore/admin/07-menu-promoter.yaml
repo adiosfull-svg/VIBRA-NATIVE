@@ -1,8 +1,6 @@
 # Admin: menu del promoter col tasto lungo (PromoterContextMenu, globale nel layout) su una card della
 # lista Promoter: si apre senza aprire anche il dettaglio, Info rapide e Ultime serate si aprono, il tasto
 # Indietro chiude prima il sottomenu e poi il menu, "Vai al dettaglio" apre la pagina del promoter.
-# NB: Maestro non vede le voci del menu nell'albero (vedi STATO-LAVORI): si toccano per posizione
-# (il menu si apre dove si preme, sotto il nome di "Marco Esposito") e si controllano gli screenshot.
 appId: com.vibra.mobile
 ---
 - launchApp
@@ -23,18 +21,19 @@ appId: com.vibra.mobile
 - waitForAnimationToEnd
 - longPressOn: "Marco Esposito"
 - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
 - takeScreenshot: menu-promoter-1-aperto
 # il rilascio della pressione lunga non ha aperto il dettaglio: la lista è ancora qui
 - assertVisible: "Aggiungi promoter"
 - assertNotVisible: ".*Tavoli Chiusi per Categoria.*"
 # Info rapide (6a voce)
-- tapOn:
-    point: "54%,55%"
-- waitForAnimationToEnd
+- tapOn: "Info rapide"
 - extendedWaitUntil:
-    visible: "testo-che-non-esiste"
-    timeout: 4000
-    optional: true
+    visible: "Info rapide · .*"
+    timeout: 30000
+- waitForAnimationToEnd
 - takeScreenshot: menu-promoter-2-info-rapide
 - pressKey: back
 - waitForAnimationToEnd
@@ -49,16 +48,20 @@ appId: com.vibra.mobile
     optional: true
 - takeScreenshot: menu-promoter-4-ultime-serate
 - pressKey: back
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
 - pressKey: back
 - waitForAnimationToEnd
+- assertNotVisible: "Vai al dettaglio"
 - takeScreenshot: menu-promoter-5-chiuso
 - assertVisible: "Aggiungi promoter"
 # di nuovo il menu, "Vai al dettaglio" (1a voce) → pagina del promoter
 - longPressOn: "Marco Esposito"
-- waitForAnimationToEnd
-- tapOn:
-    point: "54%,37%"
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- tapOn: "Vai al dettaglio"
 - extendedWaitUntil:
     visible:
       text: ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore"
