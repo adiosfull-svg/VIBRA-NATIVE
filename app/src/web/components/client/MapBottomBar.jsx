@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Gem, Users, Expand, ChevronUp } from '@/ui/icons.generated';
 import { rankingColor } from '@/legacy/utils/clientRanking';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 import { Circle, Path, Rect, Svg } from '@/ui/elements';
@@ -26,6 +27,9 @@ const PREVIEW_MAX = 8;
 
 export default function MapBottomBar({ visibleClients = [], onClientClick }) {
   const [expanded, setExpanded] = useState(false);
+  // PORT: "+N altri" mostra tutti i clienti in vista (allontanando la mappa centinaia) nel riquadro
+  // max-h-48 a capo: chip montate a blocchi scorrendo il riquadro (useProgressiveList box). REGOLE §3
+  const more = useProgressiveList(expanded ? visibleClients.length : 0, { initial: 40, step: 40, box: 'y' });
 
   if (visibleClients.length === 0) {
     return (
@@ -35,7 +39,7 @@ export default function MapBottomBar({ visibleClients = [], onClientClick }) {
     );
   }
 
-  const displayClients = expanded ? visibleClients : visibleClients.slice(0, PREVIEW_MAX);
+  const displayClients = expanded ? visibleClients.slice(0, more.count) : visibleClients.slice(0, PREVIEW_MAX);
   const overflow = visibleClients.length - PREVIEW_MAX;
   const driverCount = visibleClients.filter(({ client }) => client.is_driver).length;
 
@@ -73,7 +77,7 @@ export default function MapBottomBar({ visibleClients = [], onClientClick }) {
 
       {/* Chip clienti */}
       {expanded ? (
-        <Div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto recontact-scrollbar pb-0.5">
+        <Div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto recontact-scrollbar pb-0.5" onScroll={more.onBoxScroll}>
           {displayClients.map(({ client, rating }) => (
             <Btn
               button

@@ -131,8 +131,9 @@ function EventMultiSelect({ events, selected, onChange }) {
   const filtered = sorted.filter(e => !search ||
     (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
     (e.venue || '').toLowerCase().includes(search.toLowerCase()));
-  // PORT: centinaia di serate nel menu: prime 20 subito, le altre a blocchi (hooks/useProgressiveList)
-  const { count: shown } = useProgressiveList(filtered.length);
+  // PORT: centinaia di serate nel menu: prime 20 subito, le altre a blocchi scorrendo il riquadro
+  // (hooks/useProgressiveList box; prima senza sentinella restavano le prime 12)
+  const { count: shown, onBoxScroll } = useProgressiveList(filtered.length, { initial: 20, step: 20, box: 'y' });
 
   const toggle = (id) => {
     onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
@@ -156,7 +157,7 @@ function EventMultiSelect({ events, selected, onChange }) {
       {open && (
         <>
           <Btn className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <Div className="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl">
+          <Div className="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl" onScroll={onBoxScroll}>
             <Div className="sticky top-0 p-2 bg-popover border-b border-border">
               <Div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />

@@ -7,10 +7,14 @@ import {
   Children, cloneElement, createContext, Fragment, isValidElement, useContext, useMemo, useState,
   type ReactElement, type ReactNode,
 } from 'react';
-import { Pressable, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { getNiceTickValues, getTickValuesFixedDomain } from 'recharts-scale';
 import Svg, { Circle, G, Line as SvgLine, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 import { cssColor } from './webStyle';
+// @ts-ignore modulo JS
+import { usePageWindow } from '../web/hooks/usePageWindow';
+// @ts-ignore modulo JS
+import { PageWindowOffContext } from '../web/components/shared/PageWindowList';
 import { Text } from './text';
 
 type Datum = Record<string, any>;
@@ -198,9 +202,11 @@ function LegendRow({ cfg, items }: { cfg: any; items: { name: string; color: str
 type CartesianProps = {
   data?: Datum[]; width?: number; height?: number; margin?: Margin; layout?: 'horizontal' | 'vertical';
   barGap?: number; barCategoryGap?: number | string; children?: ReactNode; onClick?: (e: any) => void; stackOffset?: string;
+  /** solo telefono, barre orizzontali (layout vertical) molto alte: fasce montate sullo scroll della pagina */
+  pageWindow?: boolean;
 };
 
-function CartesianChart({ kind, data = [], width: w, height: h, margin, layout = 'horizontal', barGap = 4, barCategoryGap = '10%', children, onClick }: CartesianProps & { kind: 'bar' | 'line' | 'area' }) {
+function CartesianChart({ kind, data = [], width: w, height: h, margin, layout = 'horizontal', barGap = 4, barCategoryGap = '10%', children, onClick, pageWindow }: CartesianProps & { kind: 'bar' | 'line' | 'area' }) {
   diagCount('grafico');
   const { width, height } = useSize(w, h);
   const [active, setActive] = useState<number | null>(null);
@@ -277,20 +283,24 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
     color: (() => { const cells = flatChildren(s.props.children).filter((c) => c.type === Cell); return cssColor(cells[active]?.props.fill) ?? colorOf(s); })(),
   })) : [];
 
-  return (
-    <View style={{ width, height }}>
-      <Pressable onPress={(e) => onTouch(e.nativeEvent.locationX, e.nativeEvent.locationY)} style={{ width, height: height - legendH }}>
-        <Svg width={width} height={height - legendH}>
+  // contenuto dell'Svg con le y spostate di -oy (riquadro che parte da oy) e, per le categorie (barre,
+  // etichette, griglia orizzontale del layout verticale), solo gli indici [from, to): senza finestra
+  // oy 0 e tutte le categorie
+  const draw = (oy: number, from: number, to: number) => {
+    const Y = (v: number) => v - oy;
+    const inRange = (i: number) => i >= from && i < to;
+    return (
+      <>
           {svgExtras.map((el, i) => <Fragment key={`x${i}`}>{el}</Fragment>)}
 
           {/* griglia */}
           {grid && (
             <G>
-              {grid.horizontal !== false && (vertical ? data.map((_, i) => catPos(i)) : ticks.map(valPos)).map((pos, i) => (
-                <SvgLine key={`h${i}`} x1={plot.left} x2={plot.left + plot.width} y1={pos} y2={pos} stroke={cssColor(grid.stroke) ?? '#ccc'} strokeDasharray={grid.strokeDasharray} strokeOpacity={grid.strokeOpacity} />
-              ))}
+              {grid.horizontal !== false && (vertical ? data.map((_, i) => (inRange(i) ? catPos(i) : null)) : ticks.map(valPos)).map((pos, i) => (pos == null ? null : (
+                <SvgLine key={`h${i}`} x1={plot.left} x2={plot.left + plot.width} y1={Y(pos)} y2={Y(pos)} stroke={cssColor(grid.stroke) ?? '#ccc'} strokeDasharray={grid.strokeDasharray} strokeOpacity={grid.strokeOpacity} />
+              )))}
               {grid.vertical !== false && (vertical ? ticks.map(valPos) : data.map((_, i) => catPos(i))).map((pos, i) => (
-                <SvgLine key={`v${i}`} y1={plot.top} y2={plot.top + plot.height} x1={pos} x2={pos} stroke={cssColor(grid.stroke) ?? '#ccc'} strokeDasharray={grid.strokeDasharray} strokeOpacity={grid.strokeOpacity} />
+                <SvgLine key={`v${i}`} y1={Y(plot.top)} y2={Y(plot.top + plot.height)} x1={pos} x2={pos} stroke={cssColor(grid.stroke) ?? '#ccc'} strokeDasharray={grid.strokeDasharray} strokeOpacity={grid.strokeOpacity} />
               ))}
             </G>
           )}
@@ -298,40 +308,42 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
           {/* asse dei valori */}
           {valAxis && !valAxis.hide && ticks.map((t, i) => {
             const label = valAxis.tickFormatter ? valAxis.tickFormatter(t, i) : String(t);
-            if (vertical) return <TickText key={`vt${i}`} x={valPos(t)} y={plot.top + plot.height + 14} value={String(label)} tick={valAxis.tick} />;
-            return <TickText key={`vt${i}`} x={plot.left - 8} y={valPos(t)} dy={4} value={String(label)} tick={valAxis.tick} anchor="end" />;
+            if (vertical) return <TickText key={`vt${i}`} x={valPos(t)} y={Y(plot.top + plot.height + 14)} value={String(label)} tick={valAxis.tick} />;
+            return <TickText key={`vt${i}`} x={plot.left - 8} y={Y(valPos(t))} dy={4} value={String(label)} tick={valAxis.tick} anchor="end" />;
           })}
           {/* asse delle categorie */}
           {catAxis && !catAxis.hide && data.map((d, i) => {
             if (i % tickEvery !== 0 && i !== data.length - 1) return null;
+            if (!inRange(i)) return null;
             const value = catLabel(d, i);
             const pos = catPos(i);
             const props = vertical
-              ? { x: plot.left - 8, y: pos, payload: { value: catKey ? d[catKey] : i, index: i }, index: i, textAnchor: 'end', fill: '#666' }
-              : { x: pos, y: plot.top + plot.height + 8, payload: { value: catKey ? d[catKey] : i, index: i }, index: i, textAnchor: 'middle', fill: '#666' };
+              ? { x: plot.left - 8, y: Y(pos), payload: { value: catKey ? d[catKey] : i, index: i }, index: i, textAnchor: 'end', fill: '#666' }
+              : { x: pos, y: Y(plot.top + plot.height + 8), payload: { value: catKey ? d[catKey] : i, index: i }, index: i, textAnchor: 'middle', fill: '#666' };
             const custom = renderCustomTick(catAxis.tick, props);
             if (custom) return <G key={`ct${i}`}>{custom}</G>;
             return vertical
-              ? <TickText key={`ct${i}`} x={plot.left - 8} y={pos} dy={4} value={String(value ?? '')} tick={catAxis.tick} anchor="end" />
-              : <TickText key={`ct${i}`} x={pos} y={plot.top + plot.height + 16} value={String(value ?? '')} tick={catAxis.tick} />;
+              ? <TickText key={`ct${i}`} x={plot.left - 8} y={Y(pos)} dy={4} value={String(value ?? '')} tick={catAxis.tick} anchor="end" />
+              : <TickText key={`ct${i}`} x={pos} y={Y(plot.top + plot.height + 16)} value={String(value ?? '')} tick={catAxis.tick} />;
           })}
           {/* lineette dei tick (recharts: tickLine visibile, tickSize 6) */}
           {valAxis && !valAxis.hide && valAxis.tickLine !== false && ticks.map((t, i) => {
             const p = valPos(t);
             return vertical
-              ? <SvgLine key={`vl${i}`} x1={p} x2={p} y1={plot.top + plot.height} y2={plot.top + plot.height + 6} stroke="#666" />
-              : <SvgLine key={`vl${i}`} x1={plot.left - 6} x2={plot.left} y1={p} y2={p} stroke="#666" />;
+              ? <SvgLine key={`vl${i}`} x1={p} x2={p} y1={Y(plot.top + plot.height)} y2={Y(plot.top + plot.height + 6)} stroke="#666" />
+              : <SvgLine key={`vl${i}`} x1={plot.left - 6} x2={plot.left} y1={Y(p)} y2={Y(p)} stroke="#666" />;
           })}
           {catAxis && !catAxis.hide && catAxis.tickLine !== false && data.map((_, i) => {
             if (i % tickEvery !== 0 && i !== data.length - 1) return null;
+            if (!inRange(i)) return null;
             const p = catPos(i);
             return vertical
-              ? <SvgLine key={`cl${i}`} x1={plot.left - 6} x2={plot.left} y1={p} y2={p} stroke="#666" />
-              : <SvgLine key={`cl${i}`} x1={p} x2={p} y1={plot.top + plot.height} y2={plot.top + plot.height + 6} stroke="#666" />;
+              ? <SvgLine key={`cl${i}`} x1={plot.left - 6} x2={plot.left} y1={Y(p)} y2={Y(p)} stroke="#666" />
+              : <SvgLine key={`cl${i}`} x1={p} x2={p} y1={Y(plot.top + plot.height)} y2={Y(plot.top + plot.height + 6)} stroke="#666" />;
           })}
           {/* recharts non disegna l'asse delle categorie senza dati (nessun dominio) */}
-          {(x && !x.hide && x.axisLine !== false && !(x === catAxis && !data.length)) && <SvgLine x1={plot.left} x2={plot.left + plot.width} y1={plot.top + plot.height} y2={plot.top + plot.height} stroke="#666" />}
-          {(y && !y.hide && y.axisLine !== false && !(y === catAxis && !data.length)) && <SvgLine x1={plot.left} x2={plot.left} y1={plot.top} y2={plot.top + plot.height} stroke="#666" />}
+          {(x && !x.hide && x.axisLine !== false && !(x === catAxis && !data.length)) && <SvgLine x1={plot.left} x2={plot.left + plot.width} y1={Y(plot.top + plot.height)} y2={Y(plot.top + plot.height)} stroke="#666" />}
+          {(y && !y.hide && y.axisLine !== false && !(y === catAxis && !data.length)) && <SvgLine x1={plot.left} x2={plot.left} y1={Y(plot.top)} y2={Y(plot.top + plot.height)} stroke="#666" />}
 
           {/* serie */}
           {(() => {
@@ -347,6 +359,7 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
                       const v = Number(d[key]) || 0;
                       const base = stacked ? stackBase[i] : 0;
                       if (stacked) stackBase[i] += v;
+                      if (!inRange(i)) return null;
                       const fill = cssColor(cells[i]?.props.fill ?? s.props.fill) ?? '#8884d8';
                       const start = (vertical ? plot.top : plot.left) + i * band + (band - (stacked ? barSize : barSize * groups + barGap * (groups - 1))) / 2 + (stacked ? 0 : bi * (barSize + barGap));
                       const a = valPos(base);
@@ -354,19 +367,19 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
                       const rect = vertical
                         ? { x: Math.min(a, b2), y: start, w: Math.abs(b2 - a), h: barSize }
                         : { x: start, y: Math.min(a, b2), w: barSize, h: Math.abs(b2 - a) };
-                      return <Path key={i} d={roundedRect(rect.x, rect.y, rect.w, rect.h, s.props.radius)} fill={fill} fillOpacity={cells[i]?.props.fillOpacity ?? s.props.fillOpacity} opacity={active != null && active !== i ? 0.85 : 1} />;
+                      return <Path key={i} d={roundedRect(rect.x, Y(rect.y), rect.w, rect.h, s.props.radius)} fill={fill} fillOpacity={cells[i]?.props.fillOpacity ?? s.props.fillOpacity} opacity={active != null && active !== i ? 0.85 : 1} />;
                     })}
                   </G>
                 );
               }
-              const pts = data.map((d, i) => ({ x: catPos(i), y: valPos(Number(d[key]) || 0) }));
+              const pts = data.map((d, i) => ({ x: catPos(i), y: Y(valPos(Number(d[key]) || 0)) }));
               const curve = s.props.type === 'monotone' ? monotonePath(pts) : linearPath(pts);
               const stroke = cssColor(s.props.stroke) ?? '#3182bd';
               const showDots = s.props.dot !== false && s.type === Line;
               return (
                 <G key={`s${si}`}>
                   {s.type === Area && pts.length > 0 && (
-                    <Path d={`${curve}L${pts[pts.length - 1].x},${plot.top + plot.height}L${pts[0].x},${plot.top + plot.height}Z`}
+                    <Path d={`${curve}L${pts[pts.length - 1].x},${Y(plot.top + plot.height)}L${pts[0].x},${Y(plot.top + plot.height)}Z`}
                       fill={s.props.fill?.startsWith?.('url(') ? s.props.fill : cssColor(s.props.fill) ?? stroke} fillOpacity={s.props.fillOpacity ?? (s.props.fill?.startsWith?.('url(') ? 1 : 0.6)} />
                   )}
                   <Path d={curve} fill="none" stroke={stroke} strokeWidth={s.props.strokeWidth ?? (s.type === Line ? 1 : 1)} strokeDasharray={s.props.strokeDasharray} />
@@ -379,18 +392,69 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
 
           {refLines.map((r, i) => {
             const p = r.props;
-            if (p.y != null) return <SvgLine key={`r${i}`} x1={plot.left} x2={plot.left + plot.width} y1={valPos(p.y)} y2={valPos(p.y)} stroke={cssColor(p.stroke) ?? '#ccc'} strokeDasharray={p.strokeDasharray} />;
+            if (p.y != null) return <SvgLine key={`r${i}`} x1={plot.left} x2={plot.left + plot.width} y1={Y(valPos(p.y))} y2={Y(valPos(p.y))} stroke={cssColor(p.stroke) ?? '#ccc'} strokeDasharray={p.strokeDasharray} />;
             return null;
           })}
 
           {/* cursore del tooltip */}
-          {tooltip && active != null && kind !== 'bar' && <SvgLine x1={catPos(active)} x2={catPos(active)} y1={plot.top} y2={plot.top + plot.height} stroke="#ccc" />}
+          {tooltip && active != null && kind !== 'bar' && <SvgLine x1={catPos(active)} x2={catPos(active)} y1={Y(plot.top)} y2={Y(plot.top + plot.height)} stroke="#ccc" />}
+      </>
+    );
+  };
+
+  // grafico a barre orizzontali molto alto ("Tutti" i clienti: centinaia di barre e di etichette con
+  // foto): a fasce sullo scroll della pagina (ChartTiles), stesso disegno a pezzi. REGOLE-PRESTAZIONI §3
+  const windowOff = useContext(PageWindowOffContext);
+  const tiled = !!pageWindow && Platform.OS !== 'web' && !windowOff && vertical && kind === 'bar' && height - legendH > TILE_HEIGHT * 3;
+
+  return (
+    <View style={{ width, height }}>
+      {tiled ? (
+        <View style={{ width, height: height - legendH }}>
+          <ChartTiles width={width} height={height - legendH} catStart={plot.top} band={band} count={data.length} draw={draw} onTouch={onTouch} />
+          {tooltip && active != null && <TooltipBox cfg={tooltip} label={catKey ? data[active]?.[catKey] : active} payload={tooltipPayload} x={catPos(active)} chartWidth={width} />}
+        </View>
+      ) : (
+      <Pressable onPress={(e) => onTouch(e.nativeEvent.locationX, e.nativeEvent.locationY)} style={{ width, height: height - legendH }}>
+        <Svg width={width} height={height - legendH}>
+          {draw(0, 0, data.length)}
         </Svg>
         {tooltip && active != null && <TooltipBox cfg={tooltip} label={catKey ? data[active]?.[catKey] : active} payload={tooltipPayload} x={catPos(active)} chartWidth={width} />}
       </Pressable>
+      )}
       {legend && <LegendRow cfg={legend} items={series.map((s) => ({ name: s.props.name ?? s.props.dataKey, color: colorOf(s) }))} />}
     </View>
   );
+}
+
+const TILE_HEIGHT = 480;
+
+/**
+ * Fasce alte TILE_HEIGHT del grafico, montate solo vicino alla parte visibile della pagina
+ * (usePageWindow): ognuna è un Svg piccolo con gli elementi che la toccano (le categorie a cavallo
+ * del bordo si disegnano in entrambe, ognuna ne mostra la sua parte). Un solo Svg alto migliaia di
+ * px montava tutte le barre ed etichette insieme e su Android disegna in una bitmap grande quanto lui.
+ */
+function ChartTiles({ width, height, catStart, band, count, draw, onTouch }: {
+  width: number; height: number; catStart: number; band: number; count: number;
+  draw: (oy: number, from: number, to: number) => ReactNode; onTouch: (x: number, y: number) => void;
+}) {
+  const tiles = Math.ceil(height / TILE_HEIGHT);
+  const win = usePageWindow(tiles, TILE_HEIGHT, 1, 3);
+  const out: ReactNode[] = [];
+  for (let t = win.start; t < win.end; t++) {
+    const top = t * TILE_HEIGHT;
+    const h = Math.min(TILE_HEIGHT, height - top);
+    // categorie che toccano la fascia, più una per lato (etichette che sporgono dalla banda)
+    const from = Math.max(0, Math.floor((top - catStart) / band) - 1);
+    const to = Math.min(count, Math.ceil((top + h - catStart) / band) + 1);
+    out.push(
+      <Pressable key={t} onPress={(e) => onTouch(e.nativeEvent.locationX, e.nativeEvent.locationY + top)} style={{ position: 'absolute', top, left: 0, width, height: h }}>
+        <Svg width={width} height={h}>{draw(top, from, to)}</Svg>
+      </Pressable>,
+    );
+  }
+  return <View ref={win.containerRef} style={{ width, height }}>{out}</View>;
 }
 
 export const BarChart = (p: CartesianProps) => <CartesianChart kind="bar" {...p} />;

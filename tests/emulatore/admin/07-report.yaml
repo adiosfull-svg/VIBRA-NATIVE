@@ -1,0 +1,107 @@
+# Admin: Report (thread "liste non virtualizzate", 19/10). Gruppo Vibra: tabella Serate (48) nel riquadro
+# max-h-96 con righe montate a blocchi scorrendo il riquadro; Confronto Serate con tutte le serate: menu
+# delle serate che cresce scorrendo, tabelle di dettaglio per serata a blocchi, grafico a fasce.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://report
+- extendedWaitUntil:
+    visible: "Costruttore Report|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Genera Report"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- tapOn: "Genera Report"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Serate \\(\\d+\\)"
+    direction: DOWN
+    timeout: 60000
+- swipe:
+    start: 50%, 70%
+    end: 50%, 45%
+    duration: 1000
+- waitForAnimationToEnd
+- takeScreenshot: report-serate-01
+# il riquadro scorre da solo (il dito parte da una riga della tabella): fino all'ultima serata
+- repeat:
+    times: 14
+    commands:
+      - swipe:
+          from:
+            text: "Duel Club \\d\\d/\\d\\d"
+            index: 0
+          direction: UP
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: report-serate-02-fondo
+- assertNotVisible: "Si è verificato un errore"
+# ── Confronto Serate: tutte le serate ──
+- scrollUntilVisible:
+    element: "Confronto Serate"
+    direction: UP
+    centerElement: true
+    timeout: 60000
+- tapOn: "Confronto Serate"
+- waitForAnimationToEnd
+- tapOn: "Seleziona serate..."
+- waitForAnimationToEnd
+- tapOn: "Seleziona tutte \\(\\d+\\)"
+- waitForAnimationToEnd
+- takeScreenshot: report-menu-01
+# menu delle serate (prima ne mostrava solo 12): scorrendo arriva anche la più vecchia
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          from:
+            text: "Duel Club \\d\\d/\\d\\d.*"
+            index: 0
+          direction: UP
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: report-menu-02-fondo
+- tapOn: "Serate da confrontare:"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Genera Report"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- tapOn: "Genera Report"
+- waitForAnimationToEnd
+- takeScreenshot: report-confronto-01
+- repeat:
+    while:
+      notVisible: "Fatturato per Serata"
+    times: 80
+    commands:
+      - swipe:
+          start: 50%, 85%
+          end: 50%, 15%
+          duration: 250
+- waitForAnimationToEnd
+- takeScreenshot: report-confronto-02-grafico
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 25%
+          duration: 400
+- waitForAnimationToEnd
+- takeScreenshot: report-confronto-03-grafico-fondo
+- assertNotVisible: "Si è verificato un errore"

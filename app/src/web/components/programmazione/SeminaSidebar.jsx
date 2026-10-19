@@ -2,6 +2,7 @@
 import React from 'react';
 import { CalendarClock, ArrowDownAZ, ArrowUpAZ, Instagram, Music2, Power, Lightbulb } from '@/ui/icons.generated';
 import CachedImage from '@/web/components/shared/CachedImage';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 
@@ -27,6 +28,9 @@ const SORT_OPTIONS = [
  * Mobile: chips orizzontali scrollabili (gestito dal parent SeminaAgenda).
  */
 export default function SeminaSidebar({ semine, sortBy, onSortChange, selectedId, onSelect, layout = 'desktop' }) {
+  // PORT: sul telefono una chip (con foto) per semina, anche centinaia: montate a blocchi scorrendo la
+  // striscia verso destra (larghezze variabili: niente finestra a larghezza fissa). REGOLE-PRESTAZIONI §3
+  const chips = useProgressiveList(layout === 'mobile' ? semine.length : 0, { initial: 12, step: 12, box: 'x' });
   if (layout === 'mobile') {
     return (
       <Div className="sm:hidden">
@@ -47,10 +51,10 @@ export default function SeminaSidebar({ semine, sortBy, onSortChange, selectedId
           ))}
         </Div>
         {/* Nomi come chips orizzontali */}
-        <Div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar touch-pan-x">
+        <Div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar touch-pan-x" onScroll={chips.onBoxScroll}>
           {semine.length === 0 ? (
             <P className="text-xs text-muted-foreground py-2 px-1">Nessuna semina</P>
-          ) : semine.map(s => {
+          ) : semine.slice(0, chips.count).map(s => {
             const isTikTok = (s.platform || 'instagram') === 'tiktok';
             const PlatformIcon = isTikTok ? Music2 : Instagram;
             const isOff = !!s.is_off;

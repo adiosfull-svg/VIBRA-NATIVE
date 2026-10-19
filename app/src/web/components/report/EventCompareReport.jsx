@@ -7,6 +7,7 @@ import { it } from 'date-fns/locale';
 import { Calendar, DollarSign, Users, Table2, TrendingUp, BarChart3 } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 import { calcTables } from '@/legacy/utils/tables';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 
 import { Div, P, Span } from '@/ui/html';
 import { Table, Tbody, Td, Tfoot, Th, Thead, Tr } from '@/ui/elements';
@@ -113,6 +114,9 @@ export default function EventCompareReport({ promoters, events, attendances, con
     }).sort((a, b) => b.totalRev - a.totalRev);
   }, [eventData, promoters]);
 
+  // PORT: senza limite alle serate scelte ("Seleziona tutte" = centinaia): una tabella di dettaglio per
+  // serata, montate a blocchi avvicinandosi alla fine (hooks/useProgressiveList, scroll della pagina)
+  const { count: shownDetails, sentinelRef: detailsSentinelRef } = useProgressiveList(eventData.length, { initial: 4, step: 4 });
   const chartData = eventData.map((ed, i) => ({ ...ed, fill: COLORS[i % COLORS.length] }));
   const totalFat = eventData.reduce((s, ed) => s + ed.fatturato, 0);
   const totalProm = eventData.reduce((s, ed) => s + ed.fat_promoter, 0);
@@ -260,7 +264,7 @@ export default function EventCompareReport({ promoters, events, attendances, con
       </Div>
 
       {/* Per-event detailed breakdown */}
-      {eventData.map((ed, i) => (
+      {eventData.slice(0, shownDetails).map((ed, i) => (
         <Div key={i} className="rounded-xl border border-white/[0.06] bg-card p-4">
           <SectionTitle>{ed.nome} — {ed.data} ({ed.locale})</SectionTitle>
           <Div className="overflow-x-auto">
@@ -303,12 +307,13 @@ export default function EventCompareReport({ promoters, events, attendances, con
           </Div>
         </Div>
       ))}
+      {shownDetails < eventData.length && <Div ref={detailsSentinelRef} />}
 
       {/* Chart fatturato per serata */}
       <Div className="rounded-xl border border-white/[0.06] bg-card p-4">
         <SectionTitle>Fatturato per Serata</SectionTitle>
         <DeferredChart style={{ height: Math.max(200, chartData.length * 50) }}><ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
+          <BarChart pageWindow data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 5% 18%)" horizontal={false} />
             <XAxis type="number" tick={{ fill: 'hsl(240 5% 45%)', fontSize: 10 }} tickFormatter={fmt} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="nome" tick={{ fill: 'hsl(0 0% 70%)', fontSize: 10 }} axisLine={false} tickLine={false} width={100} />

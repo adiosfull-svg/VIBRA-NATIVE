@@ -6,6 +6,7 @@ import { rankingColor } from '@/legacy/utils/clientRanking';
 import { Gem } from '@/ui/icons.generated';
 import { TreeNode } from '@/web/components/client/ClientFamilyTree';
 import CachedImage from '@/web/components/shared/CachedImage';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 
 import { Btn, Div, P, Span } from '@/ui/html';
 
@@ -367,6 +368,10 @@ export default function ClientFamilyTreeMobile({ clients, attendances, events, o
   }, [clients, clientCumMap]);
 
   const maxSpent = useMemo(() => clients.reduce((max, c) => Math.max(max, c.cum_total_spent || 0), 0), [clients]);
+  // PORT: vista Lista (scroll della pagina): le radici con i loro rami (centinaia di clienti) montate a
+  // blocchi avvicinandosi alla fine (useProgressiveList; altezze variabili e rami che si aprono e
+  // chiudono: niente finestra). La vista Albero (tela con pan/zoom) resta intera. REGOLE-PRESTAZIONI §3
+  const { count: shownRoots, sentinelRef: rootsSentinelRef } = useProgressiveList(viewMode === 'list' ? roots.length : 0, { initial: 4, step: 4 });
 
   if (roots.length === 0) {
     return (
@@ -424,7 +429,7 @@ export default function ClientFamilyTreeMobile({ clients, attendances, events, o
       {/* ── LISTA VERTICALE: zoom CSS + scroll pagina nativo ── */}
       {viewMode === 'list' && (
         <Div className="space-y-0 divide-y divide-border/30" style={{ zoom: displayZoom, touchAction: 'manipulation' }}>
-          {roots.map((root) => (
+          {roots.slice(0, shownRoots).map((root) => (
             <Div key={root.client.id} className="pt-1 pb-2">
               <Div className="px-2 pt-2 pb-1">
                 <Div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-semibold text-primary uppercase tracking-wider mb-1">
@@ -443,6 +448,7 @@ export default function ClientFamilyTreeMobile({ clients, attendances, events, o
           ))}
         </Div>
       )}
+      {viewMode === 'list' && shownRoots < roots.length && <Div ref={rootsSentinelRef} />}
 
       {/* ── ALBERO: GPU-composited (transform, non zoom) → tipo browser ── */}
       {viewMode === 'tree' && (

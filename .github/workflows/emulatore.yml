@@ -122,6 +122,12 @@ jobs:
           # logo della sidebar (AppSettings org_logo) come nell'app vera, per la gara del menu
           $P -c "insert into app_settings (key, value) values ('org_logo', 'https://base44.app/api/apps/69de4f1f7f53d9f187d01392/files/mp/public/69de4f1f7f53d9f187d01392/d42bf9b16_VIBRAPERFETTO2.png')"
           $P -c "insert into semina (name, promoter_id, instagram, phone, eta, provenienza, notes, status, recettivita, display_order) select 'Semina ' || g, 'prom000000000000000001', 'semina.' || g, '+39 333 000 00' || lpad(g::text, 2, '0'), 18 + g % 10, (array['Napoli','Pozzuoli','Vomero','Posillipo'])[1 + g % 4], case when g % 3 = 0 then 'Nota di prova ' || g || ': da richiamare venerdì' end, (array['nuovo','contattato','interessato','convertito'])[1 + g % 4], 1 + g % 5, g from generate_series(1,60) g"
+          # liste minori (thread "liste non virtualizzate", pr/13-liste-minori): rami dell'albero dei clienti
+          # del PR (40 radici, 2 livelli), tutti i suoi clienti presenti all'ultima serata (riquadro "Già
+          # presenti" di Aggiungi presenze) e una chat Instagram lunga (120 messaggi) abbinata a "Semina 1"
+          $P -c "with r as (select id, row_number() over (order by name, id) rn from client where promoter_id = 'prom000000000000000001') update client c set referred_by_client_id = p.id from r rc join r p on p.rn = case when rc.rn > 100 then 41 + rc.rn % 60 else 1 + rc.rn % 40 end where c.id = rc.id and rc.rn > 40"
+          $P -c "insert into event_attendance (event_id, promoter_id, client_id, present, revenue, table_number) select e.id, c.promoter_id, c.id, true, 100 + (abs(hashtext(c.id)) % 400), '1' from client c, (select id from event order by date desc limit 1) e where c.promoter_id = 'prom000000000000000001' and not exists (select 1 from event_attendance a where a.client_id = c.id and a.event_id = e.id)"
+          $P -c "insert into instagram_message (promoter_id, conversation_id, sender_ig_id, sender_handle, sender_username, message_text, message_type, message_timestamp, matched_semina_id, is_outgoing, is_read) select 'prom000000000000000001', 'conv-prova-1', 'ig-semina-1', 'semina.1', 'Semina Uno', 'Messaggio ' || lpad(g::text, 3, '0'), 'text', now() - interval '6 days' + g * interval '70 minutes', (select id from semina where name = 'Semina 1'), g % 2 = 0, true from generate_series(1,120) g"
           curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
 
       # ── APK x86_64 di prova ──
