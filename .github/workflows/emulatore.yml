@@ -128,6 +128,9 @@ jobs:
           # presenti" di Aggiungi presenze) e una chat Instagram lunga (120 messaggi) abbinata a "Semina 1"
           $P -c "with r as (select id, row_number() over (order by name, id) rn from client where promoter_id = 'prom000000000000000001') update client c set referred_by_client_id = p.id from r rc join r p on p.rn = case when rc.rn > 100 then 41 + rc.rn % 60 else 1 + rc.rn % 40 end where c.id = rc.id and rc.rn > 40"
           $P -c "insert into event_attendance (event_id, promoter_id, client_id, present, revenue, table_number) select e.id, c.promoter_id, c.id, true, 100 + (abs(hashtext(c.id)) % 400), '1' from client c, (select id from event order by date desc limit 1) e where c.promoter_id = 'prom000000000000000001' and not exists (select 1 from event_attendance a where a.client_id = c.id and a.event_id = e.id)"
+          # statistiche pre-calcolate (cum_*) dei clienti del PR: barre dei grafici di Analitica clienti ("Tutti")
+          $P -c "update client set cum_visits = 1 + abs(hashtext(id)) % 20, cum_total_spent = 50 + abs(hashtext(id || 'x')) % 3000 where promoter_id = 'prom000000000000000001'"
+          $P -c "update client set cum_avg_spent = round((cum_total_spent / cum_visits)::numeric, 0) where promoter_id = 'prom000000000000000001'"
           $P -c "insert into instagram_message (promoter_id, conversation_id, sender_ig_id, sender_handle, sender_username, message_text, message_type, message_timestamp, matched_semina_id, is_outgoing, is_read) select 'prom000000000000000001', 'conv-prova-1', 'ig-semina-1', 'semina.1', 'Semina Uno', 'Messaggio ' || lpad(g::text, 3, '0'), 'text', now() - interval '6 days' + g * interval '70 minutes', (select id from semina where name = 'Semina 1'), g % 2 = 0, true from generate_series(1,120) g"
           curl -sf http://127.0.0.1:54321/rest/v1/ > /dev/null
 

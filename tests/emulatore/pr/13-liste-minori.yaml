@@ -103,8 +103,11 @@ appId: com.vibra.mobile
     timeout: 30000
 - tapOn: "Seleziona una serata..."
 - waitForAnimationToEnd
+# la ricerca del menu prende il fuoco: via la tastiera
+- hideKeyboard
+- waitForAnimationToEnd
 - tapOn:
-    text: "(Ammare Frontemare|Duel Club|Arenile) \\d\\d/\\d\\d · .*"
+    text: "(Ammare Frontemare|Duel Club|Arenile) \\d\\d/\\d\\d.*"
     index: 0
 - extendedWaitUntil:
     visible: "Già presenti in questa serata"
