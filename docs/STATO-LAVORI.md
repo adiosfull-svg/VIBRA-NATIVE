@@ -341,6 +341,36 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Verifica 17/10: giro 39049796947 (crea, riapre, filo "Amici", pannello card, pan) senza crash; la versione
   vecchia (eef7cd4, giro 39049798881) va in errore JS al primo tocco sulla card (onPointerDown).
 
+## Cornice dell'app: funzioni mancanti (19/10, branch `claude/cornice-mancante`)
+- **Menu del promoter col tasto lungo** (PromoterContextMenu + Info rapide + Ultime serate), montato nel layout
+  `(app)/_layout.tsx`, attivo su ogni `[data-promoter-id]` (rimessi in PromoterCard, PromoterCardMobile,
+  ActivePromotersPopup, LiveRankingWidget). Strato ui: i tocchi della radice arrivano ai listener touch di
+  window/document (`hoverRootProps` → `rootTouch` in `ui/gestures.ts`; prima `touchstart` non arrivava MAI a
+  document, quindi nessun menu della pressione lunga globale poteva partire, nemmeno ClientSerateMenu),
+  `touches[i].target`, `click` in cattura di document chiamati da Btn prima dell'onClick (`clickBlocked`,
+  il click guard dei menu), Btn registra i data-* come Div, Div con data-* non appiattita.
+  Sul telefono il Pressable fa il click al rilascio anche dopo una pressione lunga: il menu lo ferma finché è aperto.
+- **ClientSerateMenu**: `data-no-multiselect` come l'originale (card dell'editor Comitive: solo menu).
+- **Swipe dal bordo sinistro** (`web/hooks/useSwipeToOpenSidebar.ts`): stesse soglie dell'originale, decisione
+  al rilascio, apertura con l'animazione di ui/sideDrawer. Esclusi: scroll orizzontali nativi e gesti RNGH
+  (arriva touchcancel), `<div>` con gesti propri (`gestureOwner`), grafici uPlot (`[data-vibra-gesture]`),
+  tocchi iniziati su un `<button>` (`markButtonPressIn`).
+- **Scorrimento veloce col pollice** (`ui/fastScroll.tsx`, uno per Page): posizione da `useScrollOffset`,
+  trascinamento con gesto RNGH + `scrollTo` di Reanimated, tutto sul thread UI.
+- **Precaricamento delle foto** (Client/Semina/PromoterPhotosPreloader, VenueLogosPreloader) nel layout dopo
+  2,5 s + InteractionManager; `queueImagePrefetch` (ui/imageCache): coda a concorrenza 4, priorità, max 150
+  immagini in memoria poi solo disco (come preloadImages dell'originale). `legacy preloadImages` usa la coda.
+- **Notifiche push**: parte client pronta (`web/hooks/usePushNotifications.ts`, expo-notifications installato,
+  voce "Attiva/Disattiva notifiche Push" nel menu account, tocco sulla notifica → `action_url`), SPENTA finché
+  manca il projectId EAS (`EXPO_PUBLIC_EAS_PROJECT_ID`). Il server Base44 invia solo web push (VAPID:
+  `dispatchPushOnNotification`, `sendPushNotification`). Per le push sul telefono servono: progetto EAS +
+  credenziali FCM (google-services.json) e APNs, e lato Base44 l'invio ai token `expo:` salvati in
+  PushSubscription (API push di Expo) — decisione dell'utente, Base44 non toccato.
+- Percorsi emulatore: `admin/07-menu-promoter`, `pr/13-swipe-menu`, `pr/14-fast-scroll`.
+- Restano: data-client-id negli altri ~20 file dell'originale (ClientRowCard, ClientTableRow, RecontactList,
+  SeminaCard, LeadersList...): il menu serate dei clienti sul telefono funziona solo dove l'attributo c'è
+  (Comitive); riconvertirli per avere il menu del tasto lungo anche nelle liste.
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
@@ -373,7 +403,7 @@ emulatore: commit con `[gara]`, risultati in gara.md nel branch emulatore-risult
 2. Pagine: tutte convertite (restano fuori AccessoApp, ingresso della PWA, e OAuthConsent, non collegata).
    Da rifinire: confronti scheda per scheda di Impostazioni app e Academy, editor delle Comitive sul telefono.
 3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
-4. Notifiche push (expo-notifications al posto del web push).
+4. Notifiche push: parte client fatta (19/10, spenta); servono credenziali FCM/APNs + EAS e l'invio lato Base44.
 5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
 
 ## Differenze note (accettate)
