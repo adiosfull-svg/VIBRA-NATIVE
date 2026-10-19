@@ -29,12 +29,47 @@ const POINTER = ['onPointerDown', 'onPointerMove', 'onPointerUp', 'onPointerCanc
 const MOUSE = ['onMouseDown', 'onMouseMove', 'onMouseUp', 'onMouseEnter', 'onMouseLeave'] as const;
 const ALL = [...TOUCH, ...POINTER, ...MOUSE, 'onWheel'] as const;
 
-/** Destinazione degli eventi di window/document (la imposta web/shims/dom). */
-export const windowTouchSink: { emit: ((type: string, event: Record<string, unknown>) => void) | null } = { emit: null };
+/** Destinazione degli eventi di window/document (la imposta web/shims/dom). `has`: c'è chi ascolta quel tipo. */
+export const windowTouchSink: {
+  emit: ((type: string, event: Record<string, unknown>) => void) | null;
+  has?: (type: string) => boolean;
+  /** listener 'click' di document/window in cattura; true = il click va fermato */
+  clickCapture?: (event: Record<string, unknown>) => boolean;
+} = { emit: null };
+// eventi nativi già inoltrati a window/document da un elemento (la radice non li ripete)
+const sunk = new WeakSet<object>();
 function toWindow(e: GestureResponderEvent, types: string[]) {
   const sink = windowTouchSink.emit;
   if (!sink) return;
+  if (e.nativeEvent && typeof e.nativeEvent === 'object') sunk.add(e.nativeEvent);
   for (const t of types) sink(t, webTouchEvent(e, t) as unknown as Record<string, unknown>);
+}
+
+/**
+ * Tocchi della radice dell'app verso i listener touch di window/document (come nel browser, dove ogni
+ * touchstart/move/end arriva al documento): i menu della pressione lunga (PromoterContextMenu,
+ * ClientSerateMenu) e i "tocco fuori chiude" li registrano lì. Gli eventi touch di RN risalgono fino alla
+ * radice; quelli già inoltrati dall'elemento toccato (toWindow) non si ripetono.
+ */
+function rootTouch(type: string) {
+  return (e: GestureResponderEvent) => {
+    const sink = windowTouchSink.emit;
+    if (!sink || !windowTouchSink.has?.(type)) return;
+    if (e.nativeEvent && sunk.has(e.nativeEvent)) return;
+    sink(type, webTouchEvent(e, type) as unknown as Record<string, unknown>);
+  };
+}
+
+/**
+ * Pressione di un Btn sul telefono: prima passa dai listener 'click' in cattura di document (es. il click che
+ * il browser emette al rilascio di una pressione lunga, fermato dai menu). true = non eseguire il click.
+ */
+export function clickBlocked(e: unknown): boolean {
+  const capture = windowTouchSink.clickCapture;
+  if (!capture || !e || typeof e !== 'object') return false;
+  const ev = e as GestureResponderEvent;
+  if (!ev.nativeEvent || !(ev as { target?: unknown }).target) return false;
+  return capture({ ...(webTouchEvent(ev, 'click') as unknown as Record<string, unknown>), pointerType: undefined });
 }
 
 /** Separa gli handler web dalle altre prop. */
@@ -57,8 +92,11 @@ const webTouch = (t: NativeTouch) => ({
 /** Evento touch di RN → evento con la forma del web. */
 export function webTouchEvent(e: GestureResponderEvent, type: string) {
   const n = e.nativeEvent as unknown as { touches?: NativeTouch[]; changedTouches?: NativeTouch[]; pageX: number; pageY: number };
-  const touches = (n.touches ?? []).map(webTouch);
-  const changedTouches = (n.changedTouches ?? [n as unknown as NativeTouch]).map(webTouch);
+  // touches[i].target come nel browser (t.target.closest('[data-x]') dei menu della pressione lunga)
+  const target = withDomData(e.target);
+  const withTarget = (t: NativeTouch) => ({ ...webTouch(t), target });
+  const touches = (n.touches ?? []).map(withTarget);
+  const changedTouches = (n.changedTouches ?? [n as unknown as NativeTouch]).map(withTarget);
   const first = touches[0] ?? changedTouches[0] ?? webTouch(n as unknown as NativeTouch);
   return {
     type, touches, targetTouches: touches, changedTouches,
@@ -112,8 +150,14 @@ function registerTap(entry: HoverEntry) {
   if (!fallback) fallback = setTimeout(flushHover, 0);
 }
 
-/** Prop da mettere sulla radice dell'app (onTouchEnd) per chiudere ogni tap. */
-export const hoverRootProps = Platform.OS === 'web' ? {} : { onTouchEnd: () => flushHover() };
+/** Prop da mettere sulla radice dell'app: chiudono ogni tap (hover emulato) e portano i tocchi a window/document. */
+const rootEnd = rootTouch('touchend');
+export const hoverRootProps = Platform.OS === 'web' ? {} : {
+  onTouchStart: rootTouch('touchstart'),
+  onTouchMove: rootTouch('touchmove'),
+  onTouchEnd: (e: GestureResponderEvent) => { rootEnd(e); flushHover(); },
+  onTouchCancel: rootTouch('touchcancel'),
+};
 
 const TAP_SLOP = 10;
 

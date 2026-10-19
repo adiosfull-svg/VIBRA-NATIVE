@@ -6,6 +6,7 @@ import MobileNavBar from '../../web/components/layout/MobileNavBar';
 import Sidebar from '../../web/components/layout/Sidebar';
 import { AccountMenuPanel } from '../../web/components/layout/AccountMenu';
 import VibraSearch from '../../web/components/shared/VibraSearch';
+import PromoterContextMenu from '../../web/components/promoter/PromoterContextMenu';
 import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
 import { LayoutUIProvider } from '../../web/lib/layoutUI';
@@ -97,6 +98,8 @@ export default function AppLayout() {
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
+      {/* Menu del promoter (tasto lungo su qualsiasi [data-promoter-id]), attivo in tutta l'app */}
+      <PromoterContextMenu />
       {/* Calcolatrice globale — persiste su tutte le rotte */}
       <GlobalCalcolatrice />
       </FixedHost>

@@ -22,7 +22,13 @@ export default function LiveRankingWidget({ promoters, attendances = [], events 
   const [tab, setTab] = useState('alltime');
   const [selectedMonth, setSelectedMonth] = useState(startOfMonth(new Date()));
 
-  const activePromoters = promoters.filter(p => p.ruolo !== 'ragazza_immagine' && isVisibleInStats(p));
+  // Memorizzato: prima era un array nuovo a ogni render, quindi la classifica qui
+  // sotto (che dipende da activePromoters) veniva ricalcolata sempre, anche nei tab
+  // Mese/Settimana che scorrono tutte le presenze. Stesso filtro.
+  const activePromoters = useMemo(
+    () => promoters.filter(p => p.ruolo !== 'ragazza_immagine' && isVisibleInStats(p)),
+    [promoters]
+  );
 
   // Mappa event_id → data, per filtrare le presenze per periodo
   const eventsById = useMemo(() => Object.fromEntries(events.map(e => [e.id, e])), [events]);
@@ -115,8 +121,11 @@ export default function LiveRankingWidget({ promoters, attendances = [], events 
             {ranking.map((p, i) => (
               <Btn
                 key={`${tab}-${p.id}`}
+                data-promoter-id={p.id}
+                data-promoter-name={p.name}
                 className="flex items-center gap-3 cursor-pointer group mb-2.5"
-                onClick={() => navigate(`/promoter/${p.id}`)}>
+                onClick={() => navigate(`/promoter/${p.id}`)}
+              >
                 <Span className="text-base w-6 text-center shrink-0">{medals[i] || `#${i + 1}`}</Span>
                 <Div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-bold text-primary overflow-hidden shrink-0 border border-white/[0.08]">
                   {p.photo_url

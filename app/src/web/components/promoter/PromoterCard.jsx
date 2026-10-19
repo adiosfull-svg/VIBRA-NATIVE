@@ -96,7 +96,9 @@ export default function PromoterCard({ promoter, attendances, events, onEdit, on
     <Btn
       className="relative rounded-xl bg-card border border-border p-5 hover:border-primary/30 transition-all group flex flex-col gap-4 cursor-pointer"
       onClick={() => navigate(`/promoter/${promoter.id}`)}
-      onPointerDown={() => preloadPage('/promoter/:id')}>
+      onPointerDown={() => preloadPage('/promoter/:id')}
+      data-promoter-id={promoter.id}
+      data-promoter-name={promoter.name}>
       <Div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl opacity-50"
         style={{ background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)' }} />
       {/* Header */}

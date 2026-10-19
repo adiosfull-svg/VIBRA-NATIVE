@@ -16,7 +16,7 @@ import { themeColor } from './colors';
 import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickyBlurTooTallContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
-import { splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
+import { clickBlocked, splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, hasBreakableText, MinContentProbeContext, type MinContentProbe, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
@@ -1058,7 +1058,10 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const elementId = (props0 as { id?: string }).id;
   const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
   const domRef = useDomStyleRef((props0 as { ref?: never }).ref, elementId, nativeData);
-  const props1 = (props0 as { ref?: unknown }).ref || elementId || nativeData ? { ...props0, ref: domRef } : props0;
+  // con attributi sul telefono la View non va appiattita (Fabric): il tocco deve poterla avere come
+  // target (closest('[data-x]') dei menu della pressione lunga, ui/rootTouch)
+  const props1 = (props0 as { ref?: unknown }).ref || elementId || nativeData
+    ? (nativeData ? { ...props0, ref: domRef, collapsable: false } : { ...props0, ref: domRef }) : props0;
   const props = dataAttrs && Platform.OS === 'web' ? { ...props1, dataSet: toDataSet(dataAttrs) } : props1;
   const gestures = useWebGestures(handlers);
   const inherited = useContext(TextClassContext);
@@ -1331,11 +1334,19 @@ function useHScrollTap(targets: Set<TapTarget> | null, onPress: PressableProps['
 
 export function Btn({ className, children, onClick, onPress, disabled, style, onLayout, type, button, ...all }: BtnProps) {
   diagCount('btn', className);
-  const [handlers, props] = splitGestureProps(all);
+  const [handlers, props00] = splitGestureProps(all);
+  // data-* (data-promoter-id delle card...): come in Div, sul web dataSet, sul telefono sull'istanza
+  const [dataAttrs, props01] = splitDataProps(props00);
+  const nativeData = Platform.OS !== 'web' ? dataAttrs : null;
+  const domRef = useDomStyleRef(nativeData ? (props01 as { ref?: never }).ref : undefined, undefined, nativeData);
+  const props = !dataAttrs ? props01
+    : Platform.OS === 'web' ? { ...props01, dataSet: toDataSet(dataAttrs) } : { ...props01, ref: domRef };
   const gestures = useWebGestures(handlers);
   const form = useForm();
   const gridCell = useContext(GridCellContext);
-  const press = onPress ?? onClick;
+  const press0 = onPress ?? onClick;
+  // listener 'click' di document in cattura (es. il tap che chiude la pressione lunga dei menu, ui/rootTouch)
+  const press: typeof press0 = press0 && Platform.OS !== 'web' ? (e) => { if (!clickBlocked(e)) press0(e); } : press0;
   const handlePress0: PressableProps['onPress'] = type === 'submit' && form
     ? (e) => { press?.(e); form.submit(); }
     : press;
