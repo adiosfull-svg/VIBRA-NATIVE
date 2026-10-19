@@ -351,10 +351,13 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   il click guard dei menu), Btn registra i data-* come Div, Div con data-* non appiattita.
   Sul telefono il Pressable fa il click al rilascio anche dopo una pressione lunga: il menu lo ferma finché è aperto.
 - **ClientSerateMenu**: `data-no-multiselect` come l'originale (card dell'editor Comitive: solo menu).
-- **Swipe dal bordo sinistro** (`web/hooks/useSwipeToOpenSidebar.ts`): stesse soglie dell'originale, decisione
-  al rilascio, apertura con l'animazione di ui/sideDrawer. Esclusi: scroll orizzontali nativi e gesti RNGH
-  (arriva touchcancel), `<div>` con gesti propri (`gestureOwner`), grafici uPlot (`[data-vibra-gesture]`),
-  tocchi iniziati su un `<button>` (`markButtonPressIn`).
+- **Swipe dal bordo sinistro** (`web/hooks/useSwipeToOpenSidebar.ts`): gesto manuale RNGH sul thread UI attorno
+  alle pagine (`(app)/_layout.tsx`), stesse soglie dell'originale (zona 5-35%, fuori dai 100 px in basso,
+  > 50 px e più orizzontale che verticale), apertura con l'animazione di ui/sideDrawer. Con i listener su
+  document non funzionava: su Android lo ScrollView della pagina prende il tocco al primo scarto verticale di
+  8 dp e a JS arriva touchcancel. Il gesto prende il tocco a 12 dp verso destra (gli scroll orizzontali nativi
+  lo prendono prima, a 8 dp: restano loro); pulsanti, `<div>` con gesti propri e grafici uPlot lo bloccano dal
+  JS (`touchBlockSink` in ui/gestures).
 - **Scorrimento veloce col pollice** (`ui/fastScroll.tsx`, uno per Page): posizione da `useScrollOffset`,
   trascinamento con gesto RNGH + `scrollTo` di Reanimated, tutto sul thread UI.
 - **Precaricamento delle foto** (Client/Semina/PromoterPhotosPreloader, VenueLogosPreloader) nel layout dopo
@@ -366,7 +369,12 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   `dispatchPushOnNotification`, `sendPushNotification`). Per le push sul telefono servono: progetto EAS +
   credenziali FCM (google-services.json) e APNs, e lato Base44 l'invio ai token `expo:` salvati in
   PushSubscription (API push di Expo) — decisione dell'utente, Base44 non toccato.
-- Percorsi emulatore: `admin/07-menu-promoter`, `pr/13-swipe-menu`, `pr/14-fast-scroll`.
+- **ui/html, Div che scorre con animazione** (menu-pop-in, motion): il contenitore animato prende posizione e
+  misure (stile e classi: `fixed`, `w-[248px]`, `z-...`), lo ScrollView lo riempie. Prima il contenitore era
+  0 di altezza: il menu si vedeva ma non riceveva tocchi né compariva a Maestro (vale anche per
+  ClientSerateMenu e SeminaPasteMenu).
+- Percorsi emulatore: `admin/07-menu-promoter` (run 39274162390), `pr/13-swipe-menu` (run 39271219790),
+  `pr/14-fast-scroll` (run 39267661333): verdi.
 - Restano: data-client-id negli altri ~20 file dell'originale (ClientRowCard, ClientTableRow, RecontactList,
   SeminaCard, LeadersList...): il menu serate dei clienti sul telefono funziona solo dove l'attributo c'è
   (Comitive); riconvertirli per avere il menu del tasto lungo anche nelle liste.
