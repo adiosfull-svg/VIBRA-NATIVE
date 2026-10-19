@@ -317,10 +317,15 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Emulatore: `pr/13-liste-minori.yaml`, `admin/07-report.yaml`; seed con referral, presenze, cum_* e 120
   messaggi IG; timeout del job 120 min (la suite pr non stava in 75).
 - Verifiche: tsc + npm test (75/75); emulatore completo 39291575224 verde (admin 7/7, pr 13/13, esito 0).
-- PROBLEMA (non di questo lavoro): il menu "Seleziona serate..." di Confronto Serate sporge dal contenitore e
-  sul telefono Android non riceve i tocchi fuori dai bordi (la scelta delle serate non funziona). Va portato in
-  un livello sopra la pagina (portal ancorato). Per questo Confronto Serate e MapBottomBar (niente coordinate
-  nel seed) non sono provati sull'emulatore.
+- Menu a discesa "a mano" (velo `fixed inset-0` + riquadro `absolute` sotto un `relative`): sul telefono il
+  riquadro sporgeva dal contenitore (Android non passa i tocchi fuori dai bordi del padre) e il velo, nel
+  portale, gli stava sopra: "Seleziona serate..." di Confronto Serate non si poteva usare. Nuovo
+  `ui/anchoredPanel.tsx` (`AnchoredPanel open onClose className`): velo e riquadro nel portale della radice,
+  riquadro alla posizione misurata del contenitore (`right-0`, `w-full` rispettati); web invariato. Usato nei
+  menu serate e promoter di ReportBuilder e in "Scarica Report" di ExportReportMensile. Emulatore: 07-report
+  sceglie tutte le serate, scorre il menu fino al 3 lug e genera il confronto (grafico a fasce) — run
+  39310440084; regressioni 01-dashboard 39310491446 e 02-clienti 39310542512 verdi. MapBottomBar resta non
+  provato (niente coordinate nel seed).
 
 ## Altre liste virtualizzate (18/10, branch `claude/liste-virtualizzate`)
 - Nuovi strumenti (REGOLE §3): `PageWindowList`, `WindowedListVariable`, `useStripWindow`; Select del telefono scorrevoli.
