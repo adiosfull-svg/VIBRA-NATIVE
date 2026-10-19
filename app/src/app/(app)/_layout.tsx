@@ -13,7 +13,7 @@ import SeminaPhotosPreloader from '../../web/components/shared/SeminaPhotosPrelo
 import PromoterPhotosPreloader from '../../web/components/shared/PromoterPhotosPreloader';
 import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
-import { LayoutUIProvider, useLayoutUIActions } from '../../web/lib/layoutUI';
+import { LayoutUIProvider, useLayoutUIActions, useLayoutUIOpen } from '../../web/lib/layoutUI';
 import { useSwipeToOpenSidebar } from '../../web/hooks/useSwipeToOpenSidebar';
 import { THEME } from '../../ui/palette.generated';
 import { InteractionManager, Platform, StyleSheet, View } from 'react-native';
@@ -21,7 +21,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FixedHost } from '../../ui/fixedPortal';
 import { LocationPublisher, useNavigate } from '../../web/router';
 import { usePushNavigation } from '../../web/hooks/usePushNotifications';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
 import { useNotificationsPolling } from '../../web/hooks/useNotifications';
@@ -52,6 +53,7 @@ function SystemBarsFill() {
 
 const styles = StyleSheet.create({
   bar: { position: 'absolute', left: 0, right: 0, backgroundColor: THEME.background },
+  fill: { flex: 1 },
 });
 
 // Notifiche: un solo osservatore con polling e subscription per tutta l'app (come l'header unico
@@ -67,13 +69,21 @@ function PushNavigation() {
   return null;
 }
 
-// Swipe dal bordo sinistro → menu laterale (useSwipeToOpenSidebar in AppLayout.jsx). Solo le azioni del
-// layout: aprire il menu non ridisegna questo componente.
-function SwipeToOpenSidebar() {
+// Swipe dal bordo sinistro → menu laterale (useSwipeToOpenSidebar in AppLayout.jsx), gesto RNGH sul thread
+// UI attorno alle pagine. I figli sono elementi stabili: aprire/chiudere il menu ridisegna solo questo.
+function SwipeToOpenSidebar({ children }: { children: ReactNode }) {
   const { setSidebarOpen } = useLayoutUIActions();
+  const sidebarOpen = useLayoutUIOpen('sidebarOpen');
   const open = useCallback(() => setSidebarOpen(true), [setSidebarOpen]);
-  useSwipeToOpenSidebar(open);
-  return null;
+  const gesture = useSwipeToOpenSidebar(open, !sidebarOpen);
+  if (Platform.OS === 'web') return <>{children}</>;
+  return (
+    <GestureHandlerRootView style={styles.fill}>
+      <GestureDetector gesture={gesture}>
+        <View style={styles.fill} collapsable={false}>{children}</View>
+      </GestureDetector>
+    </GestureHandlerRootView>
+  );
 }
 
 // Precaricamento delle foto (loghi dei locali, clienti, semine, promoter) come in AppLayout.jsx, senza pesare
@@ -139,8 +149,8 @@ export default function AppLayout() {
       <LocationPublisher />
       <NotificationsPoller />
       <PushNavigation />
-      <SwipeToOpenSidebar />
       <PhotosPreloaders />
+      <SwipeToOpenSidebar>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
@@ -149,6 +159,7 @@ export default function AppLayout() {
       <PromoterContextMenu />
       {/* Calcolatrice globale — persiste su tutte le rotte */}
       <GlobalCalcolatrice />
+      </SwipeToOpenSidebar>
       </FixedHost>
       {/* pannelli laterali: uno solo per tutta l'app, montati in anticipo (ui/sideDrawer); per ultimi,
           così il velo copre tutto (anche il pulsante Cerca flottante e la calcolatrice) */}

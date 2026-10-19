@@ -53,7 +53,9 @@ function toWindow(e: GestureResponderEvent, types: string[], owner = false) {
 
 /** Ultimo tocco iniziato su un <button> (Btn con `button`): lo swipe del menu laterale lo ignora come l'originale. */
 let lastButtonPressIn = 0;
-export function markButtonPressIn() { lastButtonPressIn = Date.now(); }
+/** avvisato quando un tocco parte su un <button> o su un <div> che gestisce da sé i gesti (swipe del menu) */
+export const touchBlockSink: { fn: (() => void) | null } = { fn: null };
+export function markButtonPressIn() { lastButtonPressIn = Date.now(); touchBlockSink.fn?.(); }
 export function lastButtonPressInAt() { return lastButtonPressIn; }
 
 /**
@@ -188,6 +190,7 @@ export function useWebGestures(handlers: Handlers, owner = false): Record<string
   if (h.onTouchStart || hasPointer || hasMouse) {
     out.onTouchStart = (e: GestureResponderEvent) => {
       start.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
+      if (owner && starts) touchBlockSink.fn?.();
       ref.current.onTouchStart?.(webTouchEvent(e, 'touchstart'));
       if (ref.current.onPointerDown) for (const pe of webPointerEvents(e, 'pointerdown', 'changed')) ref.current.onPointerDown?.(pe);
     };
