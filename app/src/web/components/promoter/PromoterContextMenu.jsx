@@ -1,6 +1,7 @@
 // Port di src/components/promoter/PromoterContextMenu.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from '@/web/shims/react-dom';
+import { TEST_DIAG } from '@/lib/testDiag';
 import { useNavigate } from '@/web/router';
 import { useQuery } from '@tanstack/react-query';
 import { ExternalLink, Copy, Instagram, BarChart3, Info, CalendarDays, X } from '@/ui/icons.generated';
@@ -29,6 +30,13 @@ function WhatsAppIcon({ className = '' }) {
  * renderizzato nell'AppLayout. Funzioni di prova: vai al dettaglio, contatta
  * (WhatsApp), copia telefono, apri Instagram, attiva/disattiva (solo admin).
  */
+// TEMP diagnostica emulatore
+const diagLayout = (name) => (TEST_DIAG ? (e) => {
+  const l = e.nativeEvent.layout;
+  console.log(`VIBRA diag menu-promoter ${name} ${Math.round(l.x)},${Math.round(l.y)} ${Math.round(l.width)}x${Math.round(l.height)}`);
+  e.target?.measureInWindow?.((x, y, w, h) => console.log(`VIBRA diag menu-promoter ${name} finestra ${Math.round(x)},${Math.round(y)} ${Math.round(w)}x${Math.round(h)}`));
+} : undefined);
+
 export default function PromoterContextMenu() {
   const navigate = useNavigate();
 
@@ -177,11 +185,12 @@ export default function PromoterContextMenu() {
           <Div
             className={`fixed inset-0 z-[10000] bg-black/30 ${closing ? 'backdrop-fade-out' : 'backdrop-fade-in'}`}
             style={{ touchAction: 'none' }}
+            onLayout={diagLayout('velo')}
             onPointerDown={(e) => { e.preventDefault(); closeMenu(); }} />
           <Div
             className={`fixed z-[10001] w-[248px] rounded-xl border border-white/10 bg-popover shadow-2xl overflow-y-auto overflow-x-hidden ${closing ? 'menu-pop-out' : 'menu-pop-in'}`}
             style={{ left: x, top: y, maxHeight: webWindow.innerHeight - y - 8, transformOrigin: `${ox}px ${oy}px` }}>
-            <Div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-secondary/40">
+            <Div onLayout={diagLayout('testata')} className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-secondary/40">
               <P className="text-[11px] font-semibold text-foreground truncate">{menu.promoter.name || 'Promoter'}</P>
               <Btn
                 button

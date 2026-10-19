@@ -9,6 +9,7 @@
 // di Clienti compariva su Semine e Il Mio Vibra). Ora ogni pagina mostra i suoi fixed solo quando è
 // in primo piano (display none altrimenti: lo stato resta). Dentro l'app vanno nell'host "fixed"
 // del layout, sotto i pannelli laterali (come z-40 sotto lo z-50 della sidebar) e sotto i dialog.
+import { TEST_DIAG } from '../lib/testDiag';
 import { Portal, PortalHost } from '@rn-primitives/portal';
 import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -49,7 +50,7 @@ export function PortalToRoot({ children }: { children: ReactNode }) {
   const focused = useScreenFocused();
   return (
     <Portal name={name} hostName={inApp ? FIXED_HOST : undefined}>
-      <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, !focused && styles.hidden]}>
+      <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, !focused && styles.hidden]} onLayout={TEST_DIAG ? (e) => { const l = e.nativeEvent.layout; console.log(`VIBRA diag portale ${inApp ? 'app' : 'radice'} ${Math.round(l.width)}x${Math.round(l.height)} focused=${focused}`); } : undefined}>
         <InPortalContext.Provider value>
           <TextClassContext.Provider value={textClasses}>{children}</TextClassContext.Provider>
         </InPortalContext.Provider>

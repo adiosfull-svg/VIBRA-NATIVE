@@ -1174,7 +1174,8 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
         {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
       </ScrollBox>
     );
-    return <Animated.View style={[outer, animatedStyle]}>{scrollOuter}</Animated.View>;
+    const diagLayout = TEST_DIAG ? (e: LayoutChangeEvent) => { const l = e.nativeEvent.layout; console.log(`VIBRA diag scroll-animato ${Math.round(l.x)},${Math.round(l.y)} ${Math.round(l.width)}x${Math.round(l.height)} outer=${JSON.stringify(outer)}`); } : undefined;
+    return <Animated.View style={[outer, animatedStyle]} onLayout={diagLayout}>{scrollOuter}</Animated.View>;
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
