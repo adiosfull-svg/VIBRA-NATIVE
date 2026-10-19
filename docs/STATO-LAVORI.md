@@ -372,6 +372,10 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   (vedi Differenze note). Il 19/10 l'originale ha cambiato anche index.html/manifest (solo PWA).
 - Controlli: typecheck e test (76) verdi; Clienti/Dashboard/Il Mio Vibra rimisurati contro la versione prima
   (git stash) senza regressioni.
+- Emulatore: giro completo 39292696316 (6e79cca) verde, admin 6/6 e pr 12/12, crash 0. I giri prima
+  (39267691524, 39282122173) e quelli della base 993a902 venivano annullati a 75 min durante 12-liste:
+  `timeout-minutes` del job portato a 110. I tempi variano molto da un giro all'altro (10-comitive 349-1313 s,
+  12-liste 937 s): da guardare (Achievement/liste lente, vedi sopra).
 - Restano scarti nei mockup Academy (dy relativi 8-36px in clienti, programmazione, ilmiovibra, report; le
   sezioni admin dashboard/promoter/serate/locali/consolle/impostazioni e formazione sono allineate),
   da guardare con `probe.mjs` e `scrollid`.
