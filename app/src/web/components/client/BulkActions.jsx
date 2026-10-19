@@ -204,9 +204,13 @@ export default function BulkActions() {
 
   return createPortal(
     <>
+      {/* PORT: nel browser la barra (fixed left-1/2 -translate-x-1/2) prende la larghezza del contenuto e sta al
+          centro dello schermo; sul telefono left 50% le dava solo metà schermo e usciva a destra ("Confr…"). Qui una
+          fascia a tutta larghezza (tocchi passano: box-none) la centra con la sua larghezza naturale. */}
+      <Div className="fixed left-0 right-0 bottom-24 sm:bottom-10 z-40 flex justify-center" style={{ pointerEvents: 'box-none' }}>
       <Div
         data-bulk-actions
-        className="fixed left-1/2 -translate-x-1/2 bottom-24 sm:bottom-10 z-40 flex items-center gap-0 sm:gap-1.5 rounded-2xl border border-violet-500/30 bg-popover/95 backdrop-blur-md px-2 sm:px-3 py-1.5 sm:py-2"
+        className="flex items-center gap-0 sm:gap-1.5 rounded-2xl border border-violet-500/30 bg-popover/95 backdrop-blur-md px-2 sm:px-3 py-1.5 sm:py-2"
         style={{ boxShadow: '0 8px 32px -4px rgba(167,139,250,0.4)' }}>
         <Span className="text-sm font-semibold text-violet-300 px-1 sm:px-2 whitespace-nowrap">{count} sel.</Span>
         <BulkBtn Icon={Link2} label="Gruppo" color="text-violet-300" hover="hover:bg-violet-500/20" onClick={() => setAction('group')} title="Aggiungi a gruppo" />
@@ -216,6 +220,7 @@ export default function BulkActions() {
         <Div className="w-px h-8 sm:h-6 bg-border/50 mx-0.5" />
         <BulkBtn Icon={Users} label="Tutti" color="text-muted-foreground" hover="hover:bg-secondary/60" onClick={ctx.selectAll} title="Seleziona tutti" />
         <BulkBtn Icon={X} label="Chiudi" color="text-muted-foreground" hover="hover:bg-secondary/60" onClick={ctx.clearSelection} title="Annulla selezione" />
+      </Div>
       </Div>
 
       {action === 'group' && (
