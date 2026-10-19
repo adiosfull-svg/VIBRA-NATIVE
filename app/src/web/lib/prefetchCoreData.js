@@ -128,23 +128,19 @@ export function prefetchDeferredData() {
       queryKey: ['promoter-ranks'],
       queryFn: () => base44.entities.PromoterRank.list(),
     }),
-    // Rotte secondarie: scaldiamo la cache prima che l'utente ci navighi
+    // Rotte secondarie: scaldiamo la cache prima che l'utente ci navighi.
+    // STESSA queryFn dei componenti (ordinati per sort_order): con list() semplice
+    // la cache avrebbe avuto i locali in ordine diverso finché non scadeva.
     () => queryClientInstance.prefetchQuery({
       queryKey: ['venues'],
-      queryFn: () => base44.entities.Venue.list(),
+      queryFn: () => base44.entities.Venue.list('sort_order'),
     }),
     () => queryClientInstance.prefetchQuery({
       queryKey: ['download-items'],
       queryFn: () => base44.entities.DownloadItem.list(),
     }),
-    () => queryClientInstance.prefetchQuery({
-      queryKey: ['audit-logs'],
-      queryFn: () => base44.entities.AuditLog.list('-timestamp', 200),
-    }),
-    () => queryClientInstance.prefetchQuery({
-      queryKey: ['credit-usage'],
-      queryFn: () => base44.entities.CreditUsageLog.list('-created_date', 200),
-    }),
+    // audit-logs e credit-usage tolti: la console admin usa una queryFn diversa
+    // (tutti i log, non 200) e credit-usage non è letto da nessun componente.
 
   ], 200);
 

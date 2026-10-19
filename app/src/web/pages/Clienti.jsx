@@ -1348,26 +1348,11 @@ export default function Clienti() {
       >
         <Div
           className="sticky-glass absolute inset-0"
-          style={{
-            ...stickyGlassStyle(stuck),
-            transition:
-              'backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, background-color 0.2s ease'
-          }} />
+          style={stickyGlassStyle(stuck)} />
 
-        {/* MODIFICA: il corpo della sticky bar ora entra/esce
-            con una transizione morbida di opacity + posizione + scala */}
-        <Div
-          className="sticky-bar-body relative flex items-center gap-2"
-          style={{
-            transition:
-              'opacity 220ms ease, transform 220ms ease',
-            opacity: stuck ? 1 : 0.92,
-            transform: stuck
-              ? 'translateY(0) scale(1)'
-              : 'translateY(-3px) scale(0.995)',
-            transformOrigin: 'top center'
-          }}
-        >
+        {/* Corpo della sticky bar: identico alle altre sezioni (nessuna transizione
+            di opacità/posizione legata allo stato incollata). */}
+        <Div className="sticky-bar-body relative flex items-center gap-2">
           <Div
             ref={scrollRef}
             className="relative overflow-x-auto overflow-y-hidden flex-1 min-w-0"
