@@ -10,6 +10,7 @@ import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimation
 import { combinedD, opaque } from './iconPath';
 import { classTransform, transitionSpec, useCssTransition, withoutClassTransform } from './cssTransition';
 import { cn } from './cn';
+import { cssColor } from './webStyle';
 import { TextClassContext, TextStyleContext } from './text';
 
 export type IconNode = [string, Record<string, string>][];
@@ -120,7 +121,11 @@ export function makeIcon(name: string, node: IconNode) {
     const iconDefaults = useContext(IconClassContext);
     // currentColor = colore del testo: anche quello dato con style dal contenitore (salvo classe propria)
     const ownColor = (className ?? '').split(/\s+/).some((c) => TEXT_COLOR.test(c));
-    const effectiveColor = color ?? (!ownColor ? inheritedStyleColor : undefined);
+    // style={{ color }} dell'icona (es. 'hsl(var(--primary))' della rotella di Academy): in CSS lo stile in
+    // linea vince sulle classi; la prop color di lucide (attributo stroke) vince su entrambi
+    const { color: rawStyleColor, ...styleRest } = (style ? StyleSheet.flatten(style) : {}) as Record<string, unknown>;
+    const styleColor = rawStyleColor != null ? cssColor(rawStyleColor) : undefined;
+    const effectiveColor = color ?? styleColor ?? (!ownColor ? inheritedStyleColor : undefined);
     const inheritedColor = inheritedText.split(/\s+/).filter((c) => TEXT_COLOR.test(c)).join(' ');
     // size esplicito (prop, come in lucide) vince sulle classi di dimensione di default
     const sizeClasses = size != null ? '' : cn('w-6 h-6', iconDefaults);
@@ -136,7 +141,7 @@ export function makeIcon(name: string, node: IconNode) {
         {...(effectiveColor ? { color: effectiveColor } : null)}
         {...(fill ? { fill } : null)}
         strokeWidth={strokeWidth ?? 2}
-        style={style}
+        style={styleColor ? styleRest : style}
       />
     );
   }

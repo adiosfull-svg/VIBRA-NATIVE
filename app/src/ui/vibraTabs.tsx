@@ -14,7 +14,7 @@ import {
 } from 'expo-router/react-navigation';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { memo, useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { makeMutable, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { runOnUISync } from 'react-native-worklets';
@@ -45,12 +45,15 @@ const TabScene = memo(function TabScene({ index, focused, children }: { index: n
   useState(() => {
     if (!focused) return;
     focusedTab = index;
-    runOnUISync((i: number) => {
+    const show = (i: number) => {
       'worklet';
       if (pendingTab.value >= 0 && pendingTab.value !== i) return;
       pendingTab.value = -1;
       shownTab.value = i;
-    }, index);
+    };
+    // sul web (confronti con tools/compare) runOnUISync non esiste: non c'è un thread UI separato
+    if (Platform.OS === 'web') show(index);
+    else runOnUISync(show, index);
   });
   // solo quando cambia il focus nel JS: un ridisegno qualsiasi mentre il thread UI ha già cambiato tab
   // non deve riportare indietro quella vecchia

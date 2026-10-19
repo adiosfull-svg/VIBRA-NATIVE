@@ -301,10 +301,17 @@ export default function AcademySideRail({ items, onJump }) {
           <Div
             ref={glassRef}
             className="absolute pointer-events-none"
+            // PORT: clip-path non esiste in React Native. A riposo il vetro è ritagliato sulla forma della
+            // barra (inset di 16px a destra, angoli destri arrotondati; il path di updateRailShape è la stessa
+            // forma): stessa area con larghezza 100% e raggi a destra. Il rigonfiamento durante lo scrub resta
+            // sul bordo disegnato dall'Svg qui sotto.
             style={{
               top: 0,
               left: 0,
-              width: 'calc(100% + 16px)',
+              width: '100%',
+              borderTopRightRadius: 16,
+              borderBottomRightRadius: 16,
+              overflow: 'hidden',
               height: '100%',
               background: 'hsl(var(--card) / 0.6)',
               backdropFilter: 'blur(6px) saturate(160%)',
@@ -314,7 +321,6 @@ export default function AcademySideRail({ items, onJump }) {
               filter: scrubbing
                 ? 'drop-shadow(4px 0 18px rgba(139,92,246,0.32)) drop-shadow(0 6px 16px rgba(0,0,0,0.28))'
                 : 'drop-shadow(0 0 6px rgba(139,92,246,0.12))',
-              clipPath: 'inset(0 16px 0 0 round 0 16px 16px 0)',
             }}
           />
 

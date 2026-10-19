@@ -8,6 +8,7 @@ import { ARB_SIZE, fontSizeOf, inheritedLineHeight, inlineLineBox, lineHeightOf,
 import { nextTextStyle, weightClass, withoutClassOverrides, type TextStyle } from './textStyleInherit';
 import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
 import { webStyle } from './webStyle';
+import { cssOrder } from './cssOrder';
 
 export { textClassesFor };
 
@@ -55,7 +56,7 @@ export function splitTextClasses(className?: string): [text: string, box: string
   let out = splitCache.get(className);
   if (!out) {
     if (splitCache.size > 5000) splitCache.clear();
-    out = computeSplit(className);
+    out = computeSplit(cssOrder(className));
     splitCache.set(className, out);
   }
   return out;
@@ -197,7 +198,7 @@ function textFacts(inherited: string, className: string | undefined): TextFacts 
   const key = `${inherited}|${className ?? ''}`;
   let f = factsCache.get(key);
   if (!f) {
-    const merged = cn('text-base text-foreground', inherited, className);
+    const merged = cn('text-base text-foreground', inherited, className && cssOrder(className));
     f = {
       merged,
       ownWeight: /(^|\s)font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)(\s|$)/.test(className ?? ''),
