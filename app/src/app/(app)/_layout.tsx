@@ -14,7 +14,8 @@ import { THEME } from '../../ui/palette.generated';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FixedHost } from '../../ui/fixedPortal';
-import { LocationPublisher } from '../../web/router';
+import { LocationPublisher, useNavigate } from '../../web/router';
+import { usePushNavigation } from '../../web/hooks/usePushNotifications';
 import { useEffect } from 'react';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
@@ -52,6 +53,12 @@ const styles = StyleSheet.create({
 // dell'originale); le campanelle delle pagine leggono la cache (web/hooks/useNotifications).
 function NotificationsPoller() {
   useNotificationsPolling();
+  return null;
+}
+
+// Tocco su una notifica push → pagina della notifica (evento 'vibra-navigate' di AppLayout.jsx)
+function PushNavigation() {
+  usePushNavigation(useNavigate());
   return null;
 }
 
@@ -94,6 +101,7 @@ export default function AppLayout() {
       <FixedHost>
       <LocationPublisher />
       <NotificationsPoller />
+      <PushNavigation />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
