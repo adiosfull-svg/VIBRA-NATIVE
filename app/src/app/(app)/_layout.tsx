@@ -9,14 +9,15 @@ import VibraSearch from '../../web/components/shared/VibraSearch';
 import PromoterContextMenu from '../../web/components/promoter/PromoterContextMenu';
 import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
-import { LayoutUIProvider } from '../../web/lib/layoutUI';
+import { LayoutUIProvider, useLayoutUIActions } from '../../web/lib/layoutUI';
+import { useSwipeToOpenSidebar } from '../../web/hooks/useSwipeToOpenSidebar';
 import { THEME } from '../../ui/palette.generated';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FixedHost } from '../../ui/fixedPortal';
 import { LocationPublisher, useNavigate } from '../../web/router';
 import { usePushNavigation } from '../../web/hooks/usePushNotifications';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
 import { useNotificationsPolling } from '../../web/hooks/useNotifications';
@@ -62,6 +63,15 @@ function PushNavigation() {
   return null;
 }
 
+// Swipe dal bordo sinistro → menu laterale (useSwipeToOpenSidebar in AppLayout.jsx). Solo le azioni del
+// layout: aprire il menu non ridisegna questo componente.
+function SwipeToOpenSidebar() {
+  const { setSidebarOpen } = useLayoutUIActions();
+  const open = useCallback(() => setSidebarOpen(true), [setSidebarOpen]);
+  useSwipeToOpenSidebar(open);
+  return null;
+}
+
 // Calcolatrice globale: resta attiva su tutte le rotte finché non la chiudi (come AppLayout.jsx).
 function GlobalCalcolatrice() {
   const { open, close } = useCalcolatrice();
@@ -102,6 +112,7 @@ export default function AppLayout() {
       <LocationPublisher />
       <NotificationsPoller />
       <PushNavigation />
+      <SwipeToOpenSidebar />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}

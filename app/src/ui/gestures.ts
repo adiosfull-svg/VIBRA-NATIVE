@@ -38,12 +38,23 @@ export const windowTouchSink: {
 } = { emit: null };
 // eventi nativi già inoltrati a window/document da un elemento (la radice non li ripete)
 const sunk = new WeakSet<object>();
-function toWindow(e: GestureResponderEvent, types: string[]) {
+function toWindow(e: GestureResponderEvent, types: string[], owner = false) {
   const sink = windowTouchSink.emit;
   if (!sink) return;
   if (e.nativeEvent && typeof e.nativeEvent === 'object') sunk.add(e.nativeEvent);
-  for (const t of types) sink(t, webTouchEvent(e, t) as unknown as Record<string, unknown>);
+  for (const t of types) {
+    const ev = webTouchEvent(e, t) as unknown as Record<string, unknown>;
+    // tocco partito su un <div> che gestisce da sé i propri gesti (trascinamenti, pinch, card che si girano):
+    // è il touch-action: none / overflow dell'originale per chi ascolta su document (swipe del menu laterale)
+    if (owner) ev.gestureOwner = true;
+    sink(t, ev);
+  }
 }
+
+/** Ultimo tocco iniziato su un <button> (Btn con `button`): lo swipe del menu laterale lo ignora come l'originale. */
+let lastButtonPressIn = 0;
+export function markButtonPressIn() { lastButtonPressIn = Date.now(); }
+export function lastButtonPressInAt() { return lastButtonPressIn; }
 
 /**
  * Tocchi della radice dell'app verso i listener touch di window/document (come nel browser, dove ogni
@@ -162,7 +173,7 @@ export const hoverRootProps = Platform.OS === 'web' ? {} : {
 const TAP_SLOP = 10;
 
 /** Prop native per una View a partire dagli handler web. */
-export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
+export function useWebGestures(handlers: Handlers, owner = false): Record<string, AnyFn> {
   const ref = useRef<Handlers>(handlers);
   ref.current = handlers;
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -186,7 +197,7 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
       const t0 = TEST_DIAG ? Date.now() : 0;
       ref.current.onTouchMove?.(webTouchEvent(e, 'touchmove'));
       if (ref.current.onPointerMove) for (const pe of webPointerEvents(e, 'pointermove', 'all')) ref.current.onPointerMove?.(pe);
-      if (starts) toWindow(e, ['pointermove', 'touchmove']);
+      if (starts) toWindow(e, ['pointermove', 'touchmove'], owner);
       if (TEST_DIAG) diagTime('gesti-move', Date.now() - t0);
     };
   }
@@ -194,7 +205,7 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
     out.onTouchEnd = (e: GestureResponderEvent) => {
       ref.current.onTouchEnd?.(webTouchEvent(e, 'touchend'));
       if (ref.current.onPointerUp) for (const pe of webPointerEvents(e, 'pointerup', 'changed')) ref.current.onPointerUp?.(pe);
-      if (starts) toWindow(e, ['pointerup', 'touchend']);
+      if (starts) toWindow(e, ['pointerup', 'touchend'], owner);
       const s = start.current;
       const { pageX, pageY } = e.nativeEvent;
       if (hasMouse && s && Math.abs(pageX - s.x) < TAP_SLOP && Math.abs(pageY - s.y) < TAP_SLOP) {
@@ -213,7 +224,7 @@ export function useWebGestures(handlers: Handlers): Record<string, AnyFn> {
       (ref.current.onTouchCancel ?? ref.current.onTouchEnd)?.(webTouchEvent(e, 'touchcancel'));
       const onCancel = ref.current.onPointerCancel ?? ref.current.onPointerUp;
       if (onCancel) for (const pe of webPointerEvents(e, 'pointercancel', 'changed')) onCancel(pe);
-      if (starts) toWindow(e, ['pointercancel', 'touchcancel']);
+      if (starts) toWindow(e, ['pointercancel', 'touchcancel'], owner);
     };
   }
   return out;

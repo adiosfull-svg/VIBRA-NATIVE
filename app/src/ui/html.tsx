@@ -16,7 +16,7 @@ import { themeColor } from './colors';
 import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
 import { isNativeSticky, NativeBlur, StickyBlurTargetContext, StickyBlurTooTallContext, StickySplit, usePageBlurTarget, useStickyPin } from './pageLayers';
 import { useForm } from './formContext';
-import { clickBlocked, splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
+import { clickBlocked, markButtonPressIn, splitGestureProps, useWebGestures, type WebGestureProps } from './gestures';
 import { FlexParentContext, hasBreakableText, MinContentProbeContext, type MinContentProbe, NarrowCellContext, splitTextClasses, WrapProbeContext, type WrapProbe, type ParentLayout, Text, TextClassContext, TextStyleContext, textClassesFor, useInlineBox, type AppTextProps } from './text';
 import { nextTextStyle } from './textStyleInherit';
 import { diagCount, diagTime, TEST_DIAG } from '../lib/testDiag';
@@ -1063,7 +1063,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const props1 = (props0 as { ref?: unknown }).ref || elementId || nativeData
     ? (nativeData ? { ...props0, ref: domRef, collapsable: false } : { ...props0, ref: domRef }) : props0;
   const props = dataAttrs && Platform.OS === 'web' ? { ...props1, dataSet: toDataSet(dataAttrs) } : props1;
-  const gestures = useWebGestures(handlers);
+  const gestures = useWebGestures(handlers, true);
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);
   const layout = useContext(FlexParentContext);
@@ -1267,14 +1267,14 @@ function btnStates(box: string): BtnStates {
 }
 
 /** Pressable del pulsante: sul telefono, con classi statiche già viste, senza NativeWind (ui/classStyleCache). */
-function BtnPressable({ classes, ownStyle: baseStyle0, disabledStyle, activeStyle, children, onPressIn, onPressOut, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; disabledStyle?: ViewStyle | null; activeStyle?: ViewStyle | null; children?: ReactNode }) {
+function BtnPressable({ classes, ownStyle: baseStyle0, disabledStyle, activeStyle, children, onPressIn, onPressOut, isButton, ...rest }: Omit<PressableProps, 'style'> & { classes: string; ownStyle: StyleProp<ViewStyle>[]; disabledStyle?: ViewStyle | null; activeStyle?: ViewStyle | null; children?: ReactNode; isButton?: boolean }) {
   // Stato "premuto" qui e non in Btn: i figli arrivano già creati e React salta il loro ridisegno (prima ogni
   // tocco ridisegnava due volte tutto il contenuto del pulsante). Con className, NativeWind sul web ignora
   // uno style passato come funzione: per questo è a mano.
   const [pressed, setPressed] = useState(false);
   const p = {
     ...rest,
-    onPressIn: (e: GestureResponderEvent) => { setPressed(true); onPressIn?.(e); },
+    onPressIn: (e: GestureResponderEvent) => { if (isButton) markButtonPressIn(); setPressed(true); onPressIn?.(e); },
     onPressOut: (e: GestureResponderEvent) => { setPressed(false); onPressOut?.(e); },
   };
   // disabled: subito dopo lo stile delle classi (vince su opacity-50 come in NativeWind), active: in fondo
@@ -1417,6 +1417,7 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       {...gestures}
       disabled={disabled}
       onPress={handlePress}
+      isButton={button}
       classes={cn(states ? states.base : box, disabled && 'opacity-50')}
       disabledStyle={disabled ? states?.disabled : null}
       activeStyle={states?.active}

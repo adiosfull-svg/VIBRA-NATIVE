@@ -8,9 +8,15 @@
 //  - tooltip al tocco (come setCursor), pinch con due dita e trascinamento quando è ingrandito
 //    (lib/uplotTouchZoom.js dell'originale).
 import { useMemo, useRef, useState } from 'react';
-import { PanResponder, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import { PanResponder, Platform, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, G, Line as SvgLine, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { monotonePath } from './recharts';
+import { registerData } from './domData';
+
+// area del grafico con gesti propri (tooltip, pinch, pan): lo swipe del menu laterale la ignora, come
+// .uplot nell'originale (web/hooks/useSwipeToOpenSidebar)
+const GESTURE_AREA = { 'data-vibra-gesture': '' };
+const markGestureArea = (node: View | null) => { if (node && Platform.OS !== 'web') registerData(node, GESTURE_AREA); };
 
 type Datum = Record<string, any>;
 type Serie = { key: string; name: string; color: string };
@@ -257,7 +263,7 @@ function ChartFrame({ data, series, xLabels, valueFormatter = (v) => v, height =
             </Svg>
           </Svg>
           {/* area dei gesti sopra il grafico (come u.over) */}
-          <View {...responder.panHandlers} style={{ position: 'absolute', left: plot.left, top: plot.top, width: plot.width, height: plot.height }} />
+          <View {...responder.panHandlers} ref={markGestureArea} collapsable={false} style={{ position: 'absolute', left: plot.left, top: plot.top, width: plot.width, height: plot.height }} />
           {tooltip}
         </View>
       )}

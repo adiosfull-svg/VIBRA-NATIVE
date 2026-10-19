@@ -1,0 +1,68 @@
+# PR: swipe dal bordo sinistro verso destra apre il menu laterale (useSwipeToOpenSidebar); uno scorrimento
+# verticale partito dalla stessa fascia e uno swipe verso sinistra non lo aprono.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+# precaricamento di tab e pannelli
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- assertNotVisible: "Guida all'uso"
+# scorrimento verticale dalla fascia sinistra: non apre
+- swipe:
+    start: 15%, 70%
+    end: 18%, 35%
+    duration: 400
+- waitForAnimationToEnd
+- assertNotVisible: "Guida all'uso"
+- swipe:
+    start: 15%, 35%
+    end: 18%, 70%
+    duration: 400
+- waitForAnimationToEnd
+# swipe verso sinistra: non apre
+- swipe:
+    start: 30%, 50%
+    end: 5%, 51%
+    duration: 300
+- waitForAnimationToEnd
+- assertNotVisible: "Guida all'uso"
+# swipe verso destra dal bordo: apre
+- swipe:
+    start: 12%, 50%
+    end: 80%, 52%
+    duration: 300
+- extendedWaitUntil:
+    visible: "Guida all'uso"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: swipe-menu-aperto
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Guida all'uso"
+# secondo giro su un'altra tab (Clienti)
+- tapOn: "Clienti"
+- waitForAnimationToEnd
+- swipe:
+    start: 12%, 55%
+    end: 80%, 57%
+    duration: 300
+- extendedWaitUntil:
+    visible: "Guida all'uso"
+    timeout: 10000
+- takeScreenshot: swipe-menu-clienti
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Guida all'uso"
