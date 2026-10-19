@@ -301,6 +301,26 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Dopo `openLink` (che rimonta tutta l'app) la pillola della barra resta su Semine con la versione nuova (2 giri su 2;
   la vecchia è su Il Mio): corsa nella MobileNavBar al rimontaggio, da vedere nel thread della barra.
 
+## Liste minori (19/10, branch `claude/liste-minori`)
+- `useProgressiveList` ora regge anche i riquadri con scroll proprio: `box: 'y' | 'x' | 'top'` (onBoxScroll sul
+  Div), `resetKey`; `Table` accetta `measureKey` (colonne misurate una volta, con righe nascoste delle celle più
+  larghe); `BarChart layout="vertical"` con `pageWindow` sul telefono si disegna a fasce di 480 px (usePageWindow).
+- A blocchi: tabella Serate di ReportPreview (Gruppo Vibra), menu serate di ReportBuilder (bug: prima mostrava
+  solo 12 serate), card di dettaglio di EventCompareReport, chip mobile di SeminaSidebar, elenco aperto di
+  MapBottomBar, barra "Aggiungi persone" di ComitivaEditor (trascinamento invariato), "Già presenti" di
+  AttendanceHub e SmartBatchImport, vista lista di ClientFamilyTreeMobile, chat di InstagramDMsTab (dal fondo,
+  le più vecchie salendo, posizione tenuta con maintainVisibleContentPosition).
+- A fasce: i 4 grafici "Tutti" di ClientiAnalytics e "Fatturato per Serata" di EventCompareReport.
+- Lasciati: tela dell'albero (pan/zoom), matrici di EventCompareReport (colonne = serate scelte, poche), elenco
+  AI di SmartBatchImport (corto).
+- Emulatore: `pr/13-liste-minori.yaml`, `admin/07-report.yaml`; seed con referral, presenze, cum_* e 120
+  messaggi IG; timeout del job 120 min (la suite pr non stava in 75).
+- Verifiche: tsc + npm test (75/75); emulatore completo 39291575224 verde (admin 7/7, pr 13/13, esito 0).
+- PROBLEMA (non di questo lavoro): il menu "Seleziona serate..." di Confronto Serate sporge dal contenitore e
+  sul telefono Android non riceve i tocchi fuori dai bordi (la scelta delle serate non funziona). Va portato in
+  un livello sopra la pagina (portal ancorato). Per questo Confronto Serate e MapBottomBar (niente coordinate
+  nel seed) non sono provati sull'emulatore.
+
 ## Altre liste virtualizzate (18/10, branch `claude/liste-virtualizzate`)
 - Nuovi strumenti (REGOLE §3): `PageWindowList`, `WindowedListVariable`, `useStripWindow`; Select del telefono scorrevoli.
 - Virtualizzate: griglie Semine (telefono), striscia Semine del weekend in Programmazione, heatmap Costanza,
@@ -312,9 +332,7 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   provare con i dati sintetici (0 clienti per locale, nessun dato costanza).
 - Achievement era già molto lento sull'emulatore prima (swipe 4×~800 s con cc7842b); con la finestra 4×~300 s.
   Da capire la causa (animazioni continue delle card?).
-- Restano da fare: tabella eventi di ReportPreview, conversazione di InstagramDMsTab, chip mobile di SeminaSidebar,
-  ClientFamilyTreeMobile, MapBottomBar, sidebar di ComitivaEditor, SmartBatchImport/AttendanceHub, grafici
-  "Tutti" di ClientiAnalytics, limite di EventCompareReport.
+- Le liste che restavano sono in "Liste minori (19/10)".
 
 ## Comitive (17/10, branch `claude/comitive-funnel`)
 - Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
