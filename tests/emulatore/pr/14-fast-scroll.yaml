@@ -1,0 +1,41 @@
+# PR: scorrimento veloce col pollice (MobileFastScroll → ui/fastScroll in Page). Trascinando il bordo destro
+# verso il basso la lista dei clienti va in fondo (uno swipe normale nello stesso verso la porterebbe in
+# cima), trascinandolo verso l'alto torna al primo cliente.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "Sofia Colombo"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: fast-scroll-01-cima
+- swipe:
+    start: 99%, 20%
+    end: 99%, 85%
+    duration: 1200
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: fast-scroll-02-fondo
+- assertNotVisible: "Sofia Colombo"
+- swipe:
+    start: 99%, 85%
+    end: 99%, 10%
+    duration: 1200
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible: "Sofia Colombo"
+    timeout: 15000
+- takeScreenshot: fast-scroll-03-cima

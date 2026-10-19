@@ -13,6 +13,8 @@ import { OwnPathProvider, useScreenNavigation } from '../../router';
 import { diagCount, diagMark, diagTime, dumpLayout, TEST_DIAG, useDiagWhy } from '../../../lib/testDiag';
 import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
+import { useAnimatedRef } from 'react-native-reanimated';
+import { FastScroll, useMergedScrollRef, type FastScrollHandle } from '../../../ui/fastScroll';
 
 type Props = Omit<ScrollViewProps, 'children'> & {
   children?: ReactNode;
@@ -33,11 +35,15 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   useImperativeHandle(ref, () => scrollRef.current as ScrollView);
+  // scorrimento veloce col pollice (MobileFastScroll dell'originale, ui/fastScroll): sul thread UI
+  const animatedScrollRef = useAnimatedRef<ScrollView>();
+  const setScrollRef = useMergedScrollRef(scrollRef, animatedScrollRef);
+  const fastScroll = useRef<FastScrollHandle | null>(null);
   const handle = useRef<ReturnType<typeof pageScroll.register> | null>(null);
   const blurHandle = useRef<ReturnType<typeof registerPageBlurTarget> | null>(null);
   const contentListeners = useRef(new Set<() => void>()).current;
   const scrollListeners = useRef(new Set<() => void>()).current;
-  const own = useRef({ y: 0, viewportHeight: 0 }).current;
+  const own = useRef({ y: 0, viewportHeight: 0, contentHeight: 0 }).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   // contesto stabile dello schermo (useNavigation/useFocusEffect di expo-router ridisegnavano la Page a
   // ogni navigazione, anche delle altre tab)
@@ -131,13 +137,16 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   );
   const handleContentSize = useCallback((w: number, h: number) => {
     handle.current?.setContentHeight(h);
+    own.contentHeight = h;
+    fastScroll.current?.setMetrics(h, own.viewportHeight);
     contentListeners.forEach((fn) => fn());
     onContentSizeChange?.(w, h);
-  }, [onContentSizeChange, contentListeners]);
+  }, [onContentSizeChange, contentListeners, own]);
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
     handle.current?.setViewportHeight(e.nativeEvent.layout.height);
     if (own.viewportHeight !== e.nativeEvent.layout.height) {
       own.viewportHeight = e.nativeEvent.layout.height;
+      fastScroll.current?.setMetrics(own.contentHeight, own.viewportHeight);
       scrollListeners.forEach((fn) => fn());
     }
     onLayout?.(e);
@@ -155,7 +164,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   return (
     <BlurTargetView ref={setBlurTarget as never} style={{ flex: 1, backgroundColor: THEME.background }}>
       <Animated.ScrollView
-        ref={scrollRef}
+        ref={setScrollRef}
         onLayout={handleLayout}
         onScroll={animatedScroll}
         scrollEventThrottle={16}
@@ -174,6 +183,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
           </PageLayerContext.Provider>
         </OwnPathProvider>
       </Animated.ScrollView>
+      {Platform.OS !== 'web' && <FastScroll ref={fastScroll} scrollRef={animatedScrollRef} />}
     </BlurTargetView>
   );
 });
