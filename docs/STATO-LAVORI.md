@@ -373,8 +373,11 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   misure (stile e classi: `fixed`, `w-[248px]`, `z-...`), lo ScrollView lo riempie. Prima il contenitore era
   0 di altezza: il menu si vedeva ma non riceveva tocchi né compariva a Maestro (vale anche per
   ClientSerateMenu e SeminaPasteMenu).
-- Percorsi emulatore: `admin/07-menu-promoter` (run 39274162390), `pr/13-swipe-menu` (run 39271219790),
-  `pr/14-fast-scroll` (run 39267661333): verdi.
+- Percorsi emulatore: `admin/07-menu-promoter`, `pr/13-swipe-menu`, `pr/14-fast-scroll`. Corsa completa su
+  c5d47b6 (run 39275181161): admin tutti verdi, pr 01-11 verdi; la corsa pr è stata fermata dal limite di 75
+  min durante 12-liste (10-comitive ~22 min e 12-liste ~41 min anche prima di questo lavoro), quindi 12, 13 e
+  14 a parte sullo stesso commit: 39287139437, 39287143146, 39287147841, verdi. Il limite del job non basta
+  più per tutti i percorsi pr in una corsa sola.
 - Restano: data-client-id negli altri ~20 file dell'originale (ClientRowCard, ClientTableRow, RecontactList,
   SeminaCard, LeadersList...): il menu serate dei clienti sul telefono funziona solo dove l'attributo c'è
   (Comitive); riconvertirli per avere il menu del tasto lungo anche nelle liste.
