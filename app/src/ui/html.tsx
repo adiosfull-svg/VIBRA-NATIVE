@@ -828,6 +828,16 @@ function splitOuterBox(flat: Record<string, any>): [Record<string, any>, Record<
   return [outer, inner];
 }
 
+// Classi del riquadro esterno (posizione, misure, margini, flex) per lo stesso contenitore animato.
+const OUTER_CLASS = /^-?(absolute|relative|static|sticky|inset-|top-|left-|right-|bottom-|start-|end-|z-|w-|min-w-|max-w-|h-|min-h-|max-h-|size-|m[trblxyse]?-|flex-1$|flex-auto$|flex-initial$|flex-none$|grow|shrink|basis-|self-)/;
+function splitOuterClasses(box: string): [{ classes: string; sized: boolean }, string] {
+  const outer: string[] = [];
+  const inner: string[] = [];
+  for (const c of box.split(/\s+/)) if (c) (OUTER_CLASS.test(c) ? outer : inner).push(c);
+  const sized = outer.some((c) => /^(h-|size-|inset-0$|inset-y-|flex-1$)/.test(c)) || (outer.some((c) => /^top-/.test(c)) && outer.some((c) => /^bottom-/.test(c)));
+  return [{ classes: outer.join(' '), sized }, inner.join(' ')];
+}
+
 function ScrollBox({ axis, box, style, children, onScroll, ref, ...props }: Omit<ViewProps, 'style'> & {
   axis: 'x' | 'y'; box: string; style: Record<string, any>; children: ReactNode; onScroll?: (e: any) => void; ref?: Ref<unknown>;
 }) {
@@ -1164,18 +1174,19 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
     );
     if (!animatedStyle) return scroll;
     // animazione (motion, menu-pop-in...) su un riquadro che scorre: il contenitore animato prende il posto e
-    // le misure del riquadro (position/top/left, larghezza, max-height, margini, flex) e lo ScrollView lo
-    // riempie. Prima il contenitore restava in flusso con misura 0 e il riquadro `fixed` (assoluto) ci stava
+    // le misure del riquadro (position/top/left, larghezza, max-height, margini, flex: sia dallo style sia
+    // dalle classi, `fixed` → absolute, w-[248px], z-...) e lo ScrollView lo riempie. Prima il contenitore restava in flusso con misura 0 e il riquadro `fixed` (assoluto) ci stava
     // fuori: si vedeva (Android non ritaglia i figli) ma non riceveva tocchi né accessibilità (menu del promoter).
     const [outer, inner] = splitOuterBox(flat);
+    const [outerCls, innerCls] = splitOuterClasses(box);
+    if (outerCls.sized) inner.flexGrow = 1;
     const scrollOuter = (
-      <ScrollBox {...props} {...gestures} axis={axis} box={box} style={inner} onLayout={min.onLayout}>
+      <ScrollBox {...props} {...gestures} axis={axis} box={innerCls} style={inner} onLayout={min.onLayout}>
         {nativeBlur}
         {textInherit(inheritedStyle, inherited, text, rnStyle, content)}
       </ScrollBox>
     );
-    const diagLayout = TEST_DIAG ? (e: LayoutChangeEvent) => { const l = e.nativeEvent.layout; console.log(`VIBRA diag scroll-animato ${Math.round(l.x)},${Math.round(l.y)} ${Math.round(l.width)}x${Math.round(l.height)} outer=${JSON.stringify(outer)}`); } : undefined;
-    return <Animated.View style={[outer, animatedStyle]} onLayout={diagLayout}>{scrollOuter}</Animated.View>;
+    return <AnimatedBox className={outerCls.classes} style={[outer, animatedStyle]}>{scrollOuter}</AnimatedBox>;
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
