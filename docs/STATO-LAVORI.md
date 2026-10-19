@@ -378,9 +378,15 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   min durante 12-liste (10-comitive ~22 min e 12-liste ~41 min anche prima di questo lavoro), quindi 12, 13 e
   14 a parte sullo stesso commit: 39287139437, 39287143146, 39287147841, verdi. Il limite del job non basta
   più per tutti i percorsi pr in una corsa sola.
-- Restano: data-client-id negli altri ~20 file dell'originale (ClientRowCard, ClientTableRow, RecontactList,
-  SeminaCard, LeadersList...): il menu serate dei clienti sul telefono funziona solo dove l'attributo c'è
-  (Comitive); riconvertirli per avere il menu del tasto lungo anche nelle liste.
+- **data-client-id ovunque come l'originale** (menu serate col tasto lungo da tutte le liste): data-client-id/name
+  (+ data-semina, data-ig, data-is-off, data-phone sulle semine) in ClientRowCard, ClientTableRow, LeadersList,
+  ClientGroupsBox, AttendanceClientSearchRow, AttendanceHubDialog, SmartBatchImport, AIConsoleBox,
+  ProgrammazionePlanner, ClientFUTCard, ClientGrowthLeague, WeeklySuggestionBox, RecontactList, TargetLocaleTab,
+  SeminaCard; data-prospetto-root (ProgrammazionePlanner) e data-bulk-actions (BulkActions). Strato ui: data-*
+  anche su Tr e sui testi (Span/P). ClientSerateMenu: il click del Pressable al rilascio dopo la pressione
+  lunga è fermato (apriva il dettaglio sopra il menu o toglieva la selezione multipla appena attivata).
+  Percorso `pr/15-menu-serate-cliente` (pressione di 0,8 s → menu serate; pressione lunga → selezione multipla).
+
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
