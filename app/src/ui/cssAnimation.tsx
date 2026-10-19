@@ -9,7 +9,7 @@
 // Inoltre le entrate/uscite una tantum dell'index.css dell'originale (menu-pop-in/out, backdrop-fade-in/out,
 // search-*, heatmap-row-in, chart-fs-in): sul telefono non esistevano, i menu comparivano di colpo e in
 // chiusura restavano fermi 140 ms prima di sparire.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing } from 'react-native';
 import { useScreenFocused } from './fixedPortal';
 
@@ -52,37 +52,24 @@ export function withoutCssAnimation(className: string): string {
 
 const FRAME_DEFAULT: Required<Frame> = { opacity: 1, scale: 1, translateX: 0, translateY: 0 };
 
-/** solo per le prove sull'emulatore: entrate/uscite una tantum spente (stile finale subito) */
-const NO_ONE_SHOT = process.env.EXPO_PUBLIC_TEST_NO_ONESHOT === '1';
-
-/**
- * Entrata/uscita una tantum: parte al montaggio e a ogni cambio di classe (in → out), poi resta sull'arrivo.
- * A fine animazione lo stile diventa quello finale fisso (stessa forma, valori normali): col driver nativo
- * l'albero di Fabric teneva i valori di partenza (opacity 0, scale 0.9) mentre la vista nativa mostrava
- * quelli d'arrivo.
- */
+/** Entrata/uscita una tantum: parte al montaggio e a ogni cambio di classe (in → out), poi resta sull'arrivo. */
 function useOneShot(kind: string | null) {
   const v = useRef(new Animated.Value(0)).current;
   const spec = kind ? ONE_SHOT[kind] : null;
-  const [doneFor, setDoneFor] = useState<OneShot | null>(null);
   useEffect(() => {
     if (!spec) return undefined;
-    if (NO_ONE_SHOT) { setDoneFor(spec); return undefined; }
     v.setValue(0);
     const a = Animated.timing(v, { toValue: 1, duration: spec.ms, easing: spec.easing, useNativeDriver: true });
-    a.start(({ finished }) => { if (finished) setDoneFor(spec); });
+    a.start();
     return () => a.stop();
   }, [spec, v]);
-  const done = !!spec && doneFor === spec;
   return useMemo(() => {
     if (!spec) return null;
     const keys = [...new Set([...Object.keys(spec.from), ...Object.keys(spec.to)])] as (keyof Frame)[];
-    const at = (k: keyof Frame) => (done
-      ? (spec.to[k] ?? FRAME_DEFAULT[k])
-      : v.interpolate({ inputRange: [0, 1], outputRange: [spec.from[k] ?? FRAME_DEFAULT[k], spec.to[k] ?? FRAME_DEFAULT[k]] }));
+    const at = (k: keyof Frame) => v.interpolate({ inputRange: [0, 1], outputRange: [spec.from[k] ?? FRAME_DEFAULT[k], spec.to[k] ?? FRAME_DEFAULT[k]] });
     const transform = keys.filter((k) => k !== 'opacity').map((k) => ({ [k]: at(k) }));
     return { ...(keys.includes('opacity') ? { opacity: at('opacity') } : null), ...(transform.length ? { transform } : null) };
-  }, [spec, v, done]);
+  }, [spec, v]);
 }
 
 const PULSE_EASE = Easing.bezier(0.4, 0, 0.6, 1);
