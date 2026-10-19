@@ -70,7 +70,20 @@ const TabScene = memo(function TabScene({ index, focused, children }: { index: n
     return () => { mountedTabs.value &= ~(1 << index); };
   }, [index]);
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: shownTab.value === index ? 0 : OFFSCREEN }] }));
-  return <Animated.View style={[StyleSheet.absoluteFill, style]} collapsable={false}>{children}</Animated.View>;
+  // le tab fuori schermo (precaricate) fuori anche dall'albero dell'accessibilità, come il menu laterale chiuso
+  // (ui/sideDrawer): TalkBack non le deve leggere e chi percorre l'albero (servizi di accessibilità, Robo di
+  // Test Lab, UiAutomator) visita solo la pagina che si vede. Con tutte le tab montate l'albero aveva ~3000
+  // nodi e Robo impiegava ~25 s per schermata (Test Lab 39332948258), tenendo occupato il thread UI.
+  return (
+    <Animated.View
+      style={[StyleSheet.absoluteFill, style]}
+      collapsable={false}
+      importantForAccessibility={focused ? 'auto' : 'no-hide-descendants'}
+      accessibilityElementsHidden={!focused}
+    >
+      {children}
+    </Animated.View>
+  );
 });
 
 type Props = {
