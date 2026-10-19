@@ -81,3 +81,6 @@ export function MiniTabBar({ tabs, active }) {
     </Div>
   );
 }
+// PORT: la radice di Callout è absolute (anche se chi lo usa passa solo -top-1 left-3...): in CSS non
+// occupa celle nelle griglie (grid-cols-3 dei KPI) né conta come fratello nei margini (ui/html.tsx).
+Callout.cssOutOfFlow = true;

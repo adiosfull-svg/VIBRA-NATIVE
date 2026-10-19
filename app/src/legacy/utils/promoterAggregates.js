@@ -42,6 +42,61 @@ export const VENUE_ROWS = [
 
 const ZERO_VENUE = Object.freeze({ presenti: 0, myRev: 0, myTav: 0 });
 
+// ── Indici condivisi tra le chiamate ──
+// computePromoterAggregates viene chiamata una volta per card (20 card Promoter,
+// classifica, Miei Progressi) sempre con gli STESSI array presenze/eventi della
+// cache React Query. Prima ogni chiamata rifaceva da zero: mappa eventi, media
+// soglie, conteggio eventi per locale e scansione di TUTTE le presenze.
+// Ora questi dati si calcolano una volta per array (WeakMap: si liberano da soli
+// quando l'array viene sostituito) e ogni card lavora solo sulle sue presenze.
+// Risultati identici: stesse presenze, nello stesso ordine, stessi filtri.
+const eventsIndexCache = new WeakMap();
+function getEventsIndex(events) {
+  const cacheable = events && typeof events === 'object';
+  let idx = cacheable ? eventsIndexCache.get(events) : undefined;
+  if (idx) return idx;
+  const eventsById = events instanceof Map ? events : new Map(events.map(e => [e.id, e]));
+  const avgThreshold = computeAvgThreshold(eventsById.values());
+  const evCountByVenue = new Map();
+  let evExtra = 0;
+  for (const ev of eventsById.values()) {
+    evCountByVenue.set(ev.venue, (evCountByVenue.get(ev.venue) || 0) + 1);
+    if (ev.is_extra) evExtra++;
+  }
+  idx = { eventsById, avgThreshold, evCountByVenue, evExtra };
+  if (cacheable) eventsIndexCache.set(events, idx);
+  return idx;
+}
+
+const attendancesByPromoterCache = new WeakMap();
+function getPromoterAttendances(promoterId, attendances) {
+  if (!Array.isArray(attendances)) return attendances;
+  let byPromoter = attendancesByPromoterCache.get(attendances);
+  if (!byPromoter) {
+    byPromoter = new Map();
+    for (const a of attendances) {
+      let list = byPromoter.get(a.promoter_id);
+      if (!list) { list = []; byPromoter.set(a.promoter_id, list); }
+      list.push(a);
+    }
+    attendancesByPromoterCache.set(attendances, byPromoter);
+  }
+  return byPromoter.get(promoterId) || [];
+}
+
+// Giorno settimana e chiave giorno per serata: dipendono solo da ev.date, quindi si
+// calcolano una volta per serata invece che per ogni presenza di ogni card (era la
+// parte più costosa del calcolo). Se la data della serata cambia, si ricalcola.
+const eventDayCache = new WeakMap();
+function eventDayInfo(ev) {
+  let info = eventDayCache.get(ev);
+  if (!info || info.date !== ev.date) {
+    info = { date: ev.date, dow: getDow(ev.date), day: validDayKey(ev.date) || ev.date };
+    eventDayCache.set(ev, info);
+  }
+  return info;
+}
+
 function monthKeyOf(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
@@ -76,13 +131,12 @@ export function dedupPromoterAttendances(promoterId, attendances, eventsById) {
  * @returns {object} tutti gli aggregati pronti per la UI
  */
 export function computePromoterAggregates(promoterId, attendances, events, now = new Date()) {
-  const eventsById = events instanceof Map ? events : new Map(events.map(e => [e.id, e]));
-  const myAtts = dedupPromoterAttendances(promoterId, attendances, eventsById);
+  const { eventsById, avgThreshold, evCountByVenue, evExtra } = getEventsIndex(events);
+  const myAtts = dedupPromoterAttendances(promoterId, getPromoterAttendances(promoterId, attendances), eventsById);
 
-  // Media delle soglie di tutti gli eventi: usata come fallback per gli eventi
-  // senza table_threshold (invece del fisso 300) così il totale tavoli riflette
-  // la distribuzione reale delle soglie (240, 300, 360, 120...).
-  const avgThreshold = computeAvgThreshold(eventsById.values());
+  // avgThreshold = media delle soglie di tutti gli eventi: usata come fallback per
+  // gli eventi senza table_threshold (invece del fisso 300) così il totale tavoli
+  // riflette la distribuzione reale delle soglie (240, 300, 360, 120...).
 
   // Build rows: un solo passaggio, ogni presenza "agganciata" al suo evento
   const rows = [];
@@ -90,8 +144,7 @@ export function computePromoterAggregates(promoterId, attendances, events, now =
     const ev = eventsById.get(a.event_id);
     if (!ev?.date) continue;
     const revenue = a.revenue || 0;
-    const dow = getDow(ev.date);
-    const day = validDayKey(ev.date) || ev.date;
+    const { dow, day } = eventDayInfo(ev);
     rows.push({ a, ev, date: ev.date, day, revenue, dow, tables: calcTables(revenue, dow, ev.table_threshold, avgThreshold) });
   }
 
@@ -127,13 +180,7 @@ export function computePromoterAggregates(promoterId, attendances, events, now =
     else if (r.dow === 0) monthlySun += r.tables;
   }
 
-  // Performance per locale (chiusura tavoli)
-  const evCountByVenue = new Map();
-  let evExtra = 0;
-  for (const ev of eventsById.values()) {
-    evCountByVenue.set(ev.venue, (evCountByVenue.get(ev.venue) || 0) + 1);
-    if (ev.is_extra) evExtra++;
-  }
+  // Performance per locale (chiusura tavoli); conteggi eventi per locale dall'indice
   const byVenue = new Map();
   const extra = { presenti: 0, myRev: 0, myTav: 0 };
   for (const r of rows) {

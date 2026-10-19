@@ -193,6 +193,15 @@ export function cssChildren(children: ReactNode): ReactNode[] {
  * Figli di una griglia CSS: larghezza 1/cols (o col-span) e gap orizzontale come padding.
  * Come in CSS (align-items: stretch) un Div/Btn figlio diretto si allunga all'altezza della riga.
  */
+/**
+ * Componente la cui radice è fuori dal flusso (absolute/fixed) anche se chi lo usa non lo scrive nelle
+ * classi: es. `Callout` dei mockup di Academy (`<Callout className="-top-1 left-3" />` è uno span absolute).
+ * Si segna con `Componente.cssOutOfFlow = true`: in CSS non occupa celle di griglia né conta per i margini.
+ */
+function outOfFlowType(child: ReactNode): boolean {
+  return isValidElement(child) && !!(child.type as { cssOutOfFlow?: boolean }).cssOutOfFlow;
+}
+
 function gridChildren(children: ReactNode, grid: Grid, className?: string): ReactNode {
   if (grid.rows || hasRowSpan(children)) return <ExplicitGrid grid={grid} className={className}>{children}</ExplicitGrid>;
   if (grid.template) return templateGridRows(children, grid, className);
@@ -204,7 +213,7 @@ function gridChildren(children: ReactNode, grid: Grid, className?: string): Reac
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
     const span = Math.min(Number(cls.match(/(?:^|\s)col-span-(\d+)/)?.[1] ?? 1), n);
     // in CSS gli elementi assoluti non sono elementi della griglia (niente cella, niente gap)
-    if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) return child;
+    if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls) || outOfFlowType(child)) return child;
     if (col + span > n) col = 0;
     // larghezza span/n e padding secondo la colonna: contenuto largo come la traccia CSS
     // ((W − (n−1)·gap)/n) e nessun gap ai bordi, anche se il contenitore ha padding o bordo
@@ -255,7 +264,7 @@ function ExplicitGrid({ grid, className, children }: { grid: Grid; className?: s
   let cr = 0, cc = 0;
   for (const child of Children.toArray(wrapText(cssChildren(children)))) {
     const cls = classOf(child);
-    if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls)) { outOfFlow.push(child); continue; }
+    if (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls) || outOfFlowType(child)) { outOfFlow.push(child); continue; }
     const cs = Math.min(Number(cls.match(COL_SPAN)?.[1] ?? 1), n);
     const rs = Number(cls.match(ROW_SPAN)?.[1] ?? 1);
     while (cc + cs > n || !free(cr, cc, rs, cs)) { cc++; if (cc + cs > n) { cc = 0; cr++; } }
@@ -298,7 +307,7 @@ function templateGridRows(children: ReactNode, grid: Grid, className?: string): 
   const cells: ReactNode[] = [];
   for (const child of Children.toArray(wrapText(cssChildren(children)))) {
     const cls = isValidElement(child) ? String((child as ReactElement<{ className?: string }>).props.className ?? '') : '';
-    (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls) ? outOfFlow : cells).push(child);
+    (/(?:^|\s)(hidden|absolute|fixed)(?:\s|$)/.test(cls) || outOfFlowType(child) ? outOfFlow : cells).push(child);
   }
   const rows: ReactNode[] = [];
   for (let r = 0; r * tracks.length < cells.length; r++) {
@@ -313,7 +322,83 @@ function templateGridRows(children: ReactNode, grid: Grid, className?: string): 
 }
 
 function boxContent(children: ReactNode, grid?: Grid, className?: string) {
-  return grid ? gridChildren(children, grid, className) : stickySplit(wrapText(spaceOverrides(children, className)), className);
+  return grid ? gridChildren(children, grid, className) : stickySplit(wrapText(spaceOverrides(collapseSiblingMargins(children, className), className)), className);
+}
+
+// Margini verticali dalle classi senza varianti (mt/mb/my/m): l'ultima classe vince, come tailwind-merge.
+const V_MARGIN = /^(-?)(m|my|mt|mb)-(.+)$/;
+const DISPLAY_NONE = cachedTest(/(?:^|\s)hidden(?:\s|$)/);
+const BLOCK_LEVEL = cachedTest(/(?:^|\s)(block|flex|grid)(?:\s|$)/);
+const vMarginCache = new Map<string, { top: number; bottom: number }>();
+const NO_V_MARGIN = { top: 0, bottom: 0 };
+// collapseSiblingMargins la chiama per ogni figlio a blocco a ogni render: risultato in cache per className
+function verticalMargins(cls: string): { top: number; bottom: number } {
+  let r = vMarginCache.get(cls);
+  if (!r) {
+    r = /(?:^|\s)-?m[ytb]?-/.test(cls) ? computeVerticalMargins(cls) : NO_V_MARGIN;
+    if (vMarginCache.size > 4000) vMarginCache.clear();
+    vMarginCache.set(cls, r);
+  }
+  return r;
+}
+function computeVerticalMargins(cls: string): { top: number; bottom: number } {
+  let top = 0, bottom = 0;
+  for (const c of cls.split(/\s+/)) {
+    const m = c.match(V_MARGIN);
+    if (!m) continue;
+    const px = (m[1] ? -1 : 1) * spacingPx(m[3]);
+    if (!Number.isFinite(px)) continue;
+    if (m[2] !== 'mb') top = px;
+    if (m[2] !== 'mt') bottom = px;
+  }
+  return { top, bottom };
+}
+
+/**
+ * Fratelli in un blocco (contenitore non flex/grid e senza space-y): in CSS il margin-bottom di un
+ * elemento e il margin-top del successivo collassano (distanza = il maggiore), in RN si sommano.
+ * Es. Academy: mockup `mb-2.5` seguito da `<ol className="mt-2">` → 10px, non 18. Al secondo diamo
+ * marginTop = max(mt, mb) − mb. Solo margini positivi da classi, solo elementi a blocco (Div, P, H;
+ * Span e Btn solo con block/flex/grid): un componente o un elemento in linea interrompe la catena.
+ */
+function collapseSiblingMargins(children: ReactNode, className?: string): ReactNode {
+  if (children == null || typeof children !== 'object') return children;
+  if (className && (CSS_FLEX.test(className) || /(?:^|\s)space-y-/.test(className))) return children;
+  // primo passaggio senza allocare: quasi sempre non c'è nulla da correggere
+  if (!marginWalk(children, { prev: 0 }, false)) return children;
+  return marginWalk(children, { prev: 0 }, true);
+}
+
+/** Percorre i figli (anche dentro i Fragment); con apply=false dice solo se serve una correzione. */
+function marginWalk(nodes: ReactNode, st: { prev: number }, apply: boolean): any {
+  let need = false;
+  const one = (child: ReactNode): ReactNode => {
+    if (typeof child === 'string') { if (child.trim()) st.prev = 0; return child; }
+    if (!isValidElement(child)) return child;
+    if (child.type === Fragment) {
+      const inner = marginWalk((child.props as { children?: ReactNode }).children, st, apply);
+      if (!apply) { need = need || inner; return child; }
+      return <Fragment key={child.key}>{inner}</Fragment>;
+    }
+    const props = child.props as { className?: unknown; style?: unknown };
+    const cls = typeof props.className === 'string' ? props.className : '';
+    if ((cls && (DISPLAY_NONE.test(cls) || OUT_OF_FLOW.test(cls))) || outOfFlowType(child)) return child; // non nel flusso
+    const block = (child.type === Div || child.type === P || child.type === H || ((child.type === Span || child.type === Btn) && BLOCK_LEVEL.test(cls))) && !INLINE_LEVEL.test(cls);
+    if (!block || !cls) { st.prev = 0; return child; }
+    const flat = (Array.isArray(props.style) ? StyleSheet.flatten(props.style as StyleProp<ViewStyle>) : (props.style ?? {})) as Record<string, unknown>;
+    const own = verticalMargins(cls);
+    const inlineTop = inlinePx(flat.marginTop ?? flat.marginVertical ?? flat.margin);
+    const inlineBottom = inlinePx(flat.marginBottom ?? flat.marginVertical ?? flat.margin);
+    const top = inlineTop ?? own.top;
+    const before = st.prev;
+    st.prev = inlineBottom ?? own.bottom;
+    if (before <= 0 || top <= 0) return child;
+    need = true;
+    if (!apply) return child;
+    return cloneElement(child as ReactElement<{ style?: unknown }>, { style: { ...flat, marginTop: Math.max(top, before) - before } });
+  };
+  if (!apply) { Children.forEach(nodes, (c) => { one(c); }); return need; }
+  return Children.map(nodes, one);
 }
 
 /** Figlio `sticky` (telefono): i fratelli che lo seguono diventano il bersaglio del suo blur (pageLayers). */
@@ -389,7 +474,7 @@ function spaceOverrides(children: ReactNode, className?: string): ReactNode {
     const hadInFlow = seenInFlow;
     const styleTag = !!(child.type as { cssStyleTag?: boolean }).cssStyleTag;
     const drawn = styleTag || typeof child.type === 'string' || props.className != null || props.style != null;
-    const outOfFlow = styleTag || OUT_OF_FLOW.test(props.className ?? '');
+    const outOfFlow = styleTag || OUT_OF_FLOW.test(props.className ?? '') || outOfFlowType(child);
     if (drawn) { seen = true; if (!outOfFlow) seenInFlow = true; }
     if (!hadPrev && !drawn && child.type === Div && gaps.y != null && !CSS_FLEX.test(className) && elementAfter(nodes, index)) {
       // primo figlio = <div> senza classi: in CSS il margin-bottom del suo ultimo figlio lo attraversa

@@ -46,7 +46,8 @@
    `(tabs)/programmazione.tsx`).
 3. Confronto: `node tools/compare/measure.mjs <out> /<route> pr,super4 "<passi>"` (screenshot `-ref/-nat` +
    `dy` dei testi comuni; passi: `click:<testo>`, `click~`, `nth:`, `wait:`, `type:`, `key:`, `scroll:`,
-   `scrollto:<y>`), causa con `node tools/compare/probe.mjs <ruolo> <route> "<testo>" [livelli] [passi]`.
+   `scrollto:<y>`, `scrollid:<id>` = l'elemento con quell'id a 100px dall'alto, es. `scrollid:academy-tile-<id>`),
+   causa con `node tools/compare/probe.mjs <ruolo> <route> "<testo>" [livelli] [passi]`.
    Normali: dy/dx piccoli su pulsanti, badge, celle `<td>` (il web misura il contenitore), testi nascosti duplicati.
    La tabella mensile di I Miei Progressi a volte misura righe più alte (intermittente: rimisurare).
 4. Correggere nello strato `app/src/ui/` (vale per tutte le pagine), modificare il codice di pagina solo se
@@ -341,6 +342,44 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Verifica 17/10: giro 39049796947 (crea, riapre, filo "Amici", pannello card, pan) senza crash; la versione
   vecchia (eef7cd4, giro 39049798881) va in errore JS al primo tocco sulla card (onPointerDown).
 
+## Confronto Impostazioni app e Academy (19/10, branch `claude/confronto-impostazioni-academy`)
+- Impostazioni app: tutte le schede misurate per pr, admin, super4; Academy: tutte le sezioni (chip + `scrollid`).
+- Strato ui:
+  - `ui/cssOrder.ts` + `cssOrder.generated.ts` (da `scripts/port/css-order.mjs`, con l'originale su :5173):
+    classi in conflitto nello stesso className ("text-muted-foreground ... text-destructive", "pt-8 p-4"):
+    in CSS vince l'ordine del foglio di Tailwind, nel nativo l'ultima scritta → riordinate prima di cn/NativeWind
+    (usato in ui/text). Rigenerare dopo una riconversione grossa.
+  - `ui/html`: margini verticali che collassano tra fratelli block (`collapseSiblingMargins`, non in flex/grid/
+    space-y); componenti con `Comp.cssOutOfFlow = true` (position absolute nel web, es. Callout dei mockup Academy)
+    non contano come fratelli/figli in griglie, space-y e margini.
+  - `ui/icon`: colore da `style.color` anche in formato CSS (cssColor).
+  - `ui/vibraTabs`: sul web `show` chiamato direttamente (runOnUISync non esiste sul web e faceva crashare le
+    tab nel nativo web; sul telefono invariato).
+- Pagine: `AcademySideRail` vetro con angoli arrotondati invece di clipPath (PORT); GenericMockup
+  (ScreenMockups) e card di SemineMockupsV2 con il Callout dopo le schede (PORT: in CSS il margine di space-y
+  della prima scheda attraversa il contenitore e collassa nel margine del fratello sopra; il collasso
+  genitore-figlio non è emulato in ui/html).
+- `tools/compare/steps.mjs`: `click` porta in vista un testo fuori schermo solo dentro un contenitore scorrevole
+  in orizzontale (prima nel nativo web cliccava le voci del pannello Account chiuso).
+- Modifiche dell'originale del 14-16/10 portate (9de6dfd): Weekend (presenze con la pagina, dettaglio cliente come
+  in Clienti), vetro sticky senza transizione in Clienti/Weekend, pulsante Comprimi dell'Analisi Intelligente,
+  clientRanking/promoterAggregates, prefetchCoreData (locali per sort_order, niente audit-logs/credit-usage).
+  Non portate (solo web o già equivalenti nel nativo): useStickyTabScroll/stickyNaturalTop (scroll della finestra),
+  loading="lazy" delle immagini, AnimatedNumber/chartEntrance/uPlot, queryCachePersist, leaflet, main/index.css,
+  useIOSBackGesture/useScrollRestoration/useSwipeToOpenSidebar, thumbWorker/publicImageCache, RecontactList
+  (layout effect del web; il nativo è già virtualizzato), VenueCard e Dashboard (indice/useMemo già presenti),
+  Clienti ?tab= (aggiunto e poi tolto dall'originale). useVibraLogo: l'originale ora usa `/vibra-logo.png` locale
+  (vedi Differenze note). Il 19/10 l'originale ha cambiato anche index.html/manifest (solo PWA).
+- Controlli: typecheck e test (76) verdi; Clienti/Dashboard/Il Mio Vibra rimisurati contro la versione prima
+  (git stash) senza regressioni.
+- Emulatore: giro completo 39292696316 (6e79cca) verde, admin 6/6 e pr 12/12, crash 0. I giri prima
+  (39267691524, 39282122173) e quelli della base 993a902 venivano annullati a 75 min durante 12-liste:
+  `timeout-minutes` del job portato a 110. I tempi variano molto da un giro all'altro (10-comitive 349-1313 s,
+  12-liste 937 s): da guardare (Achievement/liste lente, vedi sopra).
+- Restano scarti nei mockup Academy (dy relativi 8-36px in clienti, programmazione, ilmiovibra, report; le
+  sezioni admin dashboard/promoter/serate/locali/consolle/impostazioni e formazione sono allineate),
+  da guardare con `probe.mjs` e `scrollid`.
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
@@ -371,7 +410,7 @@ emulatore: commit con `[gara]`, risultati in gara.md nel branch emulatore-risult
    data/ora, foto/file, swipe dei leader, albero (trascinamento/pinch), chiusura dei dialog toccando fuori,
    scorrimento dei dialog e del dettaglio cliente, export PDF/CSV della Dashboard. Correggere gli errori segnalati.
 2. Pagine: tutte convertite (restano fuori AccessoApp, ingresso della PWA, e OAuthConsent, non collegata).
-   Da rifinire: confronti scheda per scheda di Impostazioni app e Academy, editor delle Comitive sul telefono.
+   Da rifinire: editor delle Comitive sul telefono (Impostazioni app e Academy confrontate il 19/10).
 3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
 4. Notifiche push (expo-notifications al posto del web push).
 5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
@@ -382,3 +421,10 @@ emulatore: commit con `[gara]`, risultati in gara.md nel branch emulatore-risult
 - «Strada verso la vetta» (Achievement): l'originale è ~20px a sinistra del centro (offsetLeft del DOM).
 - Freccia «→»: nel container l'originale usa un font di ripiego (il sottoinsieme latin di Inter non ce l'ha).
 - Logo «Vibra» dell'header: immagine esterna non raggiungibile dal container (manca in entrambe).
+- Academy: toccando un chip il nativo scorre alla scheda, l'originale no (framer-motion chiama window.scrollTo
+  durante measureAllKeyframes e annulla lo scrollIntoView smooth: è un difetto dell'originale). Da decidere.
+- Logo dell'header: l'originale ora usa `/vibra-logo.png` dentro l'app, il nativo ancora l'URL media.base44.com
+  (da decidere se includere l'immagine nell'app).
+- Academy: ombra della rotella laterale e rigonfiamento del vetro non riprodotti; MieiProgressi senza animateIn.
+- Impostazioni app, Materiale Locali: pulsante Salva ~2px più alto per voce (riga inline-block del web).
+- Titolo dell'header tagliato nel nativo web (solo web).

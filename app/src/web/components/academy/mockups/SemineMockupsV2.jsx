@@ -51,8 +51,8 @@ function ListaContent({ desktop }) {
         <Div className="flex-1 text-center py-0.5 rounded text-muted-foreground text-[7px] flex items-center justify-center gap-0.5"><EyeOff className="w-2.5 h-2.5" />Spente (3)</Div>
       </Div>
       {/* Cards */}
+      {/* PORT: Callout dopo le card (vedi GenericMockup in ScreenMockups): il margine di space-y collassa nel mb-2 sopra */}
       <Div className="relative space-y-1.5">
-        <Callout n={4} className="-top-1 left-2" />
         {semine.map((s, i) => (
           <Div key={i} className="rounded-lg bg-card border border-border p-2 flex items-center gap-1.5" style={{ borderLeft: s.r === 3 ? '3px solid #4ade80' : s.r === 2 ? '3px solid #fbbf24' : '1px solid hsl(var(--border))' }}>
             {desktop && <GripVertical className="w-2.5 h-2.5 text-muted-foreground/50" />}
@@ -68,6 +68,7 @@ function ListaContent({ desktop }) {
             {s.last && <Span className="text-[4px] text-muted-foreground/70 hidden sm:block">{s.last}</Span>}
           </Div>
         ))}
+        <Callout n={4} className="-top-1 left-2" />
       </Div>
     </>
   );

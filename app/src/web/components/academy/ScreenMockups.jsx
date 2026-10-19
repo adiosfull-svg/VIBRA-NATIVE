@@ -611,8 +611,10 @@ function GenericMockup() {
         <Span className="text-sm font-bold text-foreground">Vibra</Span>
         <Div className="w-7 h-7 rounded-lg bg-primary/15" />
       </Div>
+      {/* PORT: Callout (assoluto) spostato dopo le schede: in CSS il margine di space-y della prima scheda
+          attraversa il contenitore e collassa nel mb-3 dell'intestazione (nessuno spazio in più); nel nativo
+          resterebbe dentro (+8px). In CSS l'assoluto è disegnato sopra comunque. */}
       <Div className="relative space-y-2">
-        <Callout n={1} className="-top-1 -left-1" />
         <Div className="rounded-lg bg-card border border-border p-2">
           <Div className="text-[10px] font-semibold text-foreground mb-1">Sezione 1</Div>
           <Div className="text-[9px] text-muted-foreground">Contenuto e materiali caricati dall'admin.</Div>
@@ -626,6 +628,7 @@ function GenericMockup() {
           <Div className="text-[10px] font-semibold text-foreground mb-1">Elemento 3</Div>
           <Div className="text-[9px] text-muted-foreground">Azioni disponibili.</Div>
         </Div>
+        <Callout n={1} className="-top-1 -left-1" />
       </Div>
     </Frame>
   );

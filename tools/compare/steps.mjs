@@ -13,7 +13,9 @@ const findText = ([text, exact, nth]) => {
     const el = n.parentElement; let r = el.getBoundingClientRect();
     if (!r.width || !r.height || getComputedStyle(el).visibility === 'hidden') continue;
     // fuori schermo in orizzontale (barra tab scorrevole): portalo in vista
-    if (r.right > innerWidth || r.left < 0) { el.scrollIntoView({ block: 'nearest', inline: 'center' }); r = el.getBoundingClientRect(); }
+    // (solo dentro un contenitore scorrevole in orizzontale: non i pannelli chiusi fuori schermo, es. Account del nativo)
+    const inHScroll = (e) => { for (let p = e.parentElement; p; p = p.parentElement) { if (/auto|scroll/.test(getComputedStyle(p).overflowX) && p.scrollWidth > p.clientWidth + 1) return true; } return false; };
+    if ((r.right > innerWidth || r.left < 0) && inHScroll(el)) { el.scrollIntoView({ block: 'nearest', inline: 'center' }); r = el.getBoundingClientRect(); }
     if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
     hits.push({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
   }
@@ -21,7 +23,7 @@ const findText = ([text, exact, nth]) => {
 };
 export async function runSteps(page, steps, label) {
   for (const step of steps) {
-    const [kind, ...rest] = step.split(/(?<=^(?:click|nth|wait|scrollto|scroll|key|type))[:~]/);
+    const [kind, ...rest] = step.split(/(?<=^(?:click|nth|wait|scrollto|scrollid|scroll|key|type))[:~]/);
     const exact = !step.startsWith('click~');
     let arg = rest.join(':'), nth = 0;
     if (kind === 'nth') { const i = arg.indexOf(':'); nth = Number(arg.slice(0, i)); arg = arg.slice(i + 1); }
@@ -40,6 +42,20 @@ export async function runSteps(page, steps, label) {
         }
         if (best && best.clientHeight > innerHeight / 2) best.scrollTop = y;
       }, Number(arg));
+      await page.waitForTimeout(800);
+    } else if (kind === 'scrollid') {
+      // porta l'elemento con quell'id a 100px dall'alto (stesso punto sulle due app, senza scroll-margin):
+      // scorre il primo antenato scorrevole (sul nativo web lo ScrollView della pagina), se no la finestra
+      await page.evaluate((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const dy = el.getBoundingClientRect().top - 100;
+        for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+          const s = getComputedStyle(p);
+          if (/auto|scroll/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 1) { p.scrollTop += dy; return; }
+        }
+        window.scrollBy(0, dy);
+      }, arg);
       await page.waitForTimeout(800);
     } else if (kind === 'scroll') {
       await page.mouse.move(195, 500); await page.mouse.wheel(0, Number(arg)); await page.waitForTimeout(600);

@@ -200,12 +200,14 @@ export default function Programmazione() {
   // identità stabile per ClientSerateMenu (in memo): cambia solo con i clienti
   const getClientById = useCallback((id) => clients.find((c) => c.id === id), [clients]);
 
-  // attendances: caricato solo quando serve (tab Target o detail dialog aperto).
-  // Evita il download di migliaia di record di presenze al primo caricamento.
+  // attendances: caricato insieme alla pagina (come in Clienti). Se lo si
+  // scaricasse solo all'apertura del dettaglio cliente, i dati arriverebbero
+  // mentre l'utente sta già scorrendo il dialog: grafici + ricalcoli entrano
+  // a metà scroll e lo scroll perde fluidità.
   const { data: attendances = [] } = useQuery({
     queryKey: ['attendances', promoterId],
     queryFn: () => base44.entities.EventAttendance.filter({ promoter_id: promoterId }, '-created_date', 5000),
-    enabled: !!user && (activeTab === 'target' || !!detailClient),
+    enabled: !!user,
     staleTime: 5 * 60000,
     gcTime: 10 * 60000,
     refetchOnWindowFocus: false,
@@ -264,7 +266,10 @@ export default function Programmazione() {
 
   const getStats = (id) => clientStatsMap[id] ?? FALLBACK;
   // Badges: calcolati solo quando il detail dialog è aperto (evita O(n) a ogni mount)
-  const clientBadges = useMemo(() => detailClient ? buildClientBadgesMap(clients) : {}, [clients, detailClient]);
+  // Dipende da "aperto/chiuso", non dall'oggetto cliente: un salvataggio rapido
+  // nel dettaglio (onClientUpdated) non deve ricalcolarli su tutto il parco clienti.
+  const detailOpen = !!detailClient;
+  const clientBadges = useMemo(() => detailOpen ? buildClientBadgesMap(clients) : {}, [clients, detailOpen]);
   // Enriched: calcolato solo per i tab che lo usano (Tabelle, Growth). Sul tab Inviti
   // (default) restituisce [] istantaneamente — zero calcolo al primo caricamento.
   const enriched = useMemo(() => {
@@ -419,6 +424,8 @@ export default function Programmazione() {
       setDetailClient(client);
     }
   });
+  // Chiusura con fade (back Android / freccia), come in Clienti.
+  const detailCloseRef = useRef(null);
 
   const { plan, addToPlan, removeFromPlan, updateNote } = useProgrammazionePlan(promoterId);
 
@@ -620,10 +627,7 @@ export default function Programmazione() {
       >
         <Div
           className="sticky-glass absolute inset-0"
-          style={{
-            ...stickyGlassStyle(stuck),
-            transition: 'backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, background-color 0.2s ease'
-          }} />
+          style={stickyGlassStyle(stuck)} />
         <Div className="relative flex items-center gap-2">
           <Div ref={scrollRef} className="relative overflow-x-auto overflow-y-hidden flex-1 min-w-0" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}>
             <SubTabButtons tabs={TABS} active={activeTab} onSelect={onTabSelect} activeRef={activeButtonRef} />
@@ -812,16 +816,23 @@ export default function Programmazione() {
       )}
       </Suspense>
 
-      <ClientDetailDialog
-        open={!!detailClient}
-        onOpenChange={v => { if (!v) setDetailClient(null); }}
-        client={detailClient}
-        attendances={attendances}
-        events={events}
-        badges={detailClient ? (clientBadges[detailClient.id] || []) : []}
-        allClients={clients}
-        onClientUpdated={setDetailClient}
-      />
+      {/* Montato solo quando serve, con le stesse props di Clienti: ogni apertura
+          parte da un dialog "pulito" invece di riusare un'istanza sempre montata. */}
+      {!!detailClient && (
+        <ClientDetailDialog
+          open={!!detailClient}
+          onOpenChange={v => { if (!v) setDetailClient(null); }}
+          client={detailClient}
+          attendances={attendances}
+          events={events}
+          badges={clientBadges[detailClient.id] || []}
+          allClients={clients}
+          groups={groups}
+          onClientDetail={setDetailClient}
+          onClientUpdated={setDetailClient}
+          closeRef={detailCloseRef}
+        />
+      )}
 
       <CaptureSeminaDialog
         open={captureOpen}

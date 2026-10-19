@@ -627,7 +627,9 @@ function AIConsoleBox({ clients, onContact, onDetail, promoterId: promoterIdProp
       behavior: 'smooth'
     });
   }}
-            className="text-xs font-semibold px-4 py-2 rounded-full border border-violet-400/40 text-violet-100 bg-violet-600/50 backdrop-blur-md hover:bg-violet-600/70 transition-colors shadow-lg">
+            // Niente backdrop-blur: è un livello fisso sempre a schermo con la lista espansa
+            // (anche sotto il dettaglio cliente) e la sfocatura va ricalcolata a ogni frame.
+            className="text-xs font-semibold px-4 py-2 rounded-full border border-violet-400/40 text-violet-100 bg-violet-600/90 hover:bg-violet-600 transition-colors shadow-lg">
             ↑ Comprimi
           </Btn>
         </Div>

@@ -29,6 +29,40 @@ const DECAY_SINGLE_VISIT_MONTHLY_PENALTY = 0.5;
 const DECAY_NORMAL_GRACE_DAYS = 7;
 const DECAY_NORMAL_WEEKLY_FACTOR = 0.985;
 
+// Indice delle date evento (timestamp ordinati), calcolato UNA volta per array di
+// eventi e riusato per tutti i clienti. Prima ogni cliente rifaceva
+// events.filter(new Date(...)) su tutti gli eventi: con centinaia di clienti e ~500
+// eventi erano centinaia di migliaia di Date create a ogni ricalcolo della lista.
+// Risultato identico: conta gli eventi con data valida >= trackingStart.
+const eventTimesCache = new WeakMap();
+function getSortedEventTimes(events) {
+  let times = eventTimesCache.get(events);
+  if (!times) {
+    times = [];
+    for (const e of events) {
+      if (!e?.date) continue;
+      const t = new Date(e.date).getTime();
+      if (!Number.isNaN(t)) times.push(t);
+    }
+    times.sort((a, b) => a - b);
+    eventTimesCache.set(events, times);
+  }
+  return times;
+}
+
+// Numero di eventi con data >= startMs (ricerca binaria sull'indice ordinato).
+function countEventsFrom(events, startMs) {
+  // Data di partenza non valida: ogni confronto con NaN è falso, come nel vecchio filter → 0.
+  if (Number.isNaN(startMs)) return 0;
+  const times = getSortedEventTimes(events);
+  let lo = 0, hi = times.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (times[mid] < startMs) lo = mid + 1; else hi = mid;
+  }
+  return times.length - lo;
+}
+
 /** Trova la data della prima presenza del cliente (lookup O(1) tramite mappa) */
 function getFirstAttendanceDate(attendances, eventsById) {
   if (!attendances || attendances.length === 0) return FALLBACK_START;
@@ -76,8 +110,7 @@ export function computeClientRanking(client, stats, events = [], eventsById, asO
   const trackingStart = getFirstAttendanceDate(attendances, byId);
 
   // Serate disponibili dalla prima presenza del cliente
-  const relevantEvents = events.filter(e => e.date && new Date(e.date) >= trackingStart);
-  const denominator = Math.max(relevantEvents.length, 1);
+  const denominator = Math.max(countEventsFrom(events, trackingStart.getTime()), 1);
 
   // --- Componente 1: Frequenza (cap a 1.0) ---
   // Media tra % relativa (costanza) e volume assoluto (quante volte è venuto)
