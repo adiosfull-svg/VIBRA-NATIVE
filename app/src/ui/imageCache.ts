@@ -40,3 +40,35 @@ export function prefetchImages(urls: (string | null | undefined)[]): Promise<boo
     return false;
   });
 }
+
+// ── precaricamento in coda (foto di clienti, semine, promoter, loghi: centinaia di URL) ─────────────
+// Come preloadImages dell'originale (utils/imageCache.js): concorrenza limitata (4) per non competere con
+// i dati e le immagini a schermo, priorità per le foto "calde", e un tetto alla cache in memoria (150
+// immagini, poi solo disco): oltre, ogni nuova foto spingerebbe fuori dalla memoria quelle già mostrate.
+const QUEUE_CONCURRENCY = 4;
+const MEMORY_BUDGET = 150;
+let memoryPrefetched = 0;
+let active = 0;
+const queue: string[] = [];
+
+function pump() {
+  while (active < QUEUE_CONCURRENCY && queue.length) {
+    const url = queue.shift()!;
+    const policy = memoryPrefetched < MEMORY_BUDGET ? IMAGE_CACHE : 'disk';
+    if (policy === IMAGE_CACHE) memoryPrefetched++;
+    active++;
+    Image.prefetch([url], policy)
+      .then((ok) => { if (ok && policy === IMAGE_CACHE) warm.add(url); if (!ok) requested.delete(url); })
+      .catch(() => { requested.delete(url); })
+      .finally(() => { active--; pump(); });
+  }
+}
+
+/** Mette in coda il precaricamento (non blocca: ritorna subito). `priority`: davanti alla coda. */
+export function queueImagePrefetch(urls: (string | null | undefined)[], { priority = false } = {}) {
+  const todo = urls.filter((u): u is string => !!u && /^https?:/.test(u) && !requested.has(u));
+  if (!todo.length) return;
+  todo.forEach((u) => requested.add(u));
+  if (priority) queue.unshift(...todo); else queue.push(...todo);
+  pump();
+}

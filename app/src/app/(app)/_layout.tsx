@@ -7,17 +7,21 @@ import Sidebar from '../../web/components/layout/Sidebar';
 import { AccountMenuPanel } from '../../web/components/layout/AccountMenu';
 import VibraSearch from '../../web/components/shared/VibraSearch';
 import PromoterContextMenu from '../../web/components/promoter/PromoterContextMenu';
+import VenueLogosPreloader from '../../web/components/shared/VenueLogosPreloader';
+import ClientPhotosPreloader from '../../web/components/shared/ClientPhotosPreloader';
+import SeminaPhotosPreloader from '../../web/components/shared/SeminaPhotosPreloader';
+import PromoterPhotosPreloader from '../../web/components/shared/PromoterPhotosPreloader';
 import Calcolatrice from '../../web/components/ilmiovibra/Calcolatrice';
 import { CalcolatriceProvider, useCalcolatrice } from '../../web/lib/calcolatriceContext';
 import { LayoutUIProvider, useLayoutUIActions } from '../../web/lib/layoutUI';
 import { useSwipeToOpenSidebar } from '../../web/hooks/useSwipeToOpenSidebar';
 import { THEME } from '../../ui/palette.generated';
-import { Platform, StyleSheet, View } from 'react-native';
+import { InteractionManager, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FixedHost } from '../../ui/fixedPortal';
 import { LocationPublisher, useNavigate } from '../../web/router';
 import { usePushNavigation } from '../../web/hooks/usePushNotifications';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { prefetchImages } from '../../ui/imageCache';
 import { LOGO_URL } from '../../web/hooks/useVibraLogo';
 import { useNotificationsPolling } from '../../web/hooks/useNotifications';
@@ -72,6 +76,29 @@ function SwipeToOpenSidebar() {
   return null;
 }
 
+// Precaricamento delle foto (loghi dei locali, clienti, semine, promoter) come in AppLayout.jsx, senza pesare
+// sull'avvio: montati dopo la prima schermata, a app ferma; le query hanno le stesse chiavi delle pagine
+// (se le tab precaricate le hanno già chieste non partono di nuovo) e le immagini vanno in una coda a
+// concorrenza limitata (ui/imageCache, queueImagePrefetch).
+const PHOTO_PRELOAD_DELAY_MS = 2500;
+function PhotosPreloaders() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let task: { cancel: () => void } | null = null;
+    const t = setTimeout(() => { task = InteractionManager.runAfterInteractions(() => setReady(true)); }, PHOTO_PRELOAD_DELAY_MS);
+    return () => { clearTimeout(t); task?.cancel(); };
+  }, []);
+  if (!ready) return null;
+  return (
+    <>
+      <VenueLogosPreloader />
+      <ClientPhotosPreloader />
+      <SeminaPhotosPreloader />
+      <PromoterPhotosPreloader />
+    </>
+  );
+}
+
 // Calcolatrice globale: resta attiva su tutte le rotte finché non la chiudi (come AppLayout.jsx).
 function GlobalCalcolatrice() {
   const { open, close } = useCalcolatrice();
@@ -113,6 +140,7 @@ export default function AppLayout() {
       <NotificationsPoller />
       <PushNavigation />
       <SwipeToOpenSidebar />
+      <PhotosPreloaders />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
