@@ -17,6 +17,9 @@ type MotionProps = {
   onClick?: () => void; [key: string]: any;
 };
 
+// prova (build di test): EXPO_PUBLIC_TEST_NO_LOOP=motion|pulse|all toglie le animazioni infinite
+const NO_LOOP_MOTION = /motion|all/.test(process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '');
+
 const KEYS = ['opacity', 'x', 'y', 'scale', 'rotate'] as const;
 const DEFAULTS: Record<string, number> = { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 };
 
@@ -104,11 +107,12 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
       if (Array.isArray(v)) {
         const step = duration / Math.max(1, v.length - 1);
         const seq = Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
+        if (transition?.repeat === Infinity && NO_LOOP_MOTION) return null;
         return transition?.repeat === Infinity ? Animated.loop(seq) : seq;
       }
       lastTarget[k] = Number(v);
       return Animated.timing(values[k], { toValue: Number(v), duration, delay, easing: easing(transition?.ease), useNativeDriver: nativeDriver });
-    });
+    }).filter((a): a is Animated.CompositeAnimation => a != null);
     for (const k of sizes) {
       const n = sizeOf(to[k])!.n;
       if (n === lastTarget[k]) continue;
