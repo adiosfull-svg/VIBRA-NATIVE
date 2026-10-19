@@ -1,0 +1,52 @@
+# PR: tasto lungo su un cliente della lista Clienti (ClientSerateMenu, [data-client-id] su ClientRowCard).
+# Come l'originale: a 0,5 s si apre il menu serate (senza aprire anche il dettaglio al rilascio); tenendo
+# premuto oltre 1 s parte la selezione multipla con il cliente selezionato (il click al rilascio non la toglie).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "Sofia Colombo"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: menu-serate-0-lista
+# pressione di 0,8 s sul nome di Sofia Colombo (primo cliente, ~31%,50%): menu serate
+- swipe:
+    start: 31%, 50%
+    end: 31%, 50%
+    duration: 800
+- extendedWaitUntil:
+    visible: "Aggiungi a gruppo"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: menu-serate-1-aperto
+- assertVisible: "Ricordami di ricontattarlo"
+- assertNotVisible: "Skill del cliente"
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Aggiungi a gruppo"
+- assertVisible: "LISTA CLIENTI"
+- takeScreenshot: menu-serate-2-chiuso
+# pressione lunga (oltre 1 s): selezione multipla con il cliente selezionato, dettaglio non aperto
+- longPressOn: "Sofia Colombo"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*1 sel\\..*"
+    timeout: 10000
+- takeScreenshot: menu-serate-3-selezione
+- assertNotVisible: "Skill del cliente"
+- assertNotVisible: "Aggiungi a gruppo"

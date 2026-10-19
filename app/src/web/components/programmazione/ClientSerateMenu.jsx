@@ -742,6 +742,12 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
   // Le card disabilitano -webkit-touch-callout (no "Cerca su Safari"/Look Up)
   // e la selezione testo, così il menu di sistema non compare durante l'attesa.
   const touchOpenedRef = useRef(0);
+  // PORT: sul telefono il Pressable della card fa il click al rilascio anche dopo una pressione lunga
+  // (nel browser no): finché il menu aperto col dito è aperto, il click sulla card va fermato
+  const menuOpenRef = useRef(false);
+  menuOpenRef.current = menu !== null && !closing;
+  // e anche dopo la pressione lunga di 1 s (selezione multipla): il click al rilascio la toglierebbe
+  const longPressFiredRef = useRef(false);
   useEffect(() => {
     let timer = null;
     let longTimer = null;
@@ -769,6 +775,7 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
     };
 
     const onTouchStart = (e) => {
+      longPressFiredRef.current = false;
       if (e.touches.length !== 1) return;
       const t = e.touches[0];
       const el = t.target.closest && t.target.closest('[data-client-id]');
@@ -798,6 +805,7 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
       timer = setTimeout(() => {
         if (hasScrolled()) { clear(); return; }
         timer = null;
+        longPressFiredRef.current = true;
         touchOpenedRef.current = Date.now();
         menuOpenedViaTouchRef.current = true;
         openMenu(el, startX, startY);
@@ -823,6 +831,7 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
           // via il primo cliente appena selezionato (bug: prima selezione
           // non si illuminava).
           touchOpenedRef.current = Date.now();
+          longPressFiredRef.current = true;
           selectModeRef.current = true;
           const id = el.getAttribute('data-client-id');
           const name = el.getAttribute('data-client-name') || '';
@@ -853,7 +862,7 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
     // per non aprire anche il dettaglio cliente sopra il menu serate. Scope:
     // solo click sulla card, mai sui bottoni del menu (che sono in portal).
     const onClickGuard = (e) => {
-      if (Date.now() - touchOpenedRef.current > 600) return;
+      if (Date.now() - touchOpenedRef.current > 600 && !menuOpenRef.current && !longPressFiredRef.current) return;
       // Blocca il click spurio che iOS emette al rilascio dopo una pressione
       // prolungata (menu serate o attivazione selezione multipla). Senza questo,
       // il click passerebbe all'onClick della riga: nel caso della selezione
