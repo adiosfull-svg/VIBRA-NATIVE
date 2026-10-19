@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing } from 'react-native';
 import { useScreenFocused } from './fixedPortal';
+import { useReduceMotion } from './loopActive';
 
 type Frame = { opacity?: number; scale?: number; translateX?: number; translateY?: number };
 type OneShot = { from: Frame; to: Frame; ms: number; easing: (t: number) => number };
@@ -91,8 +92,10 @@ const PULSE_CURVE = (() => {
 export function useCssAnimation(kind: CssAnimationKind) {
   const focused = useScreenFocused();
   const v = useRef(new Animated.Value(0)).current;
-  const loop = kind === 'spin' || kind === 'pulse';
-  const oneShot = useOneShot(loop ? null : kind);
+  // pulse è decorativo: fermo con "Rimuovi animazioni" (ui/loopActive); spin no (dice che sta caricando)
+  const still = useReduceMotion(kind === 'pulse');
+  const loop = (kind === 'spin' || kind === 'pulse') && !still;
+  const oneShot = useOneShot(kind === 'spin' || kind === 'pulse' ? null : kind);
   useEffect(() => {
     if (!focused || !loop) return undefined;
     v.setValue(0);
