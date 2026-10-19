@@ -65,7 +65,8 @@ appId: com.vibra.mobile
 - waitForAnimationToEnd
 - takeScreenshot: report-menu-01
 # il menu sporge dal riquadro: per Android le voci possono non risultare visibili (Maestro non le trova
-# per testo), si prova il testo e poi il punto ("Seleziona tutte" è la prima voce sotto la ricerca)
+# per testo), si prova il testo e poi il punto ("Seleziona tutte" è la prima voce sotto la ricerca; posizioni
+# misurate con il pulsante al centro dello schermo)
 - tapOn:
     text: "Seleziona tutte \\(\\d+\\)"
     optional: true
@@ -74,19 +75,21 @@ appId: com.vibra.mobile
       visible: "Seleziona serate..."
     commands:
       - tapOn:
-          point: "50%,58%"
+          point: "50%,65%"
 - waitForAnimationToEnd
 # menu delle serate (prima ne mostrava solo 12): scorrendo arriva anche la più vecchia
 - repeat:
     times: 10
     commands:
       - swipe:
-          start: 50%, 76%
-          end: 50%, 60%
+          start: 50%, 86%
+          end: 50%, 74%
           duration: 300
 - waitForAnimationToEnd
 - takeScreenshot: report-menu-02-fondo
-- tapOn: "Serate da confrontare:"
+# fuori dal menu (velo a tutto schermo): si chiude
+- tapOn:
+    point: "50%,22%"
 - waitForAnimationToEnd
 - scrollUntilVisible:
     element: "Genera Report"
