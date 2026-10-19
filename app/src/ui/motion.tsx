@@ -10,7 +10,7 @@ import { Btn, Div, Span } from './html';
 import { Img } from './elements';
 
 type Target = Record<string, any> | boolean | undefined | string;
-type Transition = { duration?: number; delay?: number; ease?: string | number[]; repeat?: number; repeatType?: string };
+type Transition = { duration?: number; delay?: number; ease?: string | number[]; repeat?: number; repeatType?: string; repeatDelay?: number };
 type MotionProps = {
   initial?: Target; animate?: Target; exit?: Target; transition?: Transition; whileTap?: Target; whileHover?: Target;
   layout?: unknown; layoutId?: string; variants?: unknown; children?: ReactNode; className?: string; style?: any;
@@ -19,6 +19,38 @@ type MotionProps = {
 
 // prova (build di test): EXPO_PUBLIC_TEST_NO_LOOP=motion|pulse|all toglie le animazioni infinite
 const NO_LOOP_MOTION = /motion|all/.test(process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '');
+
+// Keyframe con repeat: Infinity (badge e scritte di RankCard, ecc.). PORT: prima erano
+// Animated.loop(Animated.sequence(...)): la sequenza non gira sul driver nativo come un tutt'uno, quindi a
+// ogni tratto (2-3 al secondo per elemento) il thread JS riceveva la fine, ripartiva col tratto dopo e
+// sincronizzava il valore con Fabric. Lo schermo non era mai fermo (sull'emulatore UiAutomator "Could not
+// detect idle state": swipe di Achievement da ~480 s l'uno, apertura ~315 s; senza questi loop 4-11 s e 5 s).
+// Ora un solo Animated.timing 0 → 1 lineare in Animated.loop (loop nativo: nessun passaggio dal JS) e i
+// keyframe come interpolazione, con la curva di ogni tratto campionata e la pausa `repeatDelay` di
+// framer-motion in coda (valore fermo sull'ultimo keyframe).
+const LOOP_SAMPLES = 12;
+type LoopSpec = { input: number[]; output: number[]; ms: number };
+function loopSpec(frames: number[], transition: Transition | undefined): LoopSpec {
+  const duration = (transition?.duration ?? 0.3) * 1000;
+  const pause = Math.max(0, (transition?.repeatDelay ?? 0) * 1000);
+  const ms = duration + pause;
+  const ease = easing(transition?.ease);
+  const segs = Math.max(1, frames.length - 1);
+  const segMs = duration / segs;
+  const input: number[] = [0];
+  const output: number[] = [frames[0]];
+  for (let i = 0; i < segs; i++) {
+    const a = frames[i], b = frames[i + 1] ?? frames[i];
+    for (let j = 1; j <= LOOP_SAMPLES; j++) {
+      const t = j / LOOP_SAMPLES;
+      input.push((i * segMs + t * segMs) / ms);
+      output.push(a + (b - a) * ease(t));
+    }
+  }
+  if (pause > 0) { input.push(1); output.push(output[output.length - 1]); }
+  input[input.length - 1] = 1;
+  return { input, output, ms };
+}
 
 const KEYS = ['opacity', 'x', 'y', 'scale', 'rotate'] as const;
 const DEFAULTS: Record<string, number> = { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 };
@@ -93,6 +125,29 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   // PORT: x/y in % (es. lo scintillio infinito di RankCard) restano sul driver nativo: il valore resta in
   // % e diventa px con la larghezza dell'elemento (onLayout); prima giravano sul thread JS per sempre.
   const nativeDriver = sizes.length === 0;
+  const infinite = transition?.repeat === Infinity && !NO_LOOP_MOTION;
+  const loopKeys = infinite ? KEYS.filter((k) => Array.isArray(to?.[k]) && to![k].length > 1 && to![k].every((n: unknown) => typeof n === 'number')) : [];
+  const loopClock = useRef<Animated.Value | null>(null);
+  if (loopKeys.length && !loopClock.current) loopClock.current = new Animated.Value(0);
+  const loopKey = loopKeys.map((k) => `${k}:${to![k].join(',')}`).join('|') + `|${transition?.duration}|${transition?.repeatDelay}|${JSON.stringify(transition?.ease ?? '')}`;
+  const loops = useMemo(() => {
+    const out: Partial<Record<string, { spec: LoopSpec; node: Animated.AnimatedInterpolation<number> }>> = {};
+    for (const k of loopKeys) {
+      const spec = loopSpec(to![k], transition);
+      out[k] = { spec, node: loopClock.current!.interpolate({ inputRange: spec.input, outputRange: spec.output }) };
+    }
+    return out;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loopKey]);
+  const loopMs = loopKeys.length ? loops[loopKeys[0]]?.spec.ms ?? 0 : 0;
+  useEffect(() => {
+    const clock = loopClock.current;
+    if (!clock || !loopMs) return undefined;
+    clock.setValue(0);
+    const a = Animated.loop(Animated.timing(clock, { toValue: 1, duration: loopMs, easing: Easing.linear, useNativeDriver: nativeDriver }));
+    a.start();
+    return () => a.stop();
+  }, [loopMs, loopKey, nativeDriver]);
   const waitWidth = pct.size > 0 && !(width > 0);
   const targetKey = JSON.stringify(to ?? {}) + (pct.size ? `|${width > 0 ? 1 : 0}` : '');
   useEffect(() => {
@@ -105,10 +160,10 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
     const anims = KEYS.filter((k) => to[k] !== undefined && ok(to[k]) && (Array.isArray(to[k]) || Number(to[k]) !== lastTarget[k])).map((k) => {
       const v = to[k];
       if (Array.isArray(v)) {
+        // infiniti: orologio nativo qui sopra; senza loop (prova NO_LOOP) fermi sul primo keyframe
+        if (transition?.repeat === Infinity) return null;
         const step = duration / Math.max(1, v.length - 1);
-        const seq = Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
-        if (transition?.repeat === Infinity && NO_LOOP_MOTION) return null;
-        return transition?.repeat === Infinity ? Animated.loop(seq) : seq;
+        return Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
       }
       lastTarget[k] = Number(v);
       return Animated.timing(values[k], { toValue: Number(v), duration, delay, easing: easing(transition?.ease), useNativeDriver: nativeDriver });
@@ -130,12 +185,13 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   // % → px sulla larghezza dell'elemento (come translate in % del CSS); prima della misura la larghezza
   // dello schermo come stima (una barra che entra da -100% non deve comparire piena per un frame)
   const pctBase = width > 0 ? width : Dimensions.get('window').width;
-  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: [0, pctBase] });
-  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(values.x) : values.x });
-  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(values.y) : values.y });
-  if (used.has('scale')) transform.push({ scale: values.scale });
-  if (used.has('rotate')) transform.push({ rotate: values.rotate.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
-  const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: values.opacity } : null), ...(transform.length ? { transform } : null) };
+  const asPct = (v: Animated.Value | Animated.AnimatedInterpolation<number>) => v.interpolate({ inputRange: [0, 100], outputRange: [0, pctBase] });
+  const val = (k: string) => loops[k]?.node ?? values[k];
+  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(val('x')) : val('x') });
+  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(val('y')) : val('y') });
+  if (used.has('scale')) transform.push({ scale: val('scale') });
+  if (used.has('rotate')) transform.push({ rotate: val('rotate').interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
+  const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: val('opacity') } : null), ...(transform.length ? { transform } : null) };
   for (const k of sizes) {
     out[k] = sizeOf(to![k])!.pct ? values[k].interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }) : values[k];
   }

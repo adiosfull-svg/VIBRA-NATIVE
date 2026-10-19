@@ -74,6 +74,19 @@ function useOneShot(kind: string | null) {
 
 const NO_LOOP_CSS = /pulse|all/.test(process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '');
 const PULSE_EASE = Easing.bezier(0.4, 0, 0.6, 1);
+// pulse: 1 → .5 → 1 in 2 s con la curva di Tailwind su ogni metà, campionata (orologio lineare 0 → 1)
+const PULSE_CURVE = (() => {
+  const inputRange: number[] = [];
+  const outputRange: number[] = [];
+  const n = 12;
+  for (let j = 0; j <= 2 * n; j++) {
+    const half = j <= n ? j / n : (j - n) / n;
+    const e = PULSE_EASE(half);
+    inputRange.push(j / (2 * n));
+    outputRange.push(j <= n ? 1 - 0.5 * e : 0.5 + 0.5 * e);
+  }
+  return { inputRange, outputRange };
+})();
 
 /** Stile animato (driver nativo) per spin/pulse; il loop si ferma quando la schermata perde il fuoco. */
 export function useCssAnimation(kind: CssAnimationKind) {
@@ -86,15 +99,13 @@ export function useCssAnimation(kind: CssAnimationKind) {
     v.setValue(0);
     const anim = kind === 'spin'
       ? Animated.loop(Animated.timing(v, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }))
-      : Animated.loop(Animated.sequence([
-        Animated.timing(v, { toValue: 1, duration: 1000, easing: PULSE_EASE, useNativeDriver: true }),
-        Animated.timing(v, { toValue: 0, duration: 1000, easing: PULSE_EASE, useNativeDriver: true }),
-      ]));
+      // un solo timing in loop nativo (la sequenza andata/ritorno ripassava dal JS a ogni secondo)
+      : Animated.loop(Animated.timing(v, { toValue: 1, duration: 2000, easing: Easing.linear, useNativeDriver: true }));
     anim.start();
     return () => anim.stop();
   }, [focused, kind, loop, v]);
   const loopStyle = useMemo(() => (kind === 'spin'
     ? { transform: [{ rotate: v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }
-    : { opacity: v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.5] }) }), [kind, v]);
+    : { opacity: v.interpolate(PULSE_CURVE) }), [kind, v]);
   return oneShot ?? loopStyle;
 }
