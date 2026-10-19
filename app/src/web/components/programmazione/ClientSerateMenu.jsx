@@ -782,7 +782,8 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
       // selezionano/deselezionano (gestito dall'onClick della riga).
       if (selectModeRef.current) return;
       // Le semine NON supportano la selezione multipla: solo il menu serate (500ms).
-      const isSemina = el.getAttribute('data-semina') === '1';
+      // Anche le card con data-no-multiselect (es. editor Comitive) hanno solo il menu, senza selezione multipla.
+      const isSemina = el.getAttribute('data-semina') === '1' || el.getAttribute('data-no-multiselect') === '1';
       startX = t.clientX; startY = t.clientY;
       // Snapshot della posizione dell'elemento al touchstart. Su iOS lo scroll
       // nativo coalescesce i touchmove (non arrivano al JS), quindi il threshold
