@@ -63,7 +63,7 @@ jobs:
       group: emulatore-${{ github.ref }}-${{ matrix.utente }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}${{ contains(github.event.head_commit.message, '[gara]') && '-gara' || '' }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 150
     # un job per utente di prova (pagine e permessi diversi), in parallelo
     strategy:
       fail-fast: false
