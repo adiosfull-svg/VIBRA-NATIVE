@@ -7,6 +7,7 @@ import jsPDF from '@/web/shims/jspdf';
 
 import { doc as webDocument, storage as webStorage, url as webURL } from '@/web/shims/dom';
 import { Btn, Div } from '@/ui/html';
+import { AnchoredPanel } from '@/ui/anchoredPanel';
 
 function getDeltaPct(curr, prev) {
   if (prev === 0 && curr === 0) return null;
@@ -297,10 +298,10 @@ export default function ExportReportMensile({ promoterReports, monthLabel, prevM
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </Btn>
 
-      {open && (
-        <>
-          <Btn className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <Div className="absolute right-0 top-full mt-1.5 z-20 bg-card border border-border rounded-xl shadow-2xl overflow-hidden min-w-[200px]">
+      {/* PORT: menu nel portale sul telefono, agganciato al pulsante (ui/anchoredPanel): sporgendo dal
+          contenitore non riceveva i tocchi */}
+      <AnchoredPanel open={open} onClose={() => setOpen(false)}
+        className="absolute right-0 top-full mt-1.5 z-20 bg-card border border-border rounded-xl shadow-2xl overflow-hidden min-w-[200px]">
             <Btn
               button
               onClick={handleExportPDF}
@@ -326,9 +327,7 @@ export default function ExportReportMensile({ promoterReports, monthLabel, prevM
                 <Div className="text-[10px] text-muted-foreground">Dati per Excel</Div>
               </Div>
             </Btn>
-          </Div>
-        </>
-      )}
+      </AnchoredPanel>
     </Div>
   );
 }

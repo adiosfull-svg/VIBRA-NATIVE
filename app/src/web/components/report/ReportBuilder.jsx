@@ -8,6 +8,7 @@ import { format, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+import { AnchoredPanel } from '@/ui/anchoredPanel';
 import { HtmlInput, HtmlOption, HtmlSelect } from '@/ui/elements';
 
 const TYPE_ICONS = {
@@ -53,10 +54,9 @@ function PromoterMultiSelect({ promoters, selected, onChange }) {
         </Span>
         <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
       </Btn>
-      {open && (
-        <>
-          <Btn className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <Div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl">
+      {/* PORT: menu nel portale sul telefono, agganciato al pulsante (ui/anchoredPanel) */}
+      <AnchoredPanel open={open} onClose={() => setOpen(false)}
+        className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl">
             <Div className="sticky top-0 p-2 bg-popover border-b border-border">
               <Div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
@@ -98,9 +98,7 @@ function PromoterMultiSelect({ promoters, selected, onChange }) {
                 </Btn>
               ))}
             </Div>
-          </Div>
-        </>
-      )}
+      </AnchoredPanel>
     </Div>
   );
 }
@@ -154,10 +152,10 @@ function EventMultiSelect({ events, selected, onChange }) {
         </Span>
         <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
       </Btn>
-      {open && (
-        <>
-          <Btn className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <Div className="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl" onScroll={onBoxScroll}>
+      {/* PORT: menu nel portale della radice sul telefono, agganciato al pulsante (ui/anchoredPanel):
+          sporgendo dal contenitore non riceveva tocchi né scorrimento */}
+      <AnchoredPanel open={open} onClose={() => setOpen(false)}
+        className="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl" onScroll={onBoxScroll}>
             <Div className="sticky top-0 p-2 bg-popover border-b border-border">
               <Div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
@@ -188,9 +186,7 @@ function EventMultiSelect({ events, selected, onChange }) {
                 <EventPickRow key={e.id} e={e} checked={selected.includes(e.id)} onToggle={stableToggle} />
               ))}
             </Div>
-          </Div>
-        </>
-      )}
+      </AnchoredPanel>
     </Div>
   );
 }

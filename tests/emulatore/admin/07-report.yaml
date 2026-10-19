@@ -1,7 +1,7 @@
 # Admin: Report (thread "liste non virtualizzate", 19/10). Gruppo Vibra: tabella Serate (48) nel riquadro
-# max-h-96 con righe montate a blocchi scorrendo il riquadro. Confronto Serate non si prova: sul telefono il
-# menu delle serate sporge dal suo contenitore e Android non gli passa i tocchi fuori dai bordi (vedi
-# STATO-LAVORI, liste minori 19/10).
+# max-h-96 con righe montate a blocchi scorrendo il riquadro; Confronto Serate con tutte le serate: menu
+# delle serate (nel portale, ui/anchoredPanel) che si tocca, scorre e cresce fino alla più vecchia, tabelle
+# di dettaglio per serata a blocchi, grafico a fasce.
 appId: com.vibra.mobile
 ---
 - launchApp
@@ -45,4 +45,78 @@ appId: com.vibra.mobile
           duration: 300
 - waitForAnimationToEnd
 - takeScreenshot: report-serate-02-fondo
+- assertNotVisible: "Si è verificato un errore"
+# ── Confronto Serate: tutte le serate ──
+- scrollUntilVisible:
+    element: "Confronto Serate"
+    direction: UP
+    centerElement: true
+    timeout: 60000
+- tapOn: "Confronto Serate"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Seleziona serate..."
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- tapOn: "Seleziona serate..."
+- waitForAnimationToEnd
+# la ricerca del menu prende il fuoco (autoFocus): la tastiera coprirebbe le serate
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: report-menu-01
+- tapOn: "Seleziona tutte \\(\\d+\\)"
+- waitForAnimationToEnd
+- assertVisible: "\\d+ serate selezionate"
+# il menu (max-h-72) sta sotto il pulsante, al centro dello schermo: trascinamenti dentro il menu fino
+# alla serata più vecchia (prima ne mostrava solo 12; ora arrivano a blocchi scorrendo)
+- repeat:
+    while:
+      notVisible: "3 lug 26"
+    times: 25
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 60%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: report-menu-02-fondo
+- assertVisible: "3 lug 26"
+# fuori dal menu (velo a tutto schermo): si chiude
+- tapOn:
+    point: "50%,15%"
+- waitForAnimationToEnd
+- assertNotVisible: "Deseleziona tutte"
+- assertVisible: "48 serate selezionate"
+- scrollUntilVisible:
+    element: "Genera Report"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- tapOn: "Genera Report"
+- waitForAnimationToEnd
+- takeScreenshot: report-confronto-01
+- extendedWaitUntil:
+    visible: "Serate Confront.*"
+    timeout: 60000
+- repeat:
+    while:
+      notVisible: "(?i)fatturato per serata"
+    times: 80
+    commands:
+      - swipe:
+          start: 50%, 85%
+          end: 50%, 15%
+          duration: 250
+- waitForAnimationToEnd
+- takeScreenshot: report-confronto-02-grafico
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 25%
+          duration: 400
+- waitForAnimationToEnd
+- takeScreenshot: report-confronto-03-grafico-fondo
 - assertNotVisible: "Si è verificato un errore"
