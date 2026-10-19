@@ -426,6 +426,12 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   lunga è fermato (apriva il dettaglio sopra il menu o toglieva la selezione multipla appena attivata).
   Percorso `pr/15-menu-serate-cliente` (pressione di 0,8 s → menu serate; pressione lunga → selezione multipla).
   Emulatore: pr/15 verde (run 39305896309), pr/02-clienti (39294865927) e pr/06-semine (39302128335) verdi.
+- **Barra della selezione multipla (BulkActions)** centrata e intera: sul telefono `left-1/2` le dava metà
+  schermo e usciva a destra; ora una fascia a tutta larghezza (box-none) la centra con la sua larghezza.
+- **Stack locale dell'emulatore**: `dev_stack.sh` provava PostgREST una volta sola dopo 2 s (`curl -f` → exit 22,
+  "Stack locale di prova" fallito in 6 giri pr su 9). Ora riprova ogni 0,5 s fino a 60 s (poi stampa i log) e
+  il controllo finale del workflow riprova per 30 s. Giri singoli su dea1a50, tutti verdi e stack partito 4 su
+  4: pr/15 39307584499, pr/02 39307588381, pr/13 39307593339, pr/14 39307598275.
 
 
 ## PROSSIMO PASSO
