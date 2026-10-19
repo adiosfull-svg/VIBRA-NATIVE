@@ -184,14 +184,25 @@ appId: com.vibra.mobile
 # (siamo già su Clienti, tab Albero: la barra delle tab è in alto, Comitive accanto ad Albero)
 - tapOn: "Comitive"
 - waitForAnimationToEnd
-- scrollUntilVisible:
-    element: "Crea comitiva"
-    direction: UP
-    timeout: 30000
+# la pagina è scorsa in basso (dall'Albero): "Crea comitiva" resta sotto la barra delle tab, si torna in cima
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 35%
+          end: 50%, 85%
+          duration: 300
+- waitForAnimationToEnd
 - extendedWaitUntil:
     visible: "Crea comitiva"
     timeout: 60000
-- tapOn: "Crea comitiva"
+- repeat:
+    while:
+      notVisible: "Dai un nome alla comitiva.*"
+    times: 4
+    commands:
+      - tapOn: "Crea comitiva"
+      - waitForAnimationToEnd
 - tapOn: "Dai un nome alla comitiva.*"
 - inputText: "Prova liste"
 - hideKeyboard
