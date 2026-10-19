@@ -329,7 +329,19 @@ function boxContent(children: ReactNode, grid?: Grid, className?: string) {
 const V_MARGIN = /^(-?)(m|my|mt|mb)-(.+)$/;
 const DISPLAY_NONE = cachedTest(/(?:^|\s)hidden(?:\s|$)/);
 const BLOCK_LEVEL = cachedTest(/(?:^|\s)(block|flex|grid)(?:\s|$)/);
+const vMarginCache = new Map<string, { top: number; bottom: number }>();
+const NO_V_MARGIN = { top: 0, bottom: 0 };
+// collapseSiblingMargins la chiama per ogni figlio a blocco a ogni render: risultato in cache per className
 function verticalMargins(cls: string): { top: number; bottom: number } {
+  let r = vMarginCache.get(cls);
+  if (!r) {
+    r = /(?:^|\s)-?m[ytb]?-/.test(cls) ? computeVerticalMargins(cls) : NO_V_MARGIN;
+    if (vMarginCache.size > 4000) vMarginCache.clear();
+    vMarginCache.set(cls, r);
+  }
+  return r;
+}
+function computeVerticalMargins(cls: string): { top: number; bottom: number } {
   let top = 0, bottom = 0;
   for (const c of cls.split(/\s+/)) {
     const m = c.match(V_MARGIN);
