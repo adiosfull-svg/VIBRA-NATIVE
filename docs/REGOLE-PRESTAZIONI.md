@@ -69,6 +69,9 @@ si montano solo le righe visibili più un margine (`overscan`).
 | Lista o **griglia** con la pagina, righe ad **altezza variabile** (card) | `web/components/shared/PageWindowList.jsx` (`columns`, `gap`, `apiRef.scrollToItem` al posto di `scrollIntoView`; `entering` per non rifare le animazioni d'entrata) |
 | Riquadro con scroll proprio, righe ad altezza variabile | `ui/windowedList.tsx` → `<WindowedListVariable>` (con `maxHeight`, o senza per riempire il genitore) |
 | Striscia **orizzontale** di card a larghezza fissa | `web/hooks/useStripWindow.js` (spaziatori prima e dopo) |
+| Riquadro con scroll proprio che deve restare **identico** (flex-wrap, tabelle con colonne misurate, trascinamenti dentro la lista, chip a larghezza variabile) | `useProgressiveList(n, { box: 'y' \| 'x' })` + `onScroll={onBoxScroll}` sul riquadro (righe montate a blocchi verso la fine); chat che parte dal fondo: `box: 'top'` + `maintainVisibleContentPosition`; `resetKey` per ripartire (pannello riaperto, altra tab) |
+| Tabella con righe montate a blocchi | `<Table measureKey={rows}>` (colonne rimisurate solo quando cambia) + righe nascoste alte 0 con i testi più lunghi (es. `ReportPreview`) |
+| Grafico a barre orizzontali alto centinaia di righe ("Tutti") | `<BarChart pageWindow …>` (`ui/recharts`): sul telefono disegnato a fasce di 480 px sullo scroll della pagina |
 | Pagina che è solo una lista enorme | `FlatList` con `getItemLayout`, `initialNumToRender` ~10, `windowSize` 5-7, `removeClippedSubviews` |
 
 - Righe ad **altezza fissa** e nota (misurata sull'originale): niente misure a runtime.

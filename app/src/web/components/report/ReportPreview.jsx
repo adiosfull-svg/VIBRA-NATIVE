@@ -13,6 +13,7 @@ import {
   filterEventsByPeriod, periodLabel, computeGroupDayTypeMedie, DAY_TYPES,
 } from '@/legacy/utils/reportData';
 import { exportReportPDF } from '@/legacy/utils/reportPDF';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import EventCompareReport from '@/web/components/report/EventCompareReport';
 import DualPeriodWaveChart from '@/web/components/report/DualPeriodWaveChart';
 import DayTypeBreakdown from '@/web/components/report/DayTypeBreakdown';
@@ -89,12 +90,50 @@ function ReportHeader({ title, subtitle, onPrint, onPDF, pdfLoading }) {
   );
 }
 
+// PORT: riga della tabella Serate (in memo: aggiungendo righe si disegnano solo quelle nuove).
+// `hidden`: riga alta 0 e trasparente che serve solo a misurare le colonne (vedi VibraGroupReport).
+const HIDDEN_ROW = { height: 0, overflow: 'hidden', opacity: 0, borderBottomWidth: 0 };
+const EventRow = React.memo(function EventRow({ r, hidden }) {
+  return (
+    <Tr className={hidden ? undefined : 'border-b border-border/40 hover:bg-secondary/20'} style={hidden ? HIDDEN_ROW : undefined}>
+      <Td className="py-2 pr-3 whitespace-nowrap">{r.data}</Td>
+      <Td className="py-2 pr-3 font-medium">{r.nome}</Td>
+      <Td className="py-2 pr-3 text-muted-foreground">{r.locale}</Td>
+      <Td className="py-2 pr-3 text-right font-semibold">{fmt(r.fatturato)}</Td>
+      <Td className="py-2 pr-3 text-right">{r.promoter_attivi}</Td>
+      <Td className="py-2 text-right text-muted-foreground">{fmt(r.fat_promoter)}</Td>
+    </Tr>
+  );
+});
+const EVENT_COLS = [(r) => r.data, (r) => r.nome, (r) => r.locale, (r) => fmt(r.fatturato), (r) => String(r.promoter_attivi), (r) => fmt(r.fat_promoter)];
+
+/** Righe dopo le prime `skip` con il testo più lungo per colonna (le 2 più lunghe di ognuna): bastano a
+ *  dare alla tabella le larghezze che avrebbe con tutte le righe montate. */
+function widestRows(rows, cols, skip) {
+  const picked = new Set();
+  for (const col of cols) {
+    let a = -1, b = -1;
+    for (let i = skip; i < rows.length; i++) {
+      const len = String(col(rows[i]) ?? '').length;
+      if (a < 0 || len > String(col(rows[a]) ?? '').length) { b = a; a = i; } else if (b < 0 || len > String(col(rows[b]) ?? '').length) b = i;
+    }
+    if (a >= 0) picked.add(a);
+    if (b >= 0) picked.add(b);
+  }
+  return [...picked].sort((x, y) => x - y).map((i) => rows[i]);
+}
+
 // ── Vibra Group ──
 function VibraGroupReport({ promoters, attendances, events, config }) {
   const promoterRows = useMemo(() => buildPromoterRows(promoters, attendances, events, config.from, config.to), [promoters, attendances, events, config]);
   const eventRows = useMemo(() => buildEventRows(events, attendances, config.from, config.to), [events, attendances, config]);
   const monthlyRows = useMemo(() => buildMonthlyRows(events, config.from, config.to), [events, config]);
   const kpis = useMemo(() => computeGroupKpis(promoterRows, events, config.from, config.to), [promoterRows, events, config]);
+  // PORT: tutte le serate del periodo (di default tutte, centinaia) nel riquadro max-h-96: righe montate
+  // a blocchi scorrendo il riquadro (useProgressiveList box), larghezze delle colonne misurate subito su
+  // righe nascoste con i testi più lunghi (Table measureKey), così le righe nuove non le cambiano.
+  const eventsList = useProgressiveList(eventRows.length, { initial: 20, step: 20, box: 'y' });
+  const eventMeasureRows = useMemo(() => widestRows(eventRows, EVENT_COLS, 20), [eventRows]);
 
   return (
     <Div className="space-y-5">
@@ -182,8 +221,8 @@ function VibraGroupReport({ promoters, attendances, events, config }) {
       {config.sections.events && eventRows.length > 0 && (
         <Div className="rounded-xl border border-white/[0.06] bg-card p-4">
           <SectionTitle>Serate ({eventRows.length})</SectionTitle>
-          <Div className="overflow-x-auto max-h-96 overflow-y-auto">
-            <Table className="w-full text-xs">
+          <Div className="overflow-x-auto max-h-96 overflow-y-auto" onScroll={eventsList.onBoxScroll}>
+            <Table className="w-full text-xs" measureKey={eventRows}>
               <Thead className="sticky top-0 bg-card">
                 <Tr className="text-left text-muted-foreground border-b border-border">
                   <Th className="py-2 pr-3">Data</Th>
@@ -195,15 +234,11 @@ function VibraGroupReport({ promoters, attendances, events, config }) {
                 </Tr>
               </Thead>
               <Tbody>
-                {eventRows.map((r, i) => (
-                  <Tr key={i} className="border-b border-border/40 hover:bg-secondary/20">
-                    <Td className="py-2 pr-3 whitespace-nowrap">{r.data}</Td>
-                    <Td className="py-2 pr-3 font-medium">{r.nome}</Td>
-                    <Td className="py-2 pr-3 text-muted-foreground">{r.locale}</Td>
-                    <Td className="py-2 pr-3 text-right font-semibold">{fmt(r.fatturato)}</Td>
-                    <Td className="py-2 pr-3 text-right">{r.promoter_attivi}</Td>
-                    <Td className="py-2 text-right text-muted-foreground">{fmt(r.fat_promoter)}</Td>
-                  </Tr>
+                {eventRows.slice(0, eventsList.count).map((r, i) => (
+                  <EventRow key={i} r={r} />
+                ))}
+                {eventMeasureRows.map((r, i) => (
+                  <EventRow key={`m${i}`} r={r} hidden />
                 ))}
               </Tbody>
             </Table>

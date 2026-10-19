@@ -121,9 +121,16 @@ function contentSignature(children: ReactNode): string {
   return out;
 }
 
-export function Table({ className, children, style }: { className?: string; children?: ReactNode; style?: object }) {
-  const signature = contentSignature(children);
-  const [state, setState] = useState<{ sig: string; widths: number[] | null }>({ sig: signature, widths: null });
+/**
+ * `measureKey` (facoltativo): le colonne si rimisurano solo quando cambia questo valore e non a ogni
+ * cambio del contenuto. Serve alle tabelle con righe montate a poco a poco (hooks/useProgressiveList):
+ * le righe nuove prendono subito le larghezze già calcolate, senza un frame di colonne disallineate.
+ * Le larghezze vanno misurate su righe rappresentative montate da subito (es. righe nascoste alte 0
+ * con i testi più lunghi, ReportPreview).
+ */
+export function Table({ className, children, style, measureKey }: { className?: string; children?: ReactNode; style?: object; measureKey?: unknown }) {
+  const signature = measureKey !== undefined ? measureKey : contentSignature(children);
+  const [state, setState] = useState<{ sig: unknown; widths: number[] | null }>({ sig: signature, widths: null });
   const natural = useRef<number[]>([]);
   const tableWidth = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);

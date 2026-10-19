@@ -23,6 +23,9 @@ import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web
 import { Btn, Div, P, Span } from '@/ui/html';
 import { HtmlInput } from '@/ui/elements';
 
+// riquadro della chat: aggiungendo messaggi in cima la riga visibile resta ferma (ScrollView di RN)
+const KEEP_VISIBLE_ROW = { minIndexForVisible: 0 };
+
 export default function InstagramDMsTab({ semine = [], onAddToSemine, upcomingDates, addToPlan, onAddCustom }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -210,6 +213,11 @@ export default function InstagramDMsTab({ semine = [], onAddToSemine, upcomingDa
   const displayConvs = activeConfig.convs;
   // PORT: molte conversazioni: montaggio progressivo (hooks/useProgressiveList)
   const { count: shownConvs, sentinelRef: convsSentinelRef } = useProgressiveList(displayConvs.length);
+  // PORT: la chat aperta parte dal fondo e può avere centinaia di messaggi: si montano gli ultimi 40 e
+  // gli altri a blocchi scorrendo verso l'alto (useProgressiveList box 'top'; il riquadro tiene ferma la
+  // riga visibile con maintainVisibleContentPosition). REGOLE-PRESTAZIONI §3
+  const expandedMessages = useMemo(() => conversations.find(c => c.conversationId === expandedConvId)?.messages.length ?? 0, [conversations, expandedConvId]);
+  const chatList = useProgressiveList(expandedMessages, { initial: 40, step: 40, box: 'top', ahead: 1, resetKey: expandedConvId });
   const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length;
 
   const handleSync = async () => {
@@ -693,8 +701,10 @@ export default function InstagramDMsTab({ semine = [], onAddToSemine, upcomingDa
                 {isExpanded && (
                   <Div className="border-t border-border bg-background/50">
                     {/* Chat messages */}
-                    <Div ref={isExpanded ? messagesScrollRef : null} className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
-                      {conv.messages.map((msg, idx) => {
+                    <Div ref={isExpanded ? messagesScrollRef : null} className="p-3 space-y-2 max-h-[400px] overflow-y-auto"
+                      onScroll={chatList.onBoxScroll} maintainVisibleContentPosition={KEEP_VISIBLE_ROW}>
+                      {conv.messages.slice(Math.max(0, conv.messages.length - chatList.count)).map((msg, k) => {
+                        const idx = Math.max(0, conv.messages.length - chatList.count) + k;
                         const msgDate = new Date(msg.message_timestamp);
                         const prevMsg = idx > 0 ? conv.messages[idx - 1] : null;
                         const showDateSeparator = !prevMsg || !isSameDay(msgDate, new Date(prevMsg.message_timestamp));

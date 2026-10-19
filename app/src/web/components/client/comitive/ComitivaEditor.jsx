@@ -26,6 +26,7 @@ import {
 } from './comitiveUtils';
 import { ComitivaNode, WiresLayer, CanvasControls, CanvasMinimap } from './ComitivaCanvasParts';
 import { GhostAnim, DropRing, DROP_EASE, EASE_OUT_CSS, listDragHighlight } from './comitiveAnim';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 
 import { doc as webDocument, nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, P, Span } from '@/ui/html';
@@ -309,6 +310,12 @@ function PeopleSidebar({
     return [...list].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'it'));
   }, [groups, query, clientsById]);
 
+  // PORT: fino a 250 paganti / 200 di altri PR, rimontati a ogni apertura del pannello: righe montate a
+  // blocchi scorrendo la lista (useProgressiveList box). Le righe restano figlie della lista: il
+  // trascinamento col dito (closest/data-drag-payload, listDragHighlight) resta quello di prima.
+  const listTotal = tab === 'paganti' ? people.length : tab === 'gruppi' ? groupList.length : tab === 'altri' ? extList.length : promoterList.length;
+  const rows = useProgressiveList(listTotal, { initial: 20, step: 20, box: 'y', resetKey: `${open}|${tab}|${query}` });
+
   const dragStart = (e, payload) => {
     e.dataTransfer.setData('application/x-comitiva', JSON.stringify(payload));
     e.dataTransfer.effectAllowed = 'copy';
@@ -383,8 +390,9 @@ function PeopleSidebar({
           ref={listRef}
           className="flex-1 overflow-y-auto px-3 pb-3 space-y-1.5 overscroll-contain"
           style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
-          onTouchStart={Platform.OS !== 'web' ? (e) => touchStartRef.current?.(e) : undefined}>
-          {tab === 'paganti' && people.map((c) => {
+          onTouchStart={Platform.OS !== 'web' ? (e) => touchStartRef.current?.(e) : undefined}
+          onScroll={rows.onBoxScroll}>
+          {tab === 'paganti' && people.slice(0, rows.count).map((c) => {
             const inside = memberSet.has(c.id);
             const src = SOURCE_META[sourceKey(c)];
             return (
@@ -416,7 +424,7 @@ function PeopleSidebar({
           })}
           {tab === 'paganti' && people.length === 0 && <P className="text-xs text-center py-6 text-slate-500">Nessun pagante trovato</P>}
 
-          {tab === 'gruppi' && groupList.map((g) => {
+          {tab === 'gruppi' && groupList.slice(0, rows.count).map((g) => {
             const ids = (g.client_ids || []).filter((id) => clientsById[id]);
             const missing = ids.filter((id) => !memberSet.has(id));
             const names = ids.map((id) => clientsById[id]?.name).filter(Boolean);
@@ -456,7 +464,7 @@ function PeopleSidebar({
             <Div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-500"><Loader2 className="w-4 h-4 animate-spin" />Caricamento...</Div>
           )}
 
-          {tab === 'altri' && !dirLoading && extList.map((c) => {
+          {tab === 'altri' && !dirLoading && extList.slice(0, rows.count).map((c) => {
             const inside = memberSet.has(c.id);
             const owner = promotersById[c.promoter_id];
             return (
@@ -489,7 +497,7 @@ function PeopleSidebar({
           {tab === 'altri' && !dirLoading && extList.length === 0 && <P className="text-xs text-center py-6 text-slate-500">{query ? 'Nessun pagante trovato' : 'Nessun pagante di altri PR'}</P>}
           {tab === 'altri' && !dirLoading && !query && extClients.length > 200 && <P className="text-[10px] text-center py-2 text-slate-600">Mostrati i primi 200: cerca per trovare gli altri</P>}
 
-          {tab === 'promoter' && !dirLoading && promoterList.map((p) => {
+          {tab === 'promoter' && !dirLoading && promoterList.slice(0, rows.count).map((p) => {
             const inside = memberSet.has(p.id);
             return (
               <Div

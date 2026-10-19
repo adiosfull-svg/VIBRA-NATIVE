@@ -28,6 +28,7 @@ import { toast } from '@/ui/use-toast';
 import { refetchEventTables, triggerStatsRecompute } from '@/web/lib/eventSync';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { Img } from '@/ui/elements';
 
 import { doc as webDocument, win as webWindow } from '@/web/shims/dom';
@@ -499,6 +500,10 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
         return { client, rev: a.revenue || 0, ppl: a.new_people_brought || 0, attendanceId: a.id };
       });
   }, [selectedEvent, attendances, promoterId, sessionClientIds, localClients]);
+  // PORT: le presenze già salvate della serata (anche centinaia, righe con campi modificabili) montate a
+  // blocchi scorrendo il pannello (useProgressiveList box: sul telefono scorre il contenitore h-full,
+  // da lg il pannello destro). REGOLE-PRESTAZIONI §3
+  const existingList = useProgressiveList(existingRows.length, { initial: 15, step: 20, box: 'y', resetKey: selectedEvent?.id });
 
   // Modifica/elimina di una presenza storica: scrive su DB (AddedRow) poi riflette
   // il cambio facendo refetch delle presenze (onSaved).
@@ -536,7 +541,7 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
   }
 
   return (
-    <Div className="h-full overflow-y-auto overscroll-y-contain lg:overflow-hidden lg:grid lg:grid-rows-1 lg:grid-cols-[minmax(380px,440px)_1fr]">
+    <Div className="h-full overflow-y-auto overscroll-y-contain lg:overflow-hidden lg:grid lg:grid-rows-1 lg:grid-cols-[minmax(380px,440px)_1fr]" onScroll={existingList.onBoxScroll}>
       {/* ── Pannello sinistro: Aggiungi + Crea in blocco ── */}
       <Div className="p-4 space-y-3 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain lg:border-r lg:border-border">
         <ClientSearchRow
@@ -565,7 +570,7 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
       </Div>
 
       {/* ── Pannello destro: Riquadri presenze ── */}
-      <Div className="p-4 space-y-4 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain">
+      <Div className="p-4 space-y-4 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain" onScroll={existingList.onBoxScroll}>
         {/* Barra statistiche */}
         <Div className="flex items-center gap-2 flex-wrap">
           <Span className="inline-flex items-center gap-1.5 rounded-xl border border-border/50 bg-gradient-to-r from-secondary/30 to-secondary/10 px-3 py-1.5 text-[11px] text-foreground/80 font-medium shadow-sm">
@@ -589,7 +594,7 @@ function TabManuale({ events, clients: initialClients, groups, attendances, prom
               color="#a78bfa"
             />
             <Div className="p-2.5 space-y-1.5">
-              {existingRows.map((r) => (
+              {existingRows.slice(0, existingList.count).map((r) => (
                 <AddedRow
                   key={r.attendanceId}
                   row={r}

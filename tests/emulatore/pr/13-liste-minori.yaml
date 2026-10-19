@@ -1,0 +1,228 @@
+# PR: liste minori montate a blocchi (thread "liste non virtualizzate", 19/10). Dati aggiunti dal workflow:
+# 60 semine, albero dei clienti (40 radici), tutti i clienti del PR all'ultima serata, chat Instagram di
+# 120 messaggi abbinata a "Semina 1". Ogni blocco verifica che scorrendo arrivino anche le ultime righe.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+# ── Chat Instagram (Messaggi): ultimi 40 messaggi, gli altri scorrendo verso l'alto ──
+- openLink: vibra://messaggi
+- extendedWaitUntil:
+    visible: "Messaggio 120"
+    timeout: 90000
+- waitForAnimationToEnd
+- tapOn: "Messaggio 120"
+- waitForAnimationToEnd
+- takeScreenshot: minori-chat-01-aperta
+- assertNotVisible: "Messaggio 001"
+- repeat:
+    while:
+      notVisible: "Messaggio 001"
+    times: 40
+    commands:
+      - swipe:
+          from:
+            text: "Messaggio \\d+"
+            index: 1
+          direction: DOWN
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: minori-chat-02-inizio
+- assertVisible: "Messaggio 001"
+- assertNotVisible: "Si è verificato un errore"
+# ── Semine: chip del telefono (striscia orizzontale) fino in fondo ──
+- tapOn: "Semine"
+- extendedWaitUntil:
+    visible: "Semina \\d+"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: minori-chip-01
+- repeat:
+    times: 12
+    commands:
+      - swipe:
+          from:
+            text: "Semina \\d+"
+            index: 0
+          direction: LEFT
+          duration: 250
+- waitForAnimationToEnd
+- takeScreenshot: minori-chip-02
+- assertVisible: "Semina \\d+"
+- assertNotVisible: "Si è verificato un errore"
+# ── Analitica clienti: grafico "Tutti" a fasce sullo scroll della pagina ──
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible:
+      text: ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- tapOn:
+    text: "Tutti \\(\\d+\\)"
+    index: 0
+- waitForAnimationToEnd
+- takeScreenshot: minori-tutti-01
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 400
+- waitForAnimationToEnd
+- takeScreenshot: minori-tutti-02
+- repeat:
+    times: 14
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: minori-tutti-03
+- assertNotVisible: "Si è verificato un errore"
+# ── Clienti: Aggiungi presenze, "Già presenti" dell'ultima serata (150 righe) ──
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+- tapOn: "Aggiungi presenze"
+- extendedWaitUntil:
+    visible: "Seleziona una serata..."
+    timeout: 30000
+- tapOn: "Seleziona una serata..."
+- waitForAnimationToEnd
+# la ricerca del menu prende il fuoco: via la tastiera
+- hideKeyboard
+- waitForAnimationToEnd
+# le voci del menu sporgono dal riquadro del selettore: per l'accessibilità di Android non sono "visibili"
+# (Maestro non le trova per testo); tocco sulla prima, l'ultima serata
+- tapOn:
+    point: "50%,30%"
+- extendedWaitUntil:
+    visible: "Già presenti in questa serata"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: minori-presenze-01
+# righe montate a blocchi: dopo quattro trascinamenti lenti (~15 righe) il riquadro "Aggiunti ora" non
+# deve ancora vedersi (senza la crescita della lista comparirebbe subito dopo le prime 15)
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 40%
+          duration: 1200
+- waitForAnimationToEnd
+- takeScreenshot: minori-presenze-01b
+- assertNotVisible: "Aggiunti ora"
+- repeat:
+    while:
+      notVisible: "Aggiunti ora"
+    times: 40
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 30%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: minori-presenze-02-fondo
+- assertVisible: "Aggiunti ora"
+- assertNotVisible: "Si è verificato un errore"
+- tapOn:
+    text: "Chiudi"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+# ── Clienti: tab Albero (vista Lista: radici montate a blocchi) ──
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+- repeat:
+    while:
+      notVisible: "(?i)radice — .*"
+    times: 8
+    commands:
+      - tapOn:
+          text: "Albero"
+          optional: true
+      - waitForAnimationToEnd
+      - swipe:
+          start: 75%, 16%
+          end: 45%, 16%
+          duration: 600
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "(?i)radice — .*"
+    timeout: 30000
+- takeScreenshot: minori-albero-01
+- repeat:
+    times: 25
+    commands:
+      - swipe:
+          start: 50%, 85%
+          end: 50%, 15%
+          duration: 250
+- waitForAnimationToEnd
+- takeScreenshot: minori-albero-02
+- assertVisible: "(?i)radice — .*"
+- assertNotVisible: "Si è verificato un errore"
+# ── Comitive: barra laterale "Aggiungi persone" (150 paganti) fino all'ultimo in ordine alfabetico ──
+# (siamo già su Clienti, tab Albero: la barra delle tab è in alto, Comitive accanto ad Albero)
+- tapOn: "Comitive"
+- waitForAnimationToEnd
+# la pagina è scorsa in basso (dall'Albero): "Crea comitiva" resta sotto la barra delle tab, si torna in cima
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 35%
+          end: 50%, 85%
+          duration: 300
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Crea comitiva"
+    timeout: 60000
+- repeat:
+    while:
+      notVisible: "Dai un nome alla comitiva.*"
+    times: 4
+    commands:
+      - tapOn: "Crea comitiva"
+      - waitForAnimationToEnd
+- tapOn: "Dai un nome alla comitiva.*"
+- inputText: "Prova liste"
+- hideKeyboard
+- tapOn: "Crea e apri"
+- extendedWaitUntil:
+    visible: "Aggiungi persone"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: minori-comitiva-01
+- assertNotVisible: "Sofia .*"
+- repeat:
+    while:
+      notVisible: "Sofia .*"
+    times: 40
+    commands:
+      - swipe:
+          start: 40%, 80%
+          end: 40%, 35%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: minori-comitiva-02-fondo
+- assertVisible: "Sofia .*"
+- assertNotVisible: "Si è verificato un errore"

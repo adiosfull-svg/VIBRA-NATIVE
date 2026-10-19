@@ -11,6 +11,7 @@ import { triggerStatsRecompute } from '@/web/lib/eventSync';
 import { toast } from '@/ui/use-toast';
 
 import { Btn, Div, P, Span } from '@/ui/html';
+import { useProgressiveList } from '@/web/hooks/useProgressiveList';
 import { HtmlInput, HtmlTextarea } from '@/ui/elements';
 
 // ─── Card ────────────────────────────────────────────────────────────────────
@@ -247,6 +248,10 @@ export default function SmartBatchImport({
         return { client, rev: a.revenue || 0, ppl: a.new_people_brought || 0, attendanceId: a.id };
       });
   }, [selectedEvent, attendances, sessionClientIds, localClients]);
+  // PORT: le presenze già salvate della serata (anche centinaia, righe con campi modificabili) montate a
+  // blocchi scorrendo il pannello (useProgressiveList box: sul telefono scorre il contenitore h-full,
+  // da lg il pannello destro). REGOLE-PRESTAZIONI §3
+  const existingList = useProgressiveList(existingRows.length, { initial: 15, step: 20, box: 'y', resetKey: selectedEvent?.id });
 
   const handleParse = async () => {
     if (!batchText.trim() || !selectedEvent) return;
@@ -527,7 +532,7 @@ export default function SmartBatchImport({
   }
 
   return (
-    <Div className="h-full overflow-y-auto overscroll-y-contain lg:overflow-hidden lg:grid lg:grid-rows-1 lg:grid-cols-[minmax(380px,440px)_1fr]">
+    <Div className="h-full overflow-y-auto overscroll-y-contain lg:overflow-hidden lg:grid lg:grid-rows-1 lg:grid-cols-[minmax(380px,440px)_1fr]" onScroll={existingList.onBoxScroll}>
       {/* ── Pannello sinistro: Incolla + Aggiungi cliente/gruppo + Crea in blocco ── */}
       {/* Mobile collassato: barra compatta per riaprire (lg:hidden su desktop) */}
       {leftCollapsed && (
@@ -610,7 +615,7 @@ export default function SmartBatchImport({
       </Div>
 
       {/* ── Pannello destro: Risultati AI + Presenze ── */}
-      <Div className="p-4 space-y-4 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain">
+      <Div className="p-4 space-y-4 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain" onScroll={existingList.onBoxScroll}>
         {/* Barra statistiche */}
         <Div className="flex items-center gap-2 flex-wrap">
           <Span className="inline-flex items-center gap-1.5 rounded-xl border border-border/50 bg-gradient-to-r from-secondary/30 to-secondary/10 px-3 py-1.5 text-[11px] text-foreground/80 font-medium shadow-sm">
@@ -694,7 +699,7 @@ export default function SmartBatchImport({
           <Div className="rounded-2xl border border-border/50 overflow-hidden bg-gradient-to-b from-card to-card/90 shadow-xl">
             <PanelHeader icon={History} title="Già presenti in questa serata" count={existingRows.length} color="#a78bfa" />
             <Div className="p-2.5 space-y-1.5">
-              {existingRows.map((r) => (
+              {existingRows.slice(0, existingList.count).map((r) => (
                 <AddedRow key={r.attendanceId} row={r} tone="existing"
                   onUpdate={() => onSaved()} onDelete={() => onSaved()} onClientDetail={onClientDetail} />
               ))}

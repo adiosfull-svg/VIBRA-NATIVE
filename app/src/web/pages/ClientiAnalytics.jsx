@@ -208,6 +208,8 @@ export default function ClientiAnalytics() {
   ];
 
   // Grafico orizzontale unificato mobile+desktop, nomi troncati su mobile
+  // PORT: con "Tutti" centinaia di barre con foto: sul telefono il grafico si monta a fasce sullo scroll
+  // della pagina (BarChart pageWindow, ui/recharts ChartTiles), stesso disegno. REGOLE-PRESTAZIONI §3
   const renderMainChart = (data) => {
     const color = metricColors[metric];
     const isEuro = metric !== 'visits';
@@ -216,7 +218,7 @@ export default function ClientiAnalytics() {
         {/* MOBILE: barre orizzontali, nomi troncati a sinistra */}
         <DeferredChart className="block sm:hidden" style={{ height: Math.max(240, data.length * 28) }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical" margin={{ top: 4, right: 40, left: 84, bottom: 4 }}>
+            <BarChart pageWindow data={data} layout="vertical" margin={{ top: 4, right: 40, left: 84, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 5% 18%)" horizontal={false} />
               <XAxis type="number" tick={{ fill: 'hsl(240 5% 55%)', fontSize: 9 }}
                 tickFormatter={v => isEuro ? (v >= 1000 ? `€${Math.round(v/1000)}k` : `€${v}`) : v} />
@@ -232,7 +234,7 @@ export default function ClientiAnalytics() {
         {/* DESKTOP: barre orizzontali, nomi completi */}
         <DeferredChart className="hidden sm:block" style={{ height: Math.max(280, data.length * 32) }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical" margin={{ top: 4, right: 55, left: 144, bottom: 4 }}>
+            <BarChart pageWindow data={data} layout="vertical" margin={{ top: 4, right: 55, left: 144, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 5% 18%)" horizontal={false} />
               <XAxis type="number" tick={{ fill: 'hsl(240 5% 55%)', fontSize: 11 }}
                 tickFormatter={v => isEuro ? (v >= 1000 ? `€${Math.round(v/1000)}k` : `€${v}`) : v} />
@@ -254,7 +256,7 @@ export default function ClientiAnalytics() {
       {/* MOBILE */}
       <DeferredChart className="block sm:hidden" style={{ height: Math.max(240, data.length * 28) }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 10, left: 84, bottom: 4 }}>
+          <BarChart pageWindow data={data} layout="vertical" margin={{ top: 4, right: 10, left: 84, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 5% 18%)" horizontal={false} />
             <XAxis type="number" tick={{ fill: 'hsl(240 5% 55%)', fontSize: 9 }} allowDecimals={false} />
             <YAxis type="category" dataKey="name" interval={0} tick={(props) => <ClientTick {...props} data={data} fontSize={9} maxLen={10} width={80} />} width={80} />
@@ -280,7 +282,7 @@ export default function ClientiAnalytics() {
       {/* DESKTOP */}
       <DeferredChart className="hidden sm:block" style={{ height: Math.max(280, data.length * 32) }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 10, left: 144, bottom: 4 }}>
+          <BarChart pageWindow data={data} layout="vertical" margin={{ top: 4, right: 10, left: 144, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 5% 18%)" horizontal={false} />
             <XAxis type="number" tick={{ fill: 'hsl(240 5% 55%)', fontSize: 11 }} allowDecimals={false} />
             <YAxis type="category" dataKey="name" interval={0} tick={(props) => <ClientTick {...props} data={data} fontSize={11} maxLen={16} width={140} />} width={140} />
