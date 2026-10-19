@@ -325,7 +325,7 @@ export default function RecontactList({ clients, clientStatsMap, events, onConta
                     disabled={selectMode}
                     rightLabel="Contattato"
                   >
-                    <Div className="group">
+                    <Div className="group" data-client-id={client.id} data-client-name={client.name}>
                       {/* DESKTOP */}
                       <Btn className={`hidden sm:flex items-center gap-2.5 px-4 py-3 hover:bg-secondary/10 transition-colors cursor-pointer`} style={isSel(client.id) ? { backgroundColor: 'rgba(139, 92, 246, 0.18)' } : undefined} onClick={(e) => handleClientClick(e, client)}>
                         {selectMode && <SelectCheckbox selected={isSel(client.id)} />}

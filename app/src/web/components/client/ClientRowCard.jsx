@@ -24,6 +24,8 @@ const ClientRowCard = memo(function ClientRowCard({ client, stats, badges = [], 
   return (
     /* MOBILE: card verticale */
     <Btn
+      data-client-id={client.id}
+      data-client-name={client.name}
       className={`sm:hidden clienti-card-row relative h-full flex flex-col gap-2 px-3 py-3 border-b border-border/50 hover:bg-secondary/10 active:bg-secondary/20 cursor-pointer transition-colors ${highlighted ? 'client-highlight-flash' : ''}`}
       style={selected ? { backgroundColor: 'rgba(139, 92, 246, 0.18)' } : undefined}
       onClick={() => selectMode ? onToggleSelect?.(client) : onDetail(client)}>

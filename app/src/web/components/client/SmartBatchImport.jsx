@@ -149,6 +149,8 @@ function AddedRow({ row, onUpdate, onDelete, onClientDetail, tone = 'new' }) {
 
   return (
     <Div
+      data-client-id={row.client.id}
+      data-client-name={row.client.name}
       className={`flex items-center justify-between rounded-xl border ${tileClass} px-3 py-2.5`}>
       <Div className="flex items-center gap-1.5 min-w-0">
         <ClientAvatar client={row.client} size="xs" initials={row.client.name?.charAt(0)?.toUpperCase() || '?'} />

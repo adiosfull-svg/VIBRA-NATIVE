@@ -191,6 +191,8 @@ export default function TargetLocaleTab({ clients, upcomingDates, attendances = 
                   return (
                     <Btn
                       key={c.id}
+                      data-client-id={c.id}
+                      data-client-name={c.name}
                       onClick={(e) => handleRowClick(e, c)}
                       className={`flex items-center gap-2.5 cursor-pointer group py-2.5 border-b border-white/[0.03] last:border-0`}
                       style={isSel(c.id) ? { backgroundColor: 'rgba(139, 92, 246, 0.18)' } : undefined}>

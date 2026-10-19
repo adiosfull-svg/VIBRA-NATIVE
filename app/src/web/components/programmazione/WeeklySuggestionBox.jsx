@@ -165,6 +165,8 @@ export default function WeeklySuggestionBox({ onContact, onDetail }) {
             return (
               <Btn
                 key={s.client_id}
+                data-client-id={s.client_id}
+                data-client-name={s.name}
                 onClick={(e) => onCardClick(e, s)}
                 className={`shrink-0 w-[172px] rounded-xl border p-3 flex flex-col gap-2 cursor-pointer hover:border-white/15 transition-colors ${isSel(s.client_id) ? 'border-violet-500/40 bg-violet-500/10' : 'border-border bg-secondary/20'}`}>
                 <Div className="flex items-center gap-2">

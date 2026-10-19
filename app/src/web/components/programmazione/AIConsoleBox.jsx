@@ -51,6 +51,8 @@ const RecPill = memo(function RecPill({ r, contactedAt, onCardClick, onContacted
   const meta = CAT_META[r.categoria] || CAT_META.stabile;
   return (
     <Btn
+      data-client-id={r.client_id}
+      data-client-name={r.name}
       onClick={(e) => onCardClick(e, r)}
       className={`rounded-xl border p-3 space-y-2 active:bg-secondary/40 transition-colors cursor-pointer ${isSel ? 'border-violet-500' : 'border-border bg-secondary/20'}`}
       style={isSel ? { backgroundColor: 'rgba(139, 92, 246, 0.15)' } : undefined}>
@@ -520,6 +522,8 @@ function AIConsoleBox({ clients, onContact, onDetail, promoterId: promoterIdProp
                     return (
                       <Tr
                         key={r.client_id}
+                        data-client-id={r.client_id}
+                        data-client-name={r.name}
                         onClick={(e) => onCardClick(e, r)}
                         className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer align-top ${isSel(r.client_id) ? 'bg-violet-500/10' : ''}`}>
                         <Td className="px-2 py-2 sticky left-0 bg-card">

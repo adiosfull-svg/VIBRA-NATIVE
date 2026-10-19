@@ -42,6 +42,8 @@ const ClientTableRow = React.memo(function ClientTableRow({
   return (
     <Btn
       style={{ ...style, ...(selected ? { backgroundColor: 'rgba(139, 92, 246, 0.18)' } : {}) }}
+      data-client-id={client.id}
+      data-client-name={client.name}
       className={`clienti-table-row group relative flex items-center border-b border-border/40 hover:bg-secondary/20 transition-colors cursor-pointer h-full ${highlighted ? 'client-highlight-flash' : ''}`}
       onClick={(e) => {
         if (selectMode) { onToggleSelect?.(client); }

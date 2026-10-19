@@ -139,6 +139,12 @@ function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps
   if (compact) {
     return (
       <Div
+        data-client-id={semina.id}
+        data-client-name={displayName}
+        data-semina="1"
+        data-ig={handleDisplay}
+        data-is-off={isOff ? '1' : '0'}
+        data-phone={semina.phone || ''}
         {...(dragHandleProps || {})}
         className={`shrink-0 w-[140px] flex flex-col rounded-lg border border-pink-500/20 bg-card overflow-hidden ${isDragging ? 'opacity-60 ring-2 ring-pink-500' : ''} ${isOff ? 'opacity-40 grayscale' : ''}`}
         style={{ boxShadow: '0 2px 12px -4px rgba(236,72,153,0.12)' }}>
@@ -206,6 +212,12 @@ function SeminaCard({ semina, onDelete, onEdit, compact = false, dragHandleProps
   // ── Full card: tab Semina ──
   return (
     <Div
+      data-client-id={semina.id}
+      data-client-name={displayName}
+      data-semina="1"
+      data-ig={handleDisplay}
+      data-is-off={isOff ? '1' : '0'}
+      data-phone={semina.phone || ''}
       {...(dragHandleProps || {})}
       className={`shrink-0 w-[180px] sm:w-full semina-flip-container ${isDragging ? 'opacity-60 ring-2 ring-pink-500' : ''} ${isOff ? 'opacity-40 grayscale' : ''}`}>
       <FlipTiltContext.Provider value={flip.tilt ?? null}>

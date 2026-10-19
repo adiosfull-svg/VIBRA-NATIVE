@@ -74,6 +74,8 @@ export default function ClientFUTCard({ client, stats, ranking, trendFull, badge
 
   return (
     <Btn
+      data-client-id={client.id}
+      data-client-name={client.name}
       className={`shrink-0 w-[180px] sm:w-full flex flex-col rounded-xl border bg-card overflow-hidden cursor-pointer hover:border-white/15 hover:-translate-y-0.5 transition-all duration-200 ${isSel ? 'border-violet-500' : 'border-white/[0.06]'}`}
       style={{ boxShadow: `0 4px 18px -6px ${accentColor}22`, ...(isSel ? { backgroundColor: 'rgba(139, 92, 246, 0.12)' } : {}) }}
       onClick={handleClick}>

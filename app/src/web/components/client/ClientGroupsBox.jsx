@@ -68,6 +68,8 @@ export default function ClientGroupsBox({ client, groups = [], allClients = [], 
                       <ClientAvatar client={m} size="xs" initials={m.name?.charAt(0)?.toUpperCase() || '?'} />
                       <Btn
                         button
+                        data-client-id={m.id}
+                        data-client-name={m.name}
                         onClick={() => onClientDetail?.(m)}
                         className={`flex-1 text-left truncate hover:text-primary hover:underline transition-colors ${m.id === client.id ? 'text-violet-300 font-medium' : 'text-muted-foreground'}`}
                         accessibilityLabel="Apri dettaglio cliente">
