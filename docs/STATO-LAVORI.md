@@ -355,7 +355,12 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   - `ui/icon`: colore da `style.color` anche in formato CSS (cssColor).
   - `ui/vibraTabs`: sul web `show` chiamato direttamente (runOnUISync non esiste sul web e faceva crashare le
     tab nel nativo web; sul telefono invariato).
-- Pagine: `AcademySideRail` vetro con angoli arrotondati invece di clipPath (PORT).
+- Pagine: `AcademySideRail` vetro con angoli arrotondati invece di clipPath (PORT); GenericMockup
+  (ScreenMockups) e card di SemineMockupsV2 con il Callout dopo le schede (PORT: in CSS il margine di space-y
+  della prima scheda attraversa il contenitore e collassa nel margine del fratello sopra; il collasso
+  genitore-figlio non è emulato in ui/html).
+- `tools/compare/steps.mjs`: `click` porta in vista un testo fuori schermo solo dentro un contenitore scorrevole
+  in orizzontale (prima nel nativo web cliccava le voci del pannello Account chiuso).
 - Modifiche dell'originale del 14-16/10 portate (9de6dfd): Weekend (presenze con la pagina, dettaglio cliente come
   in Clienti), vetro sticky senza transizione in Clienti/Weekend, pulsante Comprimi dell'Analisi Intelligente,
   clientRanking/promoterAggregates, prefetchCoreData (locali per sort_order, niente audit-logs/credit-usage).
@@ -367,8 +372,9 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   (vedi Differenze note). Il 19/10 l'originale ha cambiato anche index.html/manifest (solo PWA).
 - Controlli: typecheck e test (76) verdi; Clienti/Dashboard/Il Mio Vibra rimisurati contro la versione prima
   (git stash) senza regressioni.
-- Restano scarti piccoli nei mockup Academy (dy relativi di 8-36px in clienti, programmazione, semine,
-  ilmiovibra, formazione/download, report), da guardare con `probe.mjs` e `scrollid`.
+- Restano scarti nei mockup Academy (dy relativi 8-36px in clienti, programmazione, ilmiovibra, report; le
+  sezioni admin dashboard/promoter/serate/locali/consolle/impostazioni e formazione sono allineate),
+  da guardare con `probe.mjs` e `scrollid`.
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app

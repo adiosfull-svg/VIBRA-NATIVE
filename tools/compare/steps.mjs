@@ -13,7 +13,9 @@ const findText = ([text, exact, nth]) => {
     const el = n.parentElement; let r = el.getBoundingClientRect();
     if (!r.width || !r.height || getComputedStyle(el).visibility === 'hidden') continue;
     // fuori schermo in orizzontale (barra tab scorrevole): portalo in vista
-    if (r.right > innerWidth || r.left < 0) { el.scrollIntoView({ block: 'nearest', inline: 'center' }); r = el.getBoundingClientRect(); }
+    // (solo dentro un contenitore scorrevole in orizzontale: non i pannelli chiusi fuori schermo, es. Account del nativo)
+    const inHScroll = (e) => { for (let p = e.parentElement; p; p = p.parentElement) { if (/auto|scroll/.test(getComputedStyle(p).overflowX) && p.scrollWidth > p.clientWidth + 1) return true; } return false; };
+    if ((r.right > innerWidth || r.left < 0) && inHScroll(el)) { el.scrollIntoView({ block: 'nearest', inline: 'center' }); r = el.getBoundingClientRect(); }
     if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
     hits.push({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
   }
