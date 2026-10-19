@@ -21,6 +21,8 @@ type MotionProps = {
 // con il nome di una proprietà (es. rotate,opacity) solo quelle
 const NO_LOOP = process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '';
 const NO_LOOP_MOTION = /motion|all/.test(NO_LOOP);
+// prova: EXPO_PUBLIC_TEST_NO_FADE_TEXTURE=1 = dissolvenze infinite senza texture (com'era prima)
+const NO_FADE_TEXTURE = process.env.EXPO_PUBLIC_TEST_NO_FADE_TEXTURE === '1';
 
 // Keyframe con repeat: Infinity (badge e scritte di RankCard, ecc.). PORT: prima erano
 // Animated.loop(Animated.sequence(...)): la sequenza non gira sul driver nativo come un tutt'uno, quindi a
@@ -220,10 +222,15 @@ function make(Comp: React.ComponentType<any>, direct = false) {
     const onLayout = usesPct
       ? (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; setWidth((w) => (Math.abs(w - nw) < 0.5 ? w : nw)); ownLayout?.(e); }
       : ownLayout;
+    // PORT: dissolvenza infinita (scritta e riquadro G.O.A.T. di RankCard): il contenuto va in una texture
+    // (renderToHardwareTextureAndroid) e a ogni frame cambia solo l'opacità con cui la si compone. Senza, ogni
+    // frame ridisegnava il contenuto con l'alfa: sull'emulatore frame da 0,7-1 s senza fine (Achievement).
+    const fadeLoop = transition?.repeat === Infinity && typeof animate === 'object' && Array.isArray((animate as Record<string, unknown>).opacity);
+    const hw = fadeLoop && !NO_FADE_TEXTURE ? true : undefined;
     // Div: lo stile animato va sull'elemento stesso (posizione assoluta, h-full, flex-1 restano suoi)
-    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} onLayout={onLayout}>{children}</Comp>;
+    if (direct) return <Comp className={className} style={style} animatedStyle={animated} renderToHardwareTextureAndroid={hw} {...rest} onLayout={onLayout}>{children}</Comp>;
     return (
-      <Animated.View style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
+      <Animated.View style={animated} renderToHardwareTextureAndroid={hw} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
         <Comp className={className} style={style} {...rest}>{children}</Comp>
       </Animated.View>
     );
