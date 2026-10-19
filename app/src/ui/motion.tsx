@@ -8,14 +8,45 @@ import { Children, cloneElement, createContext, isValidElement, useContext, useE
 import { Animated, Dimensions, Easing, type LayoutChangeEvent } from 'react-native';
 import { Btn, Div, Span } from './html';
 import { Img } from './elements';
+import { useLoopActive } from './loopActive';
 
 type Target = Record<string, any> | boolean | undefined | string;
-type Transition = { duration?: number; delay?: number; ease?: string | number[]; repeat?: number; repeatType?: string };
+type Transition = { duration?: number; delay?: number; ease?: string | number[]; repeat?: number; repeatType?: string; repeatDelay?: number };
 type MotionProps = {
   initial?: Target; animate?: Target; exit?: Target; transition?: Transition; whileTap?: Target; whileHover?: Target;
   layout?: unknown; layoutId?: string; variants?: unknown; children?: ReactNode; className?: string; style?: any;
   onClick?: () => void; [key: string]: any;
 };
+
+
+// Keyframe con repeat: Infinity (badge e scritte di RankCard, scintillio della barra, ecc.): un solo
+// Animated.timing 0 → 1 lineare in Animated.loop (loop nativo: nessun passaggio dal JS; prima
+// Animated.loop(Animated.sequence(...)) ripassava dal JS a ogni tratto) e i keyframe come interpolazione, con
+// la curva di ogni tratto campionata e la pausa `repeatDelay` di framer-motion in coda (valore fermo
+// sull'ultimo keyframe). Gira solo a schermata a fuoco ed elemento nello schermo (ui/loopActive).
+const LOOP_SAMPLES = 12;
+type LoopSpec = { input: number[]; output: number[]; ms: number };
+function loopSpec(frames: number[], transition: Transition | undefined): LoopSpec {
+  const duration = (transition?.duration ?? 0.3) * 1000;
+  const pause = Math.max(0, (transition?.repeatDelay ?? 0) * 1000);
+  const ms = duration + pause;
+  const ease = easing(transition?.ease);
+  const segs = Math.max(1, frames.length - 1);
+  const segMs = duration / segs;
+  const input: number[] = [0];
+  const output: number[] = [frames[0]];
+  for (let i = 0; i < segs; i++) {
+    const a = frames[i], b = frames[i + 1] ?? frames[i];
+    for (let j = 1; j <= LOOP_SAMPLES; j++) {
+      const t = j / LOOP_SAMPLES;
+      input.push((i * segMs + t * segMs) / ms);
+      output.push(a + (b - a) * ease(t));
+    }
+  }
+  if (pause > 0) { input.push(1); output.push(output[output.length - 1]); }
+  input[input.length - 1] = 1;
+  return { input, output, ms };
+}
 
 const KEYS = ['opacity', 'x', 'y', 'scale', 'rotate'] as const;
 const DEFAULTS: Record<string, number> = { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 };
@@ -59,7 +90,7 @@ function withoutEntryLift(from: Record<string, any> | undefined, to: Record<stri
   return [f, t];
 }
 
-function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0, onDone?: () => void) {
+function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0, onDone?: () => void, active = true) {
   const [rawFrom, rawTo] = withoutEntryLift(typeof initial === 'object' ? initial : undefined, typeof animate === 'object' ? animate : undefined);
   const pct = new Set(PCT_KEYS.filter((k) => isPct(rawFrom?.[k]) || isPct(rawTo?.[k])));
   const from = numeric(rawFrom);
@@ -90,6 +121,29 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   // PORT: x/y in % (es. lo scintillio infinito di RankCard) restano sul driver nativo: il valore resta in
   // % e diventa px con la larghezza dell'elemento (onLayout); prima giravano sul thread JS per sempre.
   const nativeDriver = sizes.length === 0;
+  const infinite = transition?.repeat === Infinity;
+  const loopKeys = infinite ? KEYS.filter((k) => Array.isArray(to?.[k]) && to![k].length > 1 && to![k].every((n: unknown) => typeof n === 'number')) : [];
+  const loopClock = useRef<Animated.Value | null>(null);
+  if (loopKeys.length && !loopClock.current) loopClock.current = new Animated.Value(0);
+  const loopKey = loopKeys.map((k) => `${k}:${to![k].join(',')}`).join('|') + `|${transition?.duration}|${transition?.repeatDelay}|${JSON.stringify(transition?.ease ?? '')}`;
+  const loops = useMemo(() => {
+    const out: Partial<Record<string, { spec: LoopSpec; node: Animated.AnimatedInterpolation<number> }>> = {};
+    for (const k of loopKeys) {
+      const spec = loopSpec(to![k], transition);
+      out[k] = { spec, node: loopClock.current!.interpolate({ inputRange: spec.input, outputRange: spec.output }) };
+    }
+    return out;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loopKey]);
+  const loopMs = loopKeys.length ? loops[loopKeys[0]]?.spec.ms ?? 0 : 0;
+  useEffect(() => {
+    const clock = loopClock.current;
+    if (!clock || !loopMs || !active) return undefined;
+    clock.setValue(0);
+    const a = Animated.loop(Animated.timing(clock, { toValue: 1, duration: loopMs, easing: Easing.linear, useNativeDriver: nativeDriver }));
+    a.start();
+    return () => a.stop();
+  }, [loopMs, loopKey, nativeDriver, active]);
   const waitWidth = pct.size > 0 && !(width > 0);
   const targetKey = JSON.stringify(to ?? {}) + (pct.size ? `|${width > 0 ? 1 : 0}` : '');
   useEffect(() => {
@@ -102,13 +156,14 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
     const anims = KEYS.filter((k) => to[k] !== undefined && ok(to[k]) && (Array.isArray(to[k]) || Number(to[k]) !== lastTarget[k])).map((k) => {
       const v = to[k];
       if (Array.isArray(v)) {
+        // infiniti: orologio nativo qui sopra
+        if (transition?.repeat === Infinity) return null;
         const step = duration / Math.max(1, v.length - 1);
-        const seq = Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
-        return transition?.repeat === Infinity ? Animated.loop(seq) : seq;
+        return Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
       }
       lastTarget[k] = Number(v);
       return Animated.timing(values[k], { toValue: Number(v), duration, delay, easing: easing(transition?.ease), useNativeDriver: nativeDriver });
-    });
+    }).filter((a): a is Animated.CompositeAnimation => a != null);
     for (const k of sizes) {
       const n = sizeOf(to[k])!.n;
       if (n === lastTarget[k]) continue;
@@ -126,12 +181,13 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   // % → px sulla larghezza dell'elemento (come translate in % del CSS); prima della misura la larghezza
   // dello schermo come stima (una barra che entra da -100% non deve comparire piena per un frame)
   const pctBase = width > 0 ? width : Dimensions.get('window').width;
-  const asPct = (v: Animated.Value) => v.interpolate({ inputRange: [0, 100], outputRange: [0, pctBase] });
-  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(values.x) : values.x });
-  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(values.y) : values.y });
-  if (used.has('scale')) transform.push({ scale: values.scale });
-  if (used.has('rotate')) transform.push({ rotate: values.rotate.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
-  const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: values.opacity } : null), ...(transform.length ? { transform } : null) };
+  const asPct = (v: Animated.Value | Animated.AnimatedInterpolation<number>) => v.interpolate({ inputRange: [0, 100], outputRange: [0, pctBase] });
+  const val = (k: string) => loops[k]?.node ?? values[k];
+  if (used.has('x')) transform.push({ translateX: pct.has('x') ? asPct(val('x')) : val('x') });
+  if (used.has('y')) transform.push({ translateY: pct.has('y') ? asPct(val('y')) : val('y') });
+  if (used.has('scale')) transform.push({ scale: val('scale') });
+  if (used.has('rotate')) transform.push({ rotate: val('rotate').interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'] }) });
+  const out: Record<string, any> = { ...(used.has('opacity') ? { opacity: val('opacity') } : null), ...(transform.length ? { transform } : null) };
   for (const k of sizes) {
     out[k] = sizeOf(to![k])!.pct ? values[k].interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }) : values[k];
   }
@@ -152,16 +208,21 @@ function make(Comp: React.ComponentType<any>, direct = false) {
     // x/y in %: serve la larghezza dell'elemento (misurata una volta, poi solo se cambia)
     const usesPct = PCT_KEYS.some((k) => isPct((typeof initial === 'object' ? initial : undefined)?.[k]) || isPct((typeof animate === 'object' ? animate : undefined)?.[k]));
     const [width, setWidth] = useState(0);
-    const animated = useMotion(initial, animate, transition, width, exiting ? (__exitDone as () => void) : undefined);
+    // animazione infinita: gira solo a schermata a fuoco ed elemento nello schermo (ui/loopActive)
+    const infiniteLoop = transition?.repeat === Infinity && typeof animate === 'object' && KEYS.some((k) => Array.isArray((animate as Record<string, unknown>)[k]));
+    const loop = useLoopActive(infiniteLoop);
+    const animated = useMotion(initial, animate, transition, width, exiting ? (__exitDone as () => void) : undefined, loop.active);
+    const ownRef = (rest as { ref?: unknown }).ref;
+    const ref = infiniteLoop && !ownRef ? loop.ref : ownRef;
     if (exiting) (rest as { pointerEvents?: string }).pointerEvents = 'none';
     const ownLayout = (rest as { onLayout?: (e: LayoutChangeEvent) => void }).onLayout;
     const onLayout = usesPct
       ? (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; setWidth((w) => (Math.abs(w - nw) < 0.5 ? w : nw)); ownLayout?.(e); }
       : ownLayout;
     // Div: lo stile animato va sull'elemento stesso (posizione assoluta, h-full, flex-1 restano suoi)
-    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} onLayout={onLayout}>{children}</Comp>;
+    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} ref={ref} onLayout={onLayout}>{children}</Comp>;
     return (
-      <Animated.View style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
+      <Animated.View ref={infiniteLoop ? loop.ref as never : undefined} style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
         <Comp className={className} style={style} {...rest}>{children}</Comp>
       </Animated.View>
     );

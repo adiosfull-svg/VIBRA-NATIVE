@@ -1,0 +1,42 @@
+# PR: tab Achievement di Il Mio Vibra (card in PageWindowList sul telefono) aperta da link e scorsa
+# giù e su. Misura della lentezza (thread "Achievement veloce"): durata degli swipe nei commands.json
+# di maestro-debug e battiti "VIBRA diag" del logcat; si confronta con la versione di base (app_ref).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+- openLink: vibra://il-mio-vibra?tab=achievements
+- extendedWaitUntil:
+    visible: "Primo cliente|Rete in crescita|Diecimila"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: achievement-01
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: achievement-02
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 80%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: achievement-03
+- assertNotVisible: "Si è verificato un errore"

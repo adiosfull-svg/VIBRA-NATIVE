@@ -336,9 +336,31 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Sul telefono le card Semine eliminate spariscono senza dissolvenza (niente AnimatePresence nella griglia a finestra).
 - Emulatore: `pr/12-liste.yaml`, `admin/06-promoter.yaml`; il seed ha 60 semine. Target e Costanza non si possono
   provare con i dati sintetici (0 clienti per locale, nessun dato costanza).
-- Achievement era già molto lento sull'emulatore prima (swipe 4×~800 s con cc7842b); con la finestra 4×~300 s.
-  Da capire la causa (animazioni continue delle card?).
+- Achievement lento sull'emulatore: causa trovata e corretta il 19/10 (sezione «Achievement veloce» qui sotto).
 - Le liste che restavano sono in "Liste minori (19/10)".
+
+## Achievement veloce (19/10, branch `claude/achievement-veloce`)
+- Causa: i loop infiniti di motion in RankCard. L'utente pr di prova è G.O.A.T.: rotazione del badge, dissolvenza
+  della scritta «GOAT» e del riquadro «HAI SBLOCCATO TUTTI GLI ACHIEVEMENT». Lo schermo non era mai fermo:
+  UiAutomator «Could not detect idle state», frame da 0,7-1 s, ogni comando Maestro aspettava minuti. Il JS era
+  quasi fermo (battiti senza render) e il blur non c'entra (stesso tempo con `EXPO_PUBLIC_TEST_NO_BLUR=1`).
+  Bisezione (variabile di prova poi tolta): senza le dissolvenze infinite apertura 10 s e swipe 6-27 s; senza la
+  sola rotazione resta lento. Una texture (`renderToHardwareTextureAndroid`) sulle dissolvenze peggiorava: tolta.
+- Correzione (`ui/motion.tsx`, `ui/loopActive.ts`, `ui/cssAnimation.tsx`):
+  - keyframe infiniti = un solo `Animated.timing` 0 → 1 in loop nativo con i keyframe come interpolazione
+    (curva di ogni tratto campionata) e la pausa `repeatDelay` di framer-motion (prima ignorata). Prima
+    `loop(sequence)` ripassava dal JS a ogni tratto. Stesso schema per animate-pulse;
+  - i loop di motion girano solo a schermata a fuoco ed elemento nello schermo (IntersectionObserver condiviso);
+  - con «Rimuovi animazioni» di Android (`AccessibilityInfo.isReduceMotionEnabled`) i loop decorativi (motion
+    infiniti, animate-pulse; non animate-spin) restano sul primo fotogramma, come Reanimated (ReduceMotion.System).
+    L'emulatore dei test ha le animazioni di sistema spente: lì sono fermi. Con le animazioni attive aspetto invariato.
+- Misure (`tests/emulatore/pr/13-achievement.yaml`, pr): base 993a902 (run 39262344284) apertura da link 315 s,
+  swipe giù ~450-490 s l'uno, su 193-276 s, percorso 56 min; dopo 5aa8d0f (run 39315724877) apertura 4 s, swipe
+  3,5-12 s, percorso 1 min 43 s. Screenshot uguali (il badge è sul primo fotogramma invece che a metà rotazione).
+- Giro completo inputs {} (run 39315729660): admin 6/6 e pr 13/13 superati, nessun crash; suite pr ~41 min.
+- Resta: con le animazioni attive (telefono vero, `fluidita: si`) i loop a schermo ridisegnano di continuo come
+  prima. Sul telefono il costo sembra piccolo, ma non è misurato. Non è chiaro perché sull'emulatore le dissolvenze
+  costino molto più della rotazione: la traccia Perfetto (`traccia: si`) non è arrivata in tempo (limite di 75 min).
 
 ## Comitive (17/10, branch `claude/comitive-funnel`)
 - Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
