@@ -17,8 +17,10 @@ type MotionProps = {
   onClick?: () => void; [key: string]: any;
 };
 
-// prova (build di test): EXPO_PUBLIC_TEST_NO_LOOP=motion|pulse|all toglie le animazioni infinite
-const NO_LOOP_MOTION = /motion|all/.test(process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '');
+// prova (build di test): EXPO_PUBLIC_TEST_NO_LOOP=motion|pulse|all toglie le animazioni infinite;
+// con il nome di una proprietà (es. rotate,opacity) solo quelle
+const NO_LOOP = process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '';
+const NO_LOOP_MOTION = /motion|all/.test(NO_LOOP);
 
 // Keyframe con repeat: Infinity (badge e scritte di RankCard, ecc.). PORT: prima erano
 // Animated.loop(Animated.sequence(...)): la sequenza non gira sul driver nativo come un tutt'uno, quindi a
@@ -126,7 +128,7 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   // % e diventa px con la larghezza dell'elemento (onLayout); prima giravano sul thread JS per sempre.
   const nativeDriver = sizes.length === 0;
   const infinite = transition?.repeat === Infinity && !NO_LOOP_MOTION;
-  const loopKeys = infinite ? KEYS.filter((k) => Array.isArray(to?.[k]) && to![k].length > 1 && to![k].every((n: unknown) => typeof n === 'number')) : [];
+  const loopKeys = infinite ? KEYS.filter((k) => !NO_LOOP.includes(k) && Array.isArray(to?.[k]) && to![k].length > 1 && to![k].every((n: unknown) => typeof n === 'number')) : [];
   const loopClock = useRef<Animated.Value | null>(null);
   if (loopKeys.length && !loopClock.current) loopClock.current = new Animated.Value(0);
   const loopKey = loopKeys.map((k) => `${k}:${to![k].join(',')}`).join('|') + `|${transition?.duration}|${transition?.repeatDelay}|${JSON.stringify(transition?.ease ?? '')}`;
