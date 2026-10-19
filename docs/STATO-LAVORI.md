@@ -386,6 +386,7 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   anche su Tr e sui testi (Span/P). ClientSerateMenu: il click del Pressable al rilascio dopo la pressione
   lunga è fermato (apriva il dettaglio sopra il menu o toglieva la selezione multipla appena attivata).
   Percorso `pr/15-menu-serate-cliente` (pressione di 0,8 s → menu serate; pressione lunga → selezione multipla).
+  Emulatore: pr/15 verde (run 39305896309), pr/02-clienti (39294865927) e pr/06-semine (39302128335) verdi.
 
 
 ## PROSSIMO PASSO
