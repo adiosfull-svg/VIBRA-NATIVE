@@ -29,22 +29,18 @@ appId: com.vibra.mobile
 - scrollUntilVisible:
     element: "Serate \\(\\d+\\)"
     direction: DOWN
+    centerElement: true
     timeout: 60000
-- swipe:
-    start: 50%, 70%
-    end: 50%, 45%
-    duration: 1000
 - waitForAnimationToEnd
 - takeScreenshot: report-serate-01
-# il riquadro scorre da solo (il dito parte da una riga della tabella): fino all'ultima serata
+# il riquadro max-h-96 sta sotto il titolo (al centro dello schermo): trascinamenti dentro il riquadro,
+# lontano dalla barra in basso, fino all'ultima serata
 - repeat:
-    times: 14
+    times: 16
     commands:
       - swipe:
-          from:
-            text: "Duel Club \\d\\d/\\d\\d"
-            index: 0
-          direction: UP
+          start: 50%, 80%
+          end: 50%, 62%
           duration: 300
 - waitForAnimationToEnd
 - takeScreenshot: report-serate-02-fondo
@@ -57,23 +53,36 @@ appId: com.vibra.mobile
     timeout: 60000
 - tapOn: "Confronto Serate"
 - waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Seleziona serate..."
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
 - tapOn: "Seleziona serate..."
 - waitForAnimationToEnd
 # la ricerca del menu prende il fuoco (autoFocus): la tastiera coprirebbe le serate
 - hideKeyboard
 - waitForAnimationToEnd
-- tapOn: "Seleziona tutte \\(\\d+\\)"
-- waitForAnimationToEnd
 - takeScreenshot: report-menu-01
+# il menu sporge dal riquadro: per Android le voci possono non risultare visibili (Maestro non le trova
+# per testo), si prova il testo e poi il punto ("Seleziona tutte" è la prima voce sotto la ricerca)
+- tapOn:
+    text: "Seleziona tutte \\(\\d+\\)"
+    optional: true
+- runFlow:
+    when:
+      visible: "Seleziona serate..."
+    commands:
+      - tapOn:
+          point: "50%,58%"
+- waitForAnimationToEnd
 # menu delle serate (prima ne mostrava solo 12): scorrendo arriva anche la più vecchia
 - repeat:
     times: 10
     commands:
       - swipe:
-          from:
-            text: "Duel Club \\d\\d/\\d\\d.*"
-            index: 0
-          direction: UP
+          start: 50%, 76%
+          end: 50%, 60%
           duration: 300
 - waitForAnimationToEnd
 - takeScreenshot: report-menu-02-fondo

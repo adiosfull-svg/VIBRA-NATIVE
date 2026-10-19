@@ -106,9 +106,10 @@ appId: com.vibra.mobile
 # la ricerca del menu prende il fuoco: via la tastiera
 - hideKeyboard
 - waitForAnimationToEnd
+# le voci del menu sporgono dal riquadro del selettore: per l'accessibilità di Android non sono "visibili"
+# (Maestro non le trova per testo); tocco sulla prima, l'ultima serata
 - tapOn:
-    text: "(Ammare Frontemare|Duel Club|Arenile) \\d\\d/\\d\\d.*"
-    index: 0
+    point: "50%,30%"
 - extendedWaitUntil:
     visible: "Già presenti in questa serata"
     timeout: 30000
