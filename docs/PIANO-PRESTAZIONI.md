@@ -99,11 +99,24 @@ Gara del 15/10 (run 38774983208, commit ed78b43: e8ae180 + audit in 3 parti, bra
   - in un file che importa l'icona `Map` da icons.generated `new Map()` costruisce l'icona: usare
     `globalThis.Map` o importarla come `MapIcon`.
 
+Gara del 17/10 (branch `claude/charming-franklin-gint2k`, commit d178914 = 7118036 + strato ui dell'audit:
+F34 test delle classi in cache in html.tsx, F25 hover: tolto sul telefono e disabled:/active:scale dei
+pulsanti come stili, F33 fatti delle classi di Text in cache e niente Provider per il testo semplice):
+- /serate admin, nativa contro originale (ms, «pronta»):
+  | run | 1ª | 2ª |
+  |---|---|---|
+  | 39038606150 (prima, 7118036) | 611 / 1273 | 288 / 379 |
+  | 39039649656 | 483 / 1023 | 296 / 318 |
+  | 39039651355 | 902 / 2878 | 636 / 300 (run lento: anche primo disegno 104 ms contro 31) |
+- banco (costo per elemento, ms): text 125 → 106-128, btn 225 → 189-221, riga 720 → 557-615 (rumore alto).
+- Restano dell'audit F26 (icone, in parte superato dalle icone a tracciato unico), F8 (Img in cache) e
+  F11 (prefetch dei dati dalla sidebar: per l'admin events/promoters/venues sono già in cache dalla
+  Dashboard e dal precaricamento, guadagno trascurabile).
+
 Ancora da fare (in ordine):
 1. avvio: 3-4 s prima del JS (processo + bundle) e la prima pagina; l'originale in Chrome già aperto parte
    in meno di 1-5 s;
-2. strato ui dell'audit (F33 Text, F34 cache dei fatti di classe, F25 hover/active/disabled in cache, F26
-   icone, F8 Img in cache): da misurare col banco (app/dev/bench.tsx) prima e dopo;
+2. strato ui dell'audit: F33, F34, F25 fatti il 17/10; restano F26 icone e F8 Img in cache;
 3. admin: Promoter e dettaglio promoter alla 1ª apertura, Dashboard 1ª, ritorni su Clienti/Locali/Analitica;
 4. F11 (prefetch dei dati di rotta al tocco della sidebar, come prefetchRouteData dell'originale);
 5. scorrimento e titoli lunghi dell'header (vedi sopra).
