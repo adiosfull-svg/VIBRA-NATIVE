@@ -1,0 +1,56 @@
+# Admin: menu del promoter col tasto lungo (PromoterContextMenu, globale nel layout) su una card della
+# lista Promoter: si apre senza aprire anche il dettaglio, Info rapide e Ultime serate si aprono e il
+# tasto Indietro chiude prima il sottomenu e poi il menu.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://promoter
+- extendedWaitUntil:
+    visible: "Marco Esposito|Si è verificato un errore"
+    timeout: 90000
+- waitForAnimationToEnd
+- longPressOn: "Marco Esposito"
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- waitForAnimationToEnd
+- assertVisible: "Copia telefono"
+- assertVisible: "Ultime serate"
+- takeScreenshot: menu-promoter-aperto
+- tapOn: "Info rapide"
+- extendedWaitUntil:
+    visible: "Info rapide · .*"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-info-rapide
+- pressKey: back
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- tapOn: "Ultime serate"
+- extendedWaitUntil:
+    visible: "Ultime serate · .*"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: menu-promoter-ultime-serate
+- pressKey: back
+- extendedWaitUntil:
+    visible: "Vai al dettaglio"
+    timeout: 10000
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Vai al dettaglio"
+# il rilascio della pressione lunga non ha aperto il dettaglio: la lista è ancora qui
+- assertVisible: "Marco Esposito"
+- takeScreenshot: menu-promoter-chiuso
+- assertNotVisible: "Si è verificato un errore"
