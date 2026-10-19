@@ -157,6 +157,9 @@ si montano solo le righe visibili più un margine (`overscan`).
   apertura ~280 ms, chiusura ~220 ms.
 - Le transizioni CSS (`transition-*`, `duration-*`) NON passano da NativeWind (loop del JS):
   le gestisce `ui/cssTransition.ts`.
+- **Animazioni infinite** (`repeat: Infinity` di motion, animate-pulse): loop nativo di un solo timing (mai
+  `Animated.loop(Animated.sequence(...))`), fermi fuori schermo, a schermata non a fuoco e con «Rimuovi animazioni»
+  (`ui/loopActive.ts`). Un loop sempre a schermo non lascia mai fermo lo schermo (Achievement, STATO-LAVORI 19/10).
 - Liste e pagine non devono ridisegnarsi alla fine di un'animazione: niente `onAnimationEnd → setState`
   se non serve (al massimo per smontare/nascondere, una volta).
 
