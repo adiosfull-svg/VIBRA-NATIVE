@@ -72,7 +72,6 @@ function useOneShot(kind: string | null) {
   }, [spec, v]);
 }
 
-const NO_LOOP_CSS = /pulse|all/.test(process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '');
 const PULSE_EASE = Easing.bezier(0.4, 0, 0.6, 1);
 // pulse: 1 → .5 → 1 in 2 s con la curva di Tailwind su ogni metà, campionata (orologio lineare 0 → 1)
 const PULSE_CURVE = (() => {
@@ -95,7 +94,7 @@ export function useCssAnimation(kind: CssAnimationKind) {
   const loop = kind === 'spin' || kind === 'pulse';
   const oneShot = useOneShot(loop ? null : kind);
   useEffect(() => {
-    if (!focused || !loop || NO_LOOP_CSS) return undefined;
+    if (!focused || !loop) return undefined;
     v.setValue(0);
     const anim = kind === 'spin'
       ? Animated.loop(Animated.timing(v, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }))

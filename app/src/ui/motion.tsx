@@ -8,6 +8,7 @@ import { Children, cloneElement, createContext, isValidElement, useContext, useE
 import { Animated, Dimensions, Easing, type LayoutChangeEvent } from 'react-native';
 import { Btn, Div, Span } from './html';
 import { Img } from './elements';
+import { useLoopActive } from './loopActive';
 
 type Target = Record<string, any> | boolean | undefined | string;
 type Transition = { duration?: number; delay?: number; ease?: string | number[]; repeat?: number; repeatType?: string; repeatDelay?: number };
@@ -17,19 +18,12 @@ type MotionProps = {
   onClick?: () => void; [key: string]: any;
 };
 
-// prova (build di test): EXPO_PUBLIC_TEST_NO_LOOP=motion|pulse|all toglie le animazioni infinite;
-// con il nome di una proprietà (es. rotate,opacity) solo quelle
-const NO_LOOP = process.env.EXPO_PUBLIC_TEST_NO_LOOP ?? '';
-const NO_LOOP_MOTION = /motion|all/.test(NO_LOOP);
 
-// Keyframe con repeat: Infinity (badge e scritte di RankCard, ecc.). PORT: prima erano
-// Animated.loop(Animated.sequence(...)): la sequenza non gira sul driver nativo come un tutt'uno, quindi a
-// ogni tratto (2-3 al secondo per elemento) il thread JS riceveva la fine, ripartiva col tratto dopo e
-// sincronizzava il valore con Fabric. Lo schermo non era mai fermo (sull'emulatore UiAutomator "Could not
-// detect idle state": swipe di Achievement da ~480 s l'uno, apertura ~315 s; senza questi loop 4-11 s e 5 s).
-// Ora un solo Animated.timing 0 → 1 lineare in Animated.loop (loop nativo: nessun passaggio dal JS) e i
-// keyframe come interpolazione, con la curva di ogni tratto campionata e la pausa `repeatDelay` di
-// framer-motion in coda (valore fermo sull'ultimo keyframe).
+// Keyframe con repeat: Infinity (badge e scritte di RankCard, scintillio della barra, ecc.): un solo
+// Animated.timing 0 → 1 lineare in Animated.loop (loop nativo: nessun passaggio dal JS; prima
+// Animated.loop(Animated.sequence(...)) ripassava dal JS a ogni tratto) e i keyframe come interpolazione, con
+// la curva di ogni tratto campionata e la pausa `repeatDelay` di framer-motion in coda (valore fermo
+// sull'ultimo keyframe). Gira solo a schermata a fuoco ed elemento nello schermo (ui/loopActive).
 const LOOP_SAMPLES = 12;
 type LoopSpec = { input: number[]; output: number[]; ms: number };
 function loopSpec(frames: number[], transition: Transition | undefined): LoopSpec {
@@ -96,7 +90,7 @@ function withoutEntryLift(from: Record<string, any> | undefined, to: Record<stri
   return [f, t];
 }
 
-function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0, onDone?: () => void) {
+function useMotion(initial: Target, animate: Target, transition?: Transition, width = 0, onDone?: () => void, active = true) {
   const [rawFrom, rawTo] = withoutEntryLift(typeof initial === 'object' ? initial : undefined, typeof animate === 'object' ? animate : undefined);
   const pct = new Set(PCT_KEYS.filter((k) => isPct(rawFrom?.[k]) || isPct(rawTo?.[k])));
   const from = numeric(rawFrom);
@@ -127,8 +121,8 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   // PORT: x/y in % (es. lo scintillio infinito di RankCard) restano sul driver nativo: il valore resta in
   // % e diventa px con la larghezza dell'elemento (onLayout); prima giravano sul thread JS per sempre.
   const nativeDriver = sizes.length === 0;
-  const infinite = transition?.repeat === Infinity && !NO_LOOP_MOTION;
-  const loopKeys = infinite ? KEYS.filter((k) => !NO_LOOP.includes(k) && Array.isArray(to?.[k]) && to![k].length > 1 && to![k].every((n: unknown) => typeof n === 'number')) : [];
+  const infinite = transition?.repeat === Infinity;
+  const loopKeys = infinite ? KEYS.filter((k) => Array.isArray(to?.[k]) && to![k].length > 1 && to![k].every((n: unknown) => typeof n === 'number')) : [];
   const loopClock = useRef<Animated.Value | null>(null);
   if (loopKeys.length && !loopClock.current) loopClock.current = new Animated.Value(0);
   const loopKey = loopKeys.map((k) => `${k}:${to![k].join(',')}`).join('|') + `|${transition?.duration}|${transition?.repeatDelay}|${JSON.stringify(transition?.ease ?? '')}`;
@@ -144,12 +138,12 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
   const loopMs = loopKeys.length ? loops[loopKeys[0]]?.spec.ms ?? 0 : 0;
   useEffect(() => {
     const clock = loopClock.current;
-    if (!clock || !loopMs) return undefined;
+    if (!clock || !loopMs || !active) return undefined;
     clock.setValue(0);
     const a = Animated.loop(Animated.timing(clock, { toValue: 1, duration: loopMs, easing: Easing.linear, useNativeDriver: nativeDriver }));
     a.start();
     return () => a.stop();
-  }, [loopMs, loopKey, nativeDriver]);
+  }, [loopMs, loopKey, nativeDriver, active]);
   const waitWidth = pct.size > 0 && !(width > 0);
   const targetKey = JSON.stringify(to ?? {}) + (pct.size ? `|${width > 0 ? 1 : 0}` : '');
   useEffect(() => {
@@ -162,7 +156,7 @@ function useMotion(initial: Target, animate: Target, transition?: Transition, wi
     const anims = KEYS.filter((k) => to[k] !== undefined && ok(to[k]) && (Array.isArray(to[k]) || Number(to[k]) !== lastTarget[k])).map((k) => {
       const v = to[k];
       if (Array.isArray(v)) {
-        // infiniti: orologio nativo qui sopra; senza loop (prova NO_LOOP) fermi sul primo keyframe
+        // infiniti: orologio nativo qui sopra
         if (transition?.repeat === Infinity) return null;
         const step = duration / Math.max(1, v.length - 1);
         return Animated.sequence(v.slice(1).map((n: number) => Animated.timing(values[k], { toValue: n, duration: step, easing: easing(transition?.ease), useNativeDriver: nativeDriver })));
@@ -214,16 +208,21 @@ function make(Comp: React.ComponentType<any>, direct = false) {
     // x/y in %: serve la larghezza dell'elemento (misurata una volta, poi solo se cambia)
     const usesPct = PCT_KEYS.some((k) => isPct((typeof initial === 'object' ? initial : undefined)?.[k]) || isPct((typeof animate === 'object' ? animate : undefined)?.[k]));
     const [width, setWidth] = useState(0);
-    const animated = useMotion(initial, animate, transition, width, exiting ? (__exitDone as () => void) : undefined);
+    // animazione infinita: gira solo a schermata a fuoco ed elemento nello schermo (ui/loopActive)
+    const infiniteLoop = transition?.repeat === Infinity && typeof animate === 'object' && KEYS.some((k) => Array.isArray((animate as Record<string, unknown>)[k]));
+    const loop = useLoopActive(infiniteLoop);
+    const animated = useMotion(initial, animate, transition, width, exiting ? (__exitDone as () => void) : undefined, loop.active);
+    const ownRef = (rest as { ref?: unknown }).ref;
+    const ref = infiniteLoop && !ownRef ? loop.ref : ownRef;
     if (exiting) (rest as { pointerEvents?: string }).pointerEvents = 'none';
     const ownLayout = (rest as { onLayout?: (e: LayoutChangeEvent) => void }).onLayout;
     const onLayout = usesPct
       ? (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; setWidth((w) => (Math.abs(w - nw) < 0.5 ? w : nw)); ownLayout?.(e); }
       : ownLayout;
     // Div: lo stile animato va sull'elemento stesso (posizione assoluta, h-full, flex-1 restano suoi)
-    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} onLayout={onLayout}>{children}</Comp>;
+    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} ref={ref} onLayout={onLayout}>{children}</Comp>;
     return (
-      <Animated.View style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
+      <Animated.View ref={infiniteLoop ? loop.ref as never : undefined} style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
         <Comp className={className} style={style} {...rest}>{children}</Comp>
       </Animated.View>
     );
