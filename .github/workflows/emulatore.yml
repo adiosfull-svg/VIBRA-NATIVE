@@ -63,7 +63,8 @@ jobs:
       group: emulatore-${{ github.ref }}-${{ matrix.utente }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}${{ contains(github.event.head_commit.message, '[gara]') && '-gara' || '' }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    # 120: il giro completo del PR (comitive 5-20 min, liste, liste minori) non stava più in 75 minuti
+    timeout-minutes: 120
     # un job per utente di prova (pagine e permessi diversi), in parallelo
     strategy:
       fail-fast: false
