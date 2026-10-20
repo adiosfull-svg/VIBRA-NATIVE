@@ -1,0 +1,1282 @@
+03:51:44.933 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-20_035144
+03:51:44.936 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+03:51:44.937 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+03:51:44.938 [ INFO] MAESTRO.logSystemInfo: CI: github
+03:51:44.938 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+03:51:44.938 [ INFO] MAESTRO.logSystemInfo: OS Version: 7.0.0-1017-azure
+03:51:44.938 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+03:51:44.939 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+03:51:44.942 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+03:51:44.944 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+03:51:44.947 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+03:51:44.947 [ INFO] MAESTRO.logSystemInfo: ---------------------
+03:51:45.754 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+03:51:48.073 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 38731 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/pr/13-liste-minori.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+03:51:51.199 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 13-liste-minori
+03:51:51.210 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+03:51:51.385 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+03:51:51.469 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+03:51:51.473 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+03:51:51.473 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:51:51.474 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:51:51.474 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+03:51:51.920 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:51.972 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.104 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.119 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sec.android.provider.badge.permission.READ for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sec.android.provider.badge.permission.READ
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.134 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sec.android.provider.badge.permission.WRITE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sec.android.provider.badge.permission.WRITE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.148 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.htc.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.htc.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.162 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.htc.launcher.permission.UPDATE_SHORTCUT for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.htc.launcher.permission.UPDATE_SHORTCUT
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.176 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sonyericsson.home.permission.BROADCAST_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sonyericsson.home.permission.BROADCAST_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.190 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sonymobile.home.permission.PROVIDER_INSERT_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sonymobile.home.permission.PROVIDER_INSERT_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.204 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.anddoes.launcher.permission.UPDATE_COUNT for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.anddoes.launcher.permission.UPDATE_COUNT
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.217 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.majeur.launcher.permission.UPDATE_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.majeur.launcher.permission.UPDATE_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.231 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.CHANGE_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.CHANGE_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.245 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.259 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.WRITE_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.WRITE_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.273 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_APP_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: android.permission.READ_APP_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.287 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.oppo.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.oppo.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.301 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.oppo.launcher.permission.WRITE_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.oppo.launcher.permission.WRITE_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.314 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission me.everything.badger.permission.BADGE_COUNT_READ for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: me.everything.badger.permission.BADGE_COUNT_READ
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.328 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission me.everything.badger.permission.BADGE_COUNT_WRITE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: me.everything.badger.permission.BADGE_COUNT_WRITE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:51:52.330 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+03:51:52.330 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+03:51:52.654 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+03:51:52.654 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+03:51:52.656 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:51:52.656 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:51:52.656 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+03:52:03.241 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+03:52:03.242 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+03:52:03.242 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+03:52:03.243 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi|Password" is visible RUNNING
+03:52:03.651 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi|Password" is visible COMPLETED
+03:52:03.651 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+03:52:03.652 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:52:03.652 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:52:03.652 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+03:52:04.836 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+03:52:04.836 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+03:52:04.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+03:52:04.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+03:52:04.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:52:04.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:52:04.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+03:52:05.367 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+03:52:05.368 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible SKIPPED
+03:52:05.368 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+03:52:05.368 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi" is visible RUNNING
+03:52:05.712 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi" is visible COMPLETED
+03:52:05.713 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:52:05.717 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:52:05.720 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:52:05.720 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:06.289 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:52:06.290 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:07.033 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:52:07.033 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://messaggi RUNNING
+03:52:07.036 [ INFO] maestro.Maestro.openLink: Opening link vibra://messaggi for app: com.vibra.mobile with autoVerify config as false
+03:52:09.959 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://messaggi COMPLETED
+03:52:09.959 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Messaggio 120" is visible RUNNING
+03:52:10.169 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Messaggio 120" is visible COMPLETED
+03:52:10.169 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:52:10.170 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:52:10.170 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:52:10.170 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:10.437 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:52:10.437 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:10.818 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:52:10.819 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Messaggio 120" RUNNING
+03:52:11.001 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Messaggio 120, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[299,1320][562,1373], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=299, y=1320, width=263, height=53))
+03:52:12.309 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:52:12.313 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (430, 1346) using hierarchy based logic for wait
+03:52:15.446 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:52:15.446 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Messaggio 120" COMPLETED
+03:52:15.447 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:52:15.448 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:52:15.448 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:52:15.448 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:15.771 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:52:15.771 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:16.239 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:52:16.240 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chat-01-aperta RUNNING
+03:52:16.243 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:52:16.245 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:52:16.439 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chat-01-aperta COMPLETED
+03:52:16.439 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Messaggio 001" is not visible RUNNING
+03:52:17.435 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Messaggio 001" is not visible COMPLETED
+03:52:17.437 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat while "Messaggio 001" is not visible (up to 40 times) RUNNING
+03:52:18.439 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:19.055 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=236, y=1525)
+03:52:22.059 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:22.998 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:22.999 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:23.212 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=846, y=1539)
+03:52:26.107 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:26.995 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:26.995 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:27.219 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=241, y=1535)
+03:52:30.147 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:31.078 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:31.079 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:31.307 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=842, y=1535)
+03:52:33.812 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:34.778 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:34.778 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:35.000 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=842, y=1416)
+03:52:37.910 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:38.788 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:38.788 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:38.999 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1474)
+03:52:41.405 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:42.303 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:42.303 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:42.543 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1413)
+03:52:45.635 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:46.558 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:46.558 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:46.766 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=241, y=1408)
+03:52:49.643 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:50.579 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:50.579 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:50.791 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1409)
+03:52:54.183 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:55.096 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:55.096 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:55.390 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1537)
+03:52:58.047 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:52:58.911 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:52:58.911 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:52:59.210 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1420)
+03:53:02.187 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:03.078 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:03.078 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:03.402 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1470)
+03:53:06.435 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:07.274 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:07.274 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:07.575 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=242, y=1416)
+03:53:10.419 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:11.263 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:11.263 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:11.504 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=239, y=1410)
+03:53:14.452 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:15.290 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:15.290 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:15.567 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1536)
+03:53:18.671 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:19.498 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:19.499 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:19.793 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1411)
+03:53:22.167 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:22.979 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:22.979 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:23.202 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=241, y=1504)
+03:53:25.896 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:26.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:26.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:26.935 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=839, y=1464)
+03:53:30.108 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:30.942 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:30.942 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:31.206 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1423)
+03:53:34.099 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:34.888 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:34.888 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:35.199 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1413)
+03:53:38.380 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:39.215 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:39.216 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:39.518 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1413)
+03:53:42.587 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:43.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:43.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:43.681 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1416)
+03:53:46.588 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:47.435 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:47.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:47.736 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1562)
+03:53:50.778 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:51.590 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:51.591 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:51.870 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1458)
+03:53:54.847 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:55.679 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:55.679 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:53:55.955 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1407)
+03:53:59.096 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:53:59.904 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:53:59.904 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:00.188 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1412)
+03:54:02.556 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:03.416 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:03.416 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:03.716 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1443)
+03:54:05.975 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:06.828 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:06.828 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:07.128 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1408)
+03:54:10.329 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:11.347 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:11.347 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:11.615 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=241, y=1547)
+03:54:13.928 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:14.773 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:14.774 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:15.143 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=240, y=1409)
+03:54:17.736 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:18.551 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:18.551 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:18.864 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=237, y=1406)
+03:54:21.705 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:22.484 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:22.484 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:22.743 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1411)
+03:54:25.564 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:26.324 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+03:54:26.325 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+03:54:26.587 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=837, y=1539)
+03:54:29.103 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+03:54:36.196 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat while "Messaggio 001" is not visible (up to 40 times) COMPLETED
+03:54:36.196 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:54:36.196 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:54:36.197 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:54:36.197 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:54:36.461 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:54:36.461 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:54:36.822 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:54:36.823 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chat-02-inizio RUNNING
+03:54:36.823 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:54:36.824 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:54:37.017 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chat-02-inizio COMPLETED
+03:54:37.017 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Messaggio 001" is visible RUNNING
+03:54:37.227 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Messaggio 001" is visible COMPLETED
+03:54:37.228 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:54:38.047 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:54:38.047 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Semine" RUNNING
+03:54:38.299 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Semine, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[60,2279][157,2306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=60, y=2279, width=97, height=27))
+03:54:39.707 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:54:39.708 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (108, 2292) using hierarchy based logic for wait
+03:54:44.751 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:54:44.752 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Semine" COMPLETED
+03:54:44.752 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Semina \d+" is visible RUNNING
+03:54:44.999 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Semina \d+" is visible COMPLETED
+03:54:44.999 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:54:44.999 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:54:45.000 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:54:45.000 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:54:45.387 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:54:45.387 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:54:45.869 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:54:45.869 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chip-01 RUNNING
+03:54:45.869 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:54:45.870 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:54:46.156 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chip-01 COMPLETED
+03:54:46.157 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 12 times RUNNING
+03:54:46.157 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:46.454 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=220, y=1187)
+03:54:48.319 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:54:48.320 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:54:48.320 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:48.631 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=204, y=1187)
+03:54:50.492 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:54:50.492 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:54:50.492 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:50.737 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=185, y=1187)
+03:54:52.612 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:54:52.613 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:54:52.613 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:52.883 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=170, y=1187)
+03:54:54.699 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:54:54.699 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:54:54.699 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:54.941 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=157, y=1187)
+03:54:56.604 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:54:56.604 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:54:56.604 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:56.899 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=147, y=1187)
+03:54:58.675 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:54:58.675 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:54:58.675 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:54:58.950 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=140, y=1187)
+03:55:00.295 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:55:00.296 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:55:00.296 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:55:01.143 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=137, y=1187)
+03:55:02.419 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:55:02.419 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:55:02.419 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:55:02.699 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=135, y=1187)
+03:55:04.083 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:55:04.083 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:55:04.083 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:55:04.383 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=130, y=1187)
+03:55:05.331 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:55:05.331 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:55:05.331 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:55:05.595 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=130, y=1187)
+03:55:06.611 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:55:06.611 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+03:55:06.611 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+03:55:06.862 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=130, y=1187)
+03:55:07.843 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+03:55:07.844 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 12 times COMPLETED
+03:55:07.844 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:55:07.844 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:55:07.844 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:07.844 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:08.156 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:08.156 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:08.577 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:55:08.577 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chip-02 RUNNING
+03:55:08.577 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:55:08.578 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:08.855 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chip-02 COMPLETED
+03:55:08.855 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Semina \d+" is visible RUNNING
+03:55:09.071 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Semina \d+" is visible COMPLETED
+03:55:09.072 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:55:10.032 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:55:10.032 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://clienti-analytics RUNNING
+03:55:10.032 [ INFO] maestro.Maestro.openLink: Opening link vibra://clienti-analytics for app: com.vibra.mobile with autoVerify config as false
+03:55:13.355 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://clienti-analytics COMPLETED
+03:55:13.355 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore" is visible RUNNING
+03:55:13.531 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore" is visible COMPLETED
+03:55:13.531 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:55:13.532 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:55:13.532 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:13.532 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:13.737 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:13.737 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:14.124 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:55:14.124 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Tutti \(\d+\)", Index: 0 RUNNING
+03:55:14.282 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Tutti (150), accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[853,1003][1004,1045], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=853, y=1003, width=151, height=42))
+03:55:15.606 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:55:15.607 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (928, 1024) using hierarchy based logic for wait
+03:55:17.906 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:55:17.906 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Tutti \(\d+\)", Index: 0 COMPLETED
+03:55:17.906 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:55:17.906 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:55:17.906 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:17.907 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:18.156 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:18.157 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:18.516 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:55:18.516 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-tutti-01 RUNNING
+03:55:18.516 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:55:18.517 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:18.683 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-tutti-01 COMPLETED
+03:55:18.683 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 6 times RUNNING
+03:55:18.685 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 400 ms RUNNING
+03:55:20.834 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 400 ms COMPLETED
+03:55:20.834 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 400 ms PENDING
+03:55:20.834 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 400 ms RUNNING
+03:55:23.098 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 400 ms COMPLETED
+03:55:23.098 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 400 ms PENDING
+03:55:23.098 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 400 ms RUNNING
+03:55:25.363 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 400 ms COMPLETED
+03:55:25.363 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 400 ms PENDING
+03:55:25.363 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 400 ms RUNNING
+03:55:27.748 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 400 ms COMPLETED
+03:55:27.749 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 400 ms PENDING
+03:55:27.749 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 400 ms RUNNING
+03:55:30.210 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 400 ms COMPLETED
+03:55:30.210 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 400 ms PENDING
+03:55:30.210 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 400 ms RUNNING
+03:55:32.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 400 ms COMPLETED
+03:55:32.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 6 times COMPLETED
+03:55:32.415 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:55:32.416 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:55:32.416 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:32.416 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:32.698 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:55:32.698 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:33.098 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:55:33.098 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-tutti-02 RUNNING
+03:55:33.099 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:55:33.099 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:55:33.266 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-tutti-02 COMPLETED
+03:55:33.266 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 14 times RUNNING
+03:55:33.266 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:35.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:35.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:35.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:37.622 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:37.622 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:37.622 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:39.715 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:39.715 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:39.715 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:41.768 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:41.768 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:41.768 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:43.893 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:43.893 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:43.893 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:46.028 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:46.028 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:46.028 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:49.283 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:49.283 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:49.283 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:51.385 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:51.386 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:51.386 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:54.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:54.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:54.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:55:56.829 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:55:56.829 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:55:56.829 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:56:01.216 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:56:01.217 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:56:01.217 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:56:03.500 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:56:03.500 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:56:03.500 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:56:05.682 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:56:05.682 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 20%) in 300 ms PENDING
+03:56:05.682 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 20%) in 300 ms RUNNING
+03:56:11.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 20%) in 300 ms COMPLETED
+03:56:11.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 14 times COMPLETED
+03:56:11.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:56:11.998 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:56:11.998 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:11.998 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:12.290 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:12.290 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:12.654 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:56:12.655 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-tutti-03 RUNNING
+03:56:12.655 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:56:12.655 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:12.832 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-tutti-03 COMPLETED
+03:56:12.832 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:56:13.776 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:56:13.777 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://clienti RUNNING
+03:56:13.777 [ INFO] maestro.Maestro.openLink: Opening link vibra://clienti for app: com.vibra.mobile with autoVerify config as false
+03:56:15.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://clienti COMPLETED
+03:56:15.838 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "LISTA CLIENTI" is visible RUNNING
+03:56:17.209 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "LISTA CLIENTI" is visible COMPLETED
+03:56:17.209 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:56:17.209 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:56:17.209 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:17.210 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:17.556 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:17.556 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:18.034 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:56:18.034 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Aggiungi presenze" RUNNING
+03:56:18.283 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Aggiungi presenze, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[446,529][683,569], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=446, y=529, width=237, height=40))
+03:56:19.688 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:56:19.689 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (564, 549) using hierarchy based logic for wait
+03:56:21.357 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:56:21.357 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Aggiungi presenze" COMPLETED
+03:56:21.357 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Seleziona una serata..." is visible RUNNING
+03:56:21.671 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Seleziona una serata..." is visible COMPLETED
+03:56:21.671 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Seleziona una serata..." RUNNING
+03:56:22.096 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Seleziona una serata..., accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[205,441][928,494], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=205, y=441, width=723, height=53))
+03:56:23.539 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:56:23.540 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (566, 467) using hierarchy based logic for wait
+03:56:27.708 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:56:27.708 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Seleziona una serata..." COMPLETED
+03:56:27.708 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:56:27.709 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:56:27.709 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:27.709 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:28.120 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:28.120 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:28.801 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:56:28.801 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Hide Keyboard RUNNING
+03:56:28.802 [ INFO] maestro.Maestro.hideKeyboard$lambda$12: Hiding Keyboard
+03:56:30.887 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Hide Keyboard COMPLETED
+03:56:30.887 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:56:30.888 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:56:30.888 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:30.888 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:31.266 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:31.267 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:31.897 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:56:31.897 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on point (50%,30%) RUNNING
+03:56:31.909 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 720) using hierarchy based logic for wait
+03:56:34.894 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:56:34.894 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on point (50%,30%) COMPLETED
+03:56:34.894 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Già presenti in questa serata" is visible RUNNING
+03:56:36.252 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Già presenti in questa serata" is visible COMPLETED
+03:56:36.252 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:56:36.253 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:56:36.253 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:36.253 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:36.727 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:36.727 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:37.078 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:56:37.078 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-presenze-01 RUNNING
+03:56:37.079 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:56:37.079 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:37.242 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-presenze-01 COMPLETED
+03:56:37.242 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 4 times RUNNING
+03:56:37.242 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms RUNNING
+03:56:42.473 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms COMPLETED
+03:56:42.473 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms PENDING
+03:56:42.473 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms RUNNING
+03:56:46.602 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms COMPLETED
+03:56:46.602 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms PENDING
+03:56:46.602 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms RUNNING
+03:56:50.341 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms COMPLETED
+03:56:50.341 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms PENDING
+03:56:50.341 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms RUNNING
+03:56:54.288 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 40%) in 1200 ms COMPLETED
+03:56:54.288 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 4 times COMPLETED
+03:56:54.288 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:56:54.289 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:56:54.289 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:54.289 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:54.525 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:56:54.525 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:54.887 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:56:54.887 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-presenze-01b RUNNING
+03:56:54.888 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:56:54.888 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:56:55.060 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-presenze-01b COMPLETED
+03:56:55.060 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Aggiunti ora" is not visible RUNNING
+03:56:56.358 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Aggiunti ora" is not visible COMPLETED
+03:56:56.358 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat while "Aggiunti ora" is not visible (up to 40 times) RUNNING
+03:56:57.596 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:02.164 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:03.412 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:03.413 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:08.082 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:09.123 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:09.123 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:13.172 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:14.250 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:14.250 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:18.474 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:19.494 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:19.494 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:24.212 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:25.287 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:25.287 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:29.812 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:31.075 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:31.075 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:36.253 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:37.466 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:37.466 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:42.253 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:43.446 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:43.446 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:48.512 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:49.693 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:49.693 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:54.421 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:57:55.626 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:57:55.626 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:57:59.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:58:01.440 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 80%) to (50%, 30%) in 300 ms PENDING
+03:58:01.441 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 80%) to (50%, 30%) in 300 ms RUNNING
+03:58:06.113 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 80%) to (50%, 30%) in 300 ms COMPLETED
+03:58:13.661 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat while "Aggiunti ora" is not visible (up to 40 times) COMPLETED
+03:58:13.661 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:58:13.661 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:58:13.661 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:13.661 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:13.929 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:13.929 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:14.285 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:58:14.285 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-presenze-02-fondo RUNNING
+03:58:14.285 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:58:14.286 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:14.451 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-presenze-02-fondo COMPLETED
+03:58:14.451 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Aggiunti ora" is visible RUNNING
+03:58:15.062 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Aggiunti ora" is visible COMPLETED
+03:58:15.062 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:58:16.265 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:58:16.265 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on (Optional) "Chiudi", Index: 0 RUNNING
+03:58:16.859 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=Chiudi, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[962,258][1035,331], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.Button, important-for-accessibility=true, error=}, children=[TreeNode(attributes={text=, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[978,274][1020,316], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=com.horcrux.svg.SvgView, important-for-accessibility=false, error=}, children=[TreeNode(attributes={text=, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[978,274][1010,306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=com.horcrux.svg.B, important-for-accessibility=false, error=}, children=[TreeNode(attributes={text=, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[978,274][1010,306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=com.horcrux.svg.J, important-for-accessibility=false, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false)], clickable=false, enabled=true, focused=false, checked=false, selected=false)], clickable=false, enabled=true, focused=false, checked=false, selected=false)], clickable=true, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=962, y=258, width=73, height=73))
+03:58:19.415 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:58:19.416 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (998, 294) using hierarchy based logic for wait
+03:58:21.369 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:58:21.369 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on (Optional) "Chiudi", Index: 0 COMPLETED
+03:58:21.369 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:58:21.369 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:58:21.370 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:21.370 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:21.663 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:21.663 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:22.077 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:58:22.077 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://clienti RUNNING
+03:58:22.077 [ INFO] maestro.Maestro.openLink: Opening link vibra://clienti for app: com.vibra.mobile with autoVerify config as false
+03:58:22.891 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://clienti COMPLETED
+03:58:22.891 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "LISTA CLIENTI" is visible RUNNING
+03:58:23.286 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "LISTA CLIENTI" is visible COMPLETED
+03:58:23.286 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:58:23.287 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:58:23.287 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:23.287 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:23.527 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:23.527 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:23.888 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:58:23.888 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat while "(?i)radice — .*" is not visible (up to 8 times) RUNNING
+03:58:25.051 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on (Optional) "Albero" RUNNING
+03:58:25.491 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Albero, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[928,384][1029,426], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=928, y=384, width=101, height=42))
+03:58:27.007 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+03:58:27.008 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (978, 405) using hierarchy based logic for wait
+03:58:28.850 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+03:58:28.850 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on (Optional) "Albero" COMPLETED
+03:58:28.850 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:58:28.851 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:58:28.851 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:28.851 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:29.156 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:29.157 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:30.557 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:30.557 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:30.814 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:30.814 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:31.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:58:31.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (75%, 16%) to (45%, 16%) in 600 ms RUNNING
+03:58:33.137 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (75%, 16%) to (45%, 16%) in 600 ms COMPLETED
+03:58:33.137 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:58:33.137 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:58:33.138 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:33.138 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:33.412 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:58:33.412 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:33.764 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:58:41.054 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat while "(?i)radice — .*" is not visible (up to 8 times) COMPLETED
+03:58:41.055 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "(?i)radice — .*" is visible RUNNING
+03:58:41.395 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "(?i)radice — .*" is visible COMPLETED
+03:58:41.396 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-albero-01 RUNNING
+03:58:41.396 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:58:41.396 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:58:41.627 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-albero-01 COMPLETED
+03:58:41.627 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 25 times RUNNING
+03:58:41.627 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:58:46.206 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:58:46.207 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:58:46.207 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:58:49.522 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:58:49.522 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:58:49.522 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:58:53.933 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:58:53.933 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:58:53.933 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:58:56.587 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:58:56.587 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:58:56.587 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:02.390 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:02.391 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:02.391 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:05.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:05.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:05.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:09.814 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:09.815 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:09.815 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:12.599 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:12.599 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:12.600 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:18.082 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:18.083 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:18.083 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:22.706 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:22.706 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:22.706 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:28.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:28.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:28.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:31.122 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:31.122 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:31.122 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:36.140 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:36.140 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:36.140 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:41.621 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:41.621 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:41.621 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:44.700 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:44.700 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:44.700 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:47.789 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:47.790 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:47.790 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:50.887 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:50.887 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:50.888 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:54.013 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:54.014 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:54.014 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+03:59:57.109 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+03:59:57.109 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+03:59:57.109 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+04:00:00.145 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+04:00:00.146 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+04:00:00.146 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+04:00:03.102 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+04:00:03.103 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+04:00:03.103 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+04:00:06.297 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+04:00:06.298 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+04:00:06.298 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+04:00:09.261 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+04:00:09.262 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+04:00:09.262 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+04:00:11.773 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+04:00:11.773 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 85%) to (50%, 15%) in 250 ms PENDING
+04:00:11.773 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 85%) to (50%, 15%) in 250 ms RUNNING
+04:00:14.754 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 85%) to (50%, 15%) in 250 ms COMPLETED
+04:00:14.754 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 25 times COMPLETED
+04:00:14.754 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+04:00:14.754 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+04:00:14.754 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:14.754 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:14.977 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:14.977 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:15.351 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+04:00:15.351 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-albero-02 RUNNING
+04:00:15.351 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+04:00:15.352 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:15.505 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-albero-02 COMPLETED
+04:00:15.505 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "(?i)radice — .*" is visible RUNNING
+04:00:16.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "(?i)radice — .*" is visible COMPLETED
+04:00:16.370 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+04:00:18.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+04:00:18.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Comitive" RUNNING
+04:00:18.973 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Comitive, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[485,202][620,244], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=485, y=202, width=135, height=42))
+04:00:20.958 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+04:00:20.958 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (552, 223) using hierarchy based logic for wait
+04:00:24.880 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+04:00:24.880 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Comitive" COMPLETED
+04:00:24.881 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+04:00:24.881 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+04:00:24.881 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:24.881 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:25.157 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:25.157 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:25.549 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+04:00:25.550 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 6 times RUNNING
+04:00:25.550 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 35%) to (50%, 85%) in 300 ms RUNNING
+04:00:27.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 35%) to (50%, 85%) in 300 ms COMPLETED
+04:00:27.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 35%) to (50%, 85%) in 300 ms PENDING
+04:00:27.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 35%) to (50%, 85%) in 300 ms RUNNING
+04:00:29.506 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 35%) to (50%, 85%) in 300 ms COMPLETED
+04:00:29.506 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 35%) to (50%, 85%) in 300 ms PENDING
+04:00:29.506 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 35%) to (50%, 85%) in 300 ms RUNNING
+04:00:31.458 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 35%) to (50%, 85%) in 300 ms COMPLETED
+04:00:31.458 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 35%) to (50%, 85%) in 300 ms PENDING
+04:00:31.458 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 35%) to (50%, 85%) in 300 ms RUNNING
+04:00:33.438 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 35%) to (50%, 85%) in 300 ms COMPLETED
+04:00:33.438 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 35%) to (50%, 85%) in 300 ms PENDING
+04:00:33.438 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 35%) to (50%, 85%) in 300 ms RUNNING
+04:00:35.510 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 35%) to (50%, 85%) in 300 ms COMPLETED
+04:00:35.511 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (50%, 35%) to (50%, 85%) in 300 ms PENDING
+04:00:35.511 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (50%, 35%) to (50%, 85%) in 300 ms RUNNING
+04:00:37.710 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (50%, 35%) to (50%, 85%) in 300 ms COMPLETED
+04:00:37.710 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 6 times COMPLETED
+04:00:37.710 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+04:00:37.711 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+04:00:37.711 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:37.711 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:38.027 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:38.027 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:38.463 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+04:00:38.463 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Crea comitiva" is visible RUNNING
+04:00:38.612 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Crea comitiva" is visible COMPLETED
+04:00:38.612 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat while "Dai un nome alla comitiva.*" is not visible (up to 4 times) RUNNING
+04:00:39.301 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Crea comitiva" RUNNING
+04:00:39.537 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Crea comitiva, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[448,849][695,902], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=448, y=849, width=247, height=53))
+04:00:40.933 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+04:00:40.934 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (571, 875) using hierarchy based logic for wait
+04:00:43.912 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+04:00:43.912 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Crea comitiva" COMPLETED
+04:00:43.912 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+04:00:43.913 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+04:00:43.913 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:43.913 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:44.410 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:00:44.410 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:00:45.261 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+04:00:52.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat while "Dai un nome alla comitiva.*" is not visible (up to 4 times) COMPLETED
+04:00:52.341 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Dai un nome alla comitiva.*" RUNNING
+04:00:52.650 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=, accessibilityText=, hintText=Dai un nome alla comitiva (es. Ragazzi del Vomero), ignoreBoundsFiltering=false, resource-id=, clickable=true, bounds=[86,1159][994,1275], enabled=true, focused=true, checked=false, scrollable=false, selected=false, class=android.widget.EditText, important-for-accessibility=true, error=}, children=[], clickable=true, enabled=true, focused=true, checked=false, selected=false), bounds=Bounds(x=86, y=1159, width=908, height=116))
+04:00:54.141 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+04:00:54.142 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (540, 1217) using hierarchy based logic for wait
+04:00:55.176 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Dai un nome alla comitiva.*" COMPLETED
+04:00:55.176 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Input text Prova liste RUNNING
+04:00:55.177 [ INFO] maestro.Maestro.inputText: Inputting text: Prova liste
+04:01:05.567 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Input text Prova liste COMPLETED
+04:01:05.568 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Hide Keyboard RUNNING
+04:01:05.569 [ INFO] maestro.Maestro.hideKeyboard$lambda$12: Hiding Keyboard
+04:01:06.917 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Hide Keyboard COMPLETED
+04:01:06.917 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Crea e apri" RUNNING
+04:01:07.079 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Crea e apri, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[643,1332][838,1385], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=643, y=1332, width=195, height=53))
+04:01:08.456 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+04:01:08.457 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (740, 1358) using hierarchy based logic for wait
+04:01:14.787 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+04:01:14.787 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Crea e apri" COMPLETED
+04:01:14.787 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Aggiungi persone" is visible RUNNING
+04:01:17.016 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Aggiungi persone" is visible COMPLETED
+04:01:17.017 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+04:01:17.017 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+04:01:17.017 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:01:17.017 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:01:17.227 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:01:17.227 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:01:17.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+04:01:17.666 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-comitiva-01 RUNNING
+04:01:17.667 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+04:01:17.668 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:01:18.438 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-comitiva-01 COMPLETED
+04:01:18.439 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Sofia .*" is not visible RUNNING
+04:01:19.903 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Sofia .*" is not visible COMPLETED
+04:01:19.903 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat while "Sofia .*" is not visible (up to 40 times) RUNNING
+04:01:22.232 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:27.124 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:01:29.853 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:01:29.854 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:32.526 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:01:35.065 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:01:35.065 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:37.462 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:01:39.804 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:01:39.807 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:42.401 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:01:44.810 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:01:44.810 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:47.387 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:01:49.725 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:01:49.725 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:54.080 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:01:56.760 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:01:56.760 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:01:59.800 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:02.334 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:02.336 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:04.903 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:07.325 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:07.325 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:09.704 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:12.037 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:12.037 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:14.989 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:17.554 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:17.555 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:22.170 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:24.927 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:24.927 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:27.318 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:31.451 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:31.451 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:34.635 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:38.933 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:38.933 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:42.457 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:44.872 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:44.872 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:47.163 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:50.231 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:50.231 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:52.957 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:02:54.379 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:02:54.380 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:02:58.955 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:01.769 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:01.770 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:04.166 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:08.613 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:08.614 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:13.201 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:14.392 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:14.392 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:19.044 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:21.890 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:21.890 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:24.568 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:27.048 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:27.049 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:31.461 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:34.203 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:34.203 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:38.844 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:41.894 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:41.894 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:44.608 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:48.795 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:48.795 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:03:53.946 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:03:56.939 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:03:56.939 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:04:04.082 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:04:08.637 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:04:08.637 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:04:14.592 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:04:19.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:04:19.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:04:24.727 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:04:29.716 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:04:29.717 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:04:34.714 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:04:39.320 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:04:39.320 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:04:44.381 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:04:49.642 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swipe from (40%, 80%) to (40%, 35%) in 300 ms PENDING
+04:04:49.642 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swipe from (40%, 80%) to (40%, 35%) in 300 ms RUNNING
+04:04:54.849 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swipe from (40%, 80%) to (40%, 35%) in 300 ms COMPLETED
+04:05:02.209 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat while "Sofia .*" is not visible (up to 40 times) COMPLETED
+04:05:02.210 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+04:05:02.210 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+04:05:02.210 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:05:02.210 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:05:02.422 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+04:05:02.422 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:05:02.854 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+04:05:02.854 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-comitiva-02-fondo RUNNING
+04:05:02.855 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+04:05:02.855 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+04:05:03.518 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-comitiva-02-fondo COMPLETED
+04:05:03.518 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Sofia .*" is visible RUNNING
+04:05:04.992 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Sofia .*" is visible COMPLETED
+04:05:04.992 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+04:05:09.600 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+04:05:12.838 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
+04:05:12.999 [ INFO] maestro.drivers.AndroidDriver.close: [Start] Uninstall driver from device
