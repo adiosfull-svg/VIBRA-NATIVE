@@ -229,7 +229,7 @@ object VibraA11yTree {
     val loc = IntArray(2)
     for (o in offs.sortedByDescending { it.n }.take(25)) {
       o.v.getLocationOnScreen(loc)
-      val txt = firstText(o.v, intArrayOf(400))?.replace('\n', ' ')?.take(40) ?: ""
+      val txt = firstText(o.v, intArrayOf(400))?.replace('\\n', ' ')?.take(40) ?: ""
       Log.i("VIBRA_A11Y_OFF", "n=\${o.n} imp=\${o.imp} x=\${loc[0]} y=\${loc[1]} \${label(o.v)} in \${o.path.takeLast(220)} «$txt»")
     }
   }
