@@ -12,7 +12,7 @@ import { useVibraLogo } from '../../hooks/useVibraLogo';
 import { useLayoutUIActions } from '../../lib/layoutUI';
 import { useLocation } from '../../router';
 import AccountMenu from './AccountMenu';
-import { IMAGE_CACHE } from '../../../ui/imageCache';
+import { IMAGE_CACHE, imageSource } from '../../../ui/imageCache';
 import NotificationBell from './NotificationBell';
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -103,7 +103,7 @@ export default memo(function AppHeader({ title: titleOverride }: { title?: strin
           </Text>
           <Div className="flex items-center justify-center min-w-0 h-11 translate-x-[10px]">
             {logoDataUrl ? (
-              <Image source={{ uri: logoDataUrl }} style={{ height: 44, width: '100%' }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy={IMAGE_CACHE} transition={0} />
+              <Image source={imageSource(logoDataUrl)} style={{ height: 44, width: '100%' }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy={IMAGE_CACHE} transition={0} />
             ) : null}
           </Div>
         </Div>

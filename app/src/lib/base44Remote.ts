@@ -19,8 +19,11 @@ const TOKEN_KEY = 'base44_access_token';
  * Per ora sull'anteprima (non pubblicata); dopo la pubblicazione: https://vibrayourparty.com.
  */
 const LOGIN_BRIDGE_URL = process.env.EXPO_PUBLIC_BASE44_LOGIN_BRIDGE ?? 'https://preview--club-track-live.base44.app/accesso-app';
-/** Modalità prova (default): l'app legge i dati veri ma non scrive. EXPO_PUBLIC_BASE44_READONLY=0 la toglie. */
-export const READ_ONLY = process.env.EXPO_PUBLIC_BASE44_READONLY !== '0';
+/**
+ * Modalità prova: l'app legge i dati veri ma non scrive. Tolta il 20/10 su richiesta dell'utente
+ * (l'app scrive su Base44 come l'originale); EXPO_PUBLIC_BASE44_READONLY=1 la rimette.
+ */
+export const READ_ONLY = process.env.EXPO_PUBLIC_BASE44_READONLY === '1';
 
 const isWeb = Platform.OS === 'web';
 

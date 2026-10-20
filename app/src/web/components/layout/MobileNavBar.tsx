@@ -14,7 +14,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { NativeBlur, usePageBlurTarget } from '../../../ui/pageLayers';
 import { Image } from 'expo-image';
-import { IMAGE_CACHE } from '../../../ui/imageCache';
+import { IMAGE_CACHE, imageSource } from '../../../ui/imageCache';
 import * as Haptics from 'expo-haptics';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated as RNAnimated, Easing as RNEasing, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
@@ -107,10 +107,10 @@ function VibraIcon({ index, initialActive, shared, logo }: { index: number; init
     <Animated.View style={[styles.vibraBox, boxStyle]}>
       {/* attiva: logo a colori; inattiva: opacity 0.5 + grayscale(60%) */}
       <Animated.View style={[styles.vibraLayer, grayStyle, styles.gray]}>
-        <Image source={{ uri: logo }} style={styles.vibraImg} contentFit="contain" cachePolicy={IMAGE_CACHE} transition={0} />
+        <Image source={imageSource(logo)} style={styles.vibraImg} contentFit="contain" cachePolicy={IMAGE_CACHE} transition={0} />
       </Animated.View>
       <Animated.View style={[styles.vibraLayer, colorStyle]}>
-        <Image source={{ uri: logo }} style={styles.vibraImg} contentFit="contain" cachePolicy={IMAGE_CACHE} transition={0} />
+        <Image source={imageSource(logo)} style={styles.vibraImg} contentFit="contain" cachePolicy={IMAGE_CACHE} transition={0} />
       </Animated.View>
     </Animated.View>
   );

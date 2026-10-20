@@ -1,6 +1,6 @@
-// Port di src/hooks/useVibraLogo.jsx: stesso logo dell'app web (l'immagine è messa in cache da expo-image).
-// TODO migrazione: includere il PNG negli asset dell'app prima di dismettere lo storage Base44.
-export const LOGO_URL = 'https://media.base44.com/images/public/69de4f1f7f53d9f187d01392/d975f42fa_VIBRAPNG.png';
+// Port di src/hooks/useVibraLogo.jsx: come l'originale il logo è un file dell'app ('/vibra-logo.png',
+// copia di public/vibra-logo.png in assets/), risolto da imageSource() di ui/imageCache.
+export const LOGO_URL = '/vibra-logo.png';
 
 export function useVibraLogo() {
   return { logoDataUrl: LOGO_URL, loading: false };

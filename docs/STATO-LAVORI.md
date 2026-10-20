@@ -4,8 +4,9 @@
 - Copia **identica** (grafica e funzioni) dell'app web VIBRA su Base44 (app `69de4f1f7f53d9f187d01392`) in
   React Native/Expo (Expo 57, RN 0.86 nuova architettura), Android + iOS. Si riscrive solo l'interfaccia.
 - **Backend: Base44** vero (`@base44/sdk` 0.8.53: dati, funzioni, automazioni, file, login).
-- **Sola lettura**: mai scritture su Base44 né sul repo originale; l'app è in "modalità prova"
-  (`app/src/lib/readonlyGuard.ts`) finché l'utente non dà l'ok (`EXPO_PUBLIC_BASE44_READONLY=0`).
+- **Base44**: dal 20/10, su richiesta dell'utente, l'app SCRIVE sui dati veri come l'originale (modalità prova
+  tolta: `READ_ONLY` solo con `EXPO_PUBLIC_BASE44_READONLY=1`, `app/src/lib/readonlyGuard.ts`). Il repo
+  originale e il codice dell'app Base44 restano in sola lettura.
 - Supabase solo come stack di prova locale con dati sintetici (`EXPO_PUBLIC_BACKEND=local`) per i confronti.
 - Aggiornamento 15/10: il lavoro sulle prestazioni continua su **`ccr-962ba42f-zm78fv`** (da
   `claude/charming-franklin-gint2k` → `claude/serate-admin-optimization-4ro02f`): audit applicato, risultati e
@@ -532,7 +533,11 @@ emulatore: commit con `[gara]`, risultati in gara.md nel branch emulatore-risult
    Da rifinire: editor delle Comitive sul telefono (Impostazioni app e Academy confrontate il 19/10).
 3. Telefono: `onPaste` (incolla foto/contatto) non esiste su RN (accettato). (Pull-to-refresh di Semine: fatto.)
 4. Notifiche push: parte client fatta (19/10, spenta); servono credenziali FCM/APNs + EAS e l'invio lato Base44.
-5. Con l'ok dell'utente: togliere la modalità prova e provare i salvataggi su Base44; unire il branch a `main`.
+5. Modalità prova tolta il 20/10 (ok dell'utente): verificare i salvataggi veri con l'APK. Restano: link del login
+   a vibrayourparty.com alla pubblicazione, unione a `main`, notifiche push (rimandate dall'utente il 20/10:
+   servono progetto EAS, credenziali FCM/APNs e invio ai token `expo:` su Base44).
+6. Logo VIBRA incluso nell'app (20/10): `assets/vibra-logo.png` = public/vibra-logo.png dell'originale, stesso
+   percorso `/vibra-logo.png` in useVibraLogo, risolto da `imageSource()` di `ui/imageCache.ts`.
 
 ## Differenze note (accettate)
 - Dialog Radix: nell'originale il primo campo prende il fuoco all'apertura.

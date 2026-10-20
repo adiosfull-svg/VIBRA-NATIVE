@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoleAccess, type RouteName } from '../../../lib/useRoleAccess';
 import { cn } from '../../../ui/cn';
 import { Btn, Div } from '../../../ui/html';
-import { IMAGE_CACHE } from '../../../ui/imageCache';
+import { IMAGE_CACHE, imageSource } from '../../../ui/imageCache';
 import { SideDrawer } from '../../../ui/sideDrawer';
 import {
   BarChart2, BookOpen, BrainCircuit, Building2, CalendarDays, CalendarRange, ContactRound, Download, Euro, GraduationCap,
@@ -105,7 +105,7 @@ const SidebarList = memo(function SidebarList({ location }: { location: Location
               <X className="w-5 h-5" />
             </Btn>
             {logoUrl ? (
-              <Image source={{ uri: logoUrl }} style={{ width: 208, height: 208 }} contentFit="contain" accessibilityLabel="logo" cachePolicy={IMAGE_CACHE} transition={0} />
+              <Image source={imageSource(logoUrl)} style={{ width: 208, height: 208 }} contentFit="contain" accessibilityLabel="logo" cachePolicy={IMAGE_CACHE} transition={0} />
             ) : <Div className="w-52 h-52" />}
           </Div>
 
@@ -141,7 +141,7 @@ const SidebarList = memo(function SidebarList({ location }: { location: Location
                   className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#551a8e]', myActive && 'shadow-sm bg-[#551a8e]/[0.13]')}
                 >
                   {vibraLogoUrl
-                    ? <Image source={{ uri: vibraLogoUrl }} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy={IMAGE_CACHE} transition={0} />
+                    ? <Image source={imageSource(vibraLogoUrl)} style={{ width: 32, height: 32 }} contentFit="contain" accessibilityLabel="Vibra" cachePolicy={IMAGE_CACHE} transition={0} />
                     : <Div className="w-4 h-4 rounded bg-primary/30 shrink-0" />}
                   Il Mio Vibra
                 </Btn>

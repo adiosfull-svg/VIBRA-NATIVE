@@ -22,7 +22,7 @@ import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTe
 import { TEXT_COLOR } from './icon';
 import { webStyle } from './webStyle';
 import { useDomStyleRef } from './domStyle';
-import { IMAGE_CACHE, markImageWarm } from './imageCache';
+import { IMAGE_CACHE, imageSource, markImageWarm } from './imageCache';
 import { inheritedLineHeight } from './textLeading';
 import { useFocusStyle } from './useFocusStyle';
 import RNSvg, { Path as SvgPath, type PathProps, type SvgProps } from 'react-native-svg';
@@ -50,7 +50,7 @@ export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigi
   const rnStyle = webStyle(Array.isArray(style) ? StyleSheet.flatten(style) : style).style;
   const image = (imageClass: string | undefined, imageStyle: object | undefined) => (
     <Image
-      source={{ uri: src }}
+      source={imageSource(src)}
       accessibilityLabel={alt}
       className={imageClass}
       contentFit={fitFrom(className)}

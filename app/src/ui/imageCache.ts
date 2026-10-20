@@ -11,13 +11,26 @@ export const IMAGE_CACHE = 'memory-disk' as const;
 /** Props comuni a ogni <Image> di expo-image dell'app: cache in memoria, niente dissolvenza. */
 export const IMAGE_DEFAULTS = { cachePolicy: IMAGE_CACHE, transition: 0 } as const;
 
+/**
+ * Immagini incluse nell'app (stessi percorsi della cartella public/ dell'originale): `src` resta la
+ * stringa dell'originale, la sorgente di expo-image è il file nel pacchetto (niente rete, niente flash).
+ */
+const BUNDLED: Record<string, number> = {
+  '/vibra-logo.png': require('../../assets/vibra-logo.png'),
+};
+
+/** Sorgente per <Image> di expo-image: file incluso nell'app oppure URL. */
+export function imageSource(src: string) {
+  return BUNDLED[src] ?? { uri: src };
+}
+
 const requested = new Set<string>();
 /** URL già caricate in questa sessione (quindi decodificate nella cache in memoria). */
 const warm = new Set<string>();
 
 /** L'immagine è già stata caricata in questa sessione: si può mostrare senza dissolvenza. */
 export function isImageWarm(url?: string | null): boolean {
-  return !!url && warm.has(url);
+  return !!url && (warm.has(url) || url in BUNDLED);
 }
 export function markImageWarm(url?: string | null) {
   if (url) warm.add(url);
