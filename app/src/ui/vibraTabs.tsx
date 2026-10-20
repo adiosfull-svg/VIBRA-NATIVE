@@ -8,6 +8,11 @@
 // Quale si vede lo decide una shared value (`shownTab`): la barra in basso la cambia sul thread UI al
 // rilascio del dito, nello stesso frame, e il JS naviga dopo; ogni cambio di tab del JS (sidebar, link,
 // Indietro) la riallinea. Mai `display: none` (in Fabric distrugge le viste native, vedi §5).
+// Le tab fuori schermo lo sono per layout (`left`, non transform) in un contenitore con
+// `removeClippedSubviews`: Android le STACCA dall'albero delle viste (restano in memoria, niente da
+// ricreare) e chi percorre l'albero dell'accessibilità non le visita. Robo di Test Lab conta anche le viste
+// non importanti e ignora `no-hide-descendants`: con 3 tab precaricate attaccate ~3000 nodi e 10-25 s per
+// schermata (Test Lab 39332948258, 39352849892), contro ~1000 del 17/10.
 import { withLayoutContext } from 'expo-router';
 import {
   SafeAreaProviderCompat, Screen, TabRouter, createNavigatorFactory, useNavigationBuilder,
@@ -34,7 +39,7 @@ export function resyncShownTab() {
   if (focusedTab >= 0 && shownTab.value !== focusedTab) shownTab.value = focusedTab;
 }
 
-// lontano dallo schermo: il contenitore (overflow hidden) la taglia, Android non la disegna
+// lontano dallo schermo: il contenitore (overflow hidden, removeClippedSubviews) la stacca
 const OFFSCREEN = 100000;
 
 const TabScene = memo(function TabScene({ index, focused, children }: { index: number; focused: boolean; children: ReactNode }) {
@@ -69,14 +74,17 @@ const TabScene = memo(function TabScene({ index, focused, children }: { index: n
     mountedTabs.value |= 1 << index;
     return () => { mountedTabs.value &= ~(1 << index); };
   }, [index]);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateX: shownTab.value === index ? 0 : OFFSCREEN }] }));
-  // le tab fuori schermo (precaricate) fuori anche dall'albero dell'accessibilità, come il menu laterale chiuso
-  // (ui/sideDrawer): TalkBack non le deve leggere e chi percorre l'albero (servizi di accessibilità, Robo di
-  // Test Lab, UiAutomator) visita solo la pagina che si vede. Con tutte le tab montate l'albero aveva ~3000
-  // nodi e Robo impiegava ~25 s per schermata (Test Lab 39332948258), tenendo occupato il thread UI.
+  // left/right (layout) e non translateX: lo stacco di removeClippedSubviews guarda la posizione di layout.
+  // Reanimated li applica dal thread UI con un commit dello ShadowTree (niente attesa del JS).
+  const style = useAnimatedStyle(() => {
+    const x = shownTab.value === index ? 0 : OFFSCREEN;
+    return { left: x, right: -x };
+  });
+  // la tab non a fuoco è anche nascosta all'accessibilità, come il menu laterale chiuso (ui/sideDrawer):
+  // TalkBack non la legge anche nell'istante in cui è ancora attaccata (lo stacco è nel commit successivo)
   return (
     <Animated.View
-      style={[StyleSheet.absoluteFill, style]}
+      style={[styles.scene, style]}
       collapsable={false}
       importantForAccessibility={focused ? 'auto' : 'no-hide-descendants'}
       accessibilityElementsHidden={!focused}
@@ -109,7 +117,7 @@ function VibraTabNavigator({ id, initialRouteName, backBehavior, children, scree
   return (
     <NavigationContent>
       <SafeAreaProviderCompat>
-        <View style={styles.screens}>
+        <View style={styles.screens} removeClippedSubviews>
           {state.routes.map((route, index) => {
             const isFocused = index === state.index;
             if (!loaded.includes(route.key) && !isFocused && !preloaded.includes(route.key)) return null;
@@ -131,6 +139,7 @@ function VibraTabNavigator({ id, initialRouteName, backBehavior, children, scree
 
 const styles = StyleSheet.create({
   screens: { flex: 1, overflow: 'hidden' },
+  scene: { position: 'absolute', top: 0, bottom: 0 },
 });
 
 const createVibraTabNavigator = createNavigatorFactory(VibraTabNavigator as any);
