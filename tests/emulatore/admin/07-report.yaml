@@ -59,6 +59,14 @@ appId: com.vibra.mobile
     direction: DOWN
     centerElement: true
     timeout: 30000
+# a volte la prima lettura arriva prima che la pagina si assesti e il pulsante resta in basso: il menu
+# si apre sotto e i trascinamenti al 75% toccano la ricerca (torna la tastiera). Seconda centratura.
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Seleziona serate..."
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
 - tapOn: "Seleziona serate..."
 - waitForAnimationToEnd
 # la ricerca del menu prende il fuoco (autoFocus): la tastiera coprirebbe le serate
