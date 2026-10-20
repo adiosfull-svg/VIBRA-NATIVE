@@ -1,0 +1,700 @@
+03:20:11.837 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-20_032011
+03:20:11.842 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+03:20:11.843 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+03:20:11.844 [ INFO] MAESTRO.logSystemInfo: CI: github
+03:20:11.844 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+03:20:11.845 [ INFO] MAESTRO.logSystemInfo: OS Version: 6.17.0-1022-azure
+03:20:11.845 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+03:20:11.846 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+03:20:11.849 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+03:20:11.852 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+03:20:11.854 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+03:20:11.854 [ INFO] MAESTRO.logSystemInfo: ---------------------
+03:20:12.700 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+03:20:15.605 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 35483 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/admin/03-pagine-nuove.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+03:20:18.942 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 03-pagine-nuove
+03:20:18.958 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+03:20:19.137 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+03:20:19.260 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+03:20:19.264 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+03:20:19.265 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:20:19.265 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:20:19.265 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+03:20:19.767 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:19.833 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:19.997 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.015 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sec.android.provider.badge.permission.READ for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sec.android.provider.badge.permission.READ
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.033 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sec.android.provider.badge.permission.WRITE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sec.android.provider.badge.permission.WRITE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.050 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.htc.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.htc.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.068 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.htc.launcher.permission.UPDATE_SHORTCUT for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.htc.launcher.permission.UPDATE_SHORTCUT
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.087 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sonyericsson.home.permission.BROADCAST_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sonyericsson.home.permission.BROADCAST_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.104 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sonymobile.home.permission.PROVIDER_INSERT_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sonymobile.home.permission.PROVIDER_INSERT_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.122 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.anddoes.launcher.permission.UPDATE_COUNT for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.anddoes.launcher.permission.UPDATE_COUNT
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.138 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.majeur.launcher.permission.UPDATE_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.majeur.launcher.permission.UPDATE_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.157 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.CHANGE_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.CHANGE_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.176 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.194 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.WRITE_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.WRITE_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.213 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_APP_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: android.permission.READ_APP_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.231 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.oppo.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.oppo.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.248 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.oppo.launcher.permission.WRITE_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.oppo.launcher.permission.WRITE_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.266 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission me.everything.badger.permission.BADGE_COUNT_READ for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: me.everything.badger.permission.BADGE_COUNT_READ
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.284 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission me.everything.badger.permission.BADGE_COUNT_WRITE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: me.everything.badger.permission.BADGE_COUNT_WRITE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+03:20:20.286 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+03:20:20.286 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+03:20:21.067 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+03:20:21.068 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+03:20:21.069 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:20:21.070 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:20:21.071 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+03:20:30.484 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+03:20:30.485 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+03:20:30.485 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+03:20:30.485 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "FATTURATO TOTALE|Password" is visible RUNNING
+03:20:30.831 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "FATTURATO TOTALE|Password" is visible COMPLETED
+03:20:30.831 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+03:20:30.832 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:20:30.832 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:20:30.832 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+03:20:31.842 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+03:20:31.842 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+03:20:31.843 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+03:20:31.843 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+03:20:31.843 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+03:20:31.846 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+03:20:31.847 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+03:20:33.243 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+03:20:33.243 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible SKIPPED
+03:20:33.243 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+03:20:33.244 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "FATTURATO TOTALE" is visible RUNNING
+03:20:33.535 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "FATTURATO TOTALE" is visible COMPLETED
+03:20:33.535 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://serate RUNNING
+03:20:33.539 [ INFO] maestro.Maestro.openLink: Opening link vibra://serate for app: com.vibra.mobile with autoVerify config as false
+03:20:37.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://serate COMPLETED
+03:20:37.165 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Rettangolare.*|Si è verificato un errore" is visible RUNNING
+03:20:37.561 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Rettangolare.*|Si è verificato un errore" is visible COMPLETED
+03:20:37.561 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:20:37.565 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:20:37.566 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:37.566 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:38.044 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:38.044 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:38.716 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:20:38.716 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-serate RUNNING
+03:20:38.718 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:20:38.720 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:38.954 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-serate COMPLETED
+03:20:38.955 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:20:40.000 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:20:40.000 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://importa-serata RUNNING
+03:20:40.000 [ INFO] maestro.Maestro.openLink: Opening link vibra://importa-serata for app: com.vibra.mobile with autoVerify config as false
+03:20:43.138 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://importa-serata COMPLETED
+03:20:43.138 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Serata 1.*|Si è verificato un errore" is visible RUNNING
+03:20:43.510 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Serata 1.*|Si è verificato un errore" is visible COMPLETED
+03:20:43.511 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:20:43.511 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:20:43.511 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:43.512 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:44.266 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:44.267 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:45.011 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:20:45.012 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-importa-serata RUNNING
+03:20:45.012 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:20:45.013 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:45.244 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-importa-serata COMPLETED
+03:20:45.244 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:20:46.118 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:20:46.119 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://locali RUNNING
+03:20:46.119 [ INFO] maestro.Maestro.openLink: Opening link vibra://locali for app: com.vibra.mobile with autoVerify config as false
+03:20:48.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://locali COMPLETED
+03:20:48.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Ammare Frontemare.*|Si è verificato un errore" is visible RUNNING
+03:20:49.226 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Ammare Frontemare.*|Si è verificato un errore" is visible COMPLETED
+03:20:49.227 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:20:49.227 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:20:49.227 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:49.227 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:49.480 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:49.481 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:49.915 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:20:49.915 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-locali RUNNING
+03:20:49.915 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:20:49.916 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:50.126 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-locali COMPLETED
+03:20:50.126 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:20:50.897 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:20:50.898 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://report RUNNING
+03:20:50.898 [ INFO] maestro.Maestro.openLink: Opening link vibra://report for app: com.vibra.mobile with autoVerify config as false
+03:20:52.685 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://report COMPLETED
+03:20:52.685 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Tipo di confronto:.*|Si è verificato un errore" is visible RUNNING
+03:20:53.924 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Tipo di confronto:.*|Si è verificato un errore" is visible COMPLETED
+03:20:53.925 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:20:53.925 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:20:53.925 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:53.926 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:54.197 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:54.197 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:54.646 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:20:54.647 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-report RUNNING
+03:20:54.647 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:20:54.648 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:54.878 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-report COMPLETED
+03:20:54.878 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:20:55.797 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:20:55.797 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://messaggi RUNNING
+03:20:55.798 [ INFO] maestro.Maestro.openLink: Opening link vibra://messaggi for app: com.vibra.mobile with autoVerify config as false
+03:20:58.644 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://messaggi COMPLETED
+03:20:58.645 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Esclusi.*|Si è verificato un errore" is visible RUNNING
+03:20:58.850 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Esclusi.*|Si è verificato un errore" is visible COMPLETED
+03:20:58.850 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:20:58.851 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:20:58.851 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:58.851 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:59.149 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:20:59.150 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:59.561 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:20:59.562 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-messaggi RUNNING
+03:20:59.562 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:20:59.563 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:20:59.749 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-messaggi COMPLETED
+03:20:59.749 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:00.982 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:00.983 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://promoter/prom000000000000000001 RUNNING
+03:21:00.983 [ INFO] maestro.Maestro.openLink: Opening link vibra://promoter/prom000000000000000001 for app: com.vibra.mobile with autoVerify config as false
+03:21:01.476 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://promoter/prom000000000000000001 COMPLETED
+03:21:01.477 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore" is visible RUNNING
+03:21:04.421 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Tavoli Chiusi per Categoria.*|Si è verificato un errore" is visible COMPLETED
+03:21:04.421 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:04.422 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:04.422 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:04.422 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:04.721 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:04.721 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:05.217 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:05.217 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-promoter RUNNING
+03:21:05.218 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:05.219 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:05.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-promoter COMPLETED
+03:21:05.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:06.320 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:06.321 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://clienti-analytics RUNNING
+03:21:06.321 [ INFO] maestro.Maestro.openLink: Opening link vibra://clienti-analytics for app: com.vibra.mobile with autoVerify config as false
+03:21:09.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://clienti-analytics COMPLETED
+03:21:09.525 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore" is visible RUNNING
+03:21:09.828 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Confronta le performance dei tuoi clienti.*|Si è verificato un errore" is visible COMPLETED
+03:21:09.828 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:09.829 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:09.829 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:09.829 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:10.082 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:10.082 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:10.546 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:10.546 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-clienti-analytics RUNNING
+03:21:10.546 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:10.547 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:10.757 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-clienti-analytics COMPLETED
+03:21:10.758 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:11.628 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:11.628 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://notifiche RUNNING
+03:21:11.628 [ INFO] maestro.Maestro.openLink: Opening link vibra://notifiche for app: com.vibra.mobile with autoVerify config as false
+03:21:13.239 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://notifiche COMPLETED
+03:21:13.240 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Benvenuto in Vibra mobile.*|.*non lett.*|Nessuna notifica|Si è verificato un errore" is visible RUNNING
+03:21:13.431 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Benvenuto in Vibra mobile.*|.*non lett.*|Nessuna notifica|Si è verificato un errore" is visible COMPLETED
+03:21:13.431 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:13.432 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:13.432 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:13.432 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:14.388 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:14.389 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:14.826 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:14.826 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-notifiche RUNNING
+03:21:14.827 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:14.827 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:15.039 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-notifiche COMPLETED
+03:21:15.040 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:15.746 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:15.746 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://formazione RUNNING
+03:21:15.747 [ INFO] maestro.Maestro.openLink: Opening link vibra://formazione for app: com.vibra.mobile with autoVerify config as false
+03:21:21.406 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://formazione COMPLETED
+03:21:21.406 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Presentazione.*|Si è verificato un errore" is visible RUNNING
+03:21:21.663 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Presentazione.*|Si è verificato un errore" is visible COMPLETED
+03:21:21.663 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:21.664 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:21.664 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:21.664 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:21.942 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:21.942 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:22.392 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:22.392 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-formazione RUNNING
+03:21:22.393 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:22.393 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:22.627 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-formazione COMPLETED
+03:21:22.627 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:23.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:23.436 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://download RUNNING
+03:21:23.436 [ INFO] maestro.Maestro.openLink: Opening link vibra://download for app: com.vibra.mobile with autoVerify config as false
+03:21:28.113 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://download COMPLETED
+03:21:28.113 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Tutti.*|Si è verificato un errore" is visible RUNNING
+03:21:28.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Tutti.*|Si è verificato un errore" is visible COMPLETED
+03:21:28.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:28.340 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:28.340 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:28.341 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:28.590 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:28.590 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:29.045 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:29.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-download RUNNING
+03:21:29.046 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:29.047 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:29.285 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-download COMPLETED
+03:21:29.285 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:30.062 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:30.062 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://vibra-gpt RUNNING
+03:21:30.062 [ INFO] maestro.Maestro.openLink: Opening link vibra://vibra-gpt for app: com.vibra.mobile with autoVerify config as false
+03:21:33.585 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://vibra-gpt COMPLETED
+03:21:33.585 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible RUNNING
+03:21:33.738 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible COMPLETED
+03:21:33.738 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:33.739 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:33.739 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:33.739 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:33.986 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:33.987 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:34.434 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:34.434 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-vibra-gpt RUNNING
+03:21:34.434 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:34.435 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:34.611 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-vibra-gpt COMPLETED
+03:21:34.613 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:35.410 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:35.411 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://ricerca-ai RUNNING
+03:21:35.411 [ INFO] maestro.Maestro.openLink: Opening link vibra://ricerca-ai for app: com.vibra.mobile with autoVerify config as false
+03:21:38.354 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://ricerca-ai COMPLETED
+03:21:38.354 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible RUNNING
+03:21:38.528 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Da dove iniziamo\?.*|Si è verificato un errore" is visible COMPLETED
+03:21:38.529 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:38.529 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:38.529 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:38.530 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:38.774 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:38.775 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:39.173 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:39.173 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-ricerca-ai RUNNING
+03:21:39.174 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:39.174 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:39.355 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-ricerca-ai COMPLETED
+03:21:39.355 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:40.027 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:40.027 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://admin-console RUNNING
+03:21:40.027 [ INFO] maestro.Maestro.openLink: Opening link vibra://admin-console for app: com.vibra.mobile with autoVerify config as false
+03:21:43.082 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://admin-console COMPLETED
+03:21:43.082 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Crediti AI.*|Si è verificato un errore" is visible RUNNING
+03:21:43.280 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Crediti AI.*|Si è verificato un errore" is visible COMPLETED
+03:21:43.280 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:43.280 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:43.280 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:43.280 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:43.559 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:43.560 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:44.014 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:44.015 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-admin-console RUNNING
+03:21:44.015 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:44.016 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:44.247 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-admin-console COMPLETED
+03:21:44.247 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:45.007 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:45.008 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://promoter RUNNING
+03:21:45.008 [ INFO] maestro.Maestro.openLink: Opening link vibra://promoter for app: com.vibra.mobile with autoVerify config as false
+03:21:49.901 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://promoter COMPLETED
+03:21:49.901 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Aggiungi promoter.*|Si è verificato un errore" is visible RUNNING
+03:21:50.199 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Aggiungi promoter.*|Si è verificato un errore" is visible COMPLETED
+03:21:50.200 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:50.200 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:50.200 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:50.200 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:50.522 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:50.522 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:50.961 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:50.961 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-promoter-lista RUNNING
+03:21:50.962 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:50.962 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:51.181 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-promoter-lista COMPLETED
+03:21:51.181 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:52.010 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:52.011 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://impostazioni-app RUNNING
+03:21:52.011 [ INFO] maestro.Maestro.openLink: Opening link vibra://impostazioni-app for app: com.vibra.mobile with autoVerify config as false
+03:21:55.334 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://impostazioni-app COMPLETED
+03:21:55.334 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Branding.*|Si è verificato un errore" is visible RUNNING
+03:21:55.571 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Branding.*|Si è verificato un errore" is visible COMPLETED
+03:21:55.571 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:21:55.571 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:21:55.572 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:55.572 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:55.783 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:21:55.783 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:56.179 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:21:56.179 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-impostazioni RUNNING
+03:21:56.180 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:21:56.180 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:21:56.351 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-impostazioni COMPLETED
+03:21:56.351 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:21:57.132 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:21:57.133 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://academy RUNNING
+03:21:57.133 [ INFO] maestro.Maestro.openLink: Opening link vibra://academy for app: com.vibra.mobile with autoVerify config as false
+03:22:01.551 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://academy COMPLETED
+03:22:01.553 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that ".*Benvenuto in Vibra.*|Si è verificato un errore" is visible RUNNING
+03:22:01.885 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that ".*Benvenuto in Vibra.*|Si è verificato un errore" is visible COMPLETED
+03:22:01.885 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+03:22:01.886 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+03:22:01.886 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:22:01.886 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:22:02.178 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+03:22:02.178 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:22:02.641 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+03:22:02.641 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot pagina-academy RUNNING
+03:22:02.641 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+03:22:02.642 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+03:22:02.896 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot pagina-academy COMPLETED
+03:22:02.896 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+03:22:03.736 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+03:22:04.726 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
