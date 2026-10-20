@@ -145,14 +145,20 @@ si montano solo le righe visibili più un margine (`overscan`).
   Il PanResponder vive sul thread JS: con il JS occupato il dito resta fermo. Al JS solo l'esito
   (navigazione, vibrazione) con `scheduleOnRN`. Gli stati visivi (attivo, premuto) si leggono dalle shared
   value nei componenti figli, senza setState a ogni tocco.
-- **Cambio di tab: `ui/vibraTabs.tsx`** (al posto del Tabs di expo-router). Le tab montate restano attaccate,
-  quella visibile a posto e le altre fuori schermo (translateX in un contenitore `overflow: hidden`); quale si
+- **Cambio di tab: `ui/vibraTabs.tsx`** (al posto del Tabs di expo-router). Le tab montate restano montate,
+  quella visibile a posto e le altre fuori schermo per layout (`left` da Reanimated in un contenitore
+  `overflow: hidden` con `removeClippedSubviews`: Android le stacca dall'albero delle viste senza distruggerle,
+  così chi legge l'albero dell'accessibilità, come Robo di Test Lab, non le visita); quale si
   vede lo dice la shared value `shownTab`, che la barra in basso cambia sul thread UI al rilascio del dito, prima
   che il JS navighi. Motivo (profilo Hermes, `profilo_js: si`): col JS il cambio costava 50-450 ms di render, quasi
   tutto propagazione dei contesti di navigazione in tutte le tab precaricate; un consumer "barriera" non serve
   (React riscende comunque). Una scena che si monta col focus scrive `shownTab` con `runOnUISync` PRIMA dello
   stile iniziale: la scrittura normale dal JS è asincrona e l'aggiornamento di una vista non ancora montata si
   perde (pagina vuota con la sola barra).
+- **Grandi blocchi montati fuori schermo** (pagine precaricate, pannelli): non basta nasconderli all'accessibilità
+  (`no-hide-descendants`): Robo di Test Lab e i servizi che leggono le viste non importanti li visitano lo stesso
+  (Test Lab 39352849892: ~3000 nodi, 8-18 s per schermata). Vanno staccati: posizione di layout fuori dal
+  contenitore con `removeClippedSubviews` (come `ui/vibraTabs.tsx`). Si misura con `VIBRA_A11Y` (build di prova).
 - **Flag di Reanimated `ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS`** (`app/package.json`, `reanimated.staticFeatureFlags`):
   transform e opacity animati vanno dritti alla vista senza commit dello ShadowTree (menu e barra non aspettano
   i commit di React). Conseguenza: lo stile iniziale di una vista animata deve essere già giusto al primo render.

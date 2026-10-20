@@ -383,6 +383,26 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   seconda centratura (f454772): 3 su 3 superati (run 39351062637, 39351065408, 39351067992).
 - Resta: la conferma vera è Test Lab (nodi e ms in «Collected N nodes» / «Milliseconds to extract»).
 
+## Albero dell'accessibilità: tab staccate (20/10, branch `claude/albero-accessibilita`)
+- Test Lab su 46f6c17 (run 39352849892): ancora ~3000 nodi per Robo (2948 S24, 3172 Pixel), 8-18 s per schermata.
+  `no-hide-descendants` non basta: Robo legge l'albero con le viste NON importanti e non pota i sottoalberi
+  nascosti; salta solo le viste non VISIBLE o non attaccate.
+- Misura (build di prova, `plugins/withFrameMetrics.js`): ogni 10 s `VIBRA_A11Y viste=… importanti=… fuori=…`
+  e, quando cambia, i sottoalberi fuori schermo più grandi (`VIBRA_A11Y_OFF`). Prova `prove/viste.yaml` (pr:
+  Il Mio Vibra, Clienti, dettaglio Sofia Colombo, lo stesso giro di Robo). Prima (run 39360935905, app
+  1cf6595 = df3f66c + misura): 3123 / 3087 / 3535 viste, di cui 1826 nelle 3 tab precaricate fuori schermo
+  (Menu, Weekend, Clienti), importanti solo 393 / 247 / 386.
+- Correzione (`ui/vibraTabs.tsx`): la tab non a schermo è spostata per layout (`left`/`right` da Reanimated,
+  thread UI) e non più con translateX, nel contenitore `overflow: hidden` con `removeClippedSubviews`.
+  ReactViewGroup stacca le figlie fuori dal rettangolo di layout (`removeViewInLayout`): restano in memoria,
+  niente viste ricreate, riattaccate al cambio di tab. Aspetto e cambio sul thread UI invariati
+  (05-tab-ritorno con fluidità, run 39360938672: stessi screenshot, stessi frame).
+- Dopo (run 39360933171): 1290 / 774 / 1222 viste (17/10 Robo: 1066 / 620 / 1108). Il resto è la pagina
+  stessa sotto la piega (es. Il Mio Vibra: grafici e heatmap) più i due menu laterali chiusi (63 + 58).
+- Giro completo inputs {} (run 39361793423, 1ac37c4): pr 17/17 e admin 8/8 superati, nessun crash. 10-comitive
+  13 min (il tocco sulla card aspetta la quiete con le particelle sui fili: 5-17 min anche prima, es. 17m27 su 9bd426b).
+- Resta: conferma su Test Lab («Collected N nodes»; nella build di prova anche VIBRA_A11Y nel logcat).
+
 ## Comitive (17/10, branch `claude/comitive-funnel`)
 - Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
   (`new ResizeObserver` → ReferenceError, `el.addEventListener`, `e.target.closest`, `elementFromPoint`).
