@@ -362,6 +362,26 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   prima. Sul telefono il costo sembra piccolo, ma non è misurato. Non è chiaro perché sull'emulatore le dissolvenze
   costino molto più della rotazione: la traccia Perfetto (`traccia: si`) non è arrivata in tempo (limite di 75 min).
 
+## Test Lab lento: tab fuori schermo nell'accessibilità (19/10, branch `claude/riposo-schermo`)
+- Sintomo: Test Lab su telefoni veri (run 39332948258, app 9bd426b) con Robo fermo: 10 azioni, ~40 s per azione.
+- Causa: Robo legge TUTTO l'albero dell'accessibilità, anche i nodi invisibili, sul thread UI dell'app. Da vibraTabs
+  (3ea41b5, 17/10) le tab precaricate restano montate fuori schermo (translateX 100000) e quindi nell'albero. Logcat
+  Test Lab: 3169 nodi letti in 24 747 ms alla prima schermata (poi 3133 e 3581), contro 1066 nodi in 3420 ms con
+  d2e1119 (prima di vibraTabs; poi 620 e 1108). Pile VIBRA_SLOW_TOP dentro AccessibilityInteractionController e
+  ReactAccessibilityDelegate. Le viste native non sono di più (1290b90 3352, 9bd426b 3127): conta l'accessibilità.
+- Sull'emulatore Maestro non lo vede: UiAutomator scarica solo i nodi visibili. Con `fluidita: si` flusso 05:
+  tap 5-7 s con 1290b90 (run 39338913779), 6,2-8,9 s con 9bd426b (run 39338917039): poco più lento.
+- Correzione (`ui/vibraTabs.tsx`, TabScene): la tab non a fuoco ha `importantForAccessibility="no-hide-descendants"`
+  e `accessibilityElementsHidden`, come il menu laterale chiuso (`ui/sideDrawer.tsx`). Aspetto invariato.
+- Misure di controllo (prova `tests/emulatore/prove/viste.yaml` + `viste.sh`, `fluidita: si`): nodi invisibili
+  saltati da Maestro 2195 → 1067 (run 39342851983 → 39342854686); viste native uguali (3127).
+- Giro completo inputs {} (run 39343768979, 3504ccb): pr 18/18, nessun crash; admin 7/8, fallito 07-report. Lì
+  `scrollUntilVisible «Seleziona serate...»` a volte tornava subito con il pulsante in basso: il menu si apriva
+  sotto e i trascinamenti al 75% toccavano la ricerca (tastiera). Solo 07-report: 1 su 2 fallito con la correzione,
+  0 su 2 con l'app 9bd426b (la lettura più rapida dell'albero cambia i tempi). Percorso reso stabile con una
+  seconda centratura (f454772): 3 su 3 superati (run 39351062637, 39351065408, 39351067992).
+- Resta: la conferma vera è Test Lab (nodi e ms in «Collected N nodes» / «Milliseconds to extract»).
+
 ## Comitive (17/10, branch `claude/comitive-funnel`)
 - Crash all'apertura di una comitiva sul telefono: l'editor era il codemod del 14/10 senza adattamenti
   (`new ResizeObserver` → ReferenceError, `el.addEventListener`, `e.target.closest`, `elementFromPoint`).
