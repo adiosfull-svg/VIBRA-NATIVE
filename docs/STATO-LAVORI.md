@@ -377,8 +377,8 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   saltati da Maestro 2195 → 1067 (run 39342851983 → 39342854686); viste native uguali (3127).
 - Giro completo inputs {} (run 39343768979, 3504ccb): pr 18/18, nessun crash; admin 7/8, fallito 07-report. Lì
   `scrollUntilVisible «Seleziona serate...»` a volte tornava subito con il pulsante in basso: il menu si apriva
-  sotto e i trascinamenti al 75% toccavano la ricerca (tastiera). Solo 07-report: 1 su 2 fallito con la correzione,
-  0 su 2 con l'app 9bd426b (la lettura più rapida dell'albero cambia i tempi). Percorso reso stabile con una
+  sotto e i trascinamenti al 75% toccavano la ricerca (tastiera). Con la correzione 07-report è fallito 2 volte su 3,
+  mai con l'app 9bd426b (4 su 4, run 39321820427, 39349696484, 39349699301 e daf3623) (la lettura più rapida dell'albero cambia i tempi). Percorso reso stabile con una
   seconda centratura (f454772): 3 su 3 superati (run 39351062637, 39351065408, 39351067992).
 - Resta: la conferma vera è Test Lab (nodi e ms in «Collected N nodes» / «Milliseconds to extract»).
 
