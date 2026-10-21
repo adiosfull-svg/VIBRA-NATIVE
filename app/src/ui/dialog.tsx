@@ -51,6 +51,13 @@ function useMaxHeight(popup?: boolean) {
 /** contenitore dello zoom d'entrata: largo quanto il Content, centra la finestra come prima */
 const ZOOM_BOX: ViewStyle = { width: '100%', alignItems: 'center' };
 
+/**
+ * La X è `absolute` come nel CSS, dove un posizionato che viene dopo si disegna sopra gli altri. Lo strato ui dà
+ * zIndex 1 ai Div posizionati (es. DialogHeader `relative` di Nuovo Cliente): senza lo stesso zIndex la X restava
+ * sotto l'intestazione e il tocco non le arrivava (il dialog non si chiudeva con la X).
+ */
+const CLOSE_ON_TOP: ViewStyle = { zIndex: 1 };
+
 /** <Dialog modal={false}>: niente velo scuro dietro (come Radix), il resto uguale. */
 const ModalContext = createContext(true);
 
@@ -96,7 +103,7 @@ export function DialogContent({ className, children, hideCloseButton, popup, sty
             {ownBackground ? null : <Div className="absolute inset-0"><RadialGlow /></Div>}
             {children}
             {!hideCloseButton && (
-              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70" accessibilityLabel="Chiudi" hitSlop={8}>
+              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70" style={CLOSE_ON_TOP} accessibilityLabel="Chiudi" hitSlop={8}>
                 <X className="h-4 w-4" />
               </DialogPrimitive.Close>
             )}
