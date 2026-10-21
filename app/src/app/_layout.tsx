@@ -17,6 +17,7 @@ import {
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { Stack, useNavigationContainerRef } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { TEST_DIAG, diagMark } from '../lib/testDiag';
@@ -34,6 +35,17 @@ import { Loading } from '../components/ui';
 import { colors } from '../theme';
 
 installCrashHandler();
+
+// Schermata d'avvio (sfondo scuro e logo, come lo splash della PWA: manifest background_color #09090B) tenuta
+// finché accesso e cache non sono pronti: niente schermo bianco né rotellina tra lo splash e la prima pagina.
+// Al massimo 5 s (rete lenta al primo accesso: poi si vede il caricamento dell'app).
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({ fade: true, duration: 200 });
+const splashFallback = setTimeout(() => SplashScreen.hide(), 5000);
+function hideSplash() {
+  clearTimeout(splashFallback);
+  SplashScreen.hide();
+}
 
 // Cache di React Query salvata all'ultimo uso (lib/queryCachePersist, come main.jsx dell'originale): si
 // rimette PRIMA che le pagine registrino le loro query, in parallelo al controllo dell'accesso.
@@ -65,7 +77,9 @@ function RootNavigator() {
   useNavDiag();
   const { user, isLoadingAuth } = useAuth();
   const cacheReady = useCacheRestored();
-  if (isLoadingAuth || !cacheReady) return <Loading />;
+  const ready = !isLoadingAuth && cacheReady;
+  useEffect(() => { if (ready) hideSplash(); }, [ready]);
+  if (!ready) return <Loading />;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Protected guard={!!user}>

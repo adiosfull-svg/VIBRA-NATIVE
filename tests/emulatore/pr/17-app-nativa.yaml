@@ -46,21 +46,21 @@ appId: com.vibra.mobile
     commands:
       - tapOn: "Singolo cliente"
       - extendedWaitUntil:
-          visible: "Nuovo Cliente"
+          visible: ".*Nuovo Cliente"
           timeout: 30000
       - waitForAnimationToEnd
       - tapOn: "Chiudi"
       - waitForAnimationToEnd
-      - assertNotVisible: "Nuovo Cliente"
+      - assertNotVisible: ".*Nuovo Cliente"
 - takeScreenshot: dialog-chiuso
 # dopo la chiusura la pagina risponde subito ai tocchi (il velo in uscita non li blocca)
 - tapOn: "Singolo cliente"
 - extendedWaitUntil:
-    visible: "Nuovo Cliente"
+    visible: ".*Nuovo Cliente"
     timeout: 30000
 - pressKey: back
 - waitForAnimationToEnd
-- assertNotVisible: "Nuovo Cliente"
+- assertNotVisible: ".*Nuovo Cliente"
 - openLink: vibra://il-mio-vibra?tab=guadagni
 - extendedWaitUntil:
     visible: "Guadagno totale"
