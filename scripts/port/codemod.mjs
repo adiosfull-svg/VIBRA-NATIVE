@@ -268,7 +268,8 @@ export function transform(code, originalPath = '') {
       if (TEXT_EXTRA[tag]) {
         const cls = attrs.find((a) => a.type === 'JSXAttribute' && attrName(a) === 'className');
         if (!cls) attrs.push(b.jsxAttribute(b.jsxIdentifier('className'), b.stringLiteral(TEXT_EXTRA[tag])));
-        else if (cls.value.type === 'StringLiteral') cls.value = b.stringLiteral(`${TEXT_EXTRA[tag]} ${cls.value.value}`);
+        // un peso già nelle classi vince sul grassetto del tag, come in CSS (<strong class="font-semibold"> = 600)
+        else if (cls.value.type === 'StringLiteral' && !(TEXT_EXTRA[tag] === 'font-bold' && /(^|\s)font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)(\s|$)/.test(cls.value.value))) cls.value = b.stringLiteral(`${TEXT_EXTRA[tag]} ${cls.value.value}`);
       }
 
       // <button> vero (non un div cliccabile): Btn applica i default del browser (testo centrato, in linea)

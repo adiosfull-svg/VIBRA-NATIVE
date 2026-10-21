@@ -1,0 +1,48 @@
+# PR: card delle Semine con foto (avatar centrato anche nelle card montate dopo le prime: translate in
+# percentuale) e retro della card (testo con grassetti in una riga continua, legenda "?", retro che scorre).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- waitForAnimationToEnd
+- tapOn: "Semine"
+- extendedWaitUntil:
+    visible: "Semina \\d+"
+    timeout: 60000
+- waitForAnimationToEnd
+- swipe:
+    start: 50%, 75%
+    end: 50%, 35%
+    duration: 600
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: card-01
+# card più in basso (montate scorrendo)
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: card-02
+# retro della prima card visibile
+- tapOn:
+    text: "Gira"
+    index: 0
+- waitForAnimationToEnd
+- runFlow: ../sub/sistema.yaml
+- takeScreenshot: card-retro
+- assertVisible: "INFO DA CHAT|Info da Chat"
+- assertNotVisible: "Si è verificato un errore"
