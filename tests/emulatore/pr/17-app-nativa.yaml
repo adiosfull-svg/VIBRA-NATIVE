@@ -101,6 +101,29 @@ appId: com.vibra.mobile
     visible: "LISTA CLIENTI"
     timeout: 30000
 - waitForAnimationToEnd
+# 4b) Menu a tendina che esce animato (ui/menu, usePortalPresence): ⋮ del primo cliente (~90%,50%)
+- tapOn:
+    point: 90%, 50%
+- extendedWaitUntil:
+    visible: "Modifica cliente"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: menu-aperto
+- pressKey: back
+- takeScreenshot: menu-uscita
+- waitForAnimationToEnd
+- assertNotVisible: "Modifica cliente"
+- tapOn:
+    point: 90%, 50%
+- extendedWaitUntil:
+    visible: "Modifica cliente"
+    timeout: 10000
+- waitForAnimationToEnd
+# tocco fuori dal menu: si chiude, e subito dopo la pagina risponde
+- tapOn:
+    point: 50%, 30%
+- waitForAnimationToEnd
+- assertNotVisible: "Modifica cliente"
 - tapOn: "Singolo cliente"
 - extendedWaitUntil:
     visible: ".*Nuovo Cliente"

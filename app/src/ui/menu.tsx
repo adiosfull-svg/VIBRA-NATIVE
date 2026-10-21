@@ -15,13 +15,18 @@ import { useLabelControl } from './labelControl';
 import { usePendingSelection } from '../web/hooks/usePendingSelection';
 import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
-import { EnterLayer } from './enterView';
+import { EnterLayer, PresenceProvider, usePortalPresence } from './enterView';
 import { IconClassContext } from './icon';
 import { Check, ChevronDown, ChevronRight } from './icons.generated';
 import { Text, TextClassContext } from './text';
 
 type WithChildren = { className?: string; children?: ReactNode };
 type Handler = { onClick?: () => void; onSelect?: (e?: unknown) => void };
+
+// Menu, popover e select escono come entrano (animate-out di shadcn, 150 ms): il contenuto resta montato
+// finché non è sparito (ui/enterView usePortalPresence) e, chiuso, rn-primitives lo lascia dov'era
+// (patches/@rn-primitives+popover, +dropdown-menu, +select). Prima alla chiusura spariva di colpo.
+const MENU_MS = 150;
 
 // ── DropdownMenu ─────────────────────────────────────────────────────────────
 export const DropdownMenu = (props: DropdownPrimitive.RootProps) => <DropdownPrimitive.Root style={ROOT_CONTENTS} {...props} />;
@@ -32,11 +37,15 @@ export const DropdownMenuGroup = DropdownPrimitive.Group;
 export const DropdownMenuSub = DropdownPrimitive.Sub;
 
 export function DropdownMenuContent({ className, children, align = 'center', sideOffset = 4, side }: WithChildren & { align?: 'start' | 'center' | 'end'; sideOffset?: number; side?: 'top' | 'bottom' }) {
+  const { open } = DropdownPrimitive.useRootContext();
+  const { mounted, presence } = usePortalPresence(open, MENU_MS, MENU_MS);
+  if (!mounted) return null;
   return (
-    <DropdownPrimitive.Portal>
+    <DropdownPrimitive.Portal forceMount>
+      <PresenceProvider value={presence}>
       <EnterLayer slide={-8}>
-      <DropdownPrimitive.Overlay style={StyleSheet.absoluteFill}>
-        <DropdownPrimitive.Content align={align} side={side} sideOffset={sideOffset}
+      <DropdownPrimitive.Overlay forceMount pointerEvents={open ? 'auto' : 'none'} style={StyleSheet.absoluteFill}>
+        <DropdownPrimitive.Content forceMount align={align} side={side} sideOffset={sideOffset}
           className={cn('z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-md', className)}>
           <TextClassContext.Provider value="text-popover-foreground">
             <IconClassContext.Provider value="size-4 shrink-0">{children}</IconClassContext.Provider>
@@ -44,6 +53,7 @@ export function DropdownMenuContent({ className, children, align = 'center', sid
         </DropdownPrimitive.Content>
       </DropdownPrimitive.Overlay>
       </EnterLayer>
+      </PresenceProvider>
     </DropdownPrimitive.Portal>
   );
 }
@@ -87,16 +97,21 @@ export function PopoverTrigger({ children, asChild = true }: { children?: ReactN
   return <PopoverPrimitive.Trigger asChild={asChild}>{children as ReactElement}</PopoverPrimitive.Trigger>;
 }
 export function PopoverContent({ className, children, align = 'center', sideOffset = 4, side }: WithChildren & { align?: 'start' | 'center' | 'end'; sideOffset?: number; side?: 'top' | 'bottom' }) {
+  const { open } = PopoverPrimitive.useRootContext();
+  const { mounted, presence } = usePortalPresence(open, MENU_MS, MENU_MS);
+  if (!mounted) return null;
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal forceMount>
+      <PresenceProvider value={presence}>
       <EnterLayer slide={-8}>
-      <PopoverPrimitive.Overlay style={StyleSheet.absoluteFill}>
-        <PopoverPrimitive.Content align={align} side={side} sideOffset={sideOffset}
+      <PopoverPrimitive.Overlay forceMount pointerEvents={open ? 'auto' : 'none'} style={StyleSheet.absoluteFill}>
+        <PopoverPrimitive.Content forceMount align={align} side={side} sideOffset={sideOffset}
           className={cn('z-50 w-72 rounded-md border border-border bg-popover p-4 shadow-md', className)}>
           <TextClassContext.Provider value="text-popover-foreground">{children}</TextClassContext.Provider>
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Overlay>
       </EnterLayer>
+      </PresenceProvider>
     </PopoverPrimitive.Portal>
   );
 }
@@ -180,11 +195,15 @@ export function SelectValue({ placeholder, className }: { placeholder?: string; 
 }
 
 export function SelectContent({ className, children }: WithChildren) {
+  const { open } = SelectPrimitive.useRootContext();
+  const { mounted, presence } = usePortalPresence(open, MENU_MS, MENU_MS);
+  if (!mounted) return null;
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal forceMount>
+      <PresenceProvider value={presence}>
       <EnterLayer slide={-8}>
-      <SelectPrimitive.Overlay style={StyleSheet.absoluteFill}>
-        <SelectPrimitive.Content className={cn('z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover shadow-md', className)}>
+      <SelectPrimitive.Overlay forceMount pointerEvents={open ? 'auto' : 'none'} style={StyleSheet.absoluteFill}>
+        <SelectPrimitive.Content forceMount className={cn('z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover shadow-md', className)}>
           {Platform.OS === 'web' ? (
             <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
           ) : (
@@ -197,6 +216,7 @@ export function SelectContent({ className, children }: WithChildren) {
         </SelectPrimitive.Content>
       </SelectPrimitive.Overlay>
       </EnterLayer>
+      </PresenceProvider>
     </SelectPrimitive.Portal>
   );
 }

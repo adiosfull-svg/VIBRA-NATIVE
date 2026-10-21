@@ -1,0 +1,60 @@
+diff --git a/node_modules/@rn-primitives/select/dist/select.js b/node_modules/@rn-primitives/select/dist/select.js
+index 7cce545..b7f5af0 100644
+--- a/node_modules/@rn-primitives/select/dist/select.js
++++ b/node_modules/@rn-primitives/select/dist/select.js
+@@ -75,6 +75,11 @@ var Root = ({
+   const [triggerPosition, setTriggerPosition] = React.useState(null);
+   const [contentLayout, setContentLayout] = React.useState(null);
+   const [open, setOpen] = React.useState(false);
++  // patch VIBRA: a menu chiuso il contenuto tenuto montato (forceMount) per l'animazione d'uscita resta dov'era
++  const lastPosition = React.useRef(null);
++  if (triggerPosition) lastPosition.current = triggerPosition;
++  const lastLayout = React.useRef(null);
++  if (contentLayout) lastLayout.current = contentLayout;
+   function onOpenChange(value2) {
+     setOpen(value2);
+     onOpenChangeProp?.(value2);
+@@ -87,11 +92,11 @@ var Root = ({
+       open,
+       onOpenChange,
+       disabled,
+-      contentLayout,
++      contentLayout: open ? contentLayout : contentLayout ?? lastLayout.current,
+       nativeID,
+       setContentLayout,
+       setTriggerPosition,
+-      triggerPosition
++      triggerPosition: open ? triggerPosition : triggerPosition ?? lastPosition.current
+     }}
+   >
+       <Component ref={ref} {...viewProps} />
+diff --git a/node_modules/@rn-primitives/select/dist/select.mjs b/node_modules/@rn-primitives/select/dist/select.mjs
+index 52dcbf3..93a3fdd 100644
+--- a/node_modules/@rn-primitives/select/dist/select.mjs
++++ b/node_modules/@rn-primitives/select/dist/select.mjs
+@@ -38,6 +38,11 @@ var Root = ({
+   const [triggerPosition, setTriggerPosition] = React.useState(null);
+   const [contentLayout, setContentLayout] = React.useState(null);
+   const [open, setOpen] = React.useState(false);
++  // patch VIBRA: a menu chiuso il contenuto tenuto montato (forceMount) per l'animazione d'uscita resta dov'era
++  const lastPosition = React.useRef(null);
++  if (triggerPosition) lastPosition.current = triggerPosition;
++  const lastLayout = React.useRef(null);
++  if (contentLayout) lastLayout.current = contentLayout;
+   function onOpenChange(value2) {
+     setOpen(value2);
+     onOpenChangeProp?.(value2);
+@@ -50,11 +55,11 @@ var Root = ({
+       open,
+       onOpenChange,
+       disabled,
+-      contentLayout,
++      contentLayout: open ? contentLayout : contentLayout ?? lastLayout.current,
+       nativeID,
+       setContentLayout,
+       setTriggerPosition,
+-      triggerPosition
++      triggerPosition: open ? triggerPosition : triggerPosition ?? lastPosition.current
+     }}
+   >
+       <Component ref={ref} {...viewProps} />

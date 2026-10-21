@@ -1,0 +1,60 @@
+diff --git a/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.js b/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.js
+index a042883..114e769 100644
+--- a/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.js
++++ b/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.js
+@@ -67,6 +67,11 @@ var Root = ({
+   const [triggerPosition, setTriggerPosition] = React.useState(null);
+   const [contentLayout, setContentLayout] = React.useState(null);
+   const [open, setOpen] = React.useState(false);
++  // patch VIBRA: a menu chiuso il contenuto tenuto montato (forceMount) per l'animazione d'uscita resta dov'era
++  const lastPosition = React.useRef(null);
++  if (triggerPosition) lastPosition.current = triggerPosition;
++  const lastLayout = React.useRef(null);
++  if (contentLayout) lastLayout.current = contentLayout;
+   function onOpenChange(open2) {
+     setOpen(open2);
+     onOpenChangeProp?.(open2);
+@@ -76,11 +81,11 @@ var Root = ({
+     value={{
+       open,
+       onOpenChange,
+-      contentLayout,
++      contentLayout: open ? contentLayout : contentLayout ?? lastLayout.current,
+       setContentLayout,
+       nativeID,
+       setTriggerPosition,
+-      triggerPosition
++      triggerPosition: open ? triggerPosition : triggerPosition ?? lastPosition.current
+     }}
+   >
+       <Component ref={ref} {...viewProps} />
+diff --git a/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.mjs b/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.mjs
+index 7c0d8d6..8a2eb86 100644
+--- a/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.mjs
++++ b/node_modules/@rn-primitives/dropdown-menu/dist/dropdown-menu.mjs
+@@ -29,6 +29,11 @@ var Root = ({
+   const [triggerPosition, setTriggerPosition] = React.useState(null);
+   const [contentLayout, setContentLayout] = React.useState(null);
+   const [open, setOpen] = React.useState(false);
++  // patch VIBRA: a menu chiuso il contenuto tenuto montato (forceMount) per l'animazione d'uscita resta dov'era
++  const lastPosition = React.useRef(null);
++  if (triggerPosition) lastPosition.current = triggerPosition;
++  const lastLayout = React.useRef(null);
++  if (contentLayout) lastLayout.current = contentLayout;
+   function onOpenChange(open2) {
+     setOpen(open2);
+     onOpenChangeProp?.(open2);
+@@ -38,11 +43,11 @@ var Root = ({
+     value={{
+       open,
+       onOpenChange,
+-      contentLayout,
++      contentLayout: open ? contentLayout : contentLayout ?? lastLayout.current,
+       setContentLayout,
+       nativeID,
+       setTriggerPosition,
+-      triggerPosition
++      triggerPosition: open ? triggerPosition : triggerPosition ?? lastPosition.current
+     }}
+   >
+       <Component ref={ref} {...viewProps} />
