@@ -81,3 +81,33 @@ appId: com.vibra.mobile
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: mesi-chiusi
+# 4) Pagine dello stack che entrano scorrendo (Stack con animation 'ios_from_right'): screenshot a metà
+#    entrata, poi Indietro (uscita scorrendo) e di nuovo la pagina sotto che risponde.
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+- openLink: vibra://notifiche
+- takeScreenshot: stack-entrata
+- extendedWaitUntil:
+    visible: "Notifiche"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: stack-aperta
+- pressKey: back
+- takeScreenshot: stack-uscita
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 30000
+- waitForAnimationToEnd
+- tapOn: "Singolo cliente"
+- extendedWaitUntil:
+    visible: ".*Nuovo Cliente"
+    timeout: 30000
+- pressKey: back
+- waitForAnimationToEnd
+# 5) Icona dell'app nel launcher (sfondo #090909)
+- pressKey: home
+- waitForAnimationToEnd
+- takeScreenshot: launcher-icona

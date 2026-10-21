@@ -124,6 +124,16 @@ function StackNavBar() {
   return inTabs ? null : <MobileNavBar />;
 }
 
+// Pagine dello stack (Locali, Notifiche, profilo promoter...): sul telefono entrano scorrendo da destra ed
+// escono all'indietro come in un'app nativa (animazione di react-native-screens sul thread UI, la pagina
+// sotto scorre un poco con lei). Sul web niente transizione, come l'originale. Le tab cambiano senza
+// scorrimento (ui/vibraTabs), come le tab di un'app nativa.
+const STACK_OPTIONS = {
+  headerShown: false,
+  contentStyle: { backgroundColor: THEME.background },
+  animation: Platform.OS === 'web' ? 'none' : 'ios_from_right',
+} as const;
+
 // Dati della prima schermata (Dashboard / Il Mio Vibra) chiesti appena l'utente è noto, come
 // prefetchCriticalData in AppLayout dell'originale: prima partivano solo dagli effect della pagina, dopo il
 // suo primo disegno (~1,5 s di rete in più sull'avvio). Stesse queryKey e queryFn delle pagine: le query
@@ -151,7 +161,7 @@ export default function AppLayout() {
       <PushNavigation />
       <PhotosPreloaders />
       <SwipeToOpenSidebar>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: THEME.background }, animation: 'none' }} />
+      <Stack screenOptions={STACK_OPTIONS} />
       <StackNavBar />
       {/* Vibra Search: ricerca globale (pulsante Cerca della nav, come AppLayout.jsx) */}
       <VibraSearch />
