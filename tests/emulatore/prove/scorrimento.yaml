@@ -1,0 +1,188 @@
+# Prova: tutte le sezioni (tranne Semine) ferme e poi scorse a lanci veloci, per trovare dove il JS lavora
+# durante lo scorrimento (microstuttering). Analisi: tools/scorrimento/analizza.py sui battiti del logcat.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE"
+    timeout: 180000
+# precaricamento delle tab
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 40000
+    optional: true
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - takeScreenshot: scorri-dashboard
+      - runFlow: ../sub/scorri.yaml
+- tapOn: "Il Mio"
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 6000
+    optional: true
+- takeScreenshot: scorri-tab-il-mio
+- runFlow: ../sub/scorri.yaml
+- tapOn: "Weekend"
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 6000
+    optional: true
+- takeScreenshot: scorri-tab-weekend
+- runFlow: ../sub/scorri.yaml
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 6000
+    optional: true
+- takeScreenshot: scorri-tab-clienti
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://notifiche
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-notifiche
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://formazione
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-formazione
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://academy
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-academy
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://download
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-download
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://messaggi
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-messaggi
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://impostazioni-app
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-impostazioni-app
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-clienti-analytics
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://vibra-gpt
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-vibra-gpt
+- runFlow: ../sub/scorri.yaml
+- openLink: vibra://ricerca-ai
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: scorri-ricerca-ai
+- runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://serate
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-serate
+      - runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://locali
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-locali
+      - runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://report
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-report
+      - runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://promoter
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-promoter
+      - runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://promoter/prom000000000000000001
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-promoter-prom000000000000000001
+      - runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://admin-console
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-admin-console
+      - runFlow: ../sub/scorri.yaml
+- runFlow:
+    when:
+      true: ${EMAIL == 'admin@vibra.local'}
+    commands:
+      - openLink: vibra://importa-serata
+      - extendedWaitUntil:
+          visible: "testo-che-non-esiste"
+          timeout: 12000
+          optional: true
+      - takeScreenshot: scorri-importa-serata
+      - runFlow: ../sub/scorri.yaml

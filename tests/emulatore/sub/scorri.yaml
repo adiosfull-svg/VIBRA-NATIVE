@@ -1,0 +1,32 @@
+# Scorrimento di misura (prove/scorrimento.yaml): pagina ferma, lanci veloci verso il basso, poi verso l'alto.
+# I battiti "VIBRA diag battito" di questi secondi dicono quanto lavora il JS mentre la pagina scorre.
+appId: com.vibra.mobile
+---
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 8000
+    optional: true
+- runFlow: sistema.yaml
+- repeat:
+    times: 5
+    commands:
+      - swipe:
+          start: 50%, 78%
+          end: 50%, 28%
+          duration: 250
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 3000
+    optional: true
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 80%
+          duration: 250
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 3000
+    optional: true
+- runFlow: sistema.yaml
