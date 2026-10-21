@@ -1,5 +1,6 @@
 // Port di src/components/dashboard/AnimatedNumber.jsx (convertito da scripts/port/codemod.mjs).
 import { useEffect, useState } from 'react';
+import { InteractionManager } from 'react-native';
 
 import { Span } from '@/ui/html';
 
@@ -20,8 +21,10 @@ export default function AnimatedNumber({ target, prefix = '', suffix = '', durat
       if (progress < 1) rafId = requestAnimationFrame(step);
       else setCurrent(target);
     };
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
+    // PORT: il conteggio parte a pagina montata e animazioni finite (prima si contendeva il thread JS con
+    // il montaggio della Dashboard, che è quando si vede di più)
+    const idle = InteractionManager.runAfterInteractions(() => { rafId = requestAnimationFrame(step); });
+    return () => { idle.cancel(); cancelAnimationFrame(rafId); };
   }, [target]);
   const formatted = decimals > 0
     ? current.toLocaleString('it-IT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })

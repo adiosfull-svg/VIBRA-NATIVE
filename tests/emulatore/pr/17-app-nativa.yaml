@@ -1,0 +1,83 @@
+# PR: comportamento da app nativa.
+# 1) Avvio con i dati salvati (lib/queryCachePersist + lib/userCache): dopo un primo giro l'app si chiude e
+#    riparte; la pagina iniziale e Clienti devono comparire subito con i dati (screenshot appena aperte).
+# 2) Chiusura animata dei dialog (ui/enterView usePortalPresence): Nuovo Cliente aperto e chiuso più volte,
+#    dopo la chiusura i tocchi arrivano alla pagina.
+# 3) Pannello con altezza 'auto' (ui/autoHeight): «Tutti i mesi precedenti» di I Miei Guadagni, se c'è.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- waitForAnimationToEnd
+# la cache si scrive 4 s dopo l'ultimo cambio dei dati, a app ferma
+- extendedWaitUntil:
+    visible: "__attesa_salvataggio_cache__"
+    timeout: 15000
+    optional: true
+- stopApp
+- launchApp
+- takeScreenshot: avvio-caldo-subito
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- takeScreenshot: avvio-caldo-pronta
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- takeScreenshot: clienti-subito
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - tapOn: "Singolo cliente"
+      - extendedWaitUntil:
+          visible: "Nuovo Cliente"
+          timeout: 30000
+      - waitForAnimationToEnd
+      - tapOn: "Chiudi"
+      - waitForAnimationToEnd
+      - assertNotVisible: "Nuovo Cliente"
+- takeScreenshot: dialog-chiuso
+# dopo la chiusura la pagina risponde subito ai tocchi (il velo in uscita non li blocca)
+- tapOn: "Singolo cliente"
+- extendedWaitUntil:
+    visible: "Nuovo Cliente"
+    timeout: 30000
+- pressKey: back
+- waitForAnimationToEnd
+- assertNotVisible: "Nuovo Cliente"
+- openLink: vibra://il-mio-vibra?tab=guadagni
+- extendedWaitUntil:
+    visible: "Guadagno totale"
+    timeout: 90000
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Tutti i mesi precedenti"
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- tapOn:
+    text: "Tutti i mesi precedenti"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: mesi-aperti
+- tapOn:
+    text: "Tutti i mesi precedenti"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: mesi-chiusi

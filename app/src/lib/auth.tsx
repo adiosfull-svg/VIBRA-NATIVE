@@ -2,6 +2,8 @@
 // Backend vero: login con Google su Base44 (authRemote). Stack di prova: email/password (authLocal).
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { BACKEND } from './backend';
+import { clearPersistedCache } from './queryCachePersist';
+import { readCachedUser, writeCachedUser } from './userCache';
 
 export type Role = 'admin' | 'super4' | 'capogruppo' | 'pr';
 
@@ -36,23 +38,37 @@ function useRemoteAuth(): AuthState {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoadingAuth, setLoading] = useState(true);
 
-  const loadUser = useCallback(async () => {
+  const loadUser = useCallback(async (keepOnError = false) => {
     try {
-      setUser((await remote.remoteBase44.auth.me()) as unknown as AppUser);
+      const me = (await remote.remoteBase44.auth.me()) as unknown as AppUser;
+      // stesso utente di quello salvato: niente nuovo oggetto (ridisegnerebbe tutta l'app appena partita)
+      setUser((prev) => (prev && JSON.stringify(prev) === JSON.stringify(me) ? prev : me));
+      writeCachedUser(me);
     } catch (e) {
       const status = (e as { status?: number; response?: { status?: number } })?.status ?? (e as any)?.response?.status;
       // token scaduto o non valido: si torna al login
-      if (status === 401 || status === 403) await remote.signOut();
-      setUser(null);
+      if (status === 401 || status === 403) { await remote.signOut(); setUser(null); return; }
+      // senza rete all'avvio si resta con l'utente salvato
+      if (!keepOnError) setUser(null);
     }
   }, [remote]);
 
   useEffect(() => {
     (async () => {
-      if (await remote.restoreSession()) await loadUser();
+      if (await remote.restoreSession()) {
+        const cached = readCachedUser();
+        if (cached) {
+          // l'app parte subito con l'ultimo utente; me() lo aggiorna dietro
+          setUser(cached);
+          setLoading(false);
+          await loadUser(true);
+          return;
+        }
+        await loadUser();
+      }
       setLoading(false);
     })();
-    return remote.onSignedOut(() => setUser(null));
+    return remote.onSignedOut(() => { setUser(null); writeCachedUser(null); clearPersistedCache(); });
   }, [remote, loadUser]);
 
   return useMemo<AuthState>(() => ({
@@ -68,7 +84,7 @@ function useRemoteAuth(): AuthState {
     },
     signOut: remote.signOut,
     logout: remote.signOut,
-    refreshUser: loadUser,
+    refreshUser: () => loadUser(),
   }), [user, isLoadingAuth, remote, loadUser]);
 }
 

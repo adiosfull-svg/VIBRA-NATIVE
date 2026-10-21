@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import type { AppUser, AuthState } from './auth';
+import { clearPersistedCache } from './queryCachePersist';
+import { readCachedUser, writeCachedUser } from './userCache';
 
 async function loadProfile(session: Session | null): Promise<AppUser | null> {
   if (!session) return null;
@@ -22,8 +24,17 @@ export function useLocalAuth(): AuthState {
 
   const apply = useCallback(async (s: Session | null) => {
     setSession(s);
+    if (!s) { writeCachedUser(null); clearPersistedCache(); }
+    // stesso utente dell'ultima volta: l'app parte subito, il profilo si ricontrolla dietro (lib/userCache)
+    const cached = s ? readCachedUser() : null;
+    if (cached && cached.id === s?.user.id) {
+      setUser((prev) => prev ?? cached);
+      setLoading(false);
+    }
     try {
-      setUser(await loadProfile(s));
+      const p = await loadProfile(s);
+      setUser((prev) => (prev && p && JSON.stringify(prev) === JSON.stringify(p) ? prev : p));
+      writeCachedUser(p);
     } catch {
       setUser(null);
     } finally {

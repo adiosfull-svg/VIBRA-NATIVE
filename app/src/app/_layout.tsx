@@ -18,7 +18,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { TEST_DIAG, diagMark } from '../lib/testDiag';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
@@ -27,12 +27,23 @@ import { AuthProvider, useAuth } from '../lib/auth';
 import { CrashBoundary, CrashOverlay, installCrashHandler } from '../lib/crashReport';
 import { hoverRootProps } from '../ui/gestures';
 import { queryClient } from '../lib/queryClient';
+import { persistCache, restoreCache } from '../lib/queryCachePersist';
 import { ViewAsPromoterProvider } from '../lib/viewAs';
 import { Toaster } from '../ui/use-toast';
 import { Loading } from '../components/ui';
 import { colors } from '../theme';
 
 installCrashHandler();
+
+// Cache di React Query salvata all'ultimo uso (lib/queryCachePersist, come main.jsx dell'originale): si
+// rimette PRIMA che le pagine registrino le loro query, in parallelo al controllo dell'accesso.
+let cacheRestored = false;
+const cacheRestore = restoreCache(queryClient).finally(() => { cacheRestored = true; persistCache(queryClient); });
+function useCacheRestored() {
+  const [ready, setReady] = useState(cacheRestored);
+  useEffect(() => { if (!ready) cacheRestore.finally(() => setReady(true)); }, [ready]);
+  return ready;
+}
 
 // diagnostica: azioni di navigazione e pila dello stack dell'app dopo ognuna (doppi montaggi da link)
 function useNavDiag() {
@@ -53,7 +64,8 @@ function useNavDiag() {
 function RootNavigator() {
   useNavDiag();
   const { user, isLoadingAuth } = useAuth();
-  if (isLoadingAuth) return <Loading />;
+  const cacheReady = useCacheRestored();
+  if (isLoadingAuth || !cacheReady) return <Loading />;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Protected guard={!!user}>

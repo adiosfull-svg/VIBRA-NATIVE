@@ -13,7 +13,7 @@ import { cn } from './cn';
 import { Div } from './html';
 import { X } from './icons.generated';
 import { Text } from './text';
-import { EnterLayer, EnterZoom } from './enterView';
+import { EnterLayer, EnterZoom, PresenceProvider, usePortalPresence } from './enterView';
 
 type WithChildren = { className?: string; children?: ReactNode };
 
@@ -80,11 +80,17 @@ export function DialogContent({ className, children, hideCloseButton, popup, sty
   const modal = useContext(ModalContext);
   // lo sfondo di default (bagliore viola) solo se la pagina non ne dà uno suo
   const ownBackground = !!style && Object.keys(style).some((k) => /^background/.test(k));
+  // uscita animata (enterView): resta montato chiuso finché velo e finestra non sono spariti; intanto i
+  // tocchi passano già alla pagina sotto
+  const { open } = DialogPrimitive.useRootContext();
+  const { mounted, presence } = usePortalPresence(open);
+  if (!mounted) return null;
   return (
-    <DialogPrimitive.Portal>
+    <DialogPrimitive.Portal forceMount>
+      <PresenceProvider value={presence}>
       <EnterLayer>
-      <DialogPrimitive.Overlay style={StyleSheet.absoluteFill} className={cn('flex items-center justify-center', modal ? 'bg-black/80' : 'bg-transparent')}>
-        <DialogPrimitive.Content style={{ width: '100%', alignItems: 'center' }}>
+      <DialogPrimitive.Overlay forceMount pointerEvents={open ? 'auto' : 'none'} style={StyleSheet.absoluteFill} className={cn('flex items-center justify-center', modal ? 'bg-black/80' : 'bg-transparent')}>
+        <DialogPrimitive.Content forceMount style={{ width: '100%', alignItems: 'center' }}>
           <EnterZoom style={ZOOM_BOX}>
           <Div className={cn(CONTENT_BASE, popup && POPUP_CLASSES, className)} style={[{ maxHeight }, style]}>
             {ownBackground ? null : <Div className="absolute inset-0"><RadialGlow /></Div>}
@@ -99,6 +105,7 @@ export function DialogContent({ className, children, hideCloseButton, popup, sty
         </DialogPrimitive.Content>
       </DialogPrimitive.Overlay>
       </EnterLayer>
+      </PresenceProvider>
     </DialogPrimitive.Portal>
   );
 }
@@ -117,12 +124,16 @@ export const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
 export function AlertDialogContent({ className, children }: WithChildren) {
   const maxHeight = useMaxHeight(false);
+  const { open } = AlertDialogPrimitive.useRootContext();
+  const { mounted, presence } = usePortalPresence(open);
+  if (!mounted) return null;
   return (
-    <AlertDialogPrimitive.Portal>
+    <AlertDialogPrimitive.Portal forceMount>
+      <PresenceProvider value={presence}>
       <EnterLayer>
-      <AlertDialogPrimitive.Overlay style={StyleSheet.absoluteFill} className="flex items-center justify-center bg-black/80 px-3">
+      <AlertDialogPrimitive.Overlay forceMount pointerEvents={open ? 'auto' : 'none'} style={StyleSheet.absoluteFill} className="flex items-center justify-center bg-black/80 px-3">
         <EnterZoom style={ZOOM_BOX}>
-        <AlertDialogPrimitive.Content style={{ maxHeight }} className="relative w-full max-w-lg overflow-hidden rounded-lg border border-border bg-background shadow-lg">
+        <AlertDialogPrimitive.Content forceMount style={{ maxHeight }} className="relative w-full max-w-lg overflow-hidden rounded-lg border border-border bg-background shadow-lg">
           <RadialGlow />
           <ScrollView bounces={false}>
             <Div className={cn('gap-4 p-6', className)}>{children}</Div>
@@ -131,6 +142,7 @@ export function AlertDialogContent({ className, children }: WithChildren) {
         </EnterZoom>
       </AlertDialogPrimitive.Overlay>
       </EnterLayer>
+      </PresenceProvider>
     </AlertDialogPrimitive.Portal>
   );
 }

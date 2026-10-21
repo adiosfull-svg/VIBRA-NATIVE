@@ -1,5 +1,6 @@
 // Port di src/components/dashboard/KpiFlashCard.jsx (convertito da scripts/port/codemod.mjs).
 import React, { useEffect, useState } from 'react';
+import { InteractionManager } from 'react-native';
 import { TrendingUp, TrendingDown } from '@/ui/icons.generated';
 
 import { Btn, Div, P, Span } from '@/ui/html';
@@ -17,10 +18,11 @@ function AnimatedNumber({ target, prefix = '', suffix = '', duration = 1200 }) {
       if (progress < 1) raf = requestAnimationFrame(step);
       else setCurrent(target);
     };
-    raf = requestAnimationFrame(step);
+    // PORT: a pagina montata e animazioni finite (come AnimatedNumber)
+    const idle = InteractionManager.runAfterInteractions(() => { raf = requestAnimationFrame(step); });
     // PORT: il ciclo vecchio si ferma quando cambia il valore (dati in cache, poi dalla rete): prima due cicli
     // insieme si contendevano il numero, che sfarfallava tra i due valori
-    return () => cancelAnimationFrame(raf);
+    return () => { idle.cancel(); cancelAnimationFrame(raf); };
   }, [target]);
   return <Span>{prefix}{current.toLocaleString('it-IT')}{suffix}</Span>;
 }

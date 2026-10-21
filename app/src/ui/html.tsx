@@ -135,7 +135,9 @@ function mergeInlineRuns(children: ReactNode): ReactNode[] | null {
  * larghezza nelle card montate dopo). Solo senza altre trasformazioni nelle classi (lo style le
  * sostituirebbe tutte); null se non c'è niente da togliere.
  */
-const PCT_TRANSLATE = /^(-?)translate-([xy])-(?:(\d+)\/(\d+)|(full)|\[(-?\d+(?:\.\d+)?)%\])$/;
+// anche `[calc(A% ± Bpx)]` (badge della serata pianificata sulla card di Semine): due translate di seguito,
+// la percentuale e i px, che RN somma come il calc del CSS
+const PCT_TRANSLATE = /^(-?)translate-([xy])-(?:(\d+)\/(\d+)|(full)|\[(-?\d+(?:\.\d+)?)%\]|\[calc\((-?\d+(?:\.\d+)?)%_?([+-])_?(\d+(?:\.\d+)?)px\)\])$/;
 const OTHER_TRANSFORM = /^-?(translate-[xy]|scale|scale-[xy]|rotate|skew-[xy])-/;
 const pctCache = new Map<string, [string, ViewStyle] | null>();
 function percentTranslate(box: string): [string, ViewStyle] | null {
@@ -144,20 +146,27 @@ function percentTranslate(box: string): [string, ViewStyle] | null {
   if (v !== undefined) return v;
   v = null;
   const keep: string[] = [];
-  const tf: Record<string, string> = {};
+  const tf: Record<'x' | 'y', (string | number)[]> = { x: [], y: [] };
   let other = false;
   for (const c of box.split(/\s+/)) {
     const m = c.match(PCT_TRANSLATE);
     if (m) {
-      const pct = m[5] ? 100 : m[6] != null ? Number(m[6]) : (100 * Number(m[3])) / Number(m[4]);
-      tf[m[2] === 'x' ? 'translateX' : 'translateY'] = `${m[1] ? -pct : pct}%`;
+      const sign = m[1] ? -1 : 1;
+      const axis = m[2] as 'x' | 'y';
+      if (m[7] != null) {
+        const px = Number(m[9]) * (m[8] === '-' ? -1 : 1);
+        tf[axis] = [`${sign * Number(m[7])}%`, sign * px];
+      } else {
+        const pct = m[5] ? 100 : m[6] != null ? Number(m[6]) : (100 * Number(m[3])) / Number(m[4]);
+        tf[axis] = [`${sign * pct}%`];
+      }
     } else {
       if (OTHER_TRANSFORM.test(c)) other = true;
       if (c) keep.push(c);
     }
   }
-  if (!other && (tf.translateX || tf.translateY)) {
-    const transform = [tf.translateX ? { translateX: tf.translateX } : null, tf.translateY ? { translateY: tf.translateY } : null].filter(Boolean);
+  if (!other && (tf.x.length || tf.y.length)) {
+    const transform = [...tf.x.map((t) => ({ translateX: t })), ...tf.y.map((t) => ({ translateY: t }))];
     v = [keep.join(' '), { transform } as unknown as ViewStyle];
   }
   if (pctCache.size > 2000) pctCache.clear();

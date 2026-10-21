@@ -1,13 +1,14 @@
 // Sottoinsieme di framer-motion usato dall'app web, sopra Animated:
 //   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay }}>
 // Proprietà animate: opacity, x, y, scale, rotate (numeri), anche a keyframe ([0, 1, 0]) e con
-// repeat: Infinity; width/height in px o %. height/width 'auto' non sono animabili in RN: l'elemento compare alla sua
-// misura naturale. AnimatePresence tiene montati i figli motion che escono finché non finisce la loro
+// repeat: Infinity; width/height in px o %; height 'auto' con ui/autoHeight (width 'auto' non si anima: l'elemento
+// compare alla sua misura naturale). AnimatePresence tiene montati i figli motion che escono finché non finisce la loro
 // animazione `exit` (opacity/x/y/scale/rotate; height/width di uscita non si animano).
 import { Children, cloneElement, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { Animated, Dimensions, Easing, type LayoutChangeEvent } from 'react-native';
 import { Btn, Div, Span } from './html';
 import { Img } from './elements';
+import { AutoHeight } from './autoHeight';
 import { useLoopActive } from './loopActive';
 
 type Target = Record<string, any> | boolean | undefined | string;
@@ -211,7 +212,13 @@ function make(Comp: React.ComponentType<any>, direct = false) {
     // animazione infinita: gira solo a schermata a fuoco ed elemento nello schermo (ui/loopActive)
     const infiniteLoop = transition?.repeat === Infinity && typeof animate === 'object' && KEYS.some((k) => Array.isArray((animate as Record<string, unknown>)[k]));
     const loop = useLoopActive(infiniteLoop);
-    const animated = useMotion(initial, animate, transition, width, exiting ? (__exitDone as () => void) : undefined, loop.active);
+    // height: 'auto' (pannelli che si aprono): l'altezza la anima AutoHeight, che chiude anche l'uscita verso
+    // un'altezza in numero (exit height 0)
+    const autoHeight = typeof animate0 === 'object' && animate0?.height === 'auto';
+    const autoFrom = autoHeight && typeof initial === 'object' ? sizeOf(initial?.height) : null;
+    const autoExitTo = autoHeight && exiting ? sizeOf(exitTarget.height) : null;
+    const exitDone = exiting ? (__exitDone as () => void) : undefined;
+    const animated = useMotion(initial, animate, transition, width, autoExitTo && !autoExitTo.pct ? undefined : exitDone, loop.active);
     const ownRef = (rest as { ref?: unknown }).ref;
     const ref = infiniteLoop && !ownRef ? loop.ref : ownRef;
     if (exiting) (rest as { pointerEvents?: string }).pointerEvents = 'none';
@@ -220,11 +227,19 @@ function make(Comp: React.ComponentType<any>, direct = false) {
       ? (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; setWidth((w) => (Math.abs(w - nw) < 0.5 ? w : nw)); ownLayout?.(e); }
       : ownLayout;
     // Div: lo stile animato va sull'elemento stesso (posizione assoluta, h-full, flex-1 restano suoi)
-    if (direct) return <Comp className={className} style={style} animatedStyle={animated} {...rest} ref={ref} onLayout={onLayout}>{children}</Comp>;
+    const el = direct
+      ? <Comp className={className} style={style} animatedStyle={animated} {...rest} ref={ref} onLayout={onLayout}>{children}</Comp>
+      : (
+        <Animated.View ref={infiniteLoop ? loop.ref as never : undefined} style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
+          <Comp className={className} style={style} {...rest}>{children}</Comp>
+        </Animated.View>
+      );
+    if (!autoHeight) return el;
     return (
-      <Animated.View ref={infiniteLoop ? loop.ref as never : undefined} style={animated} onLayout={usesPct ? onLayout : undefined} pointerEvents={exiting ? 'none' : undefined}>
-        <Comp className={className} style={style} {...rest}>{children}</Comp>
-      </Animated.View>
+      <AutoHeight from={autoFrom && !autoFrom.pct ? autoFrom.n : null} exiting={!!exiting} exitTo={autoExitTo && !autoExitTo.pct ? autoExitTo.n : null}
+        transition={transition} onExitDone={exitDone}>
+        {el}
+      </AutoHeight>
     );
   }
   (MotionComponent as { motionExit?: boolean }).motionExit = true;
