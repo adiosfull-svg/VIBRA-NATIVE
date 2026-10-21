@@ -10,7 +10,7 @@ import { Children, cloneElement, createContext, Fragment, startTransition, Suspe
 import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
-import { CapturePressable, CaptureView, classStyle } from './classStyleCache';
+import { AnimatedCaptureView, CapturePressable, CaptureView, classStyle } from './classStyleCache';
 import { InPortalContext, PortalToRoot } from './fixedPortal';
 import { themeColor } from './colors';
 import { cssAnimationOf, useCssAnimation, withoutCssAnimation, type CssAnimationKind } from './cssAnimation';
@@ -1294,6 +1294,16 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
     if (!cs) return <View {...props} {...gestures} onLayout={min.onLayout} style={ownStyle}>{boxInner}</View>;
     if (cs.cached) return <View {...props} {...gestures} onLayout={min.onLayout} style={[cs.style as ViewStyle, ...ownStyle]}>{boxInner}</View>;
     if (cs.key) return <CaptureView {...props} {...gestures} onLayout={min.onLayout} className={boxClasses} __cacheKey={cs.key} __extraStyle={ownStyle}>{boxInner}</CaptureView>;
+  }
+  // solo transizione CSS (niente motion né card che si gira): classi dalla cache come sopra, su un Animated.View
+  // senza NativeWind (AnimatedCaptureView la prima volta). Tipo scelto al montaggio, come sopra.
+  if (Platform.OS !== 'web' && trSpec && !animatedStyle && !faceStyle) {
+    const cs = boxClasses ? classStyle(boxClasses) : null;
+    if (captureMode.current === null) captureMode.current = !!cs && !cs.cached && !!cs.key;
+    if (captureMode.current) return <AnimatedCaptureView {...props} {...gestures} onLayout={min.onLayout} className={boxClasses || undefined} __cacheKey={cs && !cs.cached ? cs.key : null} style={ownStyle}>{boxInner}</AnimatedCaptureView>;
+    if (!cs) return <Animated.View {...props} {...gestures} onLayout={min.onLayout} style={ownStyle}>{boxInner}</Animated.View>;
+    if (cs.cached) return <Animated.View {...props} {...gestures} onLayout={min.onLayout} style={[cs.style as ViewStyle, ...ownStyle]}>{boxInner}</Animated.View>;
+    if (cs.key) return <AnimatedCaptureView {...props} {...gestures} onLayout={min.onLayout} className={boxClasses} __cacheKey={cs.key} style={ownStyle}>{boxInner}</AnimatedCaptureView>;
   }
   return (
     <Box {...props} {...gestures} onLayout={min.onLayout} className={boxClasses} style={ownStyle}>{boxInner}</Box>

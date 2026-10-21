@@ -6,7 +6,7 @@
 // un componente che ne registra lo stile (CaptureView/CapturePressable); dalla seconda Div e Btn usano
 // View/Pressable semplici con quello stile. Le classi dinamiche passano sempre da NativeWind.
 import { forwardRef, type ComponentProps } from 'react';
-import { Pressable, View } from 'react-native';
+import { Animated, Pressable, View } from 'react-native';
 import { cssInterop } from 'nativewind';
 import { cssViewport } from './webStyle';
 
@@ -71,3 +71,17 @@ export const CapturePressable = forwardRef<View, ComponentProps<typeof Pressable
   },
 );
 cssInterop(CapturePressable, { className: 'style' });
+
+/**
+ * Come CaptureView, per i Div con transizione CSS (ui/cssTransition, Animated): NativeWind scrive lo stile delle
+ * classi in `__classStyle` e non in `style`, che porta i valori animati e resta ad Animated. Prima ogni Div con
+ * `transition-*` passava sempre da NativeWind (righe di tabelle e card ridisegnate e montate scorrendo).
+ */
+const AnimatedCaptureInner = forwardRef<View, ComponentProps<typeof View> & { __cacheKey?: string | null; __classStyle?: unknown }>(
+  function AnimatedCaptureInner({ __cacheKey, __classStyle, style, ...rest }, ref) {
+    if (__cacheKey && !styles.has(__cacheKey)) styles.set(__cacheKey, __classStyle ?? null);
+    return <View ref={ref} {...rest} style={[__classStyle as never, style]} />;
+  },
+);
+export const AnimatedCaptureView = Animated.createAnimatedComponent(AnimatedCaptureInner);
+cssInterop(AnimatedCaptureView, { className: { target: '__classStyle' } } as never);

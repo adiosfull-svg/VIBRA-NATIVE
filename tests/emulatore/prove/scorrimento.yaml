@@ -47,10 +47,19 @@ appId: com.vibra.mobile
 - takeScreenshot: scorri-tab-clienti
 - runFlow: ../sub/scorri.yaml
 # Clienti > Growth (tabella virtualizzata): la barra delle tab scorre in orizzontale, passi brevi
-- openLink: vibra://clienti
+# (Clienti è già aperta e scorsa: openLink non rimonta la tab) in cima prima di scorrere le tab
+- repeat:
+    while:
+      notVisible: "LISTA CLIENTI"
+    times: 12
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 90%
+          duration: 200
 - extendedWaitUntil:
-    visible: "Sofia Colombo"
-    timeout: 90000
+    visible: "LISTA CLIENTI"
+    timeout: 30000
 - repeat:
     while:
       notVisible: "Growth League.*"
