@@ -22,6 +22,7 @@ import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTe
 import { TEXT_COLOR } from './icon';
 import { webStyle } from './webStyle';
 import { useDomStyleRef } from './domStyle';
+import { TEST_DIAG } from '../lib/testDiag';
 import { IMAGE_CACHE, imageSource, markImageWarm } from './imageCache';
 import { inheritedLineHeight } from './textLeading';
 import { useFocusStyle } from './useFocusStyle';
@@ -132,6 +133,7 @@ export function Table({ className, children, style, measureKey }: { className?: 
   const signature = measureKey !== undefined ? measureKey : contentSignature(children);
   const [state, setState] = useState<{ sig: unknown; widths: number[] | null }>({ sig: signature, widths: null });
   const natural = useRef<number[]>([]);
+  const reports = useRef<number[][]>([]);
   const tableWidth = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   if (state.sig !== signature) { natural.current = []; setState({ sig: signature, widths: null }); }
@@ -140,6 +142,7 @@ export function Table({ className, children, style, measureKey }: { className?: 
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const widths = tableColumnWidths(Array.from(natural.current, (w) => w ?? 0), tableWidth.current);
+      if (TEST_DIAG) console.log(`VIBRA tabella t=${Math.round(tableWidth.current)} n=${natural.current.map((w) => Math.round(w ?? 0))} w=${widths.map(Math.round)} top=${JSON.stringify(reports.current.map((r) => (r ?? []).sort((a, b) => b - a).slice(0, 4).map(Math.round)))}`);
       // stesse larghezze (a meno di arrotondamenti): nessun ridisegno
       setState((s) => (s.widths && s.widths.length === widths.length && s.widths.every((w, i) => Math.abs(w - widths[i]) < 0.5) ? s : { ...s, widths }));
     }, 16);
@@ -147,7 +150,7 @@ export function Table({ className, children, style, measureKey }: { className?: 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const ctx = useMemo<TableLayout>(() => ({
     widths: measuring ? null : state.widths,
-    report: (col, width) => { natural.current[col] = Math.max(natural.current[col] ?? 0, width); finish(); },
+    report: (col, width) => { if (TEST_DIAG) (reports.current[col] ??= []).push(width); natural.current[col] = Math.max(natural.current[col] ?? 0, width); finish(); },
   }), [measuring, state.widths, finish]);
   return (
     <TableContext.Provider value={ctx}>

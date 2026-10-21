@@ -1,0 +1,53 @@
+# Prova: Growth League dei clienti (larghezze delle colonne), ferma e scorsa in orizzontale.
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE"
+    timeout: 180000
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 60000
+- repeat:
+    while:
+      notVisible: "Growth League.*"
+    times: 10
+    commands:
+      - swipe:
+          start: 75%, 16%
+          end: 45%, 16%
+          duration: 600
+      - waitForAnimationToEnd
+      - tapOn:
+          text: "Growth"
+          optional: true
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 6000
+    optional: true
+- takeScreenshot: growth-colonne
+- swipe:
+    start: 85%, 60%
+    end: 15%, 60%
+    duration: 800
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 3000
+    optional: true
+- takeScreenshot: growth-colonne-destra
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 12000
+    optional: true
+- takeScreenshot: analytics-colonne
