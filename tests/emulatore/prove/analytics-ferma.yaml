@@ -1,0 +1,21 @@
+# Prova: Analisi Clienti aperta e ferma per 20 s (con EXPO_PUBLIC_TEST_TRACE=1 si vede cosa si ridisegna da solo).
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|FATTURATO TOTALE"
+    timeout: 180000
+- openLink: vibra://clienti-analytics
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 25000
+    optional: true
+- takeScreenshot: analytics-ferma
