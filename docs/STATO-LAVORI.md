@@ -520,6 +520,32 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   4: pr/15 39307584499, pr/02 39307588381, pr/13 39307593339, pr/14 39307598275.
 
 
+## Microstuttering nelle altre sezioni (21/10, branch `claude/microstuttering-sezioni`)
+- Prova `tests/emulatore/prove/scorrimento.yaml` (tutte le sezioni tranne Semine, admin e pr: ferme, poi 5 lanci
+  veloci in su e 3 in giù) e `tools/scorrimento/analizza.py <cartella risultati>`: render div/btn/text nei battiti
+  tra il primo lancio e 3 s dopo l'ultimo. Il frameMax dell'emulatore (300-1100 ms anche a 0 render) non conta.
+- Base (run 39537711642): quasi tutte le sezioni 0 render scorrendo. Fuori: Analisi Clienti pr ~2200, Growth
+  League ~33800, Academy ~750, Serate admin ~1650, Clienti ~600 (finestra della lista, normale).
+- Cause e correzioni:
+  - `Table` (ui/elements) senza `measureKey` rimisurava tutte le righe a ogni blocco o spostamento della finestra.
+    Ora Analisi Clienti e Growth League misurano una volta su righe nascoste alte 0 con i testi più lunghi
+    (`web/lib/tableMeasure.js`, anche ReportPreview); righe della Growth League in memo con props stabili.
+  - Ciclo infinito: dentro `overflow-x-auto` la tabella si allargava di un pixel di arrotondamento a ogni giro
+    (Analisi Clienti dell'admin: intestazione ridisegnata 3 volte al secondo per sempre, anche nascosta). Ora la
+    larghezza della tabella si legge solo durante la misura.
+  - Div con `transition-*`: classi dalla cache su Animated.View (`AnimatedCaptureView` in ui/classStyleCache)
+    invece del runtime di NativeWind a ogni disegno. Grafici a fasce (ui/recharts ChartTiles) in memo per fascia.
+    Academy: pillole e rotella in memo.
+- Dopo (run 39557386325, c073a91): Analisi Clienti ~860-1190, Growth League 600-8300 (dipende da quanto corre il
+  lancio: monta le righe che entrano), Serate 351, Academy un po' meno; vibra-gpt, report e ricerca-ai 0 (era il ciclo).
+  Giro completo 39557389723: 25 percorsi superati, nessun crash.
+- Growth League: la colonna Cliente ora è larga 215 dp anche per i nomi corti (su Android un testo `truncate`
+  prende tutto il `max-w-[140px]`) e le colonne sono allineate all'intestazione. Prima sembrava più stretta solo
+  perché le righe non avevano ancora le larghezze dell'intestazione (valori spostati rispetto alle colonne).
+  Prova `prove/growth-colonne.yaml` e riga `VIBRA tabella` (larghezze misurate) nelle build di prova.
+- Il Mio Vibra: JS fermo all'1% mentre scorre (profilo): il lento lì è nativo o dell'emulatore.
+- Resta: conferma sui telefoni veri (Test Lab) insieme agli altri cambi; Clienti e Growth montano righe nei lanci lunghi.
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
