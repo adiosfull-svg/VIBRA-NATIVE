@@ -789,10 +789,23 @@ const WEB_MIN_CONTENT = { minWidth: 'min-content' } as unknown as ViewStyle;
  * naturale, il testo dice la sua larghezza e quella della parola più lunga (MinContentProbeContext,
  * text.tsx), minWidth = naturale − testo + parola.
  */
-function useButtonMinContent(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
+// misure già fatte (stesse classi e stesso testo = stessa larghezza min-content): i pulsanti uguali delle card
+// di una lista (Rimuovi delle Semine) non rifanno la misura e il secondo disegno
+const minContentCache = new Map<string, number>();
+const ZERO_BASIS = cachedTest(/(^|\s)(flex-1|basis-0)(\s|$)/);
+
+function useButtonMinContent(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void, cls = '') {
   const web = Platform.OS === 'web';
   const sig = enabled && !web ? textSignature(children) : '';
-  const [done, setDone] = useState<{ sig: string; min: number } | null>(null);
+  const cacheKey = `${cls}|${sig}`;
+  const [done0, setDone0] = useState<{ sig: string; min: number } | null>(null);
+  const cachedMin = enabled && !web && done0?.sig !== sig ? minContentCache.get(cacheKey) : undefined;
+  const done = cachedMin != null ? { sig, min: cachedMin } : done0;
+  const setDone = (d: { sig: string; min: number }) => {
+    if (minContentCache.size > 2000) minContentCache.clear();
+    minContentCache.set(`${cls}|${d.sig}`, d.min);
+    setDone0(d);
+  };
   const measuring = enabled && !web && done?.sig !== sig;
   const acc = useRef<{ w?: number; text?: number; word?: number }>({});
   if (measuring && acc.current.w === undefined && acc.current.text === undefined) acc.current = {};
@@ -1609,14 +1622,18 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined, rowParent && !OUT_OF_FLOW_CLASS.test(rest));
   // min-width: auto (CSS) per un pulsante in una riga flex con contenuto che non va a capo (icone, una
   // parola): non si restringe sotto la sua larghezza; senza misure, basta non farlo restringere
-  const rigidBtn = rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
+  // flex-1 (base 0): crescere/restringersi da 0 è giusto, ma come in CSS non sotto il contenuto. Con flexShrink 0
+  // e base 0 il pulsante restava alla sua quota (Chat | Rimuovi delle card Semine: "Rimuovi" usciva dal bordo)
+  const zeroBasis = ZERO_BASIS.test(rest);
+  const rigidBtn = rowParent && !zeroBasis && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
     && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && unbreakableContent(children)
     ? RIGID_BTN : null;
   // testo che va a capo (es. pillola "Ordine aggiunta"): non sotto la parola più lunga (min-content)
   const minContent = useButtonMinContent(
     rowParent && !rigidBtn && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
-      && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && hasBreakableText(children),
-    children, min0.onLayout,
+      && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null
+      && (hasBreakableText(children) || (zeroBasis && unbreakableContent(children) && textSignature(children) !== '')),
+    children, min0.onLayout, rest,
   );
   const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
