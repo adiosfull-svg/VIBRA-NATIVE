@@ -556,13 +556,23 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - **Ultimo utente** (`lib/userCache.ts`): l'app parte con l'utente salvato e ricontrolla `me()` dietro (stesso
   oggetto se non cambia: niente ridisegno di tutta l'app); 401/403 → login; senza rete resta dentro. Uscita → file
   dell'utente e cache tolti. Anche sullo stack di prova (authLocal) per poterlo misurare.
-- **Schermata d'avvio**: prima mancava expo-splash-screen e all'apertura lo schermo era bianco. Ora sfondo #09090b
-  col logo (come lo splash della PWA, manifest background_color), tenuta fino a accesso e cache pronti (al massimo 5 s).
-  L'icona dell'app è ancora quella di Expo: l'icona VIBRAPERFETTO.png dell'originale è su media.base44.com, non
-  raggiungibile dal container.
+- **Schermata d'avvio e icona**: prima mancava expo-splash-screen e all'apertura lo schermo era bianco. Ora sfondo
+  #090909 col logo VIBRA, tenuta fino a accesso e cache pronti (al massimo 5 s). Icona dell'app dal file di Antonio
+  (VIBRA_logo_8K_sfondo_viola.png, viola tolto pixel per pixel e sfondo #090909): `assets/icon.png`, adattiva
+  (logo al 54%, dentro il cerchio sicuro), monocromatica, `splash-logo.png`, favicon.
 - **Dialog e AlertDialog: uscita animata** (`usePortalPresence` in ui/enterView, forceMount di rn-primitives): velo
-  150 ms e zoom-out-95 200 ms, intanto i tocchi passano già alla pagina. Popover/Dropdown/Select restano a uscita
-  immediata: alla chiusura rn-primitives azzera la posizione del trigger e il Portal sparisce comunque.
+  150 ms e zoom-out-95 200 ms, intanto i tocchi passano già alla pagina.
+- **Menu a tendina, Popover e Select: uscita animata** (ui/menu, 150 ms come l'entrata). rn-primitives alla chiusura
+  azzerava la posizione del trigger e il Portal spariva: patch (`patches/@rn-primitives+popover|dropdown-menu|select`)
+  che a menu chiuso passa l'ultima posizione e misura, così il contenuto tenuto montato esce dov'era.
+- **Pagine dello stack che entrano scorrendo** (Stack di `app/(app)/_layout.tsx`, `ios_from_right` sul telefono, niente
+  sul web): Locali, Notifiche, profilo promoter... entrano da destra ed escono all'indietro, la pagina sotto scorre un
+  poco. Le tab restano senza scorrimento (ui/vibraTabs). Suite pr completa: stesse prove verdi di prima (run 39666105218, 39670015026); prova 17 con animazioni verde su a250182 (run 39670442064).
+- **Pagine dello stack pronte durante lo scorrimento** (Page.tsx): una pagina aperta ora disegna prima solo
+  l'intestazione (lo scorrimento parte subito) e monta il contenuto in una transition mentre entra; prima il tocco
+  aspettava il montaggio intero (gara: Locali 4,3 s, profilo promoter 3,6 s al primo accesso). Le pagine precaricate
+  (Notifiche) sono già montate e non cambiano.
+
 - **X dei dialog**: con un DialogHeader `relative` (zIndex 1 dallo strato ui) la X restava sotto e non chiudeva
   (Nuovo Cliente di Clienti, anche nella versione di prima). Ora zIndex 1 anche alla X (dopo nel disegno, come nel CSS).
 - **height 'auto' di motion** (`ui/autoHeight.tsx`): altezza animata con Reanimated fino alla misura naturale, poi
@@ -578,8 +588,15 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Prova `tests/emulatore/pr/17-app-nativa.yaml` (verde su b07f674: run 39639613229 e, con fluidità, 39639618064; riavvio coi dati, dialog aperto/chiuso con X e Indietro, mesi
   precedenti: nei dati di prova del pr il pannello non c'è, height auto da vedere sul telefono). 13-liste-minori e 16-semine-card falliscono anche con la versione di prima nella suite pr completa
   (run 39628781545, app d82b196): non dipendono da questo lavoro.
-- Resta: Stack con `animation: 'none'` come il web (una transizione nativa delle pagine è una scelta dell'utente);
-  icona dell'app; uscite dei menu.
+- Avvio del pr (punto 2 di Antonio): profilo JS del riavvio (run 39670647387) quasi tutto montaggio React (82%), con
+  dentro il precaricamento delle tab; la prima pagina compare ~0,3-0,5 s dopo l'inizio del JS e «pronta» resta alta per
+  animazioni d'entrata e conteggi (l'originale con cache piena fa uguale, ~5,2 s). Niente da togliere senza cambiare
+  il disegno.
+- Conteggi (punto 4): già un solo testo ridisegnato e solo quando la cifra cambia; spostarli sul thread UI vorrebbe un
+  TextInput animato (grafica diversa). Lasciati così.
+- Notifiche non lette: la card ha `bg-card` e `bg-primary/5` insieme; vince la seconda (anche nel CSS dell'originale,
+  primary dopo card), trasparente, e si vede il rosso dello sfondo «elimina» sotto. Da decidere con Antonio.
+- Resta: funzioni da app (punto 5, da scegliere con Antonio).
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
