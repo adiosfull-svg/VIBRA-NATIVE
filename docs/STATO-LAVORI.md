@@ -546,6 +546,41 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
 - Il Mio Vibra: JS fermo all'1% mentre scorre (profilo): il lento lì è nativo o dell'emulatore.
 - Resta: conferma sui telefoni veri (Test Lab) insieme agli altri cambi; Clienti e Growth montano righe nei lanci lunghi.
 
+## App nativa: avvio coi dati salvati, uscite dei dialog, height auto (21/10, branch `claude/app-nativa`)
+- Branch = `claude/microstuttering-sezioni` + `claude/semine-card` (merge d82b196), poi il lavoro qui sotto.
+- **Cache dei dati sul telefono** (`lib/queryCachePersist.ts`): l'originale ha `src/lib/queryCachePersist.js` (cache di
+  React Query in IndexedDB, versione 4, TTL 30 min, notifiche escluse, scrittura 4 s dopo i cambi a pagina ferma e
+  all'uscita) e la nativa no: ogni avvio ripartiva dalla rete. Ora file JSON in `Paths.document` (AsyncStorage su
+  Android ha ~2 MB per voce), rimesso in `app/_layout.tsx` prima che le pagine registrino le query; le query con dati
+  non JSON puri (Date, Map, classi) non si salvano. Sul web (confronti) non fa nulla.
+- **Ultimo utente** (`lib/userCache.ts`): l'app parte con l'utente salvato e ricontrolla `me()` dietro (stesso
+  oggetto se non cambia: niente ridisegno di tutta l'app); 401/403 → login; senza rete resta dentro. Uscita → file
+  dell'utente e cache tolti. Anche sullo stack di prova (authLocal) per poterlo misurare.
+- **Schermata d'avvio**: prima mancava expo-splash-screen e all'apertura lo schermo era bianco. Ora sfondo #09090b
+  col logo (come lo splash della PWA, manifest background_color), tenuta fino a accesso e cache pronti (al massimo 5 s).
+  L'icona dell'app è ancora quella di Expo: l'icona VIBRAPERFETTO.png dell'originale è su media.base44.com, non
+  raggiungibile dal container.
+- **Dialog e AlertDialog: uscita animata** (`usePortalPresence` in ui/enterView, forceMount di rn-primitives): velo
+  150 ms e zoom-out-95 200 ms, intanto i tocchi passano già alla pagina. Popover/Dropdown/Select restano a uscita
+  immediata: alla chiusura rn-primitives azzera la posizione del trigger e il Portal sparisce comunque.
+- **X dei dialog**: con un DialogHeader `relative` (zIndex 1 dallo strato ui) la X restava sotto e non chiudeva
+  (Nuovo Cliente di Clienti, anche nella versione di prima). Ora zIndex 1 anche alla X (dopo nel disegno, come nel CSS).
+- **height 'auto' di motion** (`ui/autoHeight.tsx`): altezza animata con Reanimated fino alla misura naturale, poi
+  'auto'; uscita verso l'altezza di exit. Pannelli: ricerca della Growth League, ProiezioneMese, AcademyTile, progetti
+  conclusi di Serate, InstagramProfileCard, albero dei clienti.
+- `translate-[calc(A%±Bpx)]` (ui/html `percentTranslate`): due translate di seguito (badge della serata pianificata
+  sulla card di Semine).
+- AnimatedNumber/KpiFlashCard: il conteggio parte a pagina montata (InteractionManager). Resta a setState per frame
+  (sul thread UI servirebbe un TextInput animato, con grafica diversa).
+- Misure (gara, prima d82b196 → dopo 92d87e1, run 39616120039 / 39616114736, 2° e 3° avvio): admin pronta 5506/4828 →
+  3012/2923 ms, richieste all'avvio 13 → 4; pr 3778/3540 → 3843/4575 ms (Il Mio Vibra è lavoro di disegno, non di
+  rete), richieste 15 → 5/3. Sul telefono vero con Base44 il guadagno è più grande (ogni richiesta 0,2-0,8 s).
+- Prova `tests/emulatore/pr/17-app-nativa.yaml` (verde su b07f674: run 39639613229 e, con fluidità, 39639618064; riavvio coi dati, dialog aperto/chiuso con X e Indietro, mesi
+  precedenti: nei dati di prova del pr il pannello non c'è, height auto da vedere sul telefono). 13-liste-minori e 16-semine-card falliscono anche con la versione di prima nella suite pr completa
+  (run 39628781545, app d82b196): non dipendono da questo lavoro.
+- Resta: Stack con `animation: 'none'` come il web (una transizione nativa delle pagine è una scelta dell'utente);
+  icona dell'app; uscite dei menu.
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
