@@ -1,0 +1,650 @@
+20:37:11.295 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/runner/.maestro/tests/2026-10-21_203711
+20:37:11.297 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+20:37:11.298 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.11.0
+20:37:11.299 [ INFO] MAESTRO.logSystemInfo: CI: github
+20:37:11.299 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+20:37:11.300 [ INFO] MAESTRO.logSystemInfo: OS Version: 7.0.0-1017-azure
+20:37:11.300 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+20:37:11.302 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+20:37:11.306 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null
+20:37:11.311 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+20:37:11.314 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+20:37:11.314 [ INFO] MAESTRO.logSystemInfo: ---------------------
+20:37:12.068 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+20:37:13.952 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device emulator-5554 using port 36077 with execution plan ExecutionPlan(flowsToRun=[/home/runner/work/VIBRA-NATIVE/VIBRA-NATIVE/tests/emulatore/pr/13-liste-minori.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+20:37:16.389 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow 13-liste-minori
+20:37:16.402 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+20:37:16.556 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=ANDROID, widthPixels=1080, heightPixels=2400, widthGrid=1080, heightGrid=2400)
+20:37:16.625 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Define variables RUNNING
+20:37:16.628 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Define variables COMPLETED
+20:37:16.629 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:37:16.629 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:37:16.630 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Launch app "com.vibra.mobile" RUNNING
+20:37:17.052 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.READ_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.106 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.WRITE_EXTERNAL_STORAGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.SecurityException: Package com.vibra.mobile has not requested permission android.permission.WRITE_EXTERNAL_STORAGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1423)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.235 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.248 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sec.android.provider.badge.permission.READ for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sec.android.provider.badge.permission.READ
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.262 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sec.android.provider.badge.permission.WRITE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sec.android.provider.badge.permission.WRITE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.276 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.htc.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.htc.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.289 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.htc.launcher.permission.UPDATE_SHORTCUT for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.htc.launcher.permission.UPDATE_SHORTCUT
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.303 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sonyericsson.home.permission.BROADCAST_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sonyericsson.home.permission.BROADCAST_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.315 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.sonymobile.home.permission.PROVIDER_INSERT_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.sonymobile.home.permission.PROVIDER_INSERT_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.328 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.anddoes.launcher.permission.UPDATE_COUNT for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.anddoes.launcher.permission.UPDATE_COUNT
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.341 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.majeur.launcher.permission.UPDATE_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.majeur.launcher.permission.UPDATE_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.354 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.CHANGE_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.CHANGE_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.367 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.381 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.huawei.android.launcher.permission.WRITE_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.huawei.android.launcher.permission.WRITE_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.394 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission android.permission.READ_APP_BADGE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: android.permission.READ_APP_BADGE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.409 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.oppo.launcher.permission.READ_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.oppo.launcher.permission.READ_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.430 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission com.oppo.launcher.permission.WRITE_SETTINGS for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: com.oppo.launcher.permission.WRITE_SETTINGS
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.442 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission me.everything.badger.permission.BADGE_COUNT_READ for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: me.everything.badger.permission.BADGE_COUNT_READ
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.455 [DEBUG] maestro.Maestro.setPermissionInternal: Failed to set permission me.everything.badger.permission.BADGE_COUNT_WRITE for app com.vibra.mobile: shell command failed (exit -1): 
+Exception occurred while executing 'grant':
+java.lang.IllegalArgumentException: Unknown permission: me.everything.badger.permission.BADGE_COUNT_WRITE
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermissionInternal(PermissionManagerServiceImpl.java:1380)
+	at com.android.server.pm.permission.PermissionManagerServiceImpl.grantRuntimePermission(PermissionManagerServiceImpl.java:1337)
+	at com.android.server.pm.permission.PermissionManagerService.grantRuntimePermission(PermissionManagerService.java:551)
+	at android.permission.PermissionManager.grantRuntimePermission(PermissionManager.java:609)
+	at com.android.server.pm.PackageManagerShellCommand.runGrantRevokePermission(PackageManagerShellCommand.java:2672)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:291)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6350)
+	at android.os.Binder.shellCommand(Binder.java:1068)
+	at android.os.Binder.onTransact(Binder.java:888)
+	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4352)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6334)
+	at android.os.Binder.execTransactInternal(Binder.java:1344)
+	at android.os.Binder.execTransact(Binder.java:1275)
+
+20:37:17.457 [ INFO] maestro.Maestro.launchApp$lambda$5: Launching app com.vibra.mobile
+20:37:17.457 [ INFO] maestro.Maestro.launchApp$lambda$5: Stopping com.vibra.mobile app during launch
+20:37:17.822 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Launch app "com.vibra.mobile" COMPLETED
+20:37:17.822 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+20:37:17.824 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:37:17.824 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:37:17.825 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+20:37:25.906 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+20:37:25.907 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+20:37:25.907 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+20:37:25.907 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi|Password" is visible RUNNING
+20:37:26.253 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi|Password" is visible COMPLETED
+20:37:26.253 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/sistema.yaml RUNNING
+20:37:26.254 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:37:26.254 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:37:26.254 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Wait" is visible RUNNING
+20:37:27.211 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+20:37:27.211 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Wait" is visible SKIPPED
+20:37:27.211 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/sistema.yaml COMPLETED
+20:37:27.211 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run ../sub/login.yaml RUNNING
+20:37:27.212 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Apply configuration RUNNING
+20:37:27.212 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Apply configuration COMPLETED
+20:37:27.212 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Run flow when "Password" is visible RUNNING
+20:37:27.847 [ INFO] maestro.orchestra.Orchestra.executeSubflowCommands: [Command execution subflow] CommandSkipped: null
+20:37:27.848 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run flow when "Password" is visible SKIPPED
+20:37:27.848 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Run ../sub/login.yaml COMPLETED
+20:37:27.848 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "I Miei Progressi" is visible RUNNING
+20:37:28.119 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "I Miei Progressi" is visible COMPLETED
+20:37:28.119 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+20:37:28.123 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+20:37:28.126 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:37:28.126 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:28.560 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:37:28.560 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:29.107 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+20:37:29.107 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Open vibra://messaggi RUNNING
+20:37:29.110 [ INFO] maestro.Maestro.openLink: Opening link vibra://messaggi for app: com.vibra.mobile with autoVerify config as false
+20:37:31.995 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Open vibra://messaggi COMPLETED
+20:37:31.996 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Messaggio 120" is visible RUNNING
+20:37:32.147 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Messaggio 120" is visible COMPLETED
+20:37:32.147 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+20:37:32.148 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+20:37:32.148 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:37:32.148 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:32.344 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:37:32.344 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:32.692 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+20:37:32.693 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Messaggio 120" RUNNING
+20:37:32.802 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Messaggio 120, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[299,1320][562,1373], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=299, y=1320, width=263, height=53))
+20:37:34.062 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+20:37:34.066 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (430, 1346) using hierarchy based logic for wait
+20:37:36.327 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+20:37:36.327 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Messaggio 120" COMPLETED
+20:37:36.327 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+20:37:36.328 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+20:37:36.328 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:37:36.328 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:36.522 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:37:36.523 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:36.815 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+20:37:36.815 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chat-01-aperta RUNNING
+20:37:36.817 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+20:37:36.819 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:37:36.973 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chat-01-aperta COMPLETED
+20:37:36.973 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Messaggio 001" is not visible RUNNING
+20:37:37.814 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Messaggio 001" is not visible COMPLETED
+20:37:37.815 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat while "Messaggio 001" is not visible (up to 40 times) RUNNING
+20:37:38.650 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:38.864 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=236, y=1525)
+20:37:41.574 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:37:42.398 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:37:42.399 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:42.593 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=846, y=1528)
+20:37:44.770 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:37:45.504 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:37:45.504 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:45.691 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=842, y=1456)
+20:37:48.240 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:37:48.992 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:37:48.992 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:49.187 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=240, y=1488)
+20:37:51.249 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:37:51.992 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:37:51.992 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:52.181 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=237, y=1409)
+20:37:54.204 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:37:54.932 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:37:54.933 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:55.124 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1466)
+20:37:57.116 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:37:57.875 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:37:57.875 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:37:58.082 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1421)
+20:38:00.041 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:01.156 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:01.157 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:01.347 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1411)
+20:38:04.005 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:04.941 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:04.941 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:05.143 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1522)
+20:38:07.240 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:08.024 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:08.024 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:08.220 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1501)
+20:38:10.228 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:11.037 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:11.038 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:11.248 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1416)
+20:38:13.317 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:14.149 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:14.149 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:14.364 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=242, y=1468)
+20:38:16.484 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:17.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:17.340 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:17.547 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=840, y=1540)
+20:38:20.321 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:21.153 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:21.153 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:21.357 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=239, y=1532)
+20:38:23.473 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:24.324 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:24.325 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:24.524 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1419)
+20:38:26.918 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:27.706 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:27.706 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:27.914 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1482)
+20:38:29.921 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:30.672 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:30.672 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:30.869 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1442)
+20:38:32.929 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:33.729 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:33.729 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:33.928 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1539)
+20:38:36.091 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:36.880 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:36.881 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:37.096 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1424)
+20:38:39.065 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:39.873 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:39.873 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:40.092 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=245, y=1407)
+20:38:42.783 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:43.745 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:43.745 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:43.969 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1508)
+20:38:46.182 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:46.913 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:46.913 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:47.156 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=245, y=1508)
+20:38:49.357 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:50.216 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:50.216 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:50.443 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=837, y=1450)
+20:38:52.302 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:53.141 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:53.141 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:53.411 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=243, y=1423)
+20:38:55.529 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:56.489 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:56.489 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:38:56.733 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1414)
+20:38:58.837 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:38:59.781 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:38:59.781 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:00.031 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1414)
+20:39:02.097 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:03.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:03.046 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:03.236 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1422)
+20:39:05.385 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:06.358 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:06.359 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:06.590 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=244, y=1531)
+20:39:08.802 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:09.818 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:09.819 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:10.040 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=241, y=1463)
+20:39:12.110 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:12.861 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:12.861 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:13.092 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=240, y=1422)
+20:39:15.074 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:15.841 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:15.841 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:16.061 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=237, y=1420)
+20:39:18.055 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:18.997 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:18.998 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:19.228 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=838, y=1520)
+20:39:21.405 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:22.302 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in DOWN direction on "Messaggio \d+", Index: 1 PENDING
+20:39:22.302 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in DOWN direction on "Messaggio \d+", Index: 1 RUNNING
+20:39:22.526 [ INFO] maestro.Maestro.swipe: Swiping DOWN from point: Point(x=837, y=1460)
+20:39:25.313 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in DOWN direction on "Messaggio \d+", Index: 1 COMPLETED
+20:39:32.496 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat while "Messaggio 001" is not visible (up to 40 times) COMPLETED
+20:39:32.496 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+20:39:32.496 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+20:39:32.496 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:39:32.496 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:39:32.702 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:39:32.703 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:39:32.995 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+20:39:32.995 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chat-02-inizio RUNNING
+20:39:32.995 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+20:39:32.996 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:39:33.147 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chat-02-inizio COMPLETED
+20:39:33.148 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Messaggio 001" is visible RUNNING
+20:39:33.345 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Messaggio 001" is visible COMPLETED
+20:39:33.345 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Si è verificato un errore" is not visible RUNNING
+20:39:34.146 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Si è verificato un errore" is not visible COMPLETED
+20:39:34.146 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Tap on "Semine" RUNNING
+20:39:34.313 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tapping on element:  UiElement(treeNode=TreeNode(attributes={text=Semine, accessibilityText=, hintText=, ignoreBoundsFiltering=false, resource-id=, clickable=false, bounds=[60,2279][157,2306], enabled=true, focused=false, checked=false, scrollable=false, selected=false, class=android.widget.TextView, important-for-accessibility=true, error=}, children=[], clickable=false, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=60, y=2279, width=97, height=27))
+20:39:35.655 [ INFO] maestro.Maestro.tap-HgV9Ck0: Tap aimed via settled hierarchy
+20:39:35.656 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Tapping at (108, 2292) using hierarchy based logic for wait
+20:39:40.213 [ INFO] maestro.Maestro.hierarchyBasedTap-ogj28Uc: Something has changed in the UI judging by view hierarchy. Proceed.
+20:39:40.213 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Tap on "Semine" COMPLETED
+20:39:40.214 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Assert that "Semina \d+" is visible RUNNING
+20:39:40.395 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Assert that "Semina \d+" is visible COMPLETED
+20:39:40.395 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Wait for animation to end RUNNING
+20:39:40.396 [ INFO] maestro.Maestro.waitForAnimationToEnd$lambda$53: Waiting for animation to end with timeout 15000
+20:39:40.396 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:39:40.396 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:39:40.646 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+20:39:40.646 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:39:40.999 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Wait for animation to end COMPLETED
+20:39:40.999 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Take screenshot minori-chip-01 RUNNING
+20:39:40.999 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+20:39:41.000 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:39:41.214 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Take screenshot minori-chip-01 COMPLETED
+20:39:41.215 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Repeat 12 times RUNNING
+20:39:41.215 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:39:41.421 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=220, y=1187)
+20:39:42.945 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+20:39:42.945 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+20:39:42.945 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:39:43.151 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=203, y=1187)
+20:39:44.560 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+20:39:44.560 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+20:39:44.560 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:39:44.814 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=183, y=1187)
+20:39:46.304 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+20:39:46.304 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+20:39:46.304 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:39:46.518 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=168, y=1187)
+20:39:47.941 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+20:39:47.942 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+20:39:47.942 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:39:48.153 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=155, y=1187)
+20:39:49.495 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+20:39:49.496 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+20:39:49.496 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:39:49.713 [ INFO] maestro.Maestro.swipe: Swiping LEFT from point: Point(x=1035, y=1187)
+20:39:55.971 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 COMPLETED
+20:39:55.971 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandReset: Swiping in LEFT direction on "Semina \d+", Index: 0 PENDING
+20:39:55.971 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandStart: Swiping in LEFT direction on "Semina \d+", Index: 0 RUNNING
+20:40:13.460 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+20:40:13.461 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:40:13.671 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Swiping in LEFT direction on "Semina \d+", Index: 0 FAILED
+20:40:13.672 [ERROR] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandFailed: Element not found: Text matching regex: Semina \d+, Index: 0
+20:40:13.672 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+20:40:13.672 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+20:40:13.870 [ INFO] maestro.cli.runner.CliConsoleListener.onCommandFinished: Repeat 12 times FAILED
+20:40:14.696 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /home/runner/.maestro/tests
