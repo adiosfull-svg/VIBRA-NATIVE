@@ -808,6 +808,8 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
         longPressFiredRef.current = true;
         touchOpenedRef.current = Date.now();
         menuOpenedViaTouchRef.current = true;
+        // PORT: vibrazione all'apertura col dito (ui/haptics), più forte all'entrata in selezione multipla
+        webNavigator.vibrate?.(15);
         openMenu(el, startX, startY);
       }, 500);
       // Long-press prolungato (1s): entra in modalità selezione multipla e
@@ -836,6 +838,7 @@ function ClientSerateMenu({ upcomingDates, onAdd, onRemove, onAddCustom, onDelet
           const id = el.getAttribute('data-client-id');
           const name = el.getAttribute('data-client-name') || '';
           if (id) {
+            webNavigator.vibrate?.(30);
             onLongPressSelectRef.current?.({ id, name });
           }
         }, 1000);

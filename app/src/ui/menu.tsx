@@ -7,7 +7,7 @@ import * as PopoverPrimitive from '@rn-primitives/popover';
 import * as SelectPrimitive from '@rn-primitives/select';
 import * as SwitchPrimitive from '@rn-primitives/switch';
 import * as TabsPrimitive from '@rn-primitives/tabs';
-import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useCallback, useContext, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { cn } from './cn';
 import { resolveDataState } from './dataState';
@@ -16,6 +16,7 @@ import { usePendingSelection } from '../web/hooks/usePendingSelection';
 import { ROOT_CONTENTS } from './dialog';
 import { Div } from './html';
 import { EnterLayer, PresenceProvider, usePortalPresence } from './enterView';
+import { haptic } from './haptics';
 import { IconClassContext } from './icon';
 import { Check, ChevronDown, ChevronRight } from './icons.generated';
 import { Text, TextClassContext } from './text';
@@ -282,9 +283,11 @@ export function TabsContent({ className, children, value }: WithChildren & { val
 // ── Switch ───────────────────────────────────────────────────────────────────
 export function Switch({ checked, onCheckedChange, disabled, className }: { checked: boolean; onCheckedChange: (v: boolean) => void; disabled?: boolean; className?: string }) {
   // <label> che contiene lo switch: toccarlo lo cambia, come nel browser
-  useLabelControl(() => { if (!disabled) onCheckedChange(!checked); });
+  useLabelControl(() => { if (!disabled) { haptic.select(); onCheckedChange(!checked); } });
+  // scatto leggero a ogni cambio, come gli interruttori di sistema
+  const toggle = useCallback((v: boolean) => { haptic.select(); onCheckedChange(v); }, [onCheckedChange]);
   return (
-    <SwitchPrimitive.Root checked={checked} onCheckedChange={onCheckedChange} disabled={disabled}
+    <SwitchPrimitive.Root checked={checked} onCheckedChange={toggle} disabled={disabled}
       className={cn('h-5 w-9 shrink-0 flex-row items-center rounded-full border-2 border-transparent shadow-sm', checked ? 'bg-primary' : 'bg-input', disabled && 'opacity-50', className)}>
       {/* Div (non la View di rn-primitives): transition-transform dell'originale, il pallino scorre invece di saltare */}
       <SwitchPrimitive.Thumb asChild>

@@ -28,6 +28,7 @@ import { LOGO_URL } from '../../web/hooks/useVibraLogo';
 import { useNotificationsPolling } from '../../web/hooks/useNotifications';
 import { useAuth } from '../../lib/auth';
 import { prefetchCriticalData } from '../../web/lib/prefetchCoreData';
+import { haptic } from '../../ui/haptics';
 
 // Immagini del guscio (header, nav bar, sidebar): in memoria prima del primo disegno, mai un flash
 // (docs/REGOLE-PRESTAZIONI.md §6). Le immagini delle pagine le precarica ogni pagina.
@@ -74,7 +75,8 @@ function PushNavigation() {
 function SwipeToOpenSidebar({ children }: { children: ReactNode }) {
   const { setSidebarOpen } = useLayoutUIActions();
   const sidebarOpen = useLayoutUIOpen('sidebarOpen');
-  const open = useCallback(() => setSidebarOpen(true), [setSidebarOpen]);
+  // menu aperto dal gesto: vibrazione leggera, come un cassetto di sistema
+  const open = useCallback(() => { haptic.light(); setSidebarOpen(true); }, [setSidebarOpen]);
   const gesture = useSwipeToOpenSidebar(open, !sidebarOpen);
   if (Platform.OS === 'web') return <>{children}</>;
   return (

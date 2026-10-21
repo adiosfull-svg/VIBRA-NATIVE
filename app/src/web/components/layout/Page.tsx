@@ -15,6 +15,7 @@ import { BlurTargetView } from 'expo-blur';
 import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
 import { useAnimatedRef } from 'react-native-reanimated';
 import { FastScroll, useMergedScrollRef, type FastScrollHandle } from '../../../ui/fastScroll';
+import { haptic } from '../../../ui/haptics';
 
 type Props = Omit<ScrollViewProps, 'children'> & {
   children?: ReactNode;
@@ -74,7 +75,9 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   const pageRefresh = useRef<(() => Promise<unknown> | void) | null>(null);
   const [hasPageRefresh, setHasPageRefresh] = useState(false);
   const [pageRefreshing, setPageRefreshing] = useState(false);
+  // vibrazione quando il gesto di aggiorna scatta (come le liste native)
   const runPageRefresh = useCallback(async () => {
+    haptic.light();
     setPageRefreshing(true);
     try { await pageRefresh.current?.(); } finally { setPageRefreshing(false); }
   }, []);
@@ -165,7 +168,8 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   // effect) la radice dell'albero cambia tipo e React smonta e rimonta TUTTO il contenuto della pagina.
   // Serate, Semine e Promoter si montavano due volte a ogni apertura (il doppio del tempo e dei disegni).
   // Sul telefono il controllo c'è sempre, abilitato solo quando una pagina registra un handler.
-  const refreshHandler = onRefresh ?? (hasPageRefresh ? runPageRefresh : null);
+  const runPropRefresh = useCallback(() => { haptic.light(); return onRefresh?.(); }, [onRefresh]);
+  const refreshHandler = onRefresh ? runPropRefresh : (hasPageRefresh ? runPageRefresh : null);
   const isRefreshing = !!refreshHandler && (onRefresh ? refreshing : pageRefreshing);
   const refreshControl = Platform.OS === 'web'
     ? (refreshHandler ? <RefreshControl refreshing={isRefreshing} onRefresh={refreshHandler} tintColor={THEME['accent-foreground']} /> : undefined)

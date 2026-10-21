@@ -9,7 +9,7 @@ import { it } from 'date-fns/locale';
 import { Button } from '@/ui/button';
 import { parseUTC, toRome } from '@/legacy/utils/dateUtils';
 
-import { win as webWindow } from '@/web/shims/dom';
+import { nav as webNavigator, win as webWindow } from '@/web/shims/dom';
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { HtmlText } from '@/ui/htmlText';
 
@@ -58,7 +58,10 @@ function SwipeableNotif({ children, onDelete }) {
     if (!isDragging.current || startX.current === null) return;
     const dx = e.touches[0].clientX - startX.current;
     if (dx < 0) {
-      offsetRef.current = Math.max(dx, -140);
+      // PORT: vibrazione quando si supera la soglia (lasciando qui la notifica si elimina), come le liste native
+      const next = Math.max(dx, -140);
+      if ((offsetRef.current < -SWIPE_THRESHOLD) !== (next < -SWIPE_THRESHOLD)) webNavigator.vibrate?.(10);
+      offsetRef.current = next;
       x.setValue(offsetRef.current);
     }
   };
@@ -66,6 +69,7 @@ function SwipeableNotif({ children, onDelete }) {
   const handleTouchEnd = () => {
     isDragging.current = false;
     if (offsetRef.current < -SWIPE_THRESHOLD) {
+      webNavigator.vibrate?.(30);
       setDeleted(true);
       setTimeout(onDelete, 250);
     } else {

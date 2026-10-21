@@ -4,7 +4,7 @@
 //  - scroll della finestra → ScrollView della pagina (pageScroll.ts)
 //  - resize/orientationchange → Dimensions
 //  - history.pushState/back + "popstate" → tasto indietro di Android (BackHandler)
-//  - navigator.share/clipboard → Share / expo-clipboard; window.open → Linking
+//  - navigator.share/clipboard/vibrate → Share / expo-clipboard / expo-haptics; window.open → Linking
 //  - localStorage → memoria + AsyncStorage (caricato all'avvio)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
@@ -14,6 +14,7 @@ import { pageScroll } from './pageScroll';
 import { windowTouchSink } from '../../ui/gestures';
 import { getRegisteredById, setScrollIntoViewImpl } from '../../ui/domStyle';
 import { elementFromPoint } from '../../ui/domData';
+import { vibrate } from '../../ui/haptics';
 
 type AnyFn = (...a: any[]) => any;
 
@@ -142,6 +143,8 @@ export const nav = {
     if (res.action === Share.dismissedAction) throw Object.assign(new Error('Condivisione annullata'), { name: 'AbortError' });
   },
   canShare: (data?: { files?: unknown[] }) => !data?.files?.length,
+  /** navigator.vibrate dell'originale (menu delle semine, DM di Instagram, Academy) → expo-haptics */
+  vibrate,
   clipboard: {
     writeText: (t: string) => Clipboard.setStringAsync(String(t)).then(() => undefined),
     readText: () => Clipboard.getStringAsync(),

@@ -115,7 +115,8 @@ export default function PromoterContextMenu() {
       if (wasRecentScroll(300)) return;
       startX = t.clientX; startY = t.clientY;
       clear();
-      timer = setTimeout(() => { timer = null; touchOpenedRef.current = Date.now(); openMenu(el, startX, startY); }, 500);
+      // PORT: vibrazione all'apertura col dito, come un menu di sistema (ui/haptics)
+      timer = setTimeout(() => { timer = null; touchOpenedRef.current = Date.now(); webNavigator.vibrate?.(15); openMenu(el, startX, startY); }, 500);
     };
     const onTouchMove = (e) => {
       if (!timer) return;
