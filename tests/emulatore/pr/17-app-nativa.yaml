@@ -107,6 +107,16 @@ appId: com.vibra.mobile
     timeout: 30000
 - pressKey: back
 - waitForAnimationToEnd
+# pagina pesante mai aperta (Analytics clienti): entra subito con l'intestazione, il contenuto arriva scorrendo
+- openLink: vibra://clienti-analytics
+- takeScreenshot: pesante-entrata
+- waitForAnimationToEnd
+- takeScreenshot: pesante-aperta
+- pressKey: back
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 30000
+- waitForAnimationToEnd
 # 5) Icona dell'app nel launcher (sfondo #090909)
 - pressKey: home
 - waitForAnimationToEnd

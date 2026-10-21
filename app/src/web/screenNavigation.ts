@@ -8,6 +8,7 @@ import { NavigationContext } from 'expo-router/react-navigation';
 export type ScreenNav = {
   isFocused?: () => boolean;
   addListener?: (e: 'focus' | 'blur', fn: () => void) => () => void;
+  getState?: () => { type?: string } | undefined;
 } | undefined;
 
 export function useScreenNavigation(): ScreenNav {

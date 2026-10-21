@@ -52,14 +52,23 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
   // che React esegue a pezzi cedendo il passo ai tocchi. Prima il montaggio di una tab (1-2 mila elementi)
   // bloccava il JS per secondi subito dopo l'avvio: un tocco in quel momento non rispondeva.
   // Se la pagina prende il focus prima che la transition finisca, si monta subito (aggiornamento urgente).
+  // Pagina dello stack aperta ora (Locali, profilo promoter...): il primo disegno ha solo l'intestazione, così
+  // la pagina comincia subito a entrare scorrendo (animazione nativa, Stack del layout) e il contenuto si
+  // monta durante lo scorrimento. Prima il tocco aspettava il montaggio di tutta la pagina (fino a 3-4 s).
+  const [slideIn] = useState(() => {
+    if (!NATIVE_DRIVER) return false;
+    try { return !!navigation?.isFocused?.() && navigation?.getState?.()?.type === 'stack'; } catch { return false; }
+  });
   const [contentReady, setContentReady] = useState(() => {
+    if (slideIn) return false;
     try { return navigation?.isFocused?.() ?? true; } catch { return true; }
   });
   useEffect(() => {
     if (contentReady) return;
     startTransition(() => setContentReady(true));
+    if (slideIn) return;
     return navigation?.addListener?.('focus', () => setContentReady(true));
-  }, [contentReady, navigation]);
+  }, [contentReady, navigation, slideIn]);
   // pull-to-refresh chiesto dal contenuto (hooks/usePullToRefresh.native): RefreshControl nativo,
   // gesto e animazione sul thread UI (docs/REGOLE-PRESTAZIONI.md §5)
   const pageRefresh = useRef<(() => Promise<unknown> | void) | null>(null);
