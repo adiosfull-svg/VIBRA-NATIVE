@@ -14,6 +14,7 @@ import {
 } from '@/legacy/utils/reportData';
 import { exportReportPDF } from '@/legacy/utils/reportPDF';
 import { useProgressiveList } from '@/web/hooks/useProgressiveList';
+import { HIDDEN_ROW, widestRows } from '@/web/lib/tableMeasure';
 import EventCompareReport from '@/web/components/report/EventCompareReport';
 import DualPeriodWaveChart from '@/web/components/report/DualPeriodWaveChart';
 import DayTypeBreakdown from '@/web/components/report/DayTypeBreakdown';
@@ -92,7 +93,6 @@ function ReportHeader({ title, subtitle, onPrint, onPDF, pdfLoading }) {
 
 // PORT: riga della tabella Serate (in memo: aggiungendo righe si disegnano solo quelle nuove).
 // `hidden`: riga alta 0 e trasparente che serve solo a misurare le colonne (vedi VibraGroupReport).
-const HIDDEN_ROW = { height: 0, overflow: 'hidden', opacity: 0, borderBottomWidth: 0 };
 const EventRow = React.memo(function EventRow({ r, hidden }) {
   return (
     <Tr className={hidden ? undefined : 'border-b border-border/40 hover:bg-secondary/20'} style={hidden ? HIDDEN_ROW : undefined}>
@@ -106,22 +106,6 @@ const EventRow = React.memo(function EventRow({ r, hidden }) {
   );
 });
 const EVENT_COLS = [(r) => r.data, (r) => r.nome, (r) => r.locale, (r) => fmt(r.fatturato), (r) => String(r.promoter_attivi), (r) => fmt(r.fat_promoter)];
-
-/** Righe dopo le prime `skip` con il testo più lungo per colonna (le 2 più lunghe di ognuna): bastano a
- *  dare alla tabella le larghezze che avrebbe con tutte le righe montate. */
-function widestRows(rows, cols, skip) {
-  const picked = new Set();
-  for (const col of cols) {
-    let a = -1, b = -1;
-    for (let i = skip; i < rows.length; i++) {
-      const len = String(col(rows[i]) ?? '').length;
-      if (a < 0 || len > String(col(rows[a]) ?? '').length) { b = a; a = i; } else if (b < 0 || len > String(col(rows[b]) ?? '').length) b = i;
-    }
-    if (a >= 0) picked.add(a);
-    if (b >= 0) picked.add(b);
-  }
-  return [...picked].sort((x, y) => x - y).map((i) => rows[i]);
-}
 
 // ── Vibra Group ──
 function VibraGroupReport({ promoters, attendances, events, config }) {

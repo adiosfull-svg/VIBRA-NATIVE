@@ -1,5 +1,5 @@
 // Port di src/components/programmazione/ClientGrowthLeague.jsx (convertito da scripts/port/codemod.mjs).
-import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import React, { memo, useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from '@/ui/motion';
 import { ArrowUp, ArrowDown, Gem, Star, Instagram, ArrowUpDown, Search, Trophy, TrendingUp, TrendingDown } from '@/ui/icons.generated';
 import { rankingColor } from '@/legacy/utils/clientRanking';
@@ -10,6 +10,7 @@ import { useBulkSelection } from '@/web/lib/bulkSelectionContext';
 
 import { Btn, Div, H, P, Span } from '@/ui/html';
 import { usePageWindow } from '@/web/hooks/usePageWindow';
+import { HIDDEN_ROW, widestRows } from '@/web/lib/tableMeasure';
 import { A, HtmlInput, Table, Tbody, Td, Th, Thead, Tr } from '@/ui/elements';
 
 import { win as webWindow } from '@/web/shims/dom';
@@ -57,6 +58,95 @@ function TrendBadge({ trend }) {
   );
 }
 
+function renderCell(c, r) {
+  if (c.badge === 'trend') return <TrendBadge trend={r.monthTrend} />;
+  switch (c.key) {
+    case 'name':
+      return (
+        <Div className="flex items-center gap-1.5">
+          <ClientAvatar client={r.client} initials={r.initials} size="sm" />
+          <Span className="text-xs font-medium truncate max-w-[140px]">{r.client.name}</Span>
+          {r.client.is_leader && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 shrink-0" />}
+        </Div>
+      );
+    case 'ranking':
+      return r.ranking !== null && r.ranking !== undefined
+        ? <Span className={`inline-flex items-center gap-0.5 text-xs font-bold ${rankingColor(r.ranking)}`}><Gem className="w-3 h-3" />{r.ranking.toFixed(1)}</Span>
+        : <Span className="text-muted-foreground/40">—</Span>;
+    case 'visits':
+      return <Span className="text-xs font-semibold">{r.visits}</Span>;
+    case 'totalSpent':
+      return <Span className="text-xs font-medium text-primary">€{(r.totalSpent || 0).toLocaleString('it-IT')}</Span>;
+    case 'avgSpent':
+      return <Span className="text-xs">€{(r.avgSpent || 0).toLocaleString('it-IT')}</Span>;
+    case 'newPeople':
+      return <Span className="text-xs font-medium text-amber-400">{r.newPeople || 0}</Span>;
+    case 'attendanceRate':
+      return r.attendanceRate !== null && r.attendanceRate !== undefined
+        ? <Span className="text-xs font-bold text-emerald-400">{r.attendanceRate}%</Span>
+        : <Span className="text-muted-foreground/40">—</Span>;
+    case 'cicloMedio':
+      return r.cicloMedio != null
+        ? <Span className="text-xs">{r.cicloMedio} sett.</Span>
+        : <Span className="text-muted-foreground/40">—</Span>;
+    case 'daysAgo':
+      return <Span className="text-xs text-muted-foreground">{formatDays(r.daysAgo)}</Span>;
+    default:
+      return null;
+  }
+}
+
+const alignClass = (a) => a === 'left' ? 'text-left' : a === 'center' ? 'text-center' : 'text-right';
+
+// PORT: riga in memo con props stabili: spostando la finestra (usePageWindow) si disegnano solo le righe
+// che entrano; prima ogni spostamento ridisegnava tutte le righe montate
+const GrowthRow = memo(function GrowthRow({ r, position, selectMode, selected, onRowClick, hidden }) {
+  const phoneClean = r.client.phone?.replace(/\s/g, '');
+  const igHandle = r.client.instagram?.replace('@', '');
+  return (
+    <Tr
+      data-client-id={hidden ? undefined : r.client.id}
+      data-client-name={hidden ? undefined : r.client.name}
+      className={hidden ? undefined : `border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer`}
+      style={hidden ? HIDDEN_ROW : selected ? SELECTED_ROW : undefined}
+      onClick={hidden ? undefined : (e) => onRowClick(e, r.client)}>
+      {selectMode && (
+        <Td className="sticky left-0 bg-card z-20 px-3 py-2.5">
+          <SelectCheckbox selected={selected} />
+        </Td>
+      )}
+      {COLS.map(c => (
+        <Td key={c.key} className={`${c.sticky ? 'sticky left-0 bg-card z-10' : ''} px-3 py-2.5 ${alignClass(c.align)}`}>
+          {c.key === 'name'
+            ? <Div className="flex items-center gap-2"><Span className="text-[10px] text-muted-foreground w-4 text-center">{position}</Span>{renderCell(c, r)}</Div>
+            : renderCell(c, r)}
+        </Td>
+      ))}
+      <Td className="px-3 py-2.5 text-right" onClick={e => e.stopPropagation()}>
+        <Div className="flex items-center justify-end gap-1">
+          {phoneClean && <A href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-400/10"><WhatsAppIcon className="w-3.5 h-3.5" /></A>}
+          {igHandle && <A href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-pink-400 hover:bg-pink-400/10"><Instagram className="w-3.5 h-3.5" /></A>}
+        </Div>
+      </Td>
+    </Tr>
+  );
+});
+const SELECTED_ROW = { backgroundColor: 'rgba(139, 92, 246, 0.18)' };
+// testo di ogni colonna per scegliere le righe che danno le larghezze (web/lib/tableMeasure)
+const MEASURE_COLS = [
+  (r) => `${r.client.name}${r.client.is_leader ? ' *' : ''}`,
+  (r) => (r.ranking != null ? r.ranking.toFixed(1) : '—'),
+  (r) => String(r.visits),
+  (r) => (r.totalSpent || 0).toLocaleString('it-IT'),
+  (r) => (r.avgSpent || 0).toLocaleString('it-IT'),
+  (r) => String(r.newPeople || 0),
+  (r) => (r.attendanceRate != null ? `${r.attendanceRate}%` : '—'),
+  (r) => (r.cicloMedio != null ? `${r.cicloMedio} sett.` : '—'),
+  (r) => (r.monthTrend != null ? Math.abs(r.monthTrend).toFixed(0) : '—'),
+  (r) => formatDays(r.daysAgo),
+  (r) => `${r.client.phone ? 'w' : ''}${r.client.instagram ? 'i' : ''}`,
+];
+
 /**
  * Growth League dei clienti: tabella ordinabile, identica su mobile e desktop
  * (scroll orizzontale su mobile). Stile/colori allineati al Growth League del
@@ -98,51 +188,20 @@ export default function ClientGrowthLeague({ rows, onContact, onDetail, search =
   // PORT: la pagina è lo ScrollView di Page: finestra calcolata da hooks/usePageWindow
   const { containerRef: tbodyRef, start: viewStart, end: viewEnd } = usePageWindow(filtered.length, ROW_HEIGHT, OVERSCAN, 30);
   const view = { start: viewStart, end: viewEnd };
+  // PORT: colonne misurate una volta per elenco e modalità (Table measureKey) sulle righe montate più quelle
+  // nascoste con i testi più lunghi: prima ogni spostamento della finestra cambiava il contenuto e la tabella
+  // rimisurava tutte le righe (due render, colonne che saltavano durante lo scorrimento)
+  const measureRows = useMemo(() => widestRows(filtered, MEASURE_COLS, 0), [filtered]);
+  const measureKey = useMemo(() => ({ filtered, selectMode }), [filtered, selectMode]);
+  const rowClickRef = useRef(handleRowClick);
+  rowClickRef.current = handleRowClick;
+  const onRowClick = useCallback((e, client) => rowClickRef.current(e, client), []);
 
   const toggleSort = (key) => {
     if (key === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir(key === 'name' ? 'asc' : 'desc'); }
   };
 
-  const renderCell = (c, r) => {
-    if (c.badge === 'trend') return <TrendBadge trend={r.monthTrend} />;
-    switch (c.key) {
-      case 'name':
-        return (
-          <Div className="flex items-center gap-1.5">
-            <ClientAvatar client={r.client} initials={r.initials} size="sm" />
-            <Span className="text-xs font-medium truncate max-w-[140px]">{r.client.name}</Span>
-            {r.client.is_leader && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 shrink-0" />}
-          </Div>
-        );
-      case 'ranking':
-        return r.ranking !== null && r.ranking !== undefined
-          ? <Span className={`inline-flex items-center gap-0.5 text-xs font-bold ${rankingColor(r.ranking)}`}><Gem className="w-3 h-3" />{r.ranking.toFixed(1)}</Span>
-          : <Span className="text-muted-foreground/40">—</Span>;
-      case 'visits':
-        return <Span className="text-xs font-semibold">{r.visits}</Span>;
-      case 'totalSpent':
-        return <Span className="text-xs font-medium text-primary">€{(r.totalSpent || 0).toLocaleString('it-IT')}</Span>;
-      case 'avgSpent':
-        return <Span className="text-xs">€{(r.avgSpent || 0).toLocaleString('it-IT')}</Span>;
-      case 'newPeople':
-        return <Span className="text-xs font-medium text-amber-400">{r.newPeople || 0}</Span>;
-      case 'attendanceRate':
-        return r.attendanceRate !== null && r.attendanceRate !== undefined
-          ? <Span className="text-xs font-bold text-emerald-400">{r.attendanceRate}%</Span>
-          : <Span className="text-muted-foreground/40">—</Span>;
-      case 'cicloMedio':
-        return r.cicloMedio != null
-          ? <Span className="text-xs">{r.cicloMedio} sett.</Span>
-          : <Span className="text-muted-foreground/40">—</Span>;
-      case 'daysAgo':
-        return <Span className="text-xs text-muted-foreground">{formatDays(r.daysAgo)}</Span>;
-      default:
-        return null;
-    }
-  };
-
-  const alignClass = (a) => a === 'left' ? 'text-left' : a === 'center' ? 'text-center' : 'text-right';
 
   return (
     <Div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card" style={{ boxShadow: '0 4px 24px -6px rgba(167,139,250,0.10)' }}>
@@ -191,7 +250,7 @@ export default function ClientGrowthLeague({ rows, onContact, onDetail, search =
 
       {/* Tabella unica (mobile: scroll orizzontale) — identica al Growth League Promoter */}
       <Div className="overflow-x-auto client-table-scrollbar">
-        <Table className="w-full text-sm min-w-[940px]">
+        <Table className="w-full text-sm min-w-[940px]" measureKey={measureKey}>
           <Thead>
             <Tr className="border-b border-white/[0.06]">
               {COLS.map(c => (
@@ -215,39 +274,14 @@ export default function ClientGrowthLeague({ rows, onContact, onDetail, search =
             ) : (
               <>
                 {view.start > 0 && <Tr style={{ height: view.start * ROW_HEIGHT }}><Td colSpan={COLS.length + 1 + (selectMode ? 1 : 0)} /></Tr>}
-                {filtered.slice(view.start, view.end).map((r, i) => {
-                  const phoneClean = r.client.phone?.replace(/\s/g, '');
-                  const igHandle = r.client.instagram?.replace('@', '');
-                  return (
-                    <Tr
-                      key={r.client.id}
-                      data-client-id={r.client.id}
-                      data-client-name={r.client.name}
-                      className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer`}
-                      style={isSel(r.client.id) ? { backgroundColor: 'rgba(139, 92, 246, 0.18)' } : undefined}
-                      onClick={(e) => handleRowClick(e, r.client)}>
-                      {selectMode && (
-                        <Td className="sticky left-0 bg-card z-20 px-3 py-2.5">
-                          <SelectCheckbox selected={isSel(r.client.id)} />
-                        </Td>
-                      )}
-                      {COLS.map(c => (
-                        <Td key={c.key} className={`${c.sticky ? 'sticky left-0 bg-card z-10' : ''} px-3 py-2.5 ${alignClass(c.align)}`}>
-                          {c.key === 'name'
-                            ? <Div className="flex items-center gap-2"><Span className="text-[10px] text-muted-foreground w-4 text-center">{view.start + i + 1}</Span>{renderCell(c, r)}</Div>
-                            : renderCell(c, r)}
-                        </Td>
-                      ))}
-                      <Td className="px-3 py-2.5 text-right" onClick={e => e.stopPropagation()}>
-                        <Div className="flex items-center justify-end gap-1">
-                          {phoneClean && <A href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-400/10"><WhatsAppIcon className="w-3.5 h-3.5" /></A>}
-                          {igHandle && <A href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-pink-400 hover:bg-pink-400/10"><Instagram className="w-3.5 h-3.5" /></A>}
-                        </Div>
-                      </Td>
-                    </Tr>
-                  );
-                })}
+                {filtered.slice(view.start, view.end).map((r, i) => (
+                  <GrowthRow key={r.client.id} r={r} position={view.start + i + 1} selectMode={selectMode}
+                    selected={isSel(r.client.id)} onRowClick={onRowClick} />
+                ))}
                 {view.end < filtered.length && <Tr style={{ height: (filtered.length - view.end) * ROW_HEIGHT }}><Td colSpan={COLS.length + 1 + (selectMode ? 1 : 0)} /></Tr>}
+                {measureRows.map((r, i) => (
+                  <GrowthRow key={`m${i}`} r={r} position={filtered.length} selectMode={selectMode} hidden />
+                ))}
               </>
             )}
           </Tbody>

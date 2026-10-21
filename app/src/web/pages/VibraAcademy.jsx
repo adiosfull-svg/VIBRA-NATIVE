@@ -34,6 +34,39 @@ const AcademyTileRow = memo(function AcademyTileRow({ section, description, Icon
   );
 });
 
+// PORT: pillole in memo: le tile montate a blocchi scorrendo (useProgressiveList) e la barra sticky ridisegnano
+// la pagina, e prima con lei tutte le pillole (~20 pulsanti con icona) a ogni blocco
+const SectionPills = memo(function SectionPills({ sections, expandedId, onPick }) {
+  return (
+    <Div
+      className="relative overflow-x-auto overflow-y-hidden"
+      style={PILLS_SCROLL_STYLE}
+    >
+      <Div className="flex gap-1.5 w-max min-w-full">
+        {sections.map(s => {
+          const isActive = expandedId === s.id;
+          const ResolvedIcon = ICON_MAP[s.icon] || BookOpen;
+          return (
+            <Btn
+              button
+              key={s.id}
+              onClick={() => onPick(s.id)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                isActive
+                  ? 'bg-primary/15 text-primary border border-primary/30'
+                  : 'bg-secondary/40 text-muted-foreground border border-border hover:text-foreground hover:bg-secondary/60'
+              }`}>
+              <ResolvedIcon className="w-3.5 h-3.5" />
+              {s.title}
+            </Btn>
+          );
+        })}
+      </Div>
+    </Div>
+  );
+});
+const PILLS_SCROLL_STYLE = { WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' };
+
 /** PORT: scrollIntoView di un elemento che il montaggio progressivo potrebbe non avere ancora creato. */
 function scrollToTile(id, tries = 8) {
   const el = webDocument.getElementById(`academy-tile-${id}`);
@@ -42,7 +75,6 @@ function scrollToTile(id, tries = 8) {
 }
 import AcademySideRail from '@/web/components/academy/AcademySideRail';
 import { useIsMobile } from '@/web/hooks/use-mobile';
-import { makeTapHandlers } from '@/web/lib/tapHandlers';
 import { useStickySentinel } from '@/web/hooks/useStickySentinel';
 import { stickyGlassStyle } from '@/legacy/utils/stickyGlass';
 import { useStickyTabFlash } from '@/web/hooks/useStickyTabFlash';
@@ -172,7 +204,7 @@ export default function VibraAcademy() {
   // di setExpandedId(null) prima di calcolare la posizione di scroll.
   // PORT: tile montate a blocchi (useProgressiveList); prima di saltare a una tile si mostrano tutte
   const { count: shownTiles, sentinelRef: tilesSentinelRef, showAll: showAllTiles } = useProgressiveList(filteredSections.length, { initial: 4, step: 4 });
-  const handleRailJump = (id) => {
+  const handleRailJump = useCallback((id) => {
     setExpandedId(null);
     showAllTiles();
     requestAnimationFrame(() => {
@@ -180,7 +212,13 @@ export default function VibraAcademy() {
         scrollToTile(id);
       });
     });
-  };
+  }, [showAllTiles]);
+  // makeTapHandlers dell'originale: sul telefono è solo onClick (web/lib/tapHandlers)
+  const handlePillPick = useCallback((id) => {
+    setExpandedId(id);
+    showAllTiles();
+    scrollToTile(id);
+  }, [showAllTiles]);
 
   return (
     <Div className="space-y-4 pb-10">
@@ -228,35 +266,7 @@ export default function VibraAcademy() {
         </Div>
         {/* Pillose sezioni (scroll orizzontale) */}
         {filteredSections.length > 0 && (
-          <Div
-            className="relative overflow-x-auto overflow-y-hidden"
-            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
-          >
-            <Div className="flex gap-1.5 w-max min-w-full">
-              {filteredSections.map(s => {
-                const isActive = expandedId === s.id;
-                const ResolvedIcon = ICON_MAP[s.icon] || BookOpen;
-                return (
-                  <Btn
-                    button
-                    key={s.id}
-                    {...makeTapHandlers(lastTouchRef, () => {
-                      setExpandedId(s.id);
-                      showAllTiles();
-                      scrollToTile(s.id);
-                    })}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-                      isActive
-                        ? 'bg-primary/15 text-primary border border-primary/30'
-                        : 'bg-secondary/40 text-muted-foreground border border-border hover:text-foreground hover:bg-secondary/60'
-                    }`}>
-                    <ResolvedIcon className="w-3.5 h-3.5" />
-                    {s.title}
-                  </Btn>
-                );
-              })}
-            </Div>
-          </Div>
+          <SectionPills sections={filteredSections} expandedId={expandedId} onPick={handlePillPick} />
         )}
       </Div>
 

@@ -46,6 +46,31 @@ appId: com.vibra.mobile
     optional: true
 - takeScreenshot: scorri-tab-clienti
 - runFlow: ../sub/scorri.yaml
+# Clienti > Growth (tabella virtualizzata): la barra delle tab scorre in orizzontale, passi brevi
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "Sofia Colombo"
+    timeout: 90000
+- repeat:
+    while:
+      notVisible: "Growth League.*"
+    times: 10
+    commands:
+      - swipe:
+          start: 75%, 16%
+          end: 45%, 16%
+          duration: 600
+      - waitForAnimationToEnd
+      - tapOn:
+          text: "Growth"
+          optional: true
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 6000
+    optional: true
+- takeScreenshot: scorri-clienti-growth
+- runFlow: ../sub/scorri.yaml
 - openLink: vibra://notifiche
 - extendedWaitUntil:
     visible: "testo-che-non-esiste"

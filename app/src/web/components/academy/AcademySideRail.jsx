@@ -16,7 +16,8 @@ import { Path, Svg } from '@/ui/elements';
  * - Fisheye sulle icone durante il drag
  * - Effetto "pop-up" dell'intera sidebar quando viene premuta
  */
-export default function AcademySideRail({ items, onJump }) {
+// PORT: in memo (items e onJump stabili): la pagina si ridisegna a ogni blocco di tile e a ogni cambio della barra sticky
+export default React.memo(function AcademySideRail({ items, onJump }) {
   const [scrubbing, setScrubbing] = useState(false);
   const [scrubIndex, setScrubIndex] = useState(-1);
   const [scrubY, setScrubY] = useState(0);
@@ -416,4 +417,4 @@ export default function AcademySideRail({ items, onJump }) {
     </>,
     webDocument.body
   );
-}
+});

@@ -9,6 +9,7 @@ import DeferredChart from '@/web/components/shared/DeferredChart';
 import { ArrowLeft, BarChart2, ChevronDown, ChevronUp, Calendar, MapPin, Table } from '@/ui/icons.generated';
 import SectionHeader from '@/web/components/shared/SectionHeader';
 import { useProgressiveList } from '@/web/hooks/useProgressiveList';
+import { HIDDEN_ROW, widestRows } from '@/web/lib/tableMeasure';
 import { Link } from '@/web/router';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
@@ -59,9 +60,10 @@ function ClientTick({ x, y, payload, data, fontSize = 9, maxLen = 10, width = 80
 
 // PORT: riga del riepilogo in memo: aggiungendo righe si disegnano solo quelle nuove (prima tutta la
 // tabella a ogni gruppo: costo che cresceva col quadrato delle righe)
-const SummaryRow = React.memo(function SummaryRow({ c, venues }) {
+// `hidden`: riga alta 0 che serve solo a misurare le colonne (web/lib/tableMeasure)
+const SummaryRow = React.memo(function SummaryRow({ c, venues, hidden }) {
   return (
-    <Tr className="border-b border-border/50 hover:bg-secondary/20 transition-colors">
+    <Tr className={hidden ? undefined : 'border-b border-border/50 hover:bg-secondary/20 transition-colors'} style={hidden ? HIDDEN_ROW : undefined}>
       <Td className="px-2.5 py-1.5 font-medium sticky left-0 bg-card whitespace-nowrap">
         <Div className="flex items-center gap-1.5">
           {c.photo_url && <Img src={c.photo_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} className="w-4 h-4 rounded-full object-cover shrink-0" />}
@@ -185,6 +187,14 @@ export default function ClientiAnalytics() {
   // gruppi avvicinandosi alla fine (tabella in fondo alla pagina, ~3000 celle con tutti i clienti)
   const tableVenues = useMemo(() => uniqueVenues.filter(venue => clientStats.some(c => (c.venueCounts[venue] || 0) > 0)), [uniqueVenues, clientStats]);
   const { count: shownRows, sentinelRef: rowsSentinelRef } = useProgressiveList(clientStats.length, { initial: 15, step: 30, idleStep: 0 });
+  // PORT: colonne misurate una volta (Table measureKey) su righe nascoste con i testi più lunghi: prima ogni
+  // blocco di righe nuove faceva rimisurare e ridisegnare due volte l'intera tabella mentre si scorreva
+  // (emulatore, prove/scorrimento: ~2200 div ridisegnati in pochi lanci, colonne che saltavano)
+  const measureRows = useMemo(() => widestRows(clientStats, [
+    (c) => c.name, (c) => String(c.visits),
+    ...tableVenues.map((venue) => (c) => String(c.venueCounts[venue] || 0)),
+    (c) => c.totalSpent.toLocaleString('it-IT'), (c) => c.avgSpent.toLocaleString('it-IT'),
+  ], 15), [clientStats, tableVenues]);
 
   const metrics = [
     { key: 'totalSpent', label: 'Spesa Totale' },
@@ -438,7 +448,7 @@ export default function ClientiAnalytics() {
           <SectionHeader icon={Table} title="Riepilogo Completo" color="#4ade80" />
         </Div>
         <Div className="overflow-x-auto">
-          <HtmlTable className="w-full text-xs">
+          <HtmlTable className="w-full text-xs" measureKey={measureRows}>
             <Thead>
               <Tr className="border-b border-border">
                 <Th className="text-left px-2.5 py-2 font-medium text-muted-foreground sticky left-0 bg-secondary/30 whitespace-nowrap">Cliente</Th>
@@ -453,6 +463,9 @@ export default function ClientiAnalytics() {
             <Tbody>
               {clientStats.slice(0, shownRows).map((c, i) => (
                 <SummaryRow key={i} c={c} venues={tableVenues} />
+              ))}
+              {measureRows.map((c, i) => (
+                <SummaryRow key={`m${i}`} c={c} venues={tableVenues} hidden />
               ))}
             </Tbody>
           </HtmlTable>
