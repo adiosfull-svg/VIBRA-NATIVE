@@ -596,7 +596,13 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   TextInput animato (grafica diversa). Lasciati così.
 - Notifiche non lette: la card ha `bg-card` e `bg-primary/5` insieme; vince la seconda (anche nel CSS dell'originale,
   primary dopo card), trasparente, e si vede il rosso dello sfondo «elimina» sotto. Da decidere con Antonio.
-- Resta: funzioni da app (punto 5, da scegliere con Antonio).
+- **Vibrazione al tocco** (punto 5, scelta di Antonio; `ui/haptics.ts`, expo-haptics, niente sul web): `navigator.vibrate`
+  dell'originale ora vibra anche sul telefono (shim in web/shims/dom.ts: menu delle semine, DM di Instagram, Academy);
+  in più menu col tasto lungo di clienti e promoter, selezione multipla, soglia e eliminazione dello swipe delle
+  notifiche, aggiorna tirando giù (Page), Switch, menu laterale aperto col gesto. Suite pr: stesse prove verdi (run
+  39683483918); l'emulatore non vibra, da sentire sul telefono.
+- Restano tra le funzioni da app proposte: uso senza rete (cache più lunga + avviso), scorciatoie dall'icona, Indietro
+  predittivo di Android.
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
