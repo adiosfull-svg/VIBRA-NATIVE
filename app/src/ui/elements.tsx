@@ -140,7 +140,11 @@ export function Table({ className, children, style, measureKey }: { className?: 
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const widths = tableColumnWidths(Array.from(natural.current, (w) => w ?? 0), tableWidth.current);
-      setState((s) => ({ ...s, widths }));
+      // stesse larghezze (a meno di arrotondamenti): nessun ridisegno. Prima ogni onLayout della tabella
+      // dava un array nuovo, le colonne si ridisegnavano e l'arrotondamento al pixel cambiava di nuovo la
+      // larghezza: ciclo continuo (Analisi Clienti dell'admin, intestazione ridisegnata 3 volte al secondo
+      // anche da pagina nascosta)
+      setState((s) => (s.widths && s.widths.length === widths.length && s.widths.every((w, i) => Math.abs(w - widths[i]) < 0.5) ? s : { ...s, widths }));
     }, 16);
   }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
@@ -151,7 +155,12 @@ export function Table({ className, children, style, measureKey }: { className?: 
   return (
     <TableContext.Provider value={ctx}>
       <Div className={cn('flex flex-col w-full', className)} style={style}
-        onLayout={(e) => { tableWidth.current = e.nativeEvent.layout.width; if (!measuring) finish(); }}>
+        onLayout={(e) => {
+          const w = e.nativeEvent.layout.width;
+          if (tableWidth.current && Math.abs(w - tableWidth.current) < 1) return;
+          tableWidth.current = w;
+          if (!measuring) finish();
+        }}>
         {children}
       </Div>
     </TableContext.Provider>

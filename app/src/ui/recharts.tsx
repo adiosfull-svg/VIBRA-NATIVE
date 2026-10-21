@@ -4,7 +4,7 @@
 // tick personalizzati), CartesianGrid, Tooltip (al tocco, formatter/content), Legend, RadarChart.
 import { diagCount } from '../lib/testDiag';
 import {
-  Children, cloneElement, createContext, Fragment, isValidElement, useContext, useMemo, useState,
+  Children, cloneElement, createContext, Fragment, isValidElement, memo, useContext, useMemo, useState,
   type ReactElement, type ReactNode,
 } from 'react';
 import { Platform, Pressable, View, type LayoutChangeEvent } from 'react-native';
@@ -448,14 +448,23 @@ function ChartTiles({ width, height, catStart, band, count, draw, onTouch }: {
     // categorie che toccano la fascia, più una per lato (etichette che sporgono dalla banda)
     const from = Math.max(0, Math.floor((top - catStart) / band) - 1);
     const to = Math.min(count, Math.ceil((top + h - catStart) / band) + 1);
-    out.push(
-      <Pressable key={t} onPress={(e) => onTouch(e.nativeEvent.locationX, e.nativeEvent.locationY + top)} style={{ position: 'absolute', top, left: 0, width, height: h }}>
-        <Svg width={width} height={h}>{draw(top, from, to)}</Svg>
-      </Pressable>,
-    );
+    out.push(<ChartTile key={t} top={top} h={h} from={from} to={to} width={width} draw={draw} onTouch={onTouch} />);
   }
   return <View ref={win.containerRef} style={{ width, height }}>{out}</View>;
 }
+
+/** Una fascia: in memo, spostando la finestra si disegnano solo le fasce che entrano (prima tutte quelle
+ *  montate, ~800 elementi dell'Svg a ogni spostamento in Analisi Clienti mentre si scorre). */
+const ChartTile = memo(function ChartTile({ top, h, from, to, width, draw, onTouch }: {
+  top: number; h: number; from: number; to: number; width: number;
+  draw: (oy: number, from: number, to: number) => ReactNode; onTouch: (x: number, y: number) => void;
+}) {
+  return (
+    <Pressable onPress={(e) => onTouch(e.nativeEvent.locationX, e.nativeEvent.locationY + top)} style={{ position: 'absolute', top, left: 0, width, height: h }}>
+      <Svg width={width} height={h}>{draw(top, from, to)}</Svg>
+    </Pressable>
+  );
+});
 
 export const BarChart = (p: CartesianProps) => <CartesianChart kind="bar" {...p} />;
 export const LineChart = (p: CartesianProps) => <CartesianChart kind="line" {...p} />;
