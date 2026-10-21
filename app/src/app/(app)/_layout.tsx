@@ -29,6 +29,7 @@ import { useNotificationsPolling } from '../../web/hooks/useNotifications';
 import { useAuth } from '../../lib/auth';
 import { prefetchCriticalData } from '../../web/lib/prefetchCoreData';
 import { haptic } from '../../ui/haptics';
+import OfflineBanner from '../../web/components/layout/OfflineBanner';
 
 // Immagini del guscio (header, nav bar, sidebar): in memoria prima del primo disegno, mai un flash
 // (docs/REGOLE-PRESTAZIONI.md §6). Le immagini delle pagine le precarica ogni pagina.
@@ -178,6 +179,8 @@ export default function AppLayout() {
       <Sidebar />
       <AccountMenuPanel />
       <SystemBarsFill />
+      {/* senza rete: pillola «offline» sopra tutto (coi dati salvati l'app resta usabile) */}
+      <OfflineBanner />
       </CalcolatriceProvider>
     </LayoutUIProvider>
   );

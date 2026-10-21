@@ -1,0 +1,53 @@
+# PR: uso senza rete (lib/queryCachePersist 24 ore, lib/network, OfflineBanner). Primo giro con la rete per
+# salvare i dati, poi modalità aereo e riavvio: l'app si apre coi dati salvati e la pillola «Sei offline»;
+# tornata la rete la pillola sparisce. (Il server di prova passa da adb reverse e risponderebbe anche in
+# modalità aereo: conta che l'app si comporti da offline, cioè pillola e dati senza nuove richieste.)
+appId: com.vibra.mobile
+---
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible:
+      text: "I Miei Progressi|Password"
+    timeout: 180000
+- runFlow: ../sub/sistema.yaml
+- runFlow: ../sub/login.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "LISTA CLIENTI"
+    timeout: 90000
+- extendedWaitUntil:
+    visible: "Sofia Colombo"
+    timeout: 60000
+- waitForAnimationToEnd
+# la cache si scrive 4 s dopo l'ultimo cambio dei dati, a app ferma
+- extendedWaitUntil:
+    visible: "__attesa_salvataggio_cache__"
+    timeout: 15000
+    optional: true
+- setAirplaneMode: enabled
+- extendedWaitUntil:
+    visible: "Sei offline · dati salvati"
+    timeout: 20000
+- takeScreenshot: offline-pillola
+- stopApp
+- launchApp
+- runFlow: ../sub/sistema.yaml
+- extendedWaitUntil:
+    visible: "I Miei Progressi"
+    timeout: 180000
+- assertVisible: "Sei offline · dati salvati"
+- takeScreenshot: offline-avvio
+- openLink: vibra://clienti
+- extendedWaitUntil:
+    visible: "Sofia Colombo"
+    timeout: 60000
+- takeScreenshot: offline-clienti
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    notVisible: "Sei offline · dati salvati"
+    timeout: 60000
+- takeScreenshot: online-di-nuovo

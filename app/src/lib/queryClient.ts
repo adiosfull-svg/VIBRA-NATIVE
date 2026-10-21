@@ -2,6 +2,8 @@
 import { QueryClient, focusManager } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 import { diagQueries } from './testDiag';
+// stato della rete → onlineManager (richieste in pausa senza rete)
+import './network';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
