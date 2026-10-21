@@ -58,7 +58,11 @@ Dimensions.addEventListener('change', ({ window }) => Object.assign(cssViewport,
  * testo vuoto o fatto solo di spazi non occupa posto.
  */
 const NO_CHILDREN: ReactNode[] = [];
-function wrapText(children: ReactNode): ReactNode {
+function wrapText(children: ReactNode, inlineFlow = false): ReactNode {
+  if (inlineFlow) {
+    const merged = mergeInlineRuns(children);
+    if (merged) return merged;
+  }
   // uscite rapide (stesso risultato di Children.toArray): niente figli, o un solo testo/numero. Non per un
   // elemento singolo: toArray gli dà la chiave ".0" e senza si rimonterebbe passando da 1 a 2 figli.
   if (children == null || typeof children === 'boolean') return NO_CHILDREN;
@@ -82,6 +86,83 @@ function wrapText(children: ReactNode): ReactNode {
   }
   flush();
   return out;
+}
+
+/**
+ * Contenitore a blocco con testo e <span> di solo testo mescolati (es. `Studentessa di <strong>Economia</strong>
+ * alla...`): in CSS stanno nella stessa riga e vanno a capo insieme. In RN ogni pezzo sarebbe un blocco a sé
+ * (una riga per pezzo): la sequenza diventa un solo <Text> con gli span annidati. Solo span senza riquadro
+ * (niente padding, bordi, sfondi: in un testo annidato si perderebbero); null se non c'è niente da unire.
+ */
+function flatInline(children: ReactNode, out: ReactNode[]): void {
+  for (const c of Children.toArray(children)) {
+    if (isValidElement(c) && c.type === Fragment) flatInline((c.props as { children?: ReactNode }).children, out);
+    else out.push(c);
+  }
+}
+function inlineSpan(c: ReactNode): boolean {
+  if (!isValidElement(c) || c.type !== Span) return false;
+  const p = c.props as { className?: unknown; style?: unknown; children?: ReactNode };
+  if (p.style != null || (p.className != null && typeof p.className !== 'string')) return false;
+  if (splitTextClasses(p.className as string | undefined)[1].trim() !== '') return false;
+  return !hasBoxyChild(p.children);
+}
+function mergeInlineRuns(children: ReactNode): ReactNode[] | null {
+  const items: ReactNode[] = [];
+  flatInline(children, items);
+  if (!items.some(inlineSpan) || !items.some((c) => typeof c === 'string' || typeof c === 'number')) return null;
+  const out: ReactNode[] = [];
+  let run: ReactNode[] = [];
+  const flush = () => {
+    if (run.length && run.some((c) => typeof c !== 'string' || c.trim() !== '')) {
+      out.push(<Text key={`inline-${out.length}`}>{run}</Text>);
+    }
+    run = [];
+  };
+  for (const c of items) {
+    if (typeof c === 'string' || typeof c === 'number' || inlineSpan(c)) { run.push(c); continue; }
+    flush();
+    out.push(c);
+  }
+  flush();
+  return out;
+}
+
+/**
+ * Telefono: translate in percentuale delle classi (-translate-x-1/2 per centrare avatar e badge) come style
+ * con la percentuale, che RN applica da sé sulla misura dell'elemento. Via NativeWind serviva un onLayout e
+ * un secondo disegno (e la cache delle classi teneva il valore del primo, 0: avatar spostati di mezza
+ * larghezza nelle card montate dopo). Solo senza altre trasformazioni nelle classi (lo style le
+ * sostituirebbe tutte); null se non c'è niente da togliere.
+ */
+const PCT_TRANSLATE = /^(-?)translate-([xy])-(?:(\d+)\/(\d+)|(full)|\[(-?\d+(?:\.\d+)?)%\])$/;
+const OTHER_TRANSFORM = /^-?(translate-[xy]|scale|scale-[xy]|rotate|skew-[xy])-/;
+const pctCache = new Map<string, [string, ViewStyle] | null>();
+function percentTranslate(box: string): [string, ViewStyle] | null {
+  if (!box.includes('translate-')) return null;
+  let v = pctCache.get(box);
+  if (v !== undefined) return v;
+  v = null;
+  const keep: string[] = [];
+  const tf: Record<string, string> = {};
+  let other = false;
+  for (const c of box.split(/\s+/)) {
+    const m = c.match(PCT_TRANSLATE);
+    if (m) {
+      const pct = m[5] ? 100 : m[6] != null ? Number(m[6]) : (100 * Number(m[3])) / Number(m[4]);
+      tf[m[2] === 'x' ? 'translateX' : 'translateY'] = `${m[1] ? -pct : pct}%`;
+    } else {
+      if (OTHER_TRANSFORM.test(c)) other = true;
+      if (c) keep.push(c);
+    }
+  }
+  if (!other && (tf.translateX || tf.translateY)) {
+    const transform = [tf.translateX ? { translateX: tf.translateX } : null, tf.translateY ? { translateY: tf.translateY } : null].filter(Boolean);
+    v = [keep.join(' '), { transform } as unknown as ViewStyle];
+  }
+  if (pctCache.size > 2000) pctCache.clear();
+  pctCache.set(box, v);
+  return v;
 }
 
 const GRADIENT_POINTS: Record<string, [{ x: number; y: number }, { x: number; y: number }]> = {
@@ -321,8 +402,8 @@ function templateGridRows(children: ReactNode, grid: Grid, className?: string): 
   return [...outOfFlow, ...rows];
 }
 
-function boxContent(children: ReactNode, grid?: Grid, className?: string) {
-  return grid ? gridChildren(children, grid, className) : stickySplit(wrapText(spaceOverrides(collapseSiblingMargins(children, className), className)), className);
+function boxContent(children: ReactNode, grid?: Grid, className?: string, inlineFlow = false) {
+  return grid ? gridChildren(children, grid, className) : stickySplit(wrapText(spaceOverrides(collapseSiblingMargins(children, className), className), inlineFlow), className);
 }
 
 // Margini verticali dalle classi senza varianti (mt/mb/my/m): l'ultima classe vince, come tailwind-merge.
@@ -603,9 +684,30 @@ const TRANSFORMED = cachedTest(/(^|\s)-?(translate-[xy]|scale|rotate|skew)-/);
 const hasTransform = (rawClass: string, style?: Record<string, any>) =>
   TRANSFORMED.test(rawClass) || (Array.isArray(style?.transform) ? style.transform.length > 0 : style?.transform != null && style.transform !== 'none');
 
+// larghezza fissa delle classi (w-4, size-7, w-[18px]), senza varianti
+const FIXED_W = /(?:^|\s)(?:w|size)-(?:(\d+(?:\.\d+)?)|\[(\d+(?:\.\d+)?)px\])(?=\s|$)/;
+const fixedWidthCache = new Map<string, number | null>();
+function fixedWidth(cls: string): number | null {
+  let v = fixedWidthCache.get(cls);
+  if (v === undefined) {
+    const m = cls.match(FIXED_W);
+    v = m ? (m[1] != null ? Number(m[1]) * 4 : Number(m[2])) : null;
+    if (fixedWidthCache.size > 5000) fixedWidthCache.clear();
+    fixedWidthCache.set(cls, v);
+  }
+  return v;
+}
+const MIN_W_ZERO = cachedTest(/(^|\s)(min-w-\S+|overflow-hidden|overflow-x-auto|overflow-auto|truncate)(\s|$)/);
+
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
   const base: Record<string, any> = grid ? { rowGap: grid.gapY } : {};
-  if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) base.flexShrink = 1;
+  if (layout === 'flex' && !SHRINK_CLASS.test(className ?? '') && style?.flexShrink == null && style?.flex == null) {
+    base.flexShrink = 1;
+    // larghezza fissa in una riga che non ci sta (es. il "?" della legenda nel retro delle Semine): in CSS
+    // min-width: auto non la fa scendere sotto il contenuto, in Yoga si restringeva fino a sparire
+    const w = style?.width == null && style?.minWidth == null && !MIN_W_ZERO.test(className ?? '') ? fixedWidth(className ?? '') : null;
+    if (w != null) base.minWidth = w;
+  }
   if (gridCell && !NO_STRETCH.test(withoutHFull(rawClass ?? '')) && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
   // ordine di disegno CSS: gli elementi posizionati (o trasformati) stanno sopra ai fratelli non posizionati
   // (in RN-web tutte le View sono relative e conta solo l'ordine nel codice)
@@ -687,10 +789,23 @@ const WEB_MIN_CONTENT = { minWidth: 'min-content' } as unknown as ViewStyle;
  * naturale, il testo dice la sua larghezza e quella della parola più lunga (MinContentProbeContext,
  * text.tsx), minWidth = naturale − testo + parola.
  */
-function useButtonMinContent(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void) {
+// misure già fatte (stesse classi e stesso testo = stessa larghezza min-content): i pulsanti uguali delle card
+// di una lista (Rimuovi delle Semine) non rifanno la misura e il secondo disegno
+const minContentCache = new Map<string, number>();
+const ZERO_BASIS = cachedTest(/(^|\s)(flex-1|basis-0)(\s|$)/);
+
+function useButtonMinContent(enabled: boolean, children: ReactNode, onLayout?: (e: LayoutChangeEvent) => void, cls = '') {
   const web = Platform.OS === 'web';
   const sig = enabled && !web ? textSignature(children) : '';
-  const [done, setDone] = useState<{ sig: string; min: number } | null>(null);
+  const cacheKey = `${cls}|${sig}`;
+  const [done0, setDone0] = useState<{ sig: string; min: number } | null>(null);
+  const cachedMin = enabled && !web && done0?.sig !== sig ? minContentCache.get(cacheKey) : undefined;
+  const done = cachedMin != null ? { sig, min: cachedMin } : done0;
+  const setDone = (d: { sig: string; min: number }) => {
+    if (minContentCache.size > 2000) minContentCache.clear();
+    minContentCache.set(`${cls}|${d.sig}`, d.min);
+    setDone0(d);
+  };
   const measuring = enabled && !web && done?.sig !== sig;
   const acc = useRef<{ w?: number; text?: number; word?: number }>({});
   if (measuring && acc.current.w === undefined && acc.current.text === undefined) acc.current = {};
@@ -1218,7 +1333,7 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   const rowValue = !grid && isFlexRow(rest);
   const needFlow = useSticky(flowValue !== layout);
   const needRow = useSticky(rowValue !== rowParent);
-  let content0 = boxContent(children, grid, rest);
+  let content0 = boxContent(children, grid, rest, flowValue === 'block');
   if (needRow) content0 = <FlexRowContext.Provider value={rowValue}>{content0}</FlexRowContext.Provider>;
   if (needFlow) content0 = <FlexParentContext.Provider value={flowValue}>{content0}</FlexParentContext.Provider>;
   if (inner) content0 = <FlipContext.Provider value={inner.flip}>{content0}</FlipContext.Provider>;
@@ -1275,8 +1390,9 @@ function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...al
   }
   // motion.div (ui/motion.tsx): opacity/transform/width animati sull'elemento stesso
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
-  const boxClasses = cn(box, nativeBlur && 'overflow-hidden');
-  const ownStyle = [boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style];
+  const pct = Platform.OS !== 'web' ? percentTranslate(box) : null;
+  const boxClasses = cn(pct ? pct[0] : box, nativeBlur && 'overflow-hidden');
+  const ownStyle = [boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), pct?.[1], ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style];
   const boxInner = (
     <>
       {nativeBlur}
@@ -1506,7 +1622,8 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const text = button ? cn('text-center', ownText) : ownText;
   const { box: box0, grid, gradient: classGradient, ring, viewport } = normalizeClasses(rest);
   const box = gridCell ? withoutHFull(box0) : box0;
-  const states = Platform.OS !== 'web' && box ? btnStates(box) : null;
+  const pct = Platform.OS !== 'web' ? percentTranslate(box) : null;
+  const states = Platform.OS !== 'web' && box ? btnStates(pct ? pct[0] : box) : null;
   const ringStyle = ring ? ringShadow(ring) : null;
   const vpStyle = viewportSizeStyle(viewport);
   const { style: rnStyle, gradient: styleGradient } = useWebStyle(style);
@@ -1515,14 +1632,18 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
   const min0 = useMinContentWidth(className, rnStyle, children, onLayout ?? undefined, rowParent && !OUT_OF_FLOW_CLASS.test(rest));
   // min-width: auto (CSS) per un pulsante in una riga flex con contenuto che non va a capo (icone, una
   // parola): non si restringe sotto la sua larghezza; senza misure, basta non farlo restringere
-  const rigidBtn = rowParent && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
+  // flex-1 (base 0): crescere/restringersi da 0 è giusto, ma come in CSS non sotto il contenuto. Con flexShrink 0
+  // e base 0 il pulsante restava alla sua quota (Chat | Rimuovi delle card Semine: "Rimuovi" usciva dal bordo)
+  const zeroBasis = ZERO_BASIS.test(rest);
+  const rigidBtn = rowParent && !zeroBasis && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
     && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && unbreakableContent(children)
     ? RIGID_BTN : null;
   // testo che va a capo (es. pillola "Ordine aggiunta"): non sotto la parola più lunga (min-content)
   const minContent = useButtonMinContent(
     rowParent && !rigidBtn && !min0.enabled && !NO_MIN_CONTENT.test(className ?? '') && !OUT_OF_FLOW_CLASS.test(rest)
-      && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null && hasBreakableText(children),
-    children, min0.onLayout,
+      && rnStyle?.width == null && rnStyle?.minWidth == null && rnStyle?.flexShrink == null && rnStyle?.flex == null
+      && (hasBreakableText(children) || (zeroBasis && unbreakableContent(children) && textSignature(children) !== '')),
+    children, min0.onLayout, rest,
   );
   const lead = useLeadMargin(rnStyle);
   const inlineButton = button && layout === 'block' && !BUTTON_BLOCKY.test(rest) && rnStyle?.alignSelf == null && rnStyle?.width == null
@@ -1562,10 +1683,10 @@ export function Btn({ className, children, onClick, onPress, disabled, style, on
       disabled={disabled}
       onPress={handlePress}
       isButton={button}
-      classes={cn(states ? states.base : box, disabled && 'opacity-50')}
+      classes={cn(states ? states.base : pct ? pct[0] : box, disabled && 'opacity-50')}
       disabledStyle={disabled ? states?.disabled : null}
       activeStyle={states?.active}
-      ownStyle={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle]}
+      ownStyle={[boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), pct?.[1], rigidBtn, minContent.style, ringStyle, vpStyle, inlineButton, buttonCenter, rnStyle, lead, min.minStyle]}
     >
       {gradient ? <GradientFill gradient={gradient} radius={fillRadius(box, rnStyle)} /> : null}
       {content}

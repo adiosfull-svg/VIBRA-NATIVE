@@ -60,17 +60,21 @@ export default function SeminaCardBack({ semina, onClose }) {
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <Span key={i} className='font-bold text-foreground font-semibold'>{part.slice(2, -2)}</Span>;
+        return <Span key={i} className='text-foreground font-semibold'>{part.slice(2, -2)}</Span>;
       }
       return <React.Fragment key={i}>{part}</React.Fragment>;
     });
   };
 
   return (
-    <Btn className="flex flex-col h-full p-3 gap-1.5 overflow-y-auto no-scrollbar relative" onClick={e => e.stopPropagation()} style={{ touchAction: 'pan-y' }}>
+    // PORT: Div (non Btn) perché overflow-y-auto diventi uno ScrollView come nell'originale (riassunti lunghi)
+    <Div className="flex flex-col h-full p-3 gap-1.5 overflow-y-auto no-scrollbar relative" onClick={e => e.stopPropagation()} style={{ touchAction: 'pan-y' }}>
       {/* Header */}
       <Div className="flex items-center justify-between mb-0.5 shrink-0">
-        <Div className="flex items-center gap-1.5">
+        {/* PORT: in CSS i due gruppi non scendono sotto il contenuto minimo (min-width: auto) e va a capo il
+            titolo; in Yoga il restringimento è in proporzione alla larghezza e il gruppo di destra (data, legenda,
+            Gira) usciva dalla card: il titolo prende quasi tutto il restringimento */}
+        <Div className="flex items-center gap-1.5" style={{ flexShrink: 20 }}>
           <BrainCircuit className="w-3.5 h-3.5 text-violet-400" />
           <Span className="text-[10px] font-semibold text-violet-300 uppercase tracking-wide">Info da Chat</Span>
         </Div>
@@ -181,6 +185,6 @@ export default function SeminaCardBack({ semina, onClose }) {
         </Btn>
         </Div>
       </Div>
-    </Btn>
+    </Div>
   );
 }

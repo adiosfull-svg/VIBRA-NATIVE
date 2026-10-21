@@ -162,6 +162,30 @@ function longestWord(children: ReactNode): string | null {
   return best.length >= 4 ? best : null;
 }
 
+/** Testo di tutto il sottoalbero (span annidati compresi); null se c'è altro (icone, viste). */
+function deepText(children: ReactNode): string | null {
+  if (children == null || typeof children === 'boolean') return '';
+  if (typeof children === 'string' || typeof children === 'number') return String(children);
+  if (Array.isArray(children)) {
+    let out = '';
+    for (const c of children) { const t = deepText(c); if (t == null) return null; out += t; }
+    return out;
+  }
+  const props = (children as { props?: { children?: ReactNode } }).props;
+  return props && props.children != null ? deepText(props.children) : null;
+}
+
+/**
+ * Testo grande di una parola sola (importi dei riquadri: "€257.818"): in CSS non va mai a capo e se non
+ * ci sta esce dal suo riquadro; Android invece lo spezza a metà parola. Solo testi da 20px in su (dove
+ * capita), così la misura (onTextLayout) non si aggiunge a ogni etichetta.
+ */
+function bigWord(children: ReactNode, merged: string): string | null {
+  if (fontSizeOf(merged) < 20) return null;
+  const flat = deepText(children)?.trim();
+  return flat && flat.length >= 4 && !/\s/.test(flat) ? flat : null;
+}
+
 /** onTextLayout: una riga (non l'ultima) che non finisce con uno spazio = parola spezzata a metà. */
 function brokeWord(lines: { text: string }[]): boolean {
   for (let i = 0; i < lines.length - 1; i++) if (!/[\s\-]$/.test(lines[i].text)) return true;
@@ -218,7 +242,8 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   diagCount('text', typeof children === 'string' ? children : className);
   const inherited = useContext(TextClassContext);
   const inheritedStyle = useContext(TextStyleContext);
-  const inFlex = useContext(FlexParentContext) === 'flex';
+  const parentLayout = useContext(FlexParentContext);
+  const inFlex = parentLayout === 'flex';
   const facts = textFacts(inherited, className);
   const { merged, truncate, clamp } = facts;
   const converted = style == null ? NO_STYLE : webStyle(StyleSheet.flatten(style)).style;
@@ -230,7 +255,9 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   const childStyle = nextTextStyle(inheritedStyle, className, converted);
   const probe = useContext(WrapProbeContext);
   const narrow = useContext(NarrowCellContext) && Platform.OS !== 'web';
-  const word = narrow && !numberOfLines && !truncate && !clamp ? longestWord(children) : null;
+  const word = !numberOfLines && !truncate && !clamp
+    ? (narrow ? longestWord(children) : Platform.OS !== 'web' && parentLayout !== 'text' ? bigWord(children, merged) : null)
+    : null;
   const mcProbe = useContext(MinContentProbeContext);
   const flatText = mcProbe ? plainText(children) : null;
   const [broken, setBroken] = useState<string | null>(null);

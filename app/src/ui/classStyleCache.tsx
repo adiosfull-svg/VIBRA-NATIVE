@@ -16,8 +16,12 @@ const staticCache = new Map<string, boolean>();
 // varianti ammesse: solo larghezza dello schermo (tutte le altre dipendono da stato o posizione:
 // hover/active/focus/disabled, group-/peer-, first/last/odd/even, dark, placeholder, aria/data, ...)
 const MEDIA = new Set(['sm', 'md', 'lg', 'xl', '2xl', 'max-sm', 'max-md', 'max-lg', 'max-xl', 'max-2xl']);
-// proprietà animate o che definiscono variabili CSS
+// proprietà animate o che definiscono variabili CSS; translate in percentuale (-translate-x-1/2, translate-y-full,
+// translate-x-[30%]): NativeWind la calcola dalla misura dell'elemento (onLayout), quindi non è uguale per
+// tutti. In cache restava il valore del primo disegno (0) e gli avatar delle card Semine montate dopo le prime
+// erano spostati a destra di mezza larghezza
 const DYNAMIC_BASE = /^!?-?(transition|animate|duration|ease|delay|will-change)/;
+const PERCENT_TRANSLATE = /(^|:)!?-?translate-[xy]-(\d+\/\d+|full|\[[^\]]*%[^\]]*\])$/;
 
 function isStatic(cls: string): boolean {
   let v = staticCache.get(cls);
@@ -25,7 +29,7 @@ function isStatic(cls: string): boolean {
   v = true;
   for (const c of cls.split(/\s+/)) {
     if (!c) continue;
-    if (c.includes('[--') || c.startsWith('@')) { v = false; break; }
+    if (c.includes('[--') || c.startsWith('@') || PERCENT_TRANSLATE.test(c)) { v = false; break; }
     // ':' dentro i valori arbitrari ([url(...)], [calc(...)]) non è una variante
     const parts = c.replace(/\[[^\]]*\]/g, '[]').split(':');
     const base = parts.pop() ?? '';
