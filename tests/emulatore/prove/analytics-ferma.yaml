@@ -13,6 +13,12 @@ appId: com.vibra.mobile
     visible:
       text: "I Miei Progressi|FATTURATO TOTALE"
     timeout: 180000
+# come prove/scorrimento: prima Clienti (stessa cache dei clienti), poi Analisi Clienti
+- tapOn: "Clienti"
+- extendedWaitUntil:
+    visible: "testo-che-non-esiste"
+    timeout: 15000
+    optional: true
 - openLink: vibra://clienti-analytics
 - extendedWaitUntil:
     visible: "testo-che-non-esiste"
