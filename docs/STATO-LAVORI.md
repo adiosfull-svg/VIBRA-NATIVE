@@ -601,8 +601,15 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   in più menu col tasto lungo di clienti e promoter, selezione multipla, soglia e eliminazione dello swipe delle
   notifiche, aggiorna tirando giù (Page), Switch, menu laterale aperto col gesto. Suite pr: stesse prove verdi (run
   39683483918); l'emulatore non vibra, da sentire sul telefono.
-- Restano tra le funzioni da app proposte: uso senza rete (cache più lunga + avviso), scorciatoie dall'icona, Indietro
-  predittivo di Android.
+- **Uso senza rete** (scelta di Antonio 21/10): cache salvata 24 ore invece di 30 minuti, e le voci tolte dalla
+  memoria (gcTime) restano nel file fino alla scadenza; `lib/network.ts` collega expo-network all'onlineManager di React
+  Query (solo `isConnected`: senza rete le richieste vanno in pausa e ripartono da sole); `OfflineBanner` (pillola
+  «Sei offline · dati salvati» sopra la barra in basso). Prova `tests/emulatore/pr/18-offline.yaml` (modalità aereo,
+  riavvio coi dati, pillola che sparisce col ritorno della rete): verde (run 39694368181, 39703042388).
+- Scelte di Antonio: notifiche non lette rosse lasciate come l'originale; niente scorciatoie dall'icona; niente
+  Indietro predittivo.
+- Test Lab pr (run 39703039384, eba1e16): nessun crash. Galaxy S24 28% frame persi, Pixel 8 Pro 11% (Robo: «failed to
+  run» lato Test Lab, ma l'esplorazione c'è stata). APK chiesto da Antonio: release «anteprima».
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
