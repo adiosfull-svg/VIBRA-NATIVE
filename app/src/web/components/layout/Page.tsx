@@ -11,8 +11,7 @@ import AppHeader from './AppHeader';
 import { pageScroll } from '../../shims/pageScroll';
 import { OwnPathProvider, useScreenNavigation } from '../../router';
 import { diagCount, diagMark, diagTime, dumpLayout, TEST_DIAG, useDiagWhy } from '../../../lib/testDiag';
-import { BlurTargetView } from 'expo-blur';
-import { PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
+import { BlurTarget, PageLayerContext, registerPageBlurTarget, type PageLayer } from '../../../ui/pageLayers';
 import { useAnimatedRef } from 'react-native-reanimated';
 import { FastScroll, useMergedScrollRef, type FastScrollHandle } from '../../../ui/fastScroll';
 import { haptic } from '../../../ui/haptics';
@@ -175,7 +174,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     ? (refreshHandler ? <RefreshControl refreshing={isRefreshing} onRefresh={refreshHandler} tintColor={THEME['accent-foreground']} /> : undefined)
     : <RefreshControl enabled={!!refreshHandler} refreshing={isRefreshing} onRefresh={refreshHandler ?? undefined} tintColor={THEME['accent-foreground']} progressBackgroundColor={THEME.card} colors={[THEME.primary]} />;
   return (
-    <BlurTargetView ref={setBlurTarget as never} style={{ flex: 1, backgroundColor: THEME.background }}>
+    <BlurTarget ref={setBlurTarget as never} style={{ flex: 1, backgroundColor: THEME.background }}>
       <Animated.ScrollView
         ref={setScrollRef}
         onLayout={handleLayout}
@@ -197,7 +196,7 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
         </OwnPathProvider>
       </Animated.ScrollView>
       {Platform.OS !== 'web' && <FastScroll ref={fastScroll} scrollRef={animatedScrollRef} />}
-    </BlurTargetView>
+    </BlurTarget>
   );
 });
 Page.displayName = 'Page';

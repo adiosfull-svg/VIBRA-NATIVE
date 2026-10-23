@@ -447,7 +447,7 @@ export default function MobileNavBar({ state, navigation }: Partial<BottomTabBar
     <GestureHandlerRootView style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }}>
       {/* Vetro: blur(6px) saturate(160%) + bg-background/30 + border-t */}
       {/* su Android sfoca la pagina in primo piano (ui/pageLayers); blur(6px) → intensità 24 come backdrop-blur */}
-      <NativeBlur intensity={24} target={blurTarget} />
+      <NativeBlur intensity={24} target={blurTarget} veil={0.8} />
       <Animated.View pointerEvents="none" style={[styles.veil, veilStyle]} />
       {/* sopra la riga per l'ordine CSS degli elementi posizionati: non deve prendersi i tocchi */}
       <Div pointerEvents="none" className="absolute inset-0 border-t border-border bg-background/30" />

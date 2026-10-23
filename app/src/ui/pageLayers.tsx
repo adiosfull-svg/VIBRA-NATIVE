@@ -15,6 +15,7 @@ import { Component, createContext, useCallback, useContext, useEffect, useRef, u
 import { Animated, PixelRatio, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingPx } from './webClasses';
+import { THEME } from './palette.generated';
 import { useScreenNavigation } from '../web/screenNavigation';
 
 // ── scroll della pagina per gli sticky ───────────────────────────────────────
@@ -128,9 +129,16 @@ export function usePageBlurTarget(): View | null {
   return useSyncExternalStore(subscribe, topTarget, topTarget);
 }
 
-// Android: blur vero solo da Android 12 (prima Dimezis è lento: velo come prima).
-// EXPO_PUBLIC_TEST_NO_BLUR=1 (solo build di test sull'emulatore): sempre velo.
-const BLUR_METHOD = process.env.EXPO_PUBLIC_TEST_NO_BLUR === '1' ? 'none' as const : 'dimezisBlurViewSdk31Plus' as const;
+// Blur vero spento (23/10): sui telefoni veri Dimezis ridisegna e sfoca la pagina a ogni fotogramma e, con
+// la pagina avvolta nel suo bersaglio, rende più caro ogni disegno. Test Lab con e senza (run 39703039384 →
+// 39882323979, stesso percorso): Pixel 8 Pro frame persi 10,9% → 3,1% (mediana 10,9 → 8,1 ms, schermo a
+// 120 Hz = 8,3 ms), Galaxy S24 28,1% → 23,4%. Al posto del vetro un velo col colore della pagina (come
+// prima del blur); niente BlurTargetView attorno alle pagine. Per riprovarlo: LIVE_BLUR = true.
+export const LIVE_BLUR = false;
+const BLUR_METHOD = LIVE_BLUR && process.env.EXPO_PUBLIC_TEST_NO_BLUR !== '1' ? 'dimezisBlurViewSdk31Plus' as const : 'none' as const;
+
+/** Contenitore che il blur può sfocare (BlurTargetView); senza blur vero una View semplice. */
+export const BlurTarget = (LIVE_BLUR ? BlurTargetView : View) as typeof View;
 
 /**
  * Errore dentro BlurView (es. "Unable to find node on an unmounted component": il bersaglio è la pagina
@@ -147,9 +155,12 @@ class BlurGuard extends Component<{ target: unknown; children: ReactNode }, { fa
 }
 
 /** BlurView di expo-blur col bersaglio giusto (vedi in cima). */
-export function NativeBlur(props: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object }) {
+export function NativeBlur(props: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object; veil?: number }) {
+  // senza blur vero: velo col colore della pagina (opacità `veil`), il contenuto sotto resta appena visibile
+  if (!LIVE_BLUR) return <View pointerEvents="none" style={[props.style ?? StyleSheet.absoluteFill, { backgroundColor: PAGE_BG, opacity: props.veil ?? 0.7 }]} />;
   return <BlurGuard target={props.target}><NativeBlurInner {...props} /></BlurGuard>;
 }
+const PAGE_BG = THEME.background;
 
 function NativeBlurInner({ intensity, tint = 'dark', target, style }: { intensity: number; tint?: 'dark' | 'default'; target: View | null; style?: object }) {
   // expo-blur legge blurTarget.current al montaggio e quando cambia: un oggetto nuovo per bersaglio
@@ -183,7 +194,7 @@ export function StickySplit({ before, sticky, after, gap }: { before: ReactNode[
       <StickyBlurTooTallContext.Provider value={tooTall}>
         <StickyBlurTargetContext.Provider value={tooTall ? null : target}>{sticky}</StickyBlurTargetContext.Provider>
       </StickyBlurTooTallContext.Provider>
-      {after.length ? <BlurTargetView ref={setTarget as never} onLayout={onLayout} style={{ rowGap: gap }}>{after}</BlurTargetView> : null}
+      {after.length ? <BlurTarget ref={setTarget as never} onLayout={onLayout} style={{ rowGap: gap }}>{after}</BlurTarget> : null}
     </>
   );
 }
