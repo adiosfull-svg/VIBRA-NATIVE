@@ -610,6 +610,14 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Indietro predittivo.
 - Test Lab pr (run 39703039384, eba1e16): nessun crash. Galaxy S24 28% frame persi, Pixel 8 Pro 11% (Robo: «failed to
   run» lato Test Lab, ma l'esplorazione c'è stata). APK chiesto da Antonio: release «anteprima».
+- 23/10, Antonio: «ancora lontani dalla fluidità dell'originale», in tutte le sezioni. Sui telefoni veri la mediana dei
+  fotogrammi era 11-12 ms su schermi a 120 Hz (scadenza 8,3 ms), col tempo nel disegno (RenderThread/GPU). A/B su Test
+  Lab senza blur (EXPO_PUBLIC_TEST_NO_BLUR=1, run 39882323979): Pixel 8 Pro 10,9% → 3,1% frame persi, S24 28,1% → 23,4%.
+  **Blur vero tolto** (`LIVE_BLUR = false` in ui/pageLayers; velo col colore della pagina, pagine senza
+  BlurTargetView; bd2f615, suite pr come prima, APK). Nota: su Test Lab l'esploratore Robo usa l'accessibilità e
+  gonfia i tempi del thread UI (findViewByPredicateTraversal, AccessibilityNodeInfo): non confrontare con l'utente.
+  Prossimi sospetti comuni: righe delle liste montate durante lo scorrimento (PageWindowList, overscan 4: un commit
+  a ogni riga), icone SVG (bitmap per icona), montaggio di Fabric (fase «anim» 20-60 ms nei frame peggiori).
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
