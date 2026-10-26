@@ -129,15 +129,13 @@ function dataPropsOf(props: object): DataProps | null {
   return out;
 }
 
-type TableLayout = { widths: number[] | null; report: (col: number, width: number) => void };
+type TableLayout = { widths: number[] | null; report: (col: number, width: number, cell: object) => void; forget: (cell: object) => void };
 const TableContext = createContext<TableLayout | null>(null);
 const ColumnContext = createContext<{ col: number; span: number } | null>(null);
 
 /** Larghezze delle colonne: massimo per colonna, più lo spazio che avanza in proporzione. */
 export function tableColumnWidths(natural0: number[], tableWidth: number): number[] {
-  // misurate su una riga senza limiti (Tr): un testo lungo su una riga sola non allarga una colonna oltre
-  // la tabella, lì va a capo
-  const natural = tableWidth > 0 ? natural0.map((w) => Math.min(w, tableWidth)) : natural0;
+  const natural = natural0;
   const sum = natural.reduce((a, b) => a + b, 0);
   if (!sum || sum >= tableWidth) return natural;
   return natural.map((w) => (w * tableWidth) / sum);
@@ -163,26 +161,36 @@ function contentSignature(children: ReactNode): string {
 export function Table({ className, children, style, measureKey }: { className?: string; children?: ReactNode; style?: object; measureKey?: unknown }) {
   const signature = measureKey !== undefined ? measureKey : contentSignature(children);
   const [state, setState] = useState<{ sig: unknown; widths: number[] | null }>({ sig: signature, widths: null });
-  const natural = useRef<number[]>([]);
+  // ultima larghezza naturale di ogni cella montata: a una nuova misura (contenuto cambiato) le celle il cui
+  // layout non cambia non danno onLayout, e prima sparivano dal calcolo (intestazione della tabella dei
+  // locali del Promoter: la colonna «Serate» scendeva a 28 px, larga quanto i numeri, e il titolo si
+  // spezzava in «Se/rat/e»)
+  const cells = useRef(new Map<object, { col: number; w: number }>());
   const reports = useRef<number[][]>([]);
   const tableWidth = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  if (state.sig !== signature) { natural.current = []; setState({ sig: signature, widths: null }); }
+  if (state.sig !== signature) setState({ sig: signature, widths: null });
   const measuring = state.sig !== signature || state.widths == null;
   const finish = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      const widths = tableColumnWidths(Array.from(natural.current, (w) => w ?? 0), tableWidth.current);
-      if (TEST_DIAG) console.log(`VIBRA tabella t=${Math.round(tableWidth.current)} n=${natural.current.map((w) => Math.round(w ?? 0))} w=${widths.map(Math.round)} top=${JSON.stringify(reports.current.map((r) => (r ?? []).sort((a, b) => b - a).slice(0, 4).map(Math.round)))}`);
+      const natural: number[] = [];
+      cells.current.forEach(({ col, w }) => { natural[col] = Math.max(natural[col] ?? 0, w); });
+      const widths = tableColumnWidths(Array.from(natural, (w) => w ?? 0), tableWidth.current);
+      if (TEST_DIAG) console.log(`VIBRA tabella t=${Math.round(tableWidth.current)} n=${natural.map((w) => Math.round(w ?? 0))} w=${widths.map(Math.round)} top=${JSON.stringify(reports.current.map((r) => (r ?? []).sort((a, b) => b - a).slice(0, 4).map(Math.round)))}`);
       // stesse larghezze (a meno di arrotondamenti): nessun ridisegno
       setState((s) => (s.widths && s.widths.length === widths.length && s.widths.every((w, i) => Math.abs(w - widths[i]) < 0.5) ? s : { ...s, widths }));
     }, 16);
   }, []);
+  const forget = useCallback((cell: object) => { cells.current.delete(cell); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  // nuova misura senza nessun onLayout (nessuna cella cambia): si chiude con le larghezze già note
+  useEffect(() => { if (measuring) finish(); }, [measuring, state.sig, finish]);
   const ctx = useMemo<TableLayout>(() => ({
     widths: measuring ? null : state.widths,
-    report: (col, width) => { if (TEST_DIAG) (reports.current[col] ??= []).push(width); natural.current[col] = Math.max(natural.current[col] ?? 0, width); finish(); },
-  }), [measuring, state.widths, finish]);
+    report: (col, width, cell) => { if (TEST_DIAG) (reports.current[col] ??= []).push(width); cells.current.set(cell, { col, w: width }); finish(); },
+    forget,
+  }), [measuring, state.widths, finish, forget]);
   return (
     <TableContext.Provider value={ctx}>
       <Div className={cn('flex flex-col w-full', className)} style={style}
@@ -205,8 +213,6 @@ export const Thead = ({ className, children, ref }: { className?: string; childr
 export const Tbody = Thead;
 export const Tfoot = Thead;
 
-const MEASURE_ROW = { width: 4000 } as const;
-
 export function Tr({ className, children, onClick, style, ...rest }: CellProps & DataProps) {
   const data = dataPropsOf(rest);
   // indice di colonna di ogni cella (colSpan compreso), anche se la cella è dentro un altro componente
@@ -217,15 +223,10 @@ export function Tr({ className, children, onClick, style, ...rest }: CellProps &
     col += span;
     return <ColumnContext.Provider key={isValidElement(child) ? child.key ?? col : col} value={value}>{child}</ColumnContext.Provider>;
   });
-  // mentre si misura la riga è larghissima: Yoga misurava ogni cella con lo spazio che restava nella riga,
-  // e con una prima colonna larga le altre andavano a capo a metà parola ("Se/rat/e") e quella larghezza
-  // diventava la loro; in CSS una colonna non scende sotto il suo contenuto (Promoter, Fatturato per Locale)
-  const table = useContext(TableContext);
-  const rowStyle = table && !table.widths ? [MEASURE_ROW, style] : style;
   // le celle di una riga sono alte uguali (contenuto centrato in verticale nella cella)
   return onClick
-    ? <Btn className={cn('flex flex-row items-stretch', className)} onClick={onClick} style={rowStyle} {...data}>{cells}</Btn>
-    : <Div className={cn('flex flex-row items-stretch', className)} style={rowStyle} {...data}>{cells}</Div>;
+    ? <Btn className={cn('flex flex-row items-stretch', className)} onClick={onClick} style={style} {...data}>{cells}</Btn>
+    : <Div className={cn('flex flex-row items-stretch', className)} style={style} {...data}>{cells}</Div>;
 }
 
 /** text-align della cella: allinea anche i blocchi in linea (inline-flex...) come in CSS. */
@@ -237,6 +238,10 @@ function cellAlign(className = ''): 'flex-start' | 'center' | 'flex-end' | undef
 export function Td({ className, children, colSpan = 1, style, onClick }: CellProps) {
   const table = useContext(TableContext);
   const column = useContext(ColumnContext);
+  const cellId = useRef({}).current;
+  // forget è stabile (useCallback della Table): si toglie la cella solo allo smontaggio
+  const forget = table?.forget;
+  useEffect(() => () => forget?.(cellId), [forget, cellId]);
   let layout: object;
   let onLayout: ((e: LayoutChangeEvent) => void) | undefined;
   if (!table || !column) {
@@ -248,7 +253,7 @@ export function Td({ className, children, colSpan = 1, style, onClick }: CellPro
     layout = { width, flexGrow: 0, flexShrink: 0 };
   } else {
     layout = { flexGrow: 0, flexShrink: 0 };
-    if (column.span === 1) onLayout = (e) => table.report(column.col, e.nativeEvent.layout.width);
+    if (column.span === 1) onLayout = (e) => table.report(column.col, e.nativeEvent.layout.width, cellId);
   }
   const block = !/(^|\s)(flex|inline-flex|grid)(\s|$)/.test(className ?? '');
   const st = [layout, block ? { justifyContent: 'center' as const, alignItems: cellAlign(className) } : null, style];
