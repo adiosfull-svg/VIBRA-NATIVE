@@ -619,6 +619,29 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   Prossimi sospetti comuni: righe delle liste montate durante lo scorrimento (PageWindowList, overscan 4: un commit
   a ogni riga), icone SVG (bitmap per icona), montaggio di Fabric (fase «anim» 20-60 ms nei frame peggiori).
 
+## Differenze grafiche con l'originale (26/10, branch `claude/differenze-grafiche` da `claude/app-nativa` @74c4ef6)
+- **Confronto grafico sull'emulatore**: `gh workflow run emulatore.yml --ref <branch> -f gara=confronto`
+  (`-f extra_env="EXPO_PUBLIC_TEST_DIAG=1"` per i log `VIBRA tabella`/`VIBRA sticky`). Per ogni pagina di
+  `tests/gara/confronto-{admin,pr}.txt` schermate della nativa (link vibra://) e dell'originale in Chrome sullo
+  stesso emulatore (densità 450 = 384 dp, come il telefono di Antonio), alle stesse posizioni di scorrimento;
+  `tools/gara/affianca.py` le mette fianco a fianco (originale a sinistra) in `confronto/` del branch dei risultati.
+  `tools/gara/riferimento.tar.gz` è l'originale del 26/10. Differenze dovute al confronto, non all'app: Chrome in
+  scheda ha `env(safe-area-inset-top)` = 0 (Admin Console più in basso nella nativa), Clienti/Analytics admin
+  vuoti nell'originale, blur della navbar tolto apposta (thread fluidità).
+- Corretto e verificato: barre delle classifiche (`bar-grow` + `--bar-width`); importi grandi su una riga (`width`
+  e non `minWidth` sulla parola spezzata, ui/text; KpiFlashCard passa il testo al <P>, un componente dentro era
+  opaco); celle strette (`longestWord` misura tutte le parole: "Media" è più larga di "tavoli"); rounded-md/sm
+  (calc() perso da NativeWind: 10/8 px fissi); icone con `transition-*`/hover (classi tolte sul telefono, prima
+  24 px senza colore) e con width/height nello style; lente sopra il campo (zIndex 1 alle icone assolute);
+  pulsanti flex-1 misurati al min-content; `origin-*`; campo data vuoto come Chrome Android (testo trasparente,
+  freccia ▾); `<img>` con un solo lato (aspetto dall'immagine); segnaposto su una riga; `last:*` risolto dal
+  contenitore (figli diretti; righe radice di un componente → `Comp.cssLastChild = true`); tabelle: larghezza
+  naturale di ogni cella tenuta tra una misura e l'altra (le celle che non cambiano non danno onLayout).
+- Aperti: sticky delle schede nel profilo promoter (misura giusta, y=688; in un giro non si incollava, nel successivo
+  sì: da riguardare su telefono); vetro della rotella di Academy senza sfondo; etichette dell'asse x dei grafici
+  tagliate a destra ("ott 2") e tacche settimanali di uPlot che partono una settimana prima; sottotitolo delle
+  serate ("23 ott 26 · Ammare Frontemare") che va a capo solo nella nativa; mockup stretto di Academy ("Ce/rca").
+
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
   solo (a) 10/10, Scudo OOM nel thread JS (loop delle transition di NativeWind, corretto con `ui/cssTransition.ts`);
