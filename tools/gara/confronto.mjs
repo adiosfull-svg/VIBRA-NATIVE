@@ -64,6 +64,19 @@ async function nativa() {
   sh(`am force-stop ${PKG}`);
 }
 
+// inviti di Chrome sopra la pagina (notifiche, accesso): tocco su «No thanks» se c'è
+async function chiudiInviti() {
+  for (let i = 0; i < 3; i++) {
+    await sleep(1500);
+    let xml = '';
+    try { xml = adb('exec-out', 'uiautomator', 'dump', '/dev/tty').toString(); } catch { return; }
+    const m = xml.match(/text="(?:No thanks|No, thanks|Not now)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
+    if (!m) return;
+    sh(`input tap ${(Number(m[1]) + Number(m[3])) >> 1} ${(Number(m[2]) + Number(m[4])) >> 1}`);
+    note.push('originale: invito di Chrome chiuso');
+  }
+}
+
 // ── originale in Chrome (Playwright sull'emulatore) ──
 async function originale() {
   const require = createRequire(import.meta.url);
@@ -72,9 +85,12 @@ async function originale() {
   if (!device) { note.push('originale: nessun dispositivo per Playwright'); return; }
   sh('am force-stop com.android.chrome');
   sh('pm clear com.android.chrome');
-  const context = await device.launchBrowser({ args: ['--disable-fre', '--no-first-run', '--no-default-browser-check'] });
+  // senza permesso Chrome apre il suo invito alle notifiche sopra la pagina (coprirebbe tutte le schermate)
+  try { sh('pm grant com.android.chrome android.permission.POST_NOTIFICATIONS'); } catch { /* Android < 13 */ }
+  const context = await device.launchBrowser({ args: ['--disable-fre', '--no-first-run', '--no-default-browser-check', '--disable-notifications'] });
   const page = await context.newPage();
   await page.goto(`${ORIGINE}/?as=${utente}`, { timeout: 90000 });
+  await chiudiInviti();
   await page.evaluate(() => window.__gara.avvio());
   await page.waitForTimeout(4000);
   for (const { p, n } of pagine) {
@@ -82,6 +98,7 @@ async function originale() {
       await page.evaluate((x) => window.__gara.nav(x), p);
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(2500);
+      if (p === pagine[0].p) await chiudiInviti();
       await serie(p, n, 'ref');
       log('originale', p);
       if (!TAB.has(p)) { await page.evaluate(() => history.back()); await page.waitForTimeout(1200); }
