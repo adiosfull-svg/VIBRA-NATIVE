@@ -3,9 +3,11 @@ import React, { useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 import { TrendingUp, TrendingDown } from '@/ui/icons.generated';
 
-import { Btn, Div, P, Span } from '@/ui/html';
+import { Btn, Div, P } from '@/ui/html';
 
-function AnimatedNumber({ target, prefix = '', suffix = '', duration = 1200 }) {
+// PORT: hook invece del componente <AnimatedNumber/>: il <P> riceve il testo, e ui/text vede l'importo
+// ("€257.818") per tenerlo su una riga come nel browser; dentro un componente era opaco e si spezzava
+function useAnimatedNumber(target, duration = 1200) {
   const [current, setCurrent] = useState(0);
   useEffect(() => {
     let start = null;
@@ -24,10 +26,11 @@ function AnimatedNumber({ target, prefix = '', suffix = '', duration = 1200 }) {
     // insieme si contendevano il numero, che sfarfallava tra i due valori
     return () => { idle.cancel(); cancelAnimationFrame(raf); };
   }, [target]);
-  return <Span>{prefix}{current.toLocaleString('it-IT')}{suffix}</Span>;
+  return current;
 }
 
 export default function KpiFlashCard({ title, value, rawValue, label, icon: Icon, color = '#a78bfa', trend, delay = 0, onClick }) {
+  const current = useAnimatedNumber(rawValue ?? 0);
   return (
     <Btn
       className={`dash-fade-up relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card p-5 group transition-all duration-300 hover:border-white/[0.12] hover:-translate-y-0.5 ${onClick ? 'cursor-pointer' : ''}`}
@@ -48,7 +51,7 @@ export default function KpiFlashCard({ title, value, rawValue, label, icon: Icon
           <P className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest mb-2">{title}</P>
           <P className="text-2xl font-bold text-foreground leading-none">
             {rawValue !== undefined
-              ? <AnimatedNumber target={rawValue} prefix={String(value).startsWith('€') ? '€' : ''} />
+              ? `${String(value).startsWith('€') ? '€' : ''}${current.toLocaleString('it-IT')}`
               : value
             }
           </P>

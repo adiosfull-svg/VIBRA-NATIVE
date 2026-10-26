@@ -153,7 +153,8 @@ export function makeIcon(name: string, node: IconNode) {
     const effectiveColor = color ?? styleColor ?? (!ownColor ? inheritedStyleColor : undefined);
     const inheritedColor = inheritedText.split(/\s+/).filter((c) => TEXT_COLOR.test(c)).join(' ');
     // size esplicito (prop, come in lucide) vince sulle classi di dimensione di default
-    const sizeClasses = size != null ? '' : cn('w-6 h-6', iconDefaults);
+    // (anche width/height numerici nello style: la classe w-6 h-6 di NativeWind vinceva sulle prop)
+    const sizeClasses = size != null || sizeFromStyle ? '' : cn('w-6 h-6', iconDefaults);
     // il tipo resta lo stesso per tutta la vita dell'icona finché la classe di transizione c'è
     const Comp: any = kind ? AnimatedSvgIcon : trTransform ? TransitionSvgIcon : SvgIcon;
     return (

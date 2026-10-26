@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingPx } from './webClasses';
 import { THEME } from './palette.generated';
 import { useScreenNavigation } from '../web/screenNavigation';
+import { TEST_DIAG } from '../lib/testDiag';
 
 // ── scroll della pagina per gli sticky ───────────────────────────────────────
 export type PageLayer = {
@@ -66,8 +67,9 @@ export function useStickyPin(className: string) {
   const measure = useCallback(() => {
     try { if (nav?.isFocused && !nav.isFocused()) return; } catch { /* fuori da un navigatore */ }
     const y = layer?.offsetOf(ref.current);
+    if (TEST_DIAG) console.log(`VIBRA sticky ${className.slice(0, 40)} layer=${!!layer} el=${!!ref.current} y=${y}`);
     if (y != null) setOffset((o) => (o != null && Math.abs(o - y) < 0.5 ? o : y));
-  }, [layer, nav]);
+  }, [layer, nav, className]);
   useEffect(() => layer?.onContentChange(measure), [layer, measure]);
   useEffect(() => {
     if (!nav?.addListener) return;

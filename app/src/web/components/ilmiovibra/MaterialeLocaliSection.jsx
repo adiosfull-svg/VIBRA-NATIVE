@@ -284,3 +284,5 @@ export default function MaterialeLocaliSection() {
     </>
   );
 }
+// riga di un elenco con last:border-0 sulla radice (ui/html, resolveLastVariant)
+VenueRow.cssLastChild = true;

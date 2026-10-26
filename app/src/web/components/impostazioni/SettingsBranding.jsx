@@ -101,3 +101,5 @@ export default function SettingsBranding() {
     </Div>
   );
 }
+// riga di un elenco con last:border-0 sulla radice (ui/html, resolveLastVariant)
+LogoSetting.cssLastChild = true;

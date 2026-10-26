@@ -179,3 +179,6 @@ export default function SettingsMaterialeLocali() {
     </Div>
   );
 }
+// riga di un elenco con last:border-0 sulla radice (ui/html, resolveLastVariant)
+PiantinaSetting.cssLastChild = true;
+FormuleSetting.cssLastChild = true;

@@ -157,9 +157,10 @@ function longestWord(children: ReactNode): string | null {
     : Array.isArray(children) && children.every((c) => typeof c === 'string' || typeof c === 'number' || c == null || typeof c === 'boolean')
       ? children.filter((c) => typeof c === 'string' || typeof c === 'number').join('') : null;
   if (!flat) return null;
-  let best = '';
-  for (const w of flat.split(/\s+/)) if (w.length > best.length) best = w;
-  return best.length >= 4 ? best : null;
+  // tutte le parole lunghe, una per riga: la misura dà la più larga in pixel (non la più lunga in
+  // lettere: "Media" è più larga di "tavoli", e con la larghezza di "tavoli" si spezzava in "Me/dia")
+  const long = flat.split(/\s+/).filter((w) => w.length >= 4);
+  return long.length ? long.join('\n') : null;
 }
 
 /** Testo di tutto il sottoalbero (span annidati compresi); null se c'è altro (icone, viste). */
@@ -311,7 +312,7 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
       {text}
       {/* contenitore larghissimo: il testo prende la sua larghezza naturale, non quella della cella */}
       <View pointerEvents="none" style={MEASURE}>
-        <RNText className={nativeTextClass(merged)} numberOfLines={1} style={textStyle}
+        <RNText className={nativeTextClass(merged)} numberOfLines={word.includes('\n') ? undefined : 1} style={textStyle}
           onLayout={(e) => setWordWidth({ word, width: Math.ceil(e.nativeEvent.layout.width) })}>{word}</RNText>
       </View>
     </>

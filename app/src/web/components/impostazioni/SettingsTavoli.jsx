@@ -91,3 +91,5 @@ export default function SettingsTavoli() {
     </Div>
   );
 }
+// riga di un elenco con last:border-0 sulla radice (ui/html, resolveLastVariant)
+VenueThresholdRow.cssLastChild = true;

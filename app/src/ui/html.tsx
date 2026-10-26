@@ -1248,6 +1248,43 @@ export function hiddenAtWidth(className: string, width: number): boolean {
 
 const HIDDEN_VIEW_STYLE: ViewStyle = { display: 'none' };
 
+// last:* (last:border-0 delle righe di un elenco, last:mb-0): NativeWind non lo applica, e l'ultima riga
+// aveva il bordo in più sotto (Impostazioni, ricerca, notifiche). Lo risolve il contenitore: sui figli
+// diretti con last: nella classe, e sui componenti segnati cssLastChild (la riga è la radice di un
+// componente: il contenitore non vede la classe) con LastChildContext letto dal Div con last:.
+const LAST_VARIANT = /(^|\s)last:(\S+)/g;
+const LastChildContext = createContext<boolean | null>(null);
+const withLastVariant = (cls: string, isLast: boolean) => cls.replace(LAST_VARIANT, isLast ? '$1$2' : '$1');
+type LastCandidate = ReactElement<{ className?: unknown }>;
+function lastCandidate(c: ReactNode): boolean {
+  if (!isValidElement(c)) return false;
+  if ((c.type as { cssLastChild?: boolean }).cssLastChild) return true;
+  const cls = (c.props as { className?: unknown }).className;
+  return typeof cls === 'string' && cls.includes('last:');
+}
+function resolveLastVariant(children: ReactNode): ReactNode {
+  if (Platform.OS === 'web' || children == null || typeof children !== 'object') return children;
+  let any = false;
+  let lastEl: ReactNode = null;
+  Children.forEach(children, (c) => { if (isValidElement(c)) { lastEl = c; if (!any && lastCandidate(c)) any = true; } });
+  if (!any) return children;
+  const fix = (node: ReactNode): ReactNode => {
+    if (Array.isArray(node)) return node.map(fix);
+    if (!lastCandidate(node)) return node;
+    const el = node as LastCandidate;
+    if ((el.type as { cssLastChild?: boolean }).cssLastChild) {
+      return <LastChildContext.Provider key={el.key} value={el === lastEl}>{el}</LastChildContext.Provider>;
+    }
+    return cloneElement(el, { className: withLastVariant(el.props.className as string, el === lastEl) });
+  };
+  return fix(children);
+}
+/** Div con last: che il contenitore non ha risolto (radice di un componente cssLastChild, o altro). */
+function LastVariantDiv(props: DivProps) {
+  const isLast = useContext(LastChildContext);
+  return <Div {...props} className={withLastVariant(props.className ?? '', isLast === true)} />;
+}
+
 export function Div(props: DivProps) {
   // Sul telefono un ramo nascosto per la larghezza ("hidden", "hidden sm:flex": versioni desktop di
   // tabelle, date, etichette) non si costruisce nemmeno: sul web lo nasconde il CSS, qui costerebbe
@@ -1256,6 +1293,7 @@ export function Div(props: DivProps) {
   if (Platform.OS !== 'web' && props.className && hiddenAtWidth(props.className, cssViewport.width)) return <View style={HIDDEN_VIEW_STYLE} />;
   // position: sticky sul telefono (pageLayers): l'elemento segue lo scroll della pagina
   if (Platform.OS !== 'web') {
+    if (props.className?.includes('last:')) return <LastVariantDiv {...props} />;
     const anim = cssAnimationOf(props.className);
     if (anim) return <CssAnimatedDiv kind={anim} {...props} />;
   }
@@ -1295,8 +1333,9 @@ function DivBox(p: DivProps) {
   try { return DivBoxImpl(p); } finally { diagTime('div-corpo', performance.now() - t); }
 }
 
-function DivBoxImpl({ className, children, style, onLayout, animatedStyle, ...all }: DivProps) {
+function DivBoxImpl({ className, children: children0, style, onLayout, animatedStyle, ...all }: DivProps) {
   diagCount('div', className);
+  const children = resolveLastVariant(children0);
   // tipo scelto al montaggio (ui/classStyleCache): vedi sotto
   const captureMode = useRef<boolean | null>(null);
   const [handlers, props00] = splitGestureProps(all);
