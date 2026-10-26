@@ -706,6 +706,7 @@ function fixedWidth(cls: string): number | null {
   }
   return v;
 }
+const ORIGIN_CLASS = /(^|\s)origin-(center|top|bottom|left|right|top-left|top-right|bottom-left|bottom-right)(?=\s|$)/;
 const MIN_W_ZERO = cachedTest(/(^|\s)(min-w-\S+|overflow-hidden|overflow-x-auto|overflow-auto|truncate)(\s|$)/);
 
 function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | undefined, grid?: Grid, className?: string, style?: Record<string, any>, gridCell = false) {
@@ -718,6 +719,10 @@ function boxStyle(layout: ParentLayout, inherited: string, rawClass: string | un
     if (w != null) base.minWidth = w;
   }
   if (gridCell && !NO_STRETCH.test(withoutHFull(rawClass ?? '')) && style?.flexGrow == null && style?.flex == null) base.flexGrow = 1;
+  // origin-top / origin-left (NativeWind non le traduce): senza, scale-[0.48] delle anteprime di Academy
+  // rimpiccioliva verso il centro e la schermata finta finiva fuori dal riquadro (anteprime vuote)
+  const origin = Platform.OS !== 'web' && style?.transformOrigin == null ? (rawClass ?? '').match(ORIGIN_CLASS) : null;
+  if (origin) base.transformOrigin = origin[2].replace('-', ' ');
   // ordine di disegno CSS: gli elementi posizionati (o trasformati) stanno sopra ai fratelli non posizionati
   // (in RN-web tutte le View sono relative e conta solo l'ordine nel codice)
   if ((POSITIONED.test(rawClass ?? '') || hasTransform(rawClass ?? '', style)) && !Z_CLASS.test(rawClass ?? '') && style?.zIndex == null) base.zIndex = 1;
@@ -762,7 +767,9 @@ function useMinContentWidth(className: string | undefined, style: Record<string,
     && style?.width == null && style?.minWidth == null && style?.flexShrink !== 0;
   // in una riga flex minWidth = larghezza naturale equivale a non restringersi: niente misura e
   // niente secondo disegno (fuori dalle righe la misura serve: il genitore può essere più stretto)
-  const rowStatic = enabled && inRow;
+  // flex-1 (base 0): flexShrink 0 non basta, in CSS min-width: auto lo tiene almeno largo quanto il testo
+  // intero anche con un figlio truncate (i tre pulsanti di Clienti: «Importa più clienti» non si tronca)
+  const rowStatic = enabled && inRow && !ZERO_BASIS.test(className ?? '');
   const signature = enabled && !rowStatic ? textSignature(children) : '';
   const [measured, setMeasured] = useState<{ sig: string; width: number } | null>(null);
   const measuring = enabled && measured?.sig !== signature;

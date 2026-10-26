@@ -180,7 +180,8 @@ function computeNormalized(className?: string): Normalized {
   return out;
 }
 
-const RADIUS: Record<string, number> = { none: 0, sm: 2, '': 4, md: 6, lg: 8, xl: 12, '2xl': 16, '3xl': 24, full: 9999 };
+// come tailwind.config.js (lg = --radius 0.75rem, md/sm = -2/-4px), non i default di Tailwind
+const RADIUS: Record<string, number> = { none: 0, sm: 8, '': 4, md: 10, lg: 12, xl: 12, '2xl': 16, '3xl': 24, full: 9999 };
 const CORNERS: Record<string, string[]> = {
   '': ['TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'],
   t: ['TopLeft', 'TopRight'], b: ['BottomLeft', 'BottomRight'], l: ['TopLeft', 'BottomLeft'], r: ['TopRight', 'BottomRight'],

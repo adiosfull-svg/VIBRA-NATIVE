@@ -45,10 +45,29 @@ function fitFrom(className = ''): ImageProps['contentFit'] {
   return 'cover';
 }
 
+// <img class="h-9"> senza larghezza: in CSS la larghezza viene dalle proporzioni dell'immagine; in RN resta 0
+// e l'immagine non si vede (logo VIBRA accanto a «Bacheca riconoscimenti»). Proporzioni note dopo il primo
+// caricamento (onLoad), tenute per src: alle aperture dopo l'immagine ha subito la sua larghezza.
+const ONE_SIDE_H = /(^|\s)(h-(?!auto)\S+)(\s|$)/;
+const OWN_W = /(^|\s)(w-\S+|size-\S+|min-w-\S+|aspect-\S+|inset-0|inset-x-0|absolute)(\s|$)/;
+const ONE_SIDE_W = /(^|\s)(w-(?!auto)\S+)(\s|$)/;
+const OWN_H = /(^|\s)(h-\S+|size-\S+|min-h-\S+|aspect-\S+|inset-0|inset-y-0|absolute)(\s|$)/;
+const imageAspect = new Map<string, number>();
+function needsAspect(className: string | undefined, style: Record<string, unknown>): boolean {
+  if (Platform.OS === 'web' || !className || style.aspectRatio != null) return false;
+  const h = (ONE_SIDE_H.test(className) || style.height != null) && !OWN_W.test(className) && style.width == null;
+  const w = (ONE_SIDE_W.test(className) || style.width != null) && !OWN_H.test(className) && style.height == null;
+  return h || w;
+}
+
 export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigin: _c, draggable: _dr, onError, onLoad, style, ...props }: ImgProps) {
+  const [aspect, setAspect] = useState<number | undefined>(() => (src ? imageAspect.get(src) : undefined));
   if (!src) return null;
   // style in forma CSS (es. CachedImage: opacity undefined, transition) → RN
-  const rnStyle = webStyle(Array.isArray(style) ? StyleSheet.flatten(style) : style).style;
+  const rnStyle0 = webStyle(Array.isArray(style) ? StyleSheet.flatten(style) : style).style;
+  const wantAspect = needsAspect(className, rnStyle0 as Record<string, unknown>);
+  const knownAspect = wantAspect ? (aspect ?? imageAspect.get(src)) : undefined;
+  const rnStyle = knownAspect ? { ...rnStyle0, aspectRatio: knownAspect } : rnStyle0;
   const image = (imageClass: string | undefined, imageStyle: object | undefined) => (
     <Image
       source={imageSource(src)}
@@ -59,7 +78,16 @@ export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigi
       // righe di liste riciclate: senza chiave l'immagine vecchia resta visibile un frame
       recyclingKey={src}
       onError={onError ? () => onError() : undefined}
-      onLoad={() => { markImageWarm(src); onLoad?.(); }}
+      onLoad={(e) => {
+        markImageWarm(src);
+        const { width, height } = (e as { source?: { width?: number; height?: number } }).source ?? {};
+        if (wantAspect && width && height) {
+          const a = width / height;
+          imageAspect.set(src, a);
+          if (Math.abs((aspect ?? 0) - a) > 0.001) setAspect(a);
+        }
+        onLoad?.();
+      }}
       {...props}
       style={imageStyle}
     />
@@ -277,7 +305,9 @@ const RawTextInput = forwardRef<TextInput, RawInputProps & { multiline?: boolean
     // overflow-hidden (textarea ad altezza automatica): in CSS non scorre mai; su Android il campo nativo
     // scorreva al suo interno e mostrava solo l'ultima riga della nota
     ? <TextInput ref={inputRef} multiline textAlignVertical="top" scrollEnabled={!/(^|\s)overflow(-y)?-hidden(\s|$)/.test(p.className ?? '')} {...rawInput({ ...p, ...withFocus, style: [ownLeading, p.style, gap ? { marginBottom: gap } : null, focus.focusStyle] }, submit, true)} />
-    : <TextInput ref={inputRef} {...rawInput({ ...p, ...withFocus, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style, focus.focusStyle] }, submit)} />;
+    // numberOfLines 1: su Android il segnaposto lungo di un campo a una riga andava a capo, tagliato a metà
+    // della seconda riga (ricerca di Semine); nel browser resta su una riga e sparisce oltre il bordo
+    : <TextInput ref={inputRef} {...rawInput({ ...p, ...withFocus, style: [{ lineHeight: inputLineHeight(inherited, p.className) }, p.style, focus.focusStyle] }, submit)} numberOfLines={Platform.OS === 'android' ? 1 : undefined} />;
 });
 RawTextInput.displayName = 'RawTextInput';
 

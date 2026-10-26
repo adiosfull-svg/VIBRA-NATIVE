@@ -255,8 +255,9 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   const childStyle = nextTextStyle(inheritedStyle, className, converted);
   const probe = useContext(WrapProbeContext);
   const narrow = useContext(NarrowCellContext) && Platform.OS !== 'web';
+  const big = !narrow && Platform.OS !== 'web' && parentLayout !== 'text';
   const word = !numberOfLines && !truncate && !clamp
-    ? (narrow ? longestWord(children) : Platform.OS !== 'web' && parentLayout !== 'text' ? bigWord(children, merged) : null)
+    ? (narrow ? longestWord(children) : big ? bigWord(children, merged) : null)
     : null;
   const mcProbe = useContext(MinContentProbeContext);
   const flatText = mcProbe ? plainText(children) : null;
@@ -264,7 +265,14 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
   const [wordWidth, setWordWidth] = useState<{ word: string; width: number } | null>(null);
   if (probe && !probe.flexible && !numberOfLines && !truncate && !clamp && !facts.nowrap && hasBreakableText(children)) probe.mark();
   const textStyle = [cssDefaults(merged, inherited, className ?? '', { ...applied, ...converted }, inFlex), WEB_NO_WORD_BREAK, applied, converted, fontFamily ? { fontFamily, fontWeight: 'normal' as const } : null];
-  const minWord = word && wordWidth?.word === word ? { minWidth: wordWidth.width } : null;
+  // Parola spezzata (la cella o il riquadro è più stretto della parola): `width` = parola, non `minWidth`.
+  // Yoga misura il testo con la larghezza del genitore anche con un minWidth più grande e Android lo
+  // disegna con quella misura: il riquadro si allargava ma "€257.818" restava in "€257." / "818", e le
+  // celle strette (Locali: "Me/dia/tavoli") diventavano alte quanto il testo spezzato. Con width il testo va
+  // a capo solo agli spazi, largo quanto la parola più lunga: il min-content del CSS. Durante un conteggio
+  // (AnimatedNumber) la parola cambia a ogni frame: vale la misura di una parola lunga uguale.
+  const minWord = !word || !wordWidth ? null
+    : wordWidth.word === word || (big && wordWidth.word.length === word.length) ? { width: wordWidth.width, flexShrink: 0 } : null;
   const text = (
     <RNText
       {...props}
@@ -296,7 +304,8 @@ function TextImpl({ className, style, numberOfLines, children, ...props }: AppTe
     </RNText>
   );
   // parola spezzata: si misura una volta (testo invisibile su una riga) e diventa la larghezza minima
-  if (!word || broken !== word || wordWidth?.word === word) return text;
+  // (dopo la prima parola spezzata si rimisura a ogni parola nuova: i conteggi la cambiano a ogni frame)
+  if (!word || broken == null || (broken !== word && !big) || wordWidth?.word === word) return text;
   return (
     <>
       {text}

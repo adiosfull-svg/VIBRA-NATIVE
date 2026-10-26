@@ -17,8 +17,10 @@ module.exports = {
       },
       borderRadius: {
         lg: '0.75rem', // --radius
-        md: 'calc(0.75rem - 2px)',
-        sm: 'calc(0.75rem - 4px)',
+        // calc(var(--radius) - 2px) dell'originale già risolto: sul telefono NativeWind scartava il calc()
+        // e rounded-md/rounded-sm restavano a 0 (pulsanti outline, badge, campi squadrati)
+        md: '10px',
+        sm: '8px',
       },
       colors: {
         background: '#09090b',
