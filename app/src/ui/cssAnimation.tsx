@@ -7,14 +7,14 @@
 //   pulse: opacity 1 → .5 → 1, 2s cubic-bezier(.4,0,.6,1) infinite
 // animate-bounce / animate-ping (rari, solo in schermate secondarie) restano a NativeWind.
 // Inoltre le entrate/uscite una tantum dell'index.css dell'originale (menu-pop-in/out, backdrop-fade-in/out,
-// search-*, heatmap-row-in, chart-fs-in): sul telefono non esistevano, i menu comparivano di colpo e in
+// search-*, heatmap-row-in, chart-fs-in, bar-grow): sul telefono non esistevano, i menu comparivano di colpo e in
 // chiusura restavano fermi 140 ms prima di sparire.
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing } from 'react-native';
 import { useScreenFocused } from './fixedPortal';
 import { useReduceMotion } from './loopActive';
 
-type Frame = { opacity?: number; scale?: number; translateX?: number; translateY?: number };
+type Frame = { opacity?: number; scale?: number; scaleX?: number; translateX?: number; translateY?: number };
 type OneShot = { from: Frame; to: Frame; ms: number; easing: (t: number) => number };
 
 const EASE_OUT_EXPO = Easing.bezier(0.22, 1, 0.36, 1);
@@ -33,6 +33,8 @@ const ONE_SHOT: Record<string, OneShot> = {
   'search-tile-in': { from: { opacity: 0, translateY: 8 }, to: { opacity: 1, translateY: 0 }, ms: 220, easing: EASE_OUT_EXPO },
   'heatmap-row-in': { from: { opacity: 0, translateX: -8 }, to: { opacity: 1, translateX: 0 }, ms: 300, easing: EASE_OUT_EXPO },
   'chart-fs-in': { from: { opacity: 0 }, to: { opacity: 1 }, ms: 120, easing: CSS_EASE_OUT },
+  // barre delle classifiche (width 0 → var(--bar-width)): qui scaleX da sinistra, larghezza in html.tsx
+  'bar-grow': { from: { scaleX: 0 }, to: { scaleX: 1 }, ms: 500, easing: EASE_OUT_EXPO },
 };
 
 export type CssAnimationKind = 'spin' | 'pulse' | keyof typeof ONE_SHOT;
@@ -51,7 +53,7 @@ export function withoutCssAnimation(className: string): string {
   return className.replace(CSS_ANIM_ALL, ' ').trim();
 }
 
-const FRAME_DEFAULT: Required<Frame> = { opacity: 1, scale: 1, translateX: 0, translateY: 0 };
+const FRAME_DEFAULT: Required<Frame> = { opacity: 1, scale: 1, scaleX: 1, translateX: 0, translateY: 0 };
 
 /** Entrata/uscita una tantum: parte al montaggio e a ogni cambio di classe (in → out), poi resta sull'arrivo. */
 function useOneShot(kind: string | null) {

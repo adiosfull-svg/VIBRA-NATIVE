@@ -30,7 +30,7 @@ on:
         required: false
         default: ''
       gara:
-        description: 'si = gara nativa contro originale (tools/gara) invece dei percorsi Maestro; navbar = gara della barra in basso e del menu (video, tools/gara/navbar.mjs)'
+        description: 'si = gara nativa contro originale (tools/gara) invece dei percorsi Maestro; navbar = gara della barra in basso e del menu (video, tools/gara/navbar.mjs); confronto = schermate di nativa e originale affiancate (tools/gara/confronto.mjs)'
         required: false
         default: ''
       traccia:
@@ -76,9 +76,11 @@ jobs:
       FLOWS: ${{ github.event.inputs.flows || format('tests/emulatore/{0}', matrix.utente) }}
       EMAIL: ${{ matrix.utente }}@vibra.local
       UTENTE: ${{ matrix.utente }}
-      GARA: ${{ (github.event.inputs.gara == 'si' || github.event.inputs.gara == 'navbar' || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[gara-navbar]')) && '1' || '' }}
+      GARA: ${{ (github.event.inputs.gara == 'si' || github.event.inputs.gara == 'navbar' || github.event.inputs.gara == 'confronto' || contains(github.event.head_commit.message, '[gara]') || contains(github.event.head_commit.message, '[gara-navbar]')) && '1' || '' }}
       # [gara-navbar]: solo la gara della barra in basso e del menu laterale (tests/gara/run.sh)
       GARA_NAV: ${{ (github.event.inputs.gara == 'navbar' || contains(github.event.head_commit.message, '[gara-navbar]')) && '1' || '' }}
+      # gara=confronto: schermate di nativa e originale alla stessa larghezza (tests/gara/run.sh)
+      GARA_CONF: ${{ github.event.inputs.gara == 'confronto' && '1' || '' }}
       # [fluidita]: animazioni attive + video + frame persi per percorso (tests/emulatore/run.sh)
       FLUID: ${{ (github.event.inputs.fluidita == 'si' || contains(github.event.head_commit.message, '[fluidita]')) && '1' || '' }}
       # [traccia]: traccia Perfetto di ogni percorso (tests/emulatore/run.sh)

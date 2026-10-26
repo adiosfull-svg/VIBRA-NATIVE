@@ -7,7 +7,7 @@ import { collapseFirstMargin, stripSpacedMargins } from './spaceMargins';
 import { FlipContext, flipInner, useFlipFace } from './flip';
 import { fontSizeOf, inheritedLineHeight, inlineBlockMargins } from './textLeading';
 import { Children, cloneElement, createContext, Fragment, startTransition, Suspense, isValidElement, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref } from 'react';
-import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Animated, Dimensions, Platform, Pressable, ScrollView, StyleSheet, View, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent, type LayoutChangeEvent, type PressableProps, type StyleProp, type ViewProps, type ViewStyle, type DimensionValue } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cn } from './cn';
 import { AnimatedCaptureView, CapturePressable, CaptureView, classStyle } from './classStyleCache';
@@ -1258,7 +1258,12 @@ export function Div(props: DivProps) {
 /** animate-spin / animate-pulse (ui/cssAnimation): driver nativo, ferme a schermata nascosta, non Reanimated. */
 function CssAnimatedDiv({ kind, className, animatedStyle, ...props }: DivProps & { kind: CssAnimationKind }) {
   const anim = useCssAnimation(kind);
-  const merged = useMemo(() => (animatedStyle ? [animatedStyle, anim] : anim), [animatedStyle, anim]);
+  // .bar-grow { width: var(--bar-width) }: senza, la barra era larga quanto il binario (tutte piene)
+  const barWidth = kind === 'bar-grow' ? (props.style as { '--bar-width'?: string } | undefined)?.['--bar-width'] : undefined;
+  const merged = useMemo(() => {
+    const own = barWidth != null ? [{ width: barWidth as DimensionValue, transformOrigin: 'left' }, anim] : anim;
+    return animatedStyle ? [animatedStyle, own] : own;
+  }, [animatedStyle, anim, barWidth]);
   return <Div {...props} className={withoutCssAnimation(className ?? '')} animatedStyle={merged} />;
 }
 

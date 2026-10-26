@@ -15,7 +15,15 @@ adb shell pm list packages | grep -iE "chrome|webview" > "$OUT/browser.txt" || t
 adb shell getprop ro.build.fingerprint >> "$OUT/browser.txt" || true
 adb logcat -v epoch > "$OUT/logcat-full.txt" 2>&1 &
 LOGCAT=$!
-if [ "${GARA_NAV:-}" = 1 ]; then
+if [ "${GARA_CONF:-}" = 1 ]; then
+  # confronto grafico: schermate di nativa e originale alla larghezza del telefono di Antonio (384 dp)
+  adb shell wm density "${CONF_DENSITY:-450}"
+  node tools/gara/confronto.mjs "${UTENTE:-admin}" "tests/gara/confronto-${UTENTE:-admin}.txt" "$OUT" > "$OUT/gara.log" 2>&1
+  echo "esito: $?" > "$OUT/esito.txt"
+  python3 -c 'import PIL' 2>/dev/null || pip install -q pillow
+  python3 tools/gara/affianca.py "$OUT/confronto" >> "$OUT/gara.log" 2>&1
+  cp "$OUT/confronto.md" "$OUT/gara.md" 2>/dev/null || true
+elif [ "${GARA_NAV:-}" = 1 ]; then
   # gara della barra in basso e del menu laterale (video + analisi frame per frame)
   node tools/gara/navbar.mjs "${UTENTE:-admin}" "$OUT" > "$OUT/gara.log" 2>&1
   python3 tools/gara/navbar_analisi.py "$OUT" >> "$OUT/gara.log" 2>&1
