@@ -134,7 +134,10 @@ const TableContext = createContext<TableLayout | null>(null);
 const ColumnContext = createContext<{ col: number; span: number } | null>(null);
 
 /** Larghezze delle colonne: massimo per colonna, più lo spazio che avanza in proporzione. */
-export function tableColumnWidths(natural: number[], tableWidth: number): number[] {
+export function tableColumnWidths(natural0: number[], tableWidth: number): number[] {
+  // misurate su una riga senza limiti (Tr): un testo lungo su una riga sola non allarga una colonna oltre
+  // la tabella, lì va a capo
+  const natural = tableWidth > 0 ? natural0.map((w) => Math.min(w, tableWidth)) : natural0;
   const sum = natural.reduce((a, b) => a + b, 0);
   if (!sum || sum >= tableWidth) return natural;
   return natural.map((w) => (w * tableWidth) / sum);
@@ -202,6 +205,8 @@ export const Thead = ({ className, children, ref }: { className?: string; childr
 export const Tbody = Thead;
 export const Tfoot = Thead;
 
+const MEASURE_ROW = { width: 4000 } as const;
+
 export function Tr({ className, children, onClick, style, ...rest }: CellProps & DataProps) {
   const data = dataPropsOf(rest);
   // indice di colonna di ogni cella (colSpan compreso), anche se la cella è dentro un altro componente
@@ -212,10 +217,15 @@ export function Tr({ className, children, onClick, style, ...rest }: CellProps &
     col += span;
     return <ColumnContext.Provider key={isValidElement(child) ? child.key ?? col : col} value={value}>{child}</ColumnContext.Provider>;
   });
+  // mentre si misura la riga è larghissima: Yoga misurava ogni cella con lo spazio che restava nella riga,
+  // e con una prima colonna larga le altre andavano a capo a metà parola ("Se/rat/e") e quella larghezza
+  // diventava la loro; in CSS una colonna non scende sotto il suo contenuto (Promoter, Fatturato per Locale)
+  const table = useContext(TableContext);
+  const rowStyle = table && !table.widths ? [MEASURE_ROW, style] : style;
   // le celle di una riga sono alte uguali (contenuto centrato in verticale nella cella)
   return onClick
-    ? <Btn className={cn('flex flex-row items-stretch', className)} onClick={onClick} style={style} {...data}>{cells}</Btn>
-    : <Div className={cn('flex flex-row items-stretch', className)} style={style} {...data}>{cells}</Div>;
+    ? <Btn className={cn('flex flex-row items-stretch', className)} onClick={onClick} style={rowStyle} {...data}>{cells}</Btn>
+    : <Div className={cn('flex flex-row items-stretch', className)} style={rowStyle} {...data}>{cells}</Div>;
 }
 
 /** text-align della cella: allinea anche i blocchi in linea (inline-flex...) come in CSS. */

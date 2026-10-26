@@ -30,7 +30,8 @@ export function DateBox({ type, value, className, style, disabled, onPress, chil
   // sul telefono l'originale gira in Chrome per Android: campo vuoto senza "gg/mm/aaaa" e freccia ▾ a destra
   // al posto del calendario (quello è di Chrome sul computer)
   const android = Platform.OS !== 'web';
-  const text = android && empty ? '\u00a0' : shown;
+  // il testo resta (trasparente) per la larghezza: in Chrome il campo vuoto è largo quanto quello pieno
+  const hidden = android && empty;
   const Icon = android ? ChevronDown : type === 'time' ? Clock : Calendar;
   return (
     <Btn
@@ -41,7 +42,7 @@ export function DateBox({ type, value, className, style, disabled, onPress, chil
       accessibilityLabel={accessibilityLabel ?? shown}
     >
       {/* Chrome: i campi della data hanno 2px sopra e sotto l'interlinea (input senza padding né bordo: 16 → 20px) */}
-      <Text className={cn('flex-shrink', empty && 'opacity-70')} style={[inputFontSize(className), DATE_TEXT_PAD]} numberOfLines={1}>{text}</Text>
+      <Text className={cn('flex-shrink', empty && (hidden ? 'opacity-0' : 'opacity-70'))} style={[inputFontSize(className), DATE_TEXT_PAD]} numberOfLines={1}>{shown}</Text>
       <Icon className={android ? 'w-4 h-4 ml-2' : 'w-4 h-4 ml-2 opacity-70'} />
       {children}
     </Btn>

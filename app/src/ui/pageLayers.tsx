@@ -83,6 +83,17 @@ export function useStickyPin(className: string) {
     return () => { off(); if (t) clearTimeout(t); };
   }, [nav, measure]);
   const onLayout = useCallback((_e: LayoutChangeEvent) => measure(), [measure]);
+  // diagnostica: posizione sullo schermo (con la traslazione) ogni ~400 px di scroll
+  useEffect(() => {
+    if (!TEST_DIAG || !layer) return;
+    let last = -1000;
+    return layer.onScroll(() => {
+      const y = layer.y();
+      if (Math.abs(y - last) < 400) return;
+      last = y;
+      (ref.current as unknown as { measure?: (cb: (...a: number[]) => void) => void } | null)?.measure?.((_x, _y, _w, h, _px, py) => console.log(`VIBRA sticky-schermo ${className.slice(0, 40)} scroll=${Math.round(y)} pageY=${Math.round(py)} h=${Math.round(h)}`));
+    });
+  }, [layer, className]);
   if (!layer || offset == null) return { ref, onLayout, style: null };
   const start = offset - top;
   const translateY = layer.scrollY.interpolate({ inputRange: [start, start + 1], outputRange: [0, 1], extrapolateLeft: 'clamp', extrapolateRight: 'extend' });
