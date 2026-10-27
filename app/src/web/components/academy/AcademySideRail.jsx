@@ -29,6 +29,7 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
   const scrubbingRef = useRef(false);
   const glassRef = useRef(null);
   const borderPathRef = useRef(null);
+  const [railD, setRailD] = useState('');
 
   useEffect(() => {
     // PORT: un controllo per frame (prima a ogni evento di scroll, con getBoundingClientRect di ogni tessera)
@@ -138,6 +139,9 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
 
     glass.style.clipPath = `path('${d}')`;
     borderPath.setAttribute('d', d);
+    // PORT: forma a riposo anche come prop (setNativeProps del tracciato non ridisegna sempre con Fabric:
+    // il bordo della rotella non compariva); il rigonfiamento dello scrub resta su setAttribute
+    if (!(bulgeAmount > 0)) setRailD((prev) => (prev === d ? prev : d));
   }, []);
 
   useEffect(() => {
@@ -337,6 +341,7 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
           >
             <Path
               ref={borderPathRef}
+              d={railD}
               fill="none"
               stroke={
                 scrubbing

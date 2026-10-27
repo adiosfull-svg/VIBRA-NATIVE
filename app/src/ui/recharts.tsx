@@ -268,6 +268,16 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
     return Math.max(1, Math.ceil(need / (catLen / n)));
   })();
 
+  // quali etichette: interval di default di recharts = preserveEnd (si conta dall'ultima all'indietro: 12
+  // settimane → 26/10, 12/10, ... 17/08 come nell'originale; contando dalla prima uscivano 10/08 ... 19/10
+  // e 26/10 attaccata alla 19/10); preserveStart/preserveStartEnd e un numero contano dalla prima
+  const showCatTick = (i: number) => {
+    const lastIdx = data.length - 1;
+    const mode = catAxis?.interval ?? 'preserveEnd';
+    if (typeof mode === 'number' || mode === 'preserveStart') return i % tickEvery === 0;
+    if (mode === 'preserveStartEnd') return i % tickEvery === 0 || (i === lastIdx && (lastIdx % tickEvery === 0 || lastIdx - Math.floor(lastIdx / tickEvery) * tickEvery >= tickEvery / 2));
+    return (lastIdx - i) % tickEvery === 0;
+  };
   const onTouch = (evtX: number, evtY: number) => {
     const pos = vertical ? evtY - plot.top : evtX - plot.left;
     const i = pointMode ? Math.round((pos / catLen) * (n - 1)) : Math.floor(pos / band);
@@ -286,6 +296,12 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
   // contenuto dell'Svg con le y spostate di -oy (riquadro che parte da oy) e, per le categorie (barre,
   // etichette, griglia orizzontale del layout verticale), solo gli indici [from, to): senza finestra
   // oy 0 e tutte le categorie
+  // recharts (getTicks, preserveEnd/preserveStartEnd): la prima e l'ultima etichetta si spostano dentro l'area
+  // del grafico invece di uscirne; qui uscivano e l'Svg le tagliava ("ott 2" invece di "ott 26")
+  const inPlotX = (x: number, label: string, fs: number) => {
+    const half = (label.length * fs * 0.6) / 2;
+    return Math.max(plot.left + half, Math.min(plot.left + plot.width - half, x));
+  };
   const draw = (oy: number, from: number, to: number) => {
     const Y = (v: number) => v - oy;
     const inRange = (i: number) => i >= from && i < to;
@@ -313,7 +329,7 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
           })}
           {/* asse delle categorie */}
           {catAxis && !catAxis.hide && data.map((d, i) => {
-            if (i % tickEvery !== 0 && i !== data.length - 1) return null;
+            if (!showCatTick(i)) return null;
             if (!inRange(i)) return null;
             const value = catLabel(d, i);
             const pos = catPos(i);
@@ -324,7 +340,7 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
             if (custom) return <G key={`ct${i}`}>{custom}</G>;
             return vertical
               ? <TickText key={`ct${i}`} x={plot.left - 8} y={Y(pos)} dy={4} value={String(value ?? '')} tick={catAxis.tick} anchor="end" />
-              : <TickText key={`ct${i}`} x={pos} y={Y(plot.top + plot.height + 16)} value={String(value ?? '')} tick={catAxis.tick} />;
+              : <TickText key={`ct${i}`} x={inPlotX(pos, String(value ?? ''), catAxis.tick?.fontSize ?? 12)} y={Y(plot.top + plot.height + 16)} value={String(value ?? '')} tick={catAxis.tick} />;
           })}
           {/* lineette dei tick (recharts: tickLine visibile, tickSize 6) */}
           {valAxis && !valAxis.hide && valAxis.tickLine !== false && ticks.map((t, i) => {
@@ -334,7 +350,7 @@ function CartesianChart({ kind, data = [], width: w, height: h, margin, layout =
               : <SvgLine key={`vl${i}`} x1={plot.left - 6} x2={plot.left} y1={Y(p)} y2={Y(p)} stroke="#666" />;
           })}
           {catAxis && !catAxis.hide && catAxis.tickLine !== false && data.map((_, i) => {
-            if (i % tickEvery !== 0 && i !== data.length - 1) return null;
+            if (!showCatTick(i)) return null;
             if (!inRange(i)) return null;
             const p = catPos(i);
             return vertical

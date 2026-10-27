@@ -11,7 +11,7 @@
 //    contenitore raccoglie in un BlurTargetView (StickySplit).
 // Altrove (blur dentro la pagina) resta il velo semitrasparente di prima.
 import { BlurTargetView, BlurView } from 'expo-blur';
-import { Component, createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
+import { Component, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { Animated, PixelRatio, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingPx } from './webClasses';
@@ -83,10 +83,17 @@ export function useStickyPin(className: string) {
     return () => { off(); if (t) clearTimeout(t); };
   }, [nav, measure]);
   const onLayout = useCallback((_e: LayoutChangeEvent) => measure(), [measure]);
-  if (!layer || offset == null) return { ref, onLayout, style: null };
-  const start = offset - top;
-  const translateY = layer.scrollY.interpolate({ inputRange: [start, start + 1], outputRange: [0, 1], extrapolateLeft: 'clamp', extrapolateRight: 'extend' });
-  return { ref, onLayout, style: { transform: [{ translateY }] } };
+  // Interpolazione tenuta tra un disegno e l'altro: con il driver nativo il valore JS di scrollY resta 0, e
+  // un nodo nuovo a ogni ridisegno (dati arrivati, style nuovo dal genitore) ripartiva da translateY 0 fino
+  // allo scroll successivo: a pagina ferma la barra tornava al suo posto e non restava in alto (schede
+  // Sett./Mensile del profilo promoter, che si ridisegna spesso; Admin Console quasi mai)
+  const style = useMemo(() => {
+    if (!layer || offset == null) return null;
+    const start = offset - top;
+    const translateY = layer.scrollY.interpolate({ inputRange: [start, start + 1], outputRange: [0, 1], extrapolateLeft: 'clamp', extrapolateRight: 'extend' });
+    return { transform: [{ translateY }] };
+  }, [layer, offset, top]);
+  return { ref, onLayout, style };
 }
 
 // ── bersagli del blur ────────────────────────────────────────────────────────

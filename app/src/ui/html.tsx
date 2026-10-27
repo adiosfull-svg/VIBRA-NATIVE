@@ -1327,6 +1327,12 @@ function StickyDiv({ animatedStyle, onLayout, ref: outerRef, ...props }: DivProp
 // incollata). La distanza da incollato la usa già useStickyPin (stickyTop).
 const STICKY_NO_TOP = { top: 0 } as const;
 
+const ANIM_Z = { zIndex: 1 } as const;
+function styleHasTransform(st: unknown): boolean {
+  if (Array.isArray(st)) return st.some(styleHasTransform);
+  return !!st && typeof st === 'object' && (st as { transform?: unknown }).transform != null;
+}
+
 function DivBox(p: DivProps) {
   if (!TEST_DIAG) return DivBoxImpl(p);
   const t = performance.now();
@@ -1452,7 +1458,11 @@ function DivBoxImpl({ className, children: children0, style, onLayout, animatedS
   const Box = animatedStyle || faceStyle || trSpec ? AnimatedBox : View;
   const pct = Platform.OS !== 'web' ? percentTranslate(box) : null;
   const boxClasses = cn(pct ? pct[0] : box, nativeBlur && 'overflow-hidden');
-  const ownStyle = [boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), pct?.[1], ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animatedStyle, faceStyle, tr.style];
+  // transform animato (animatedStyle: riga scorrevole delle Notifiche): in CSS un elemento trasformato si
+  // disegna sopra ai fratelli assoluti che lo precedono, come per le classi (boxStyle). Senza, lo sfondo
+  // rosso del gesto di eliminazione copriva la notifica (testo sbiadito sotto il rosso)
+  const animZ = Platform.OS !== 'web' && animatedStyle && !Z_CLASS.test(className ?? '') && rnStyle?.zIndex == null && styleHasTransform(animatedStyle) ? ANIM_Z : null;
+  const ownStyle = [boxStyle(layout, inherited, className, grid, box, rnStyle, gridCell), pct?.[1], ringStyle, vpStyle, fixedStyle, rnStyle, lead, blurStyle, min.minStyle, animZ, animatedStyle, faceStyle, tr.style];
   const boxInner = (
     <>
       {nativeBlur}

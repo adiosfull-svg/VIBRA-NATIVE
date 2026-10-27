@@ -49,14 +49,20 @@ function fitFrom(className = ''): ImageProps['contentFit'] {
 // e l'immagine non si vede (logo VIBRA accanto a «Bacheca riconoscimenti»). Proporzioni note dopo il primo
 // caricamento (onLoad), tenute per src: alle aperture dopo l'immagine ha subito la sua larghezza.
 const ONE_SIDE_H = /(^|\s)(h-(?!auto)\S+)(\s|$)/;
-const OWN_W = /(^|\s)(w-\S+|size-\S+|min-w-\S+|aspect-\S+|inset-0|inset-x-0|absolute)(\s|$)/;
+const OWN_W = /(^|\s)(w-(?!auto(?:\s|$))\S+|size-\S+|min-w-\S+|aspect-\S+|inset-0|inset-x-0|absolute)(\s|$)/;
 const ONE_SIDE_W = /(^|\s)(w-(?!auto)\S+)(\s|$)/;
-const OWN_H = /(^|\s)(h-\S+|size-\S+|min-h-\S+|aspect-\S+|inset-0|inset-y-0|absolute)(\s|$)/;
+const OWN_H = /(^|\s)(h-(?!auto(?:\s|$))\S+|size-\S+|min-h-\S+|aspect-\S+|inset-0|inset-y-0|absolute)(\s|$)/;
+const MIN_MAX_H = /(^|\s)(min-h|max-h)-\S+/;
+const MIN_MAX_W = /(^|\s)(min-w|max-w)-\S+/;
 const imageAspect = new Map<string, number>();
 function needsAspect(className: string | undefined, style: Record<string, unknown>): boolean {
   if (Platform.OS === 'web' || !className || style.aspectRatio != null) return false;
-  const h = (ONE_SIDE_H.test(className) || style.height != null) && !OWN_W.test(className) && style.width == null;
-  const w = (ONE_SIDE_W.test(className) || style.width != null) && !OWN_H.test(className) && style.height == null;
+  const h = (ONE_SIDE_H.test(className) || style.height != null) && !OWN_W.test(className) && style.width == null
+    && style.minWidth == null && style.maxWidth == null && !MIN_MAX_W.test(className);
+  // con min/max sull'altra dimensione (slide di Formazione: w-full, minHeight 300) in CSS l'altezza si ferma
+  // al minimo e la larghezza resta; in Yoga aspectRatio allargava l'immagine oltre il riquadro (tagliata)
+  const w = (ONE_SIDE_W.test(className) || style.width != null) && !OWN_H.test(className) && style.height == null
+    && style.minHeight == null && style.maxHeight == null && !MIN_MAX_H.test(className);
   return h || w;
 }
 
