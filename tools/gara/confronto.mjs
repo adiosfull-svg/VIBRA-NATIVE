@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 const [utente, pagineFile, OUT] = process.argv.slice(2);
 const DIR = `${OUT}/confronto`;
 mkdirSync(DIR, { recursive: true });
+mkdirSync(`${OUT}/viste`, { recursive: true });
 const PKG = 'com.vibra.mobile';
 const ORIGINE = 'http://127.0.0.1:5173';
 const pagine = readFileSync(pagineFile, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
@@ -36,6 +37,11 @@ async function serie(p, n, chi) {
   for (let i = 0; i < n; i++) {
     if (i > 0) { scorri(); await sleep(1400); }
     shot(`${DIR}/${nome(p)}-${i}-${chi}.png`);
+    // albero delle viste della nativa (posizioni con le trasformazioni): dice se una barra sticky è stata
+    // spostata e sta sotto ad altro, o se non si è mossa
+    if (chi === 'nat') {
+      try { writeFileSync(`${OUT}/viste/${nome(p)}-${i}.xml`, adb('exec-out', 'uiautomator', 'dump', '/dev/tty')); } catch { /* niente albero */ }
+    }
   }
 }
 

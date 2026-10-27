@@ -142,6 +142,7 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
     // PORT: forma a riposo anche come prop (setNativeProps del tracciato non ridisegna sempre con Fabric:
     // il bordo della rotella non compariva); il rigonfiamento dello scrub resta su setAttribute
     if (!(bulgeAmount > 0)) setRailD((prev) => (prev === d ? prev : d));
+    if (process.env.EXPO_PUBLIC_TEST_DIAG === '1') console.log(`VIBRA rotella W=${Math.round(W)} H=${Math.round(H)} d=${d.slice(0, 40)}`);
   }, []);
 
   useEffect(() => {
