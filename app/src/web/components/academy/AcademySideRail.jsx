@@ -29,7 +29,16 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
   const scrubbingRef = useRef(false);
   const glassRef = useRef(null);
   const borderPathRef = useRef(null);
-  const [railD, setRailD] = useState('');
+  // PORT: forma a riposo dal layout della barra (onLayout) e passata come prop d: sul telefono
+  // updateRailShape non arrivava a disegnare (ref della barra non pronti) e il bordo della rotella mancava
+  const [railSize, setRailSize] = useState(null);
+  const railD = railSize
+    ? `M 0 0 L ${railSize.width - 20} 0 Q ${railSize.width} 0 ${railSize.width} 20 L ${railSize.width} ${railSize.height - 20} Q ${railSize.width} ${railSize.height} ${railSize.width - 20} ${railSize.height} L 0 ${railSize.height}`
+    : undefined;
+  const onRailLayout = useCallback((e) => {
+    const { width, height } = e.nativeEvent.layout;
+    setRailSize((p) => (p && Math.abs(p.width - width) < 0.5 && Math.abs(p.height - height) < 0.5 ? p : { width, height }));
+  }, []);
 
   useEffect(() => {
     // PORT: un controllo per frame (prima a ogni evento di scroll, con getBoundingClientRect di ogni tessera)
@@ -139,10 +148,6 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
 
     glass.style.clipPath = `path('${d}')`;
     borderPath.setAttribute('d', d);
-    // PORT: forma a riposo anche come prop (setNativeProps del tracciato non ridisegna sempre con Fabric:
-    // il bordo della rotella non compariva); il rigonfiamento dello scrub resta su setAttribute
-    if (!(bulgeAmount > 0)) setRailD((prev) => (prev === d ? prev : d));
-    if (process.env.EXPO_PUBLIC_TEST_DIAG === '1') console.log(`VIBRA rotella W=${Math.round(W)} H=${Math.round(H)} d=${d.slice(0, 40)}`);
   }, []);
 
   useEffect(() => {
@@ -276,6 +281,7 @@ export default React.memo(function AcademySideRail({ items, onJump }) {
       <Div className="fixed left-0 top-1/2 -translate-y-1/2 z-30 sm:hidden">
         <motion.div
           ref={railRef}
+          onLayout={onRailLayout}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}

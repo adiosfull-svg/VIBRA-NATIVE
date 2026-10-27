@@ -133,25 +133,15 @@ const Page = forwardRef<ScrollView, Props>(({ children, title, className, onRefr
     onScroll: (fn) => { scrollListeners.add(fn); return () => { scrollListeners.delete(fn); }; },
     setRefreshHandler: (fn) => { pageRefresh.current = fn; setHasPageRefresh(!!fn); },
   }), [scrollY, contentListeners, scrollListeners, own]);
-  // Con il driver nativo il valore JS di scrollY resta 0: con Fabric ogni ridisegno di una vista animata
-  // riscrive la trasformazione col valore JS, e una barra sticky ridisegnata a pagina ferma tornava al suo
-  // posto (schede Sett./Mensile del profilo promoter, pagina che si ridisegna spesso). A scroll fermo il
-  // valore JS si riallinea a quello vero (sul nativo non cambia nulla).
-  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (syncTimer.current) clearTimeout(syncTimer.current); }, []);
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     own.y = e.nativeEvent.contentOffset.y;
-    if (NATIVE_DRIVER) {
-      if (syncTimer.current) clearTimeout(syncTimer.current);
-      syncTimer.current = setTimeout(() => { syncTimer.current = null; scrollY.setValue(own.y); }, 150);
-    }
     const t0 = TEST_DIAG ? Date.now() : 0;
     handle.current?.report(own.y);
     const t1 = TEST_DIAG ? Date.now() : 0;
     scrollListeners.forEach((fn) => fn());
     if (TEST_DIAG) { diagTime('scroll-globale', t1 - t0); diagTime('scroll-pagina', Date.now() - t1); diagCount('evento-scroll'); }
     onScroll?.(e);
-  }, [onScroll, own, scrollListeners, scrollY]);
+  }, [onScroll, own, scrollListeners]);
   const animatedScroll = useMemo(
     () => Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: NATIVE_DRIVER, listener: handleScroll }),
     [scrollY, handleScroll],

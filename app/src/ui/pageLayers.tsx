@@ -83,10 +83,7 @@ export function useStickyPin(className: string) {
     return () => { off(); if (t) clearTimeout(t); };
   }, [nav, measure]);
   const onLayout = useCallback((_e: LayoutChangeEvent) => measure(), [measure]);
-  // Interpolazione tenuta tra un disegno e l'altro: con il driver nativo il valore JS di scrollY resta 0, e
-  // un nodo nuovo a ogni ridisegno (dati arrivati, style nuovo dal genitore) ripartiva da translateY 0 fino
-  // allo scroll successivo: a pagina ferma la barra tornava al suo posto e non restava in alto (schede
-  // Sett./Mensile del profilo promoter, che si ridisegna spesso; Admin Console quasi mai)
+  // stessa interpolazione tra un disegno e l'altro (niente nodo animato nuovo a ogni ridisegno del genitore)
   const style = useMemo(() => {
     if (!layer || offset == null) return null;
     const start = offset - top;

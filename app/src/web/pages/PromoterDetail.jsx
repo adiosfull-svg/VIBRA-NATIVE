@@ -112,7 +112,9 @@ export default function PromoterDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="weekly">
-        <Div ref={tabsRef} className="sticky top-0 z-20 py-1.5 -mx-4 px-4 border-b border-border" style={stickyGlassStyle(stuck)}>
+        {/* PORT: top-0 → sotto la barra di stato (come le altre barre sticky): con top-0 sul telefono la barra si
+            fermava in cima allo schermo, coperta dalla fascia della barra di stato (nel browser in scheda è 0) */}
+        <Div ref={tabsRef} className="sticky top-[env(safe-area-inset-top)] z-20 py-1.5 -mx-4 px-4 border-b border-border" style={stickyGlassStyle(stuck)}>
           <TabsList className="w-full overflow-x-auto flex-nowrap">
             <TabsTrigger value="weekly" className="flex-1 text-xs">Sett.</TabsTrigger>
             <TabsTrigger value="monthly" className="flex-1 text-xs">Mensile</TabsTrigger>
