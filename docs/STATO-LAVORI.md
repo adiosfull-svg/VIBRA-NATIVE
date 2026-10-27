@@ -650,6 +650,10 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   limite), mockup stretto di Academy ("Ce/rca": Android spezza la parola, il CSS la farebbe uscire).
 - Prove normali dell'emulatore: 07-report ("3 lug 26", dati relativi alla data: la serata più vecchia si sposta
   ogni settimana) e 13-liste-minori falliscono anche su `claude/app-nativa` (giro 40532228126): non regressioni.
+- Test Lab di tutto il blocco (27/10, 4679743; admin 40580741954, pr 40580753218): passati, nessun crash nativo.
+  Frame persi admin: Pixel 8 Pro 6,3%, S24 13,5%; pr: Pixel 0,6%, S24 26,4%. Trovato un errore JS sull'admin: il tocco
+  sull'icona Instagram di una card promoter dava «Cannot read property 'stopPropagation' of undefined» (il link `A`
+  di ui/elements chiamava onClick senza evento). Ora l'evento passa.
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app

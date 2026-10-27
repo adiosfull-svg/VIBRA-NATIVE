@@ -111,10 +111,11 @@ export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigi
 
 // ── <a> ──────────────────────────────────────────────────────────────────────
 export function A({ href, children, className, onClick, target: _t, rel: _r, style }: {
-  href?: string; children?: ReactNode; className?: string; onClick?: () => void; target?: string; rel?: string; style?: object;
+  href?: string; children?: ReactNode; className?: string; onClick?: (e?: any) => void; target?: string; rel?: string; style?: object;
 }) {
-  const open = () => {
-    onClick?.();
+  // l'evento va passato: i link dentro una scheda cliccabile chiamano e.stopPropagation()
+  const open = (e?: any) => {
+    onClick?.(e);
     if (!href) return;
     const url = href.startsWith('wa.me') ? `https://${href}` : href;
     Linking.openURL(url).catch(() => {});
