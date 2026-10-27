@@ -492,7 +492,7 @@ function marginWalk(nodes: ReactNode, st: { prev: number }, apply: boolean): any
 }
 
 /** Figlio `sticky` (telefono): i fratelli che lo seguono diventano il bersaglio del suo blur (pageLayers). */
-export function stickySplit(nodes: ReactNode, className?: string): ReactNode {
+function stickySplit(nodes: ReactNode, className?: string): ReactNode {
   if (Platform.OS === 'web' || (className && isFlexRow(className))) return nodes;
   const list = Children.toArray(nodes);
   const i = list.findIndex((c) => isValidElement(c) && isNativeSticky(String((c.props as { className?: unknown }).className ?? '')));

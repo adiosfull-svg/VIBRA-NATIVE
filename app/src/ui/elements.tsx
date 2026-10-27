@@ -20,7 +20,7 @@ import { BrowserSelectTrigger, Select, SelectContent, SelectItem } from './menu'
 import { THEME } from './palette.generated';
 import { fontFamilyFor, inputFontSize, TextClassContext, TextStyleContext, useTextareaBaselineGap } from './text';
 import { TEXT_COLOR } from './icon';
-import { webStyle } from './webStyle';
+import { cssColor, webStyle } from './webStyle';
 import { useDomStyleRef } from './domStyle';
 import { TEST_DIAG } from '../lib/testDiag';
 import { IMAGE_CACHE, imageSource, markImageWarm } from './imageCache';
@@ -463,12 +463,21 @@ export const Path = forwardRef<any, PathProps>((props, ref) => {
     if (typeof ref === 'function') ref(node);
     else if (ref) (ref as { current: unknown }).current = node;
   }, [ref]);
-  return <SvgPath ref={setRef} {...(Platform.OS === 'web' ? props : withRnPointerEvents(props))} />;
+  return <SvgPath ref={setRef} {...(Platform.OS === 'web' ? props : withRnColors(withRnPointerEvents(props)))} />;
 });
 
 // pointerEvents degli SVG del web ('stroke', 'visiblePainted', 'fill'...): su Android react-native-svg
 // accetta solo i valori di RN e con gli altri l'app CADE (IllegalArgumentException "No enum constant
 // ...STROKE": il filo trasparente delle Comitive chiudeva l'app all'apertura di una comitiva con legami).
+// stroke/fill con variabili CSS (hsl(var(--border) / 0.4): bordo della rotella di Academy): react-native-svg
+// non le conosce e non disegnava il tracciato
+const CSS_VAR_COLOR = /var\(--/;
+function withRnColors(props: PathProps): PathProps {
+  const { stroke, fill } = props as { stroke?: unknown; fill?: unknown };
+  const s = typeof stroke === 'string' && CSS_VAR_COLOR.test(stroke) ? cssColor(stroke) : undefined;
+  const f = typeof fill === 'string' && CSS_VAR_COLOR.test(fill) ? cssColor(fill) : undefined;
+  return s || f ? { ...props, ...(s ? { stroke: s } : null), ...(f ? { fill: f } : null) } : props;
+}
 const RN_POINTER_EVENTS = new Set(['auto', 'none', 'box-none', 'box-only']);
 function withRnPointerEvents(props: PathProps): PathProps {
   const p = props as PathProps & { style?: unknown; pointerEvents?: string };
