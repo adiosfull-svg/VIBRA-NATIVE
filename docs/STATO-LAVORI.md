@@ -642,11 +642,12 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   VibraGPT (h-14 w-auto: quadrato provvisorio finché non si conosce l'aspetto, con un lato a 0 Glide non
   scarica), recharts (etichette di testa e coda spostate dentro il grafico; interval di default preserveEnd,
   si conta dall'ultima).
-- Aperti: (1) schede Sett./Mensile del profilo promoter non restano in alto (offset misurato giusto, 688; non
-  aiutano interpolazione in useMemo, StickySplit nelle Tabs, riallineare il valore JS di scrollY a scroll
-  fermo; in un solo giro su sei si incollava). Differenze con gli sticky che funzionano: dentro TabsPrimitive.Root,
-  offset grande, style inline. (2) vetro/bordo della rotella di Academy invisibile (stroke con var CSS ora
-  convertito, d anche come prop: non basta). (3) sottotitolo delle serate che va a capo, mockup stretto di Academy.
+- Risolti col confronto che salva anche l'albero delle viste della nativa (`viste/<pagina>-<n>.xml` nel branch dei
+  risultati, posizioni con le trasformazioni): le schede Sett./Mensile del profilo promoter si incollavano ma con
+  `top-0` finivano dietro la fascia della barra di stato (ora `top-[env(safe-area-inset-top)]` come le altre
+  barre); il bordo della rotella di Academy non si disegnava (forma ora dal layout della barra, prop d).
+- Aperti minori: sottotitolo delle serate che va a capo solo nella nativa (larghezze dei caratteri di Android al
+  limite), mockup stretto di Academy ("Ce/rca": Android spezza la parola, il CSS la farebbe uscire).
 - Prove normali dell'emulatore: 07-report ("3 lug 26", dati relativi alla data: la serata più vecchia si sposta
   ogni settimana) e 13-liste-minori falliscono anche su `claude/app-nativa` (giro 40532228126): non regressioni.
 
