@@ -14,7 +14,7 @@ import { resolveDataState } from './dataState';
 import { useLabelControl } from './labelControl';
 import { usePendingSelection } from '../web/hooks/usePendingSelection';
 import { ROOT_CONTENTS } from './dialog';
-import { Div } from './html';
+import { Div, stickySplit } from './html';
 import { EnterLayer, PresenceProvider, usePortalPresence } from './enterView';
 import { haptic } from './haptics';
 import { IconClassContext } from './icon';
@@ -251,7 +251,9 @@ export function Tabs({ value, onValueChange, defaultValue, className, children }
   return (
     <ShownTabContext.Provider value={shown}>
       <TabsPrimitive.Root value={real} onValueChange={select} className={className}>
-        {children}
+        {/* barra sticky fra i figli (schede Sett./Mensile del profilo promoter): come in un Div, i fratelli
+            dopo di lei in un contenitore loro (pageLayers.StickySplit); senza, sul telefono non restava in alto */}
+        {stickySplit(children, className)}
       </TabsPrimitive.Root>
     </ShownTabContext.Provider>
   );

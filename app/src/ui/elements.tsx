@@ -73,7 +73,9 @@ export function Img({ src, alt, className, loading: _l, decoding: _d, crossOrigi
   const rnStyle0 = webStyle(Array.isArray(style) ? StyleSheet.flatten(style) : style).style;
   const wantAspect = needsAspect(className, rnStyle0 as Record<string, unknown>);
   const knownAspect = wantAspect ? (aspect ?? imageAspect.get(src)) : undefined;
-  const rnStyle = knownAspect ? { ...rnStyle0, aspectRatio: knownAspect } : rnStyle0;
+  // aspetto ancora ignoto: quadrato provvisorio. Con un lato a 0 Glide non scarica l'immagine e onLoad non
+  // arrivava mai (logo accanto alla stellina di VibraGPT, h-14 w-auto)
+  const rnStyle = wantAspect ? { ...rnStyle0, aspectRatio: knownAspect ?? 1 } : rnStyle0;
   const image = (imageClass: string | undefined, imageStyle: object | undefined) => (
     <Image
       source={imageSource(src)}
