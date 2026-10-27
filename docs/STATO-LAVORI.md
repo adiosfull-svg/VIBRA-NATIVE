@@ -637,10 +637,18 @@ Workflow `.github/workflows/emulatore.yml` (runner GitHub con KVM, gratis: repo 
   freccia ▾); `<img>` con un solo lato (aspetto dall'immagine); segnaposto su una riga; `last:*` risolto dal
   contenitore (figli diretti; righe radice di un componente → `Comp.cssLastChild = true`); tabelle: larghezza
   naturale di ogni cella tenuta tra una misura e l'altra (le celle che non cambiano non danno onLayout).
-- Aperti: sticky delle schede nel profilo promoter (misura giusta, y=688; in un giro non si incollava, nel successivo
-  sì: da riguardare su telefono); vetro della rotella di Academy senza sfondo; etichette dell'asse x dei grafici
-  tagliate a destra ("ott 2") e tacche settimanali di uPlot che partono una settimana prima; sottotitolo delle
-  serate ("23 ott 26 · Ammare Frontemare") che va a capo solo nella nativa; mockup stretto di Academy ("Ce/rca").
+- 27/10 (secondo giro), verificati: Notifiche (riga con transform animato sopra lo sfondo rosso assoluto:
+  zIndex 1 come per le classi), slide di Formazione (niente aspectRatio con min/max sull'altro lato), logo di
+  VibraGPT (h-14 w-auto: quadrato provvisorio finché non si conosce l'aspetto, con un lato a 0 Glide non
+  scarica), recharts (etichette di testa e coda spostate dentro il grafico; interval di default preserveEnd,
+  si conta dall'ultima).
+- Aperti: (1) schede Sett./Mensile del profilo promoter non restano in alto (offset misurato giusto, 688; non
+  aiutano interpolazione in useMemo, StickySplit nelle Tabs, riallineare il valore JS di scrollY a scroll
+  fermo; in un solo giro su sei si incollava). Differenze con gli sticky che funzionano: dentro TabsPrimitive.Root,
+  offset grande, style inline. (2) vetro/bordo della rotella di Academy invisibile (stroke con var CSS ora
+  convertito, d anche come prop: non basta). (3) sottotitolo delle serate che va a capo, mockup stretto di Academy.
+- Prove normali dell'emulatore: 07-report ("3 lug 26", dati relativi alla data: la serata più vecchia si sposta
+  ogni settimana) e 13-liste-minori falliscono anche su `claude/app-nativa` (giro 40532228126): non regressioni.
 
 ## PROSSIMO PASSO
 - **Crash dell'app sull'emulatore: CHIUSO (17/10).** Scansione dei logcat di tutti i 219 giri: crash dell'app
